@@ -48,7 +48,7 @@ const CARDS: {
     titleKey: 'cardWebsiteTitle',
     descKey: 'cardWebsiteDesc',
     icon: <IconWebsite />,
-    color: '#6366f1',
+    color: '#a5b4fc',
   },
   {
     type: 'saas',
@@ -62,7 +62,7 @@ const CARDS: {
     titleKey: 'cardEmployeeTitle',
     descKey: 'cardEmployeeDesc',
     icon: <IconEmployee />,
-    color: '#a855f7',
+    color: '#c084fc',
     redirect: '/coming-soon?product=AI+Employees',
     soon: true,
   },

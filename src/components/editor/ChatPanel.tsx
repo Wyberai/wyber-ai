@@ -3596,7 +3596,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
                 setPendingPlanOffer(null);
                 setPendingPlan({ prompt, image: img });
               }}
-              style={{ flex:1, padding:'7px 0', borderRadius:7, border:'none', background:'var(--accent)', color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer' }}
+              style={{ flex:1, padding:'7px 0', borderRadius:7, border:'none', background:'var(--accent)', color:'#03111c', fontSize:12, fontWeight:700, cursor:'pointer' }}
             >
               {t('showPlanButton').replace('{credits}', String(creditCost('plan', 'default')))}
             </button>
@@ -3643,7 +3643,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
             ))}
           </div>
 
-          <div style={{ fontSize: 12, color: '#71717a', lineHeight: 1.6, paddingLeft: 29 }}>
+          <div style={{ fontSize: 12, color: '#8797ab', lineHeight: 1.6, paddingLeft: 29 }}>
             {t('regulatedFooterNotice')}
           </div>
 
@@ -3791,7 +3791,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
             <button
               onClick={saveSecretsAndBuild}
               disabled={secretSaving}
-              style={{ flex:1, padding:'7px 0', borderRadius:7, border:'none', background:'var(--accent)', color:'white', fontSize:12, fontWeight:700, cursor:'pointer', opacity: secretSaving ? 0.7 : 1 }}
+              style={{ flex:1, padding:'7px 0', borderRadius:7, border:'none', background:'var(--accent)', color:'#03111c', fontSize:12, fontWeight:700, cursor:'pointer', opacity: secretSaving ? 0.7 : 1 }}
             >
               {secretSaving ? tc('saving') : t('saveKeysAndBuildButton')}
             </button>
@@ -3846,7 +3846,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
                     />
                     <div style={{ display:'flex', gap:6, justifyContent:'flex-end' }}>
                       <button onClick={handleCancelEdit} style={{ fontSize: 12, padding:'4px 10px', borderRadius:6, border:'1px solid var(--ide-border)', background:'transparent', color:'var(--ide-text3)', cursor:'pointer', fontWeight:600 }}>{tc('cancel')}</button>
-                      <button onClick={handleSaveEdit} disabled={!editingText.trim()} style={{ fontSize: 12, padding:'4px 10px', borderRadius:6, border:'none', background:'var(--accent)', color:'#fff', cursor: editingText.trim() ? 'pointer' : 'not-allowed', fontWeight:600, opacity: editingText.trim() ? 1 : 0.5 }}>{t('saveRegenerateButton')}</button>
+                      <button onClick={handleSaveEdit} disabled={!editingText.trim()} style={{ fontSize: 12, padding:'4px 10px', borderRadius:6, border:'none', background:'var(--accent)', color:'#03111c', cursor: editingText.trim() ? 'pointer' : 'not-allowed', fontWeight:600, opacity: editingText.trim() ? 1 : 0.5 }}>{t('saveRegenerateButton')}</button>
                     </div>
                   </div>
                 </div>
@@ -3861,7 +3861,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
                     </button>
                   )}
-                  <div style={{ background:'var(--accent)', borderRadius:'12px 12px 3px 12px', padding:'9px 13px', fontSize:13, lineHeight:1.55, color:'#fff', maxWidth:'85%', letterSpacing:'-0.01em' }}>
+                  <div style={{ background:'var(--accent)', borderRadius:'12px 12px 3px 12px', padding:'9px 13px', fontSize:13, lineHeight:1.55, color:'#03111c', maxWidth:'85%', letterSpacing:'-0.01em' }}>
                     {msg.content.startsWith('[Image:') ? (
                       <div style={{ display:'flex', alignItems:'center', gap:5 }}>
                         <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" style={{opacity:0.8}}><rect x="1" y="1" width="14" height="14" rx="2" stroke="currentColor" strokeWidth="1.5" fill="none"/><circle cx="5.5" cy="5.5" r="1.5"/><path d="M1 11l4-4 3 3 2-2 5 5" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>

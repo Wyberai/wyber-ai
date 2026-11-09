@@ -68,9 +68,9 @@ export default async function EmployeeTemplatePage({ params, searchParams }: {
     .limit(3)
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0b0d12', fontFamily: 'var(--font-display)', color: '#e4e4e7' }}>
+    <div style={{ minHeight: '100vh', background: '#05080d', fontFamily: 'var(--font-display)', color: '#e8eef7' }}>
       {/* Nav */}
-      <nav style={{ borderBottom: '1px solid #1a1a22', background: '#0d0d11', padding: '0 32px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <nav style={{ borderBottom: '1px solid #14202e', background: '#0a1018', padding: '0 32px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         {domain ? (
           <div style={{ fontSize: 15, fontWeight: 800, color: '#fff' }}>{domain}</div>
         ) : (
@@ -79,7 +79,7 @@ export default async function EmployeeTemplatePage({ params, searchParams }: {
           </Link>
         )}
         <div style={{ display: 'flex', gap: 10 }}>
-          {!domain && <Link href="/employees" style={{ fontSize: 12, color: '#52525b', textDecoration: 'none', padding: '5px 12px', borderRadius: 7, border: '1px solid #1e1e26' }}>← All employees</Link>}
+          {!domain && <Link href="/employees" style={{ fontSize: 12, color: '#8797ab', textDecoration: 'none', padding: '5px 12px', borderRadius: 7, border: '1px solid #1b2a3b' }}>← All employees</Link>}
           <Link href={`/ai-employees/new?template=${t.slug}`} style={{ fontSize: 13, fontWeight: 600, color: '#fff', textDecoration: 'none', padding: '7px 16px', borderRadius: 8, background: col }}>Hire {t.name} →</Link>
         </div>
       </nav>
@@ -91,10 +91,10 @@ export default async function EmployeeTemplatePage({ params, searchParams }: {
           <div style={{ flex: 1, minWidth: 260 }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: col, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>{t.department}</div>
             <h1 style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-0.04em', color: '#fff', margin: '0 0 10px', lineHeight: 1.1 }}>{t.name}</h1>
-            <p style={{ fontSize: 16, color: '#71717a', margin: '0 0 20px', lineHeight: 1.6 }}>{t.tagline}</p>
+            <p style={{ fontSize: 16, color: '#8797ab', margin: '0 0 20px', lineHeight: 1.6 }}>{t.tagline}</p>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               {t.default_tools.map((tool: string) => (
-                <span key={tool} style={{ fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 6, background: 'rgba(255,255,255,0.04)', border: '1px solid #2a2a35', color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{tool}</span>
+                <span key={tool} style={{ fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 6, background: 'rgba(255,255,255,0.04)', border: '1px solid #2a2a35', color: '#9aa8bb', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{tool}</span>
               ))}
             </div>
           </div>
@@ -108,9 +108,9 @@ export default async function EmployeeTemplatePage({ params, searchParams }: {
       <div style={{ maxWidth: 900, margin: '48px auto 80px', padding: '0 32px', display: 'grid', gridTemplateColumns: '1fr 320px', gap: 24 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           {/* Human analogy / marketing description */}
-          <div style={{ background: '#111115', border: '1px solid #1e1e26', borderRadius: 14, padding: 24 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>What this employee does</div>
-            <p style={{ fontSize: 14, color: '#a1a1aa', lineHeight: 1.8, margin: 0 }}>{whatTheyDo(t.tagline, t.name, t.department, t.role)}</p>
+          <div style={{ background: '#0d141e', border: '1px solid #1b2a3b', borderRadius: 14, padding: 24 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#8797ab', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>What this employee does</div>
+            <p style={{ fontSize: 14, color: '#9aa8bb', lineHeight: 1.8, margin: 0 }}>{whatTheyDo(t.tagline, t.name, t.department, t.role)}</p>
           </div>
 
           {/* Value bullets */}
@@ -124,14 +124,14 @@ export default async function EmployeeTemplatePage({ params, searchParams }: {
             ].map((b, i) => (
               <div key={i} style={{ display: 'flex', gap: 10, marginBottom: i < 3 ? 10 : 0, alignItems: 'flex-start' }}>
                 <span style={{ color: col, flexShrink: 0, marginTop: 1 }}>✓</span>
-                <span style={{ fontSize: 13, color: '#a1a1aa', lineHeight: 1.55 }}>{b}</span>
+                <span style={{ fontSize: 13, color: '#9aa8bb', lineHeight: 1.55 }}>{b}</span>
               </div>
             ))}
           </div>
 
           {/* How it works */}
-          <div style={{ background: '#111115', border: '1px solid #1e1e26', borderRadius: 14, padding: 24 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 16 }}>How it works</div>
+          <div style={{ background: '#0d141e', border: '1px solid #1b2a3b', borderRadius: 14, padding: 24 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#8797ab', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 16 }}>How it works</div>
             {[
               { step: '01', title: 'Hire & onboard', desc: 'Select this employee, connect your tools, and provide your company context. Takes 5 minutes.' },
               { step: '02', title: 'Set KPIs', desc: 'Define what success looks like. Set targets for each KPI and the employee will report against them.' },
@@ -141,8 +141,8 @@ export default async function EmployeeTemplatePage({ params, searchParams }: {
               <div key={s.step} style={{ display: 'flex', gap: 16, marginBottom: 16, alignItems: 'flex-start' }}>
                 <div style={{ fontSize: 11, fontWeight: 800, color: col, width: 28, flexShrink: 0, paddingTop: 2 }}>{s.step}</div>
                 <div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#e4e4e7', marginBottom: 3 }}>{s.title}</div>
-                  <div style={{ fontSize: 12, color: '#71717a', lineHeight: 1.55 }}>{s.desc}</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#e8eef7', marginBottom: 3 }}>{s.title}</div>
+                  <div style={{ fontSize: 12, color: '#8797ab', lineHeight: 1.55 }}>{s.desc}</div>
                 </div>
               </div>
             ))}
@@ -152,15 +152,15 @@ export default async function EmployeeTemplatePage({ params, searchParams }: {
         {/* Sidebar */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {/* KPIs */}
-          <div style={{ background: '#111115', border: '1px solid #1e1e26', borderRadius: 14, padding: 20 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>KPIs tracked</div>
+          <div style={{ background: '#0d141e', border: '1px solid #1b2a3b', borderRadius: 14, padding: 20 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#8797ab', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>KPIs tracked</div>
             {kpis.map((k, i) => (
-              <div key={i} style={{ marginBottom: 14, paddingBottom: 14, borderBottom: i < kpis.length - 1 ? '1px solid #1a1a22' : 'none' }}>
+              <div key={i} style={{ marginBottom: 14, paddingBottom: 14, borderBottom: i < kpis.length - 1 ? '1px solid #14202e' : 'none' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: '#e4e4e7' }}>{k.name}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: '#e8eef7' }}>{k.name}</span>
                   <span style={{ fontSize: 11, fontWeight: 700, color: col }}>Target: {k.target}{k.unit}</span>
                 </div>
-                <p style={{ fontSize: 11, color: '#52525b', margin: 0, lineHeight: 1.5 }}>{k.description}</p>
+                <p style={{ fontSize: 11, color: '#8797ab', margin: 0, lineHeight: 1.5 }}>{k.description}</p>
               </div>
             ))}
           </div>
@@ -169,7 +169,7 @@ export default async function EmployeeTemplatePage({ params, searchParams }: {
           <div style={{ background: `${col}0f`, border: `1px solid ${col}22`, borderRadius: 14, padding: 20, textAlign: 'center' }}>
             <div style={{ fontSize: 28, marginBottom: 10 }}>{t.emoji}</div>
             <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', marginBottom: 6 }}>Ready to hire {t.name}?</div>
-            <p style={{ fontSize: 12, color: '#71717a', margin: '0 0 16px', lineHeight: 1.55 }}>5-minute setup. Runs automatically. Emails you results.</p>
+            <p style={{ fontSize: 12, color: '#8797ab', margin: '0 0 16px', lineHeight: 1.55 }}>5-minute setup. Runs automatically. Emails you results.</p>
             <Link href={`/ai-employees/new?template=${t.slug}`} style={{ display: 'block', background: col, color: '#fff', textDecoration: 'none', padding: '12px 0', borderRadius: 10, fontSize: 14, fontWeight: 700 }}>
               Hire now →
             </Link>
@@ -177,14 +177,14 @@ export default async function EmployeeTemplatePage({ params, searchParams }: {
 
           {/* Related */}
           {(related?.length ?? 0) > 0 && (
-            <div style={{ background: '#111115', border: '1px solid #1e1e26', borderRadius: 14, padding: 20 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>More {t.department} employees</div>
+            <div style={{ background: '#0d141e', border: '1px solid #1b2a3b', borderRadius: 14, padding: 20 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#8797ab', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>More {t.department} employees</div>
               {related!.map(r => (
                 <Link key={r.slug} href={`/employees/${r.slug}`} style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 10, textDecoration: 'none' }}>
                   <span style={{ fontSize: 18 }}>{r.emoji}</span>
                   <div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: '#e4e4e7' }}>{r.name}</div>
-                    <div style={{ fontSize: 11, color: '#52525b', lineHeight: 1.4 }}>{r.tagline}</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: '#e8eef7' }}>{r.name}</div>
+                    <div style={{ fontSize: 11, color: '#8797ab', lineHeight: 1.4 }}>{r.tagline}</div>
                   </div>
                 </Link>
               ))}

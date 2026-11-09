@@ -427,17 +427,17 @@ export function MobilePreviewPanel({ projectId }: Props) {
       ? appetizeStatus === 'ready' ? '#22c55e'
         : (appetizeStatus === 'queued' || appetizeStatus === 'building') ? '#f59e0b'
         : appetizeStatus === 'error' ? '#ef4444'
-        : '#3f3f46'
+        : '#8797ab'
       : mode === 'wyberaigo'
-        ? deviceBundleUrl ? '#22c55e' : deviceBundling ? '#f59e0b' : '#3f3f46'
+        ? deviceBundleUrl ? '#22c55e' : deviceBundling ? '#f59e0b' : '#8797ab'
         : ready ? '#22c55e'
           : (loading || isGenerating) ? '#f59e0b'
-          : '#3f3f46'
+          : '#8797ab'
 
   const phoneHeight = Math.min(812, (typeof window !== 'undefined' ? window.innerHeight : 780) - 80)
 
   return (
-    <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', background: '#09090b' }}>
+    <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', background: '#05080d' }}>
       {/* Toolbar */}
       <div style={{ minHeight: 36, display: 'flex', alignItems: 'center', flexWrap: 'wrap', padding: '0 10px', gap: 8, borderBottom: '1px solid rgba(255,255,255,0.06)', background: '#111118', flexShrink: 0 }}>
         <div style={{ width: 7, height: 7, borderRadius: '50%', background: dotColor, transition: 'all 0.3s', flexShrink: 0 }} />
@@ -468,17 +468,17 @@ export function MobilePreviewPanel({ projectId }: Props) {
             <select
               value={deviceId}
               onChange={e => setDeviceId(e.target.value)}
-              style={{ background: '#1a1a22', color: '#d4d4d8', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, fontSize: 11, padding: '3px 6px', cursor: 'pointer', outline: 'none' }}
+              style={{ background: '#14202e', color: '#d4d4d8', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, fontSize: 11, padding: '3px 6px', cursor: 'pointer', outline: 'none' }}
             >
               {devicesForOS(platform).map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
             </select>
           </>
         )}
 
-        <span style={{ flex: 1, fontSize: 11, color: '#52525b', fontFamily: 'monospace', minWidth: 80, textAlign: 'right' }}>{statusText}</span>
+        <span style={{ flex: 1, fontSize: 11, color: '#8797ab', fontFamily: 'monospace', minWidth: 80, textAlign: 'right' }}>{statusText}</span>
 
         {shouldBuildPreview && !isGenerating && !loading && mode !== 'appetize' && (
-          <button onClick={refresh} title={t('rebuildPreviewTitle')} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, color: '#52525b', cursor: 'pointer', padding: '2px 8px', fontSize: 11 }}>⟳</button>
+          <button onClick={refresh} title={t('rebuildPreviewTitle')} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, color: '#8797ab', cursor: 'pointer', padding: '2px 8px', fontSize: 11 }}>⟳</button>
         )}
 
         {mode === 'appetize' && (appetizeStatus === 'ready' || appetizeStatus === 'error') && (
@@ -486,7 +486,7 @@ export function MobilePreviewPanel({ projectId }: Props) {
             onClick={triggerAppetizeBuild}
             disabled={appetizeTriggerLoading}
             title="Rebuild with latest code"
-            style={{ background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, color: '#52525b', cursor: 'pointer', padding: '2px 8px', fontSize: 11 }}
+            style={{ background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, color: '#8797ab', cursor: 'pointer', padding: '2px 8px', fontSize: 11 }}
           >⟳</button>
         )}
       </div>
@@ -501,16 +501,16 @@ export function MobilePreviewPanel({ projectId }: Props) {
               <rect x="20" y="6" width="8" height="2" rx="1" fill="rgba(14,165,233,0.4)" />
               <circle cx="24" cy="42" r="2" fill="rgba(14,165,233,0.3)" />
             </svg>
-            <div style={{ fontSize: 14, fontWeight: 600, color: '#e4e4e7' }}>{t('mobilePreviewEmptyTitle')}</div>
-            <div style={{ fontSize: 12, color: '#a1a1aa', maxWidth: 220, textAlign: 'center', lineHeight: 1.5 }}>{t('mobilePreviewEmptyDesc')}</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#e8eef7' }}>{t('mobilePreviewEmptyTitle')}</div>
+            <div style={{ fontSize: 12, color: '#9aa8bb', maxWidth: 220, textAlign: 'center', lineHeight: 1.5 }}>{t('mobilePreviewEmptyDesc')}</div>
           </div>
         )}
 
         {/* Generating overlay */}
         {isGenerating && (
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, background: '#09090b', zIndex: 5 }}>
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, background: '#05080d', zIndex: 5 }}>
             <div style={{ width: 28, height: 28, border: '2px solid rgba(14,165,233,0.15)', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-            <div style={{ fontSize: 13, color: '#71717a', fontWeight: 500 }}>{t('statusWritingApp')}</div>
+            <div style={{ fontSize: 13, color: '#8797ab', fontWeight: 500 }}>{t('statusWritingApp')}</div>
           </div>
         )}
 
@@ -529,7 +529,7 @@ export function MobilePreviewPanel({ projectId }: Props) {
 
         {/* ── WyberAi Go ── */}
         {!isGenerating && mode === 'wyberaigo' && (
-          <div style={{ position: 'absolute', inset: 0, overflowY: 'auto', background: '#09090b' }}>
+          <div style={{ position: 'absolute', inset: 0, overflowY: 'auto', background: '#05080d' }}>
             <WyberAiGoCta
               projectId={projectId}
               hasApp={shouldBuildPreview}
@@ -544,7 +544,7 @@ export function MobilePreviewPanel({ projectId }: Props) {
 
         {/* ── Cloud Device (Appetize) ── */}
         {!isGenerating && mode === 'appetize' && (
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', background: '#09090b' }}>
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', background: '#05080d' }}>
             {appetizeStatus === 'ready' && appetizeBuildId ? (
               <AppetizeEmbed buildId={appetizeBuildId} />
             ) : appetizeStatus === 'queued' || appetizeStatus === 'building' ? (
@@ -559,7 +559,7 @@ export function MobilePreviewPanel({ projectId }: Props) {
 
         {/* ── APK Build ── */}
         {!isGenerating && mode === 'apk' && (
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', background: '#09090b' }}>
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', background: '#05080d' }}>
             {apkStatus === 'ready' && apkUrl ? (
               <MobileBuildReady platform="apk" buildUrl={apkUrl} />
             ) : apkStatus === 'queued' || apkStatus === 'building' ? (
@@ -582,7 +582,7 @@ export function MobilePreviewPanel({ projectId }: Props) {
 
         {/* ── IPA Build ── */}
         {!isGenerating && mode === 'ipa' && (
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', background: '#09090b' }}>
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', background: '#05080d' }}>
             {ipaStatus === 'ready' && ipaUrl ? (
               <MobileBuildReady platform="ipa" buildUrl={ipaUrl} />
             ) : ipaStatus === 'queued' || ipaStatus === 'building' ? (
@@ -653,7 +653,7 @@ function WyberAiGoCta({
           <div style={{ color: '#f4f4f5', fontSize: 20, fontWeight: 700, letterSpacing: '-0.03em', marginBottom: 8 }}>
             Preview on your phone
           </div>
-          <div style={{ color: '#71717a', fontSize: 13, lineHeight: 1.6, maxWidth: 260 }}>
+          <div style={{ color: '#8797ab', fontSize: 13, lineHeight: 1.6, maxWidth: 260 }}>
             {hasApp
               ? 'Open WyberAi on your phone — your project is ready to preview.'
               : 'Describe your app above to build it, then preview it on your real device.'}
@@ -678,12 +678,12 @@ function WyberAiGoCta({
             <div style={{ color: '#f4f4f5', fontSize: 13, fontWeight: 700, textAlign: 'center', marginTop: 4 }}>
               Add credits to share previews
             </div>
-            <div style={{ color: '#71717a', fontSize: 11.5, textAlign: 'center', maxWidth: 240, lineHeight: 1.5 }}>
+            <div style={{ color: '#8797ab', fontSize: 11.5, textAlign: 'center', maxWidth: 240, lineHeight: 1.5 }}>
               Each preview scan costs {previewAccessCost} credits from your balance — top up to let people open this on their phone again.
             </div>
             <a
               href="/pricing"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none', background: '#0EA5E9', borderRadius: 10, padding: '10px 18px', color: '#fff', fontSize: 13, fontWeight: 700 }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none', background: '#0EA5E9', borderRadius: 10, padding: '10px 18px', color: '#03111c', fontSize: 13, fontWeight: 700 }}
             >
               Add Credits
             </a>
@@ -694,14 +694,14 @@ function WyberAiGoCta({
             <div style={{ background: '#fff', padding: 10, borderRadius: 14, lineHeight: 0, boxShadow: '0 4px 24px rgba(0,0,0,0.5)' }}>
               <img src={qrData} width={160} height={160} alt="Scan to open in WyberAi" style={{ display: 'block', borderRadius: 6 }} loading="lazy" />
             </div>
-            <div style={{ color: '#52525b', fontSize: 11, textAlign: 'center' }}>
+            <div style={{ color: '#8797ab', fontSize: 11, textAlign: 'center' }}>
               Scan with your phone's camera to open this project directly
             </div>
 
             {/* Divider */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%' }}>
               <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.07)' }} />
-              <span style={{ color: '#3f3f46', fontSize: 10, letterSpacing: '0.08em', fontWeight: 600 }}>OR</span>
+              <span style={{ color: '#8797ab', fontSize: 10, letterSpacing: '0.08em', fontWeight: 600 }}>OR</span>
               <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.07)' }} />
             </div>
 
@@ -716,7 +716,7 @@ function WyberAiGoCta({
                   <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(14,165,233,0.1)', border: '1px solid rgba(14,165,233,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <span style={{ color: '#0EA5E9', fontSize: 11, fontWeight: 700 }}>{n}</span>
                   </div>
-                  <span style={{ color: '#a1a1aa', fontSize: 12 }}>{label}</span>
+                  <span style={{ color: '#9aa8bb', fontSize: 12 }}>{label}</span>
                 </div>
               ))}
             </div>
@@ -732,19 +732,19 @@ function WyberAiGoCta({
           <a
             href={WYBERAI_APP_APK_URL}
             download
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 7, textDecoration: 'none', background: '#18181b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 9, padding: '8px 16px', color: '#e4e4e7', fontSize: 12.5, fontWeight: 600 }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 7, textDecoration: 'none', background: '#111b28', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 9, padding: '8px 16px', color: '#e8eef7', fontSize: 12.5, fontWeight: 600 }}
           >
             <PlayStoreIcon />
             Download the app (Android APK)
           </a>
-          <div style={{ color: '#3f3f46', fontSize: 10.5, textAlign: 'center', lineHeight: 1.5, maxWidth: 260 }}>
+          <div style={{ color: '#8797ab', fontSize: 10.5, textAlign: 'center', lineHeight: 1.5, maxWidth: 260 }}>
             Not on Google Play yet — this installs directly. Your phone may ask you to allow installs from this source once.
           </div>
         </div>
 
         {/* Pre-bundle info */}
         {bundling && (
-          <div style={{ color: '#52525b', fontSize: 10, textAlign: 'center', fontStyle: 'italic' }}>
+          <div style={{ color: '#8797ab', fontSize: 10, textAlign: 'center', fontStyle: 'italic' }}>
             Pre-bundling your app for instant loading on device…
           </div>
         )}
@@ -796,10 +796,10 @@ function AppetizeBuilding({ status }: { status: 'queued' | 'building' }) {
         <div style={{ position: 'absolute', bottom: -4, right: -4, width: 22, height: 22, border: '2px solid rgba(14,165,233,0.15)', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.9s linear infinite' }} />
       </div>
       <div style={{ textAlign: 'center' }}>
-        <div style={{ color: '#e4e4e7', fontSize: 16, fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 8 }}>
+        <div style={{ color: '#e8eef7', fontSize: 16, fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 8 }}>
           {status === 'queued' ? 'Build queued' : 'Building your app…'}
         </div>
-        <div style={{ color: '#52525b', fontSize: 12, lineHeight: 1.6, maxWidth: 240 }}>
+        <div style={{ color: '#8797ab', fontSize: 12, lineHeight: 1.6, maxWidth: 240 }}>
           Compiling to a real Android APK. Takes about 3–5 minutes.
         </div>
       </div>
@@ -814,7 +814,7 @@ function AppetizeBuilding({ status }: { status: 'queued' | 'building' }) {
             }}>
               {s.done && <span style={{ fontSize: 10, color: '#22c55e' }}>✓</span>}
             </div>
-            <span style={{ fontSize: 12, color: s.done ? '#86efac' : '#52525b' }}>{s.label}</span>
+            <span style={{ fontSize: 12, color: s.done ? '#86efac' : '#8797ab' }}>{s.label}</span>
           </div>
         ))}
       </div>
@@ -839,7 +839,7 @@ function AppetizeIdle({ onBuild, loading, hasProject }: {
       </div>
       <div style={{ textAlign: 'center' }}>
         <div style={{ color: '#f4f4f5', fontSize: 18, fontWeight: 700, letterSpacing: '-0.03em', marginBottom: 8 }}>Cloud Device Preview</div>
-        <div style={{ color: '#71717a', fontSize: 12, lineHeight: 1.7, maxWidth: 230 }}>
+        <div style={{ color: '#8797ab', fontSize: 12, lineHeight: 1.7, maxWidth: 230 }}>
           Run your app on a real Pixel 7 (Android 14) — streamed from an actual device.
         </div>
       </div>
@@ -847,18 +847,18 @@ function AppetizeIdle({ onBuild, loading, hasProject }: {
         {[{ icon: '⚡', label: 'Real hardware — not a simulator' }, { icon: '👆', label: 'Tap, swipe, scroll, type' }, { icon: '📸', label: 'Screenshot & share' }].map(f => (
           <div key={f.icon} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ fontSize: 14 }}>{f.icon}</span>
-            <span style={{ fontSize: 12, color: '#a1a1aa' }}>{f.label}</span>
+            <span style={{ fontSize: 12, color: '#9aa8bb' }}>{f.label}</span>
           </div>
         ))}
       </div>
       {hasProject ? (
-        <button onClick={onBuild} disabled={loading} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', maxWidth: 260, padding: '14px 20px', borderRadius: 14, border: 'none', background: loading ? '#1c1c2e' : 'linear-gradient(135deg, #7c3aed 0%, #0EA5E9 100%)', color: loading ? '#52525b' : '#fff', fontSize: 14, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', letterSpacing: '-0.02em', boxShadow: loading ? 'none' : '0 8px 28px rgba(14,165,233,0.3)' }}>
+        <button onClick={onBuild} disabled={loading} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', maxWidth: 260, padding: '14px 20px', borderRadius: 14, border: 'none', background: loading ? '#1c1c2e' : 'linear-gradient(135deg, #7c3aed 0%, #0EA5E9 100%)', color: loading ? '#8797ab' : '#fff', fontSize: 14, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', letterSpacing: '-0.02em', boxShadow: loading ? 'none' : '0 8px 28px rgba(14,165,233,0.3)' }}>
           {loading ? (<><div style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,0.15)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />Starting build…</>) : '✦ Build Cloud Preview'}
         </button>
       ) : (
-        <div style={{ color: '#3f3f46', fontSize: 11, textAlign: 'center' }}>Save your project first to build a cloud preview</div>
+        <div style={{ color: '#8797ab', fontSize: 11, textAlign: 'center' }}>Save your project first to build a cloud preview</div>
       )}
-      <div style={{ color: '#3f3f46', fontSize: 10, textAlign: 'center' }}>~3–5 min build · Appetize.io</div>
+      <div style={{ color: '#8797ab', fontSize: 10, textAlign: 'center' }}>~3–5 min build · Appetize.io</div>
     </div>
   )
 }
@@ -869,9 +869,9 @@ function AppetizeError({ error, onRetry, loading }: { error: string | null; onRe
       <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>✕</div>
       <div style={{ textAlign: 'center' }}>
         <div style={{ color: '#fca5a5', fontSize: 14, fontWeight: 600, marginBottom: 6 }}>Build failed</div>
-        {error && <div style={{ color: '#71717a', fontSize: 11, fontFamily: 'monospace', maxWidth: 260, whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>{error}</div>}
+        {error && <div style={{ color: '#8797ab', fontSize: 11, fontFamily: 'monospace', maxWidth: 260, whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>{error}</div>}
       </div>
-      <button onClick={onRetry} disabled={loading} style={{ background: '#0EA5E9', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 12, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer' }}>
+      <button onClick={onRetry} disabled={loading} style={{ background: '#0EA5E9', color: '#03111c', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 12, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer' }}>
         {loading ? 'Retrying…' : 'Retry Build'}
       </button>
     </div>
@@ -910,7 +910,7 @@ function MobileBuildIdle({
       </div>
       <div style={{ textAlign: 'center' }}>
         <div style={{ color: '#f4f4f5', fontSize: 18, fontWeight: 700, letterSpacing: '-0.03em', marginBottom: 8 }}>{platformIcon} {platformName} Build</div>
-        <div style={{ color: '#71717a', fontSize: 12, lineHeight: 1.7, maxWidth: 240 }}>
+        <div style={{ color: '#8797ab', fontSize: 12, lineHeight: 1.7, maxWidth: 240 }}>
           {platform === 'apk'
             ? 'Compile to a real, installable Android APK.'
             : 'Compile to a real iOS IPA. Requires TestFlight or Apple Developer account.'}
@@ -923,7 +923,7 @@ function MobileBuildIdle({
         ).map(f => (
           <div key={f.icon} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ fontSize: 14 }}>{f.icon}</span>
-            <span style={{ fontSize: 12, color: '#a1a1aa' }}>{f.label}</span>
+            <span style={{ fontSize: 12, color: '#9aa8bb' }}>{f.label}</span>
           </div>
         ))}
       </div>
@@ -943,7 +943,7 @@ function MobileBuildIdle({
               borderRadius: 14,
               border: 'none',
               background: loading || !hasCredits || !backendEnabled ? '#1c1c2e' : 'linear-gradient(135deg, #8b5cf6 0%, #0EA5E9 100%)',
-              color: loading || !hasCredits || !backendEnabled ? '#52525b' : '#fff',
+              color: loading || !hasCredits || !backendEnabled ? '#8797ab' : '#fff',
               fontSize: 14,
               fontWeight: 700,
               cursor: loading || !hasCredits || !backendEnabled ? 'not-allowed' : 'pointer',
@@ -965,7 +965,7 @@ function MobileBuildIdle({
               off, and telling someone otherwise just sends them to buy
               credits that won't fix anything. */}
           {!backendEnabled ? (
-            <div style={{ color: '#a1a1aa', fontSize: 11, textAlign: 'center', maxWidth: 240 }}>
+            <div style={{ color: '#9aa8bb', fontSize: 11, textAlign: 'center', maxWidth: 240 }}>
               {disabledMessage}
             </div>
           ) : !hasCredits ? (
@@ -973,9 +973,9 @@ function MobileBuildIdle({
           ) : null}
         </>
       ) : (
-        <div style={{ color: '#3f3f46', fontSize: 11, textAlign: 'center' }}>Save your project first to build</div>
+        <div style={{ color: '#8797ab', fontSize: 11, textAlign: 'center' }}>Save your project first to build</div>
       )}
-      <div style={{ color: '#3f3f46', fontSize: 10, textAlign: 'center' }}>~5–10 min build time · Uses Expo EAS</div>
+      <div style={{ color: '#8797ab', fontSize: 10, textAlign: 'center' }}>~5–10 min build time · Uses Expo EAS</div>
     </div>
   )
 }
@@ -998,10 +998,10 @@ function MobileBuildProgress({ status }: { status: 'queued' | 'building' }) {
         <div style={{ position: 'absolute', bottom: -4, right: -4, width: 22, height: 22, border: '2px solid rgba(14,165,233,0.15)', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.9s linear infinite' }} />
       </div>
       <div style={{ textAlign: 'center' }}>
-        <div style={{ color: '#e4e4e7', fontSize: 16, fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 8 }}>
+        <div style={{ color: '#e8eef7', fontSize: 16, fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 8 }}>
           {status === 'queued' ? 'Build queued' : 'Compiling your app…'}
         </div>
-        <div style={{ color: '#52525b', fontSize: 12, lineHeight: 1.6, maxWidth: 240 }}>
+        <div style={{ color: '#8797ab', fontSize: 12, lineHeight: 1.6, maxWidth: 240 }}>
           Building a native executable. This takes about 5–10 minutes.
         </div>
       </div>
@@ -1016,7 +1016,7 @@ function MobileBuildProgress({ status }: { status: 'queued' | 'building' }) {
             }}>
               {s.done && <span style={{ fontSize: 10, color: '#22c55e' }}>✓</span>}
             </div>
-            <span style={{ fontSize: 12, color: s.done ? '#86efac' : '#52525b' }}>{s.label}</span>
+            <span style={{ fontSize: 12, color: s.done ? '#86efac' : '#8797ab' }}>{s.label}</span>
           </div>
         ))}
       </div>
@@ -1040,7 +1040,7 @@ function MobileBuildReady({ platform, buildUrl }: { platform: 'apk' | 'ipa'; bui
 
         <div style={{ textAlign: 'center' }}>
           <div style={{ color: '#f4f4f5', fontSize: 20, fontWeight: 700, letterSpacing: '-0.03em', marginBottom: 8 }}>Ready to download</div>
-          <div style={{ color: '#71717a', fontSize: 13, lineHeight: 1.6 }}>Your {platformName} is compiled and ready for installation.</div>
+          <div style={{ color: '#8797ab', fontSize: 13, lineHeight: 1.6 }}>Your {platformName} is compiled and ready for installation.</div>
         </div>
 
         <a
@@ -1068,14 +1068,14 @@ function MobileBuildReady({ platform, buildUrl }: { platform: 'apk' | 'ipa'; bui
         <div style={{ width: '100%', height: 1, background: 'rgba(255,255,255,0.07)', marginTop: 8 }} />
 
         <div style={{ width: '100%' }}>
-          <div style={{ color: '#a1a1aa', fontSize: 12, fontWeight: 600, marginBottom: 12, letterSpacing: '0.05em' }}>INSTALLATION STEPS</div>
+          <div style={{ color: '#9aa8bb', fontSize: 12, fontWeight: 600, marginBottom: 12, letterSpacing: '0.05em' }}>INSTALLATION STEPS</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {instructions.map((step, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
                 <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(14,165,233,0.1)', border: '1px solid rgba(14,165,233,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
                   <span style={{ color: '#0EA5E9', fontSize: 11, fontWeight: 700 }}>{i + 1}</span>
                 </div>
-                <span style={{ color: '#a1a1aa', fontSize: 12, lineHeight: 1.5 }}>{step}</span>
+                <span style={{ color: '#9aa8bb', fontSize: 12, lineHeight: 1.5 }}>{step}</span>
               </div>
             ))}
           </div>
@@ -1091,9 +1091,9 @@ function MobileBuildError({ error, onRetry, loading }: { error: string | null; o
       <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>✕</div>
       <div style={{ textAlign: 'center' }}>
         <div style={{ color: '#fca5a5', fontSize: 14, fontWeight: 600, marginBottom: 6 }}>Build failed</div>
-        {error && <div style={{ color: '#71717a', fontSize: 11, fontFamily: 'monospace', maxWidth: 260, whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>{error}</div>}
+        {error && <div style={{ color: '#8797ab', fontSize: 11, fontFamily: 'monospace', maxWidth: 260, whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>{error}</div>}
       </div>
-      <button onClick={onRetry} disabled={loading} style={{ background: '#0EA5E9', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 12, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer' }}>
+      <button onClick={onRetry} disabled={loading} style={{ background: '#0EA5E9', color: '#03111c', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 12, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer' }}>
         {loading ? 'Retrying…' : 'Retry Build'}
       </button>
     </div>
@@ -1114,7 +1114,7 @@ function Segmented({ value, onChange, options }: {
             background: value === o.v
               ? (o.v === 'appetize' ? 'linear-gradient(135deg, #7c3aed 0%, #0EA5E9 100%)' : '#0EA5E9')
               : 'transparent',
-            color: value === o.v ? '#fff' : '#71717a',
+            color: value === o.v ? '#fff' : '#8797ab',
           }}>{o.label}</button>
           {o.badge && (
             <div style={{
@@ -1138,7 +1138,7 @@ function PreviewError({ error, onRetry }: { error: string; onRetry: () => void }
       <div style={{ fontFamily: 'monospace', fontSize: 11, color: '#ff6b6b', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
         <strong style={{ display: 'block', marginBottom: 8 }}>{t('previewErrorLabel')}</strong>{error}
       </div>
-      <button onClick={onRetry} style={{ alignSelf: 'flex-start', background: '#0EA5E9', color: '#fff', border: 'none', borderRadius: 6, padding: '5px 12px', cursor: 'pointer', fontSize: 11, fontFamily: 'monospace' }}>{tc('retry')} ⟳</button>
+      <button onClick={onRetry} style={{ alignSelf: 'flex-start', background: '#0EA5E9', color: '#03111c', border: 'none', borderRadius: 6, padding: '5px 12px', cursor: 'pointer', fontSize: 11, fontFamily: 'monospace' }}>{tc('retry')} ⟳</button>
     </div>
   )
 }

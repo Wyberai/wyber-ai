@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 import { DocsSidebar } from '@/components/docs/DocsSidebar'
 
-const BG = '#09090b'
+const BG = '#05080d'
 const SIDEBAR_BG = '#0d0d0f'
 const BORDER = 'rgba(255,255,255,0.06)'
 const TEXT = '#fafafa'
@@ -27,7 +27,7 @@ export function DocsShell({ children }: { children: React.ReactNode }) {
         <button
           onClick={() => setMobileOpen(o => !o)}
           className="docs-mobile-menu-btn"
-          style={{ background: 'none', border: 'none', color: '#a1a1aa', cursor: 'pointer', padding: 4, display: 'none', alignItems: 'center' }}
+          style={{ background: 'none', border: 'none', color: '#9aa8bb', cursor: 'pointer', padding: 4, display: 'none', alignItems: 'center' }}
           aria-label="Toggle docs menu">
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
             <path d="M2 4h14M2 9h14M2 14h14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
@@ -49,16 +49,16 @@ export function DocsShell({ children }: { children: React.ReactNode }) {
               <circle cx="7" cy="7" r="5.5" stroke="#fafafa" strokeWidth="1.4"/>
               <path d="M11 11l3 3" stroke="#fafafa" strokeWidth="1.6" strokeLinecap="round"/>
             </svg>
-            <span style={{ fontSize: 12, color: '#52525b' }}>Search docs…</span>
-            <kbd style={{ marginLeft: 'auto', fontSize: 10, color: '#3f3f46', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 4, padding: '1px 5px', fontFamily: 'monospace' }}>⌘K</kbd>
+            <span style={{ fontSize: 12, color: '#8797ab' }}>Search docs…</span>
+            <kbd style={{ marginLeft: 'auto', fontSize: 11, color: '#8797ab', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 4, padding: '1px 5px', fontFamily: 'monospace' }}>⌘K</kbd>
           </div>
         </div>
 
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
-          <Link href="/dashboard" style={{ fontSize: 12, padding: '6px 13px', borderRadius: 7, border: `1px solid ${BORDER}`, color: '#a1a1aa', textDecoration: 'none', fontWeight: 500, whiteSpace: 'nowrap' }}>
+          <Link href="/dashboard" style={{ fontSize: 12, padding: '6px 13px', borderRadius: 7, border: `1px solid ${BORDER}`, color: '#9aa8bb', textDecoration: 'none', fontWeight: 500, whiteSpace: 'nowrap' }}>
             Dashboard
           </Link>
-          <Link href="/signup" style={{ fontSize: 12, padding: '6px 13px', borderRadius: 7, background: SKY, color: '#fff', textDecoration: 'none', fontWeight: 700, whiteSpace: 'nowrap' }}>
+          <Link href="/signup" style={{ fontSize: 12, padding: '6px 13px', borderRadius: 7, background: SKY, color: '#03111c', textDecoration: 'none', fontWeight: 700, whiteSpace: 'nowrap' }}>
             Start free →
           </Link>
         </div>

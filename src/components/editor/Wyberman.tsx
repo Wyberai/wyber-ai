@@ -577,7 +577,7 @@ function WybermanInner() {
                 </div>
                 {secScan.phase === 'preview' && (
                   <div style={{ display: 'flex', gap: 8, padding: '8px 10px', borderTop: '1px solid var(--ide-border, #2A2A35)' }}>
-                    <button onClick={goAheadSecurity} style={{ flex: 1, padding: '6px 10px', borderRadius: 6, fontSize: 12, fontWeight: 700, background: '#F0524B', color: '#fff', border: 'none', cursor: 'pointer' }}>
+                    <button onClick={goAheadSecurity} style={{ flex: 1, padding: '6px 10px', borderRadius: 6, fontSize: 12, fontWeight: 700, background: '#F0524B', color: '#03111c', border: 'none', cursor: 'pointer' }}>
                       {t('goAheadChargeCreditsButton').replace('{cost}', String(SECURITY_SCAN_COST))}
                     </button>
                     <button onClick={secScan.cancelPreview} style={{ padding: '6px 10px', borderRadius: 6, fontSize: 12, fontWeight: 600, background: 'transparent', color: 'var(--ide-text2, #7878A0)', border: '1px solid var(--ide-border, #2A2A35)', cursor: 'pointer' }}>{tc('cancel')}</button>
@@ -586,7 +586,7 @@ function WybermanInner() {
                 {secScan.phase === 'done' && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '8px 10px', borderTop: '1px solid var(--ide-border, #2A2A35)' }}>
                     {secScan.report && secScan.report.checks.some(c => c.status !== 'pass') && (
-                      <button onClick={applyAllFixesSecurity} style={{ padding: '6px 10px', borderRadius: 6, fontSize: 12, fontWeight: 700, background: '#F0524B', color: '#fff', border: 'none', cursor: 'pointer' }}>
+                      <button onClick={applyAllFixesSecurity} style={{ padding: '6px 10px', borderRadius: 6, fontSize: 12, fontWeight: 700, background: '#F0524B', color: '#03111c', border: 'none', cursor: 'pointer' }}>
                         {'\u{1F527}'} Apply all fixes ({secScan.report.checks.filter(c => c.status !== 'pass').length})
                       </button>
                     )}

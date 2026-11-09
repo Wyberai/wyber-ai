@@ -2,8 +2,8 @@ import React from 'react'
 
 const SKY = '#0EA5E9'
 const TEXT = '#fafafa'
-const TEXT2 = '#a1a1aa'
-const TEXT3 = '#71717a'
+const TEXT2 = '#9aa8bb'
+const TEXT3 = '#8797ab'
 const BORDER = 'rgba(255,255,255,0.06)'
 const CARD = '#111118'
 
@@ -118,7 +118,7 @@ export function ScreenshotPlaceholder({ label }: { label: string }) {
 
 export function TodoBlock({ note }: { note: string }) {
   return (
-    <div style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 8, padding: '10px 14px', margin: '8px 0 16px', display: 'flex', alignItems: 'flex-start', gap: 9, fontSize: 13, color: '#a1a1aa' }}>
+    <div style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 8, padding: '10px 14px', margin: '8px 0 16px', display: 'flex', alignItems: 'flex-start', gap: 9, fontSize: 13, color: '#9aa8bb' }}>
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, marginTop: 1 }}>
         <circle cx="8" cy="8" r="7" stroke="#f59e0b" strokeWidth="1.4"/>
         <path d="M8 5v4M8 11v.5" stroke="#f59e0b" strokeWidth="1.6" strokeLinecap="round"/>

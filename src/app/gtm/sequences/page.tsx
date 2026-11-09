@@ -3,8 +3,8 @@ import { WyberLogo } from '@/components/shared/WyberLogo'
 import { SEQUENCE_TEMPLATES, TEMPLATE_CATEGORIES } from '@/lib/gtm-sequence-templates'
 
 const s = {
-  bg: '#09090b', card: '#111113', border: 'rgba(255,255,255,0.07)',
-  text: '#fafafa', muted: '#71717a', dim: '#52525b',
+  bg: '#05080d', card: '#0d141e', border: 'rgba(255,255,255,0.07)',
+  text: '#fafafa', muted: '#8797ab', dim: '#8797ab',
   orange: '#f97316', green: '#10b981', yellow: '#f59e0b', sky: '#0EA5E9', violet: '#8b5cf6',
 }
 
@@ -22,7 +22,7 @@ export default function SequencesPage() {
       <nav style={{ padding: '0 clamp(16px,4vw,48px)', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${s.border}`, background: 'rgba(9,9,11,0.92)', backdropFilter: 'blur(16px)', position: 'sticky', top: 0, zIndex: 100 }}>
         <Link href="/gtm" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none', color: 'inherit' }}><WyberLogo markSize={24} wordmarkSize={14} /></Link>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <Link href="/gtm/campaigns/new" style={{ padding: '7px 14px', borderRadius: 8, background: s.orange, color: '#fff', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>Build on canvas →</Link>
+          <Link href="/gtm/campaigns/new" style={{ padding: '7px 14px', borderRadius: 8, background: s.orange, color: '#03111c', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>Build on canvas →</Link>
           <Link href="/gtm" style={{ fontSize: 13, color: s.muted, textDecoration: 'none' }}>← GTM</Link>
         </div>
       </nav>
@@ -99,7 +99,7 @@ export default function SequencesPage() {
                   {/* Tags */}
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
                     {template.tags.map(tag => (
-                      <span key={tag} style={{ fontSize: 10, padding: '2px 7px', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: s.dim, border: `1px solid ${s.border}` }}>#{tag}</span>
+                      <span key={tag} style={{ fontSize: 11, padding: '2px 7px', borderRadius: 10, background: 'rgba(255,255,255,0.04)', color: s.dim, border: `1px solid ${s.border}` }}>#{tag}</span>
                     ))}
                   </div>
 
@@ -117,7 +117,7 @@ export default function SequencesPage() {
         <div style={{ marginTop: 48, background: `linear-gradient(135deg, rgba(249,115,22,0.08) 0%, rgba(139,92,246,0.08) 100%)`, border: `1px solid rgba(249,115,22,0.2)`, borderRadius: 16, padding: '32px', textAlign: 'center' }}>
           <div style={{ fontSize: 20, fontWeight: 800, fontFamily: 'var(--font-display)', marginBottom: 8 }}>Want a custom sequence?</div>
           <p style={{ fontSize: 14, color: s.muted, marginBottom: 20 }}>Describe your ICP and goal — our AI will generate a personalised multi-channel sequence in seconds.</p>
-          <Link href="/gtm/campaigns/new" style={{ display: 'inline-block', padding: '12px 28px', borderRadius: 10, background: s.orange, color: '#fff', fontSize: 14, fontWeight: 800, textDecoration: 'none' }}>
+          <Link href="/gtm/campaigns/new" style={{ display: 'inline-block', padding: '12px 28px', borderRadius: 10, background: s.orange, color: '#03111c', fontSize: 14, fontWeight: 800, textDecoration: 'none' }}>
             ✦ Build on canvas →
           </Link>
         </div>

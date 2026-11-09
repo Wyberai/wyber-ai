@@ -29,15 +29,15 @@ export default function EmployeesGalleryPage() {
   const departments = Object.keys(byDept).sort()
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0b0d12', fontFamily: 'var(--font-display)', color: '#e4e4e7' }}>
+    <div style={{ minHeight: '100vh', background: '#05080d', fontFamily: 'var(--font-display)', color: '#e8eef7' }}>
       {/* Nav */}
-      <nav style={{ borderBottom: '1px solid #1a1a22', background: '#0d0d11', padding: '0 32px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <nav style={{ borderBottom: '1px solid #14202e', background: '#0a1018', padding: '0 32px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <Link href="/" style={{ textDecoration: 'none' }}>
           <WyberLogo markSize={22} wordmarkSize={14} />
         </Link>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <Link href="/dashboard" style={{ fontSize: 13, color: '#52525b', textDecoration: 'none' }}>Dashboard</Link>
-          <Link href="/ai-employees/new" style={{ fontSize: 13, fontWeight: 600, color: '#fff', textDecoration: 'none', padding: '7px 16px', borderRadius: 8, background: '#0EA5E9' }}>Hire an employee</Link>
+          <Link href="/dashboard" style={{ fontSize: 13, color: '#8797ab', textDecoration: 'none' }}>Dashboard</Link>
+          <Link href="/ai-employees/new" style={{ fontSize: 13, fontWeight: 600, color: '#03111c', textDecoration: 'none', padding: '7px 16px', borderRadius: 8, background: '#0EA5E9' }}>Hire an employee</Link>
         </div>
       </nav>
 
@@ -49,12 +49,12 @@ export default function EmployeesGalleryPage() {
         <h1 style={{ fontSize: 'clamp(32px, 5vw, 54px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.1, margin: '0 0 18px', fontFamily: 'var(--font-display)' }}>
           Your AI workforce.<br /><span style={{ color: '#0EA5E9' }}>Ready to deploy.</span>
         </h1>
-        <p style={{ fontSize: 16, color: '#71717a', lineHeight: 1.65, margin: '0 0 36px', maxWidth: 580, marginLeft: 'auto', marginRight: 'auto' }}>
+        <p style={{ fontSize: 16, color: '#8797ab', lineHeight: 1.65, margin: '0 0 36px', maxWidth: 580, marginLeft: 'auto', marginRight: 'auto' }}>
           Each AI Employee is the equivalent of hiring a senior specialist — they run on your schedule, connect to your tools, complete real tasks, and email you a summary of everything they did. No management required.
         </p>
         <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
           {departments.map(d => (
-            <a key={d} href={`#${d.toLowerCase()}`} style={{ fontSize: 11, fontWeight: 600, padding: '4px 13px', borderRadius: 20, border: `1px solid ${(DEPT_COLOR[d] ?? '#1e1e26') + '33'}`, background: `${(DEPT_COLOR[d] ?? '#1e1e26')}10`, color: DEPT_COLOR[d] ?? '#52525b', textDecoration: 'none' }}>{d}</a>
+            <a key={d} href={`#${d.toLowerCase()}`} style={{ fontSize: 11, fontWeight: 600, padding: '4px 13px', borderRadius: 20, border: `1px solid ${(DEPT_COLOR[d] ?? '#1b2a3b') + '33'}`, background: `${(DEPT_COLOR[d] ?? '#1b2a3b')}10`, color: DEPT_COLOR[d] ?? '#8797ab', textDecoration: 'none' }}>{d}</a>
           ))}
         </div>
       </div>
@@ -63,13 +63,13 @@ export default function EmployeesGalleryPage() {
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px 80px', display: 'flex', gap: 28 }}>
         {/* Sidebar */}
         <div style={{ width: 180, flexShrink: 0, position: 'sticky', top: 72, alignSelf: 'flex-start' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Departments</div>
-          <div style={{ fontSize: 12, color: '#52525b', marginBottom: 12 }}>{EMPLOYEE_TEMPLATES.length} roles total</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#8797ab', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Departments</div>
+          <div style={{ fontSize: 12, color: '#8797ab', marginBottom: 12 }}>{EMPLOYEE_TEMPLATES.length} roles total</div>
           {departments.map(d => (
             <a key={d} href={`#${d.toLowerCase()}`} className="emp-side-link"
-              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 12px', borderRadius: 7, textDecoration: 'none', color: '#71717a', fontSize: 12, transition: 'all 0.1s' }}>
+              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 12px', borderRadius: 7, textDecoration: 'none', color: '#8797ab', fontSize: 12, transition: 'all 0.1s' }}>
               <span>{d}</span>
-              <span style={{ fontSize: 10, color: '#3f3f46' }}>{byDept[d]?.length}</span>
+              <span style={{ fontSize: 11, color: '#8797ab' }}>{byDept[d]?.length}</span>
             </a>
           ))}
         </div>
@@ -83,7 +83,7 @@ export default function EmployeesGalleryPage() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
                   <div style={{ width: 3, height: 20, borderRadius: 2, background: col }} />
                   <h2 style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: 0 }}>{dept}</h2>
-                  <span style={{ fontSize: 10, color: '#3f3f46' }}>{byDept[dept]?.length} roles</span>
+                  <span style={{ fontSize: 11, color: '#8797ab' }}>{byDept[dept]?.length} roles</span>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
                   {byDept[dept]?.map(t => (
@@ -97,22 +97,22 @@ export default function EmployeesGalleryPage() {
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                             <div style={{ width: 34, height: 34, borderRadius: 8, background: col + '18', border: `1px solid ${col}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>{t.emoji}</div>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: '#e4e4e7', lineHeight: 1.3 }}>{t.name}</div>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: '#e8eef7', lineHeight: 1.3 }}>{t.name}</div>
                           </div>
                           {t.popular && <span style={{ fontSize: 8, fontWeight: 700, padding: '2px 6px', borderRadius: 8, background: col + '15', color: col, letterSpacing: '0.04em', textTransform: 'uppercase', flexShrink: 0 }}>Popular</span>}
                         </div>
-                        <p style={{ fontSize: 11, color: '#71717a', lineHeight: 1.55, margin: 0, flex: 1 }}>{t.tagline}</p>
+                        <p style={{ fontSize: 11, color: '#8797ab', lineHeight: 1.55, margin: 0, flex: 1 }}>{t.tagline}</p>
                         {(t.default_tools?.length ?? 0) > 0 && (
                           <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', alignItems: 'center' }}>
                             {t.default_tools!.slice(0, 4).map((tool: string) => {
                               const logo = getToolLogo(tool)
                               return logo ? (
-                                <img key={tool} src={logo} alt={tool} width={18} height={18} style={{ borderRadius: 4, background: '#1a1a22' }} title={tool} />
+                                <img key={tool} src={logo} alt={tool} width={18} height={18} style={{ borderRadius: 4, background: '#14202e' }} title={tool} />
                               ) : (
                                 <span key={tool} style={{ fontSize: 8, fontWeight: 600, padding: '2px 6px', borderRadius: 4, background: col + '0d', border: `1px solid ${col}22`, color: col, textTransform: 'uppercase' as const, letterSpacing: '0.04em' }}>{tool}</span>
                               )
                             })}
-                            {t.default_tools!.length > 4 && <span style={{ fontSize: 8, color: '#3f3f46' }}>+{t.default_tools!.length - 4}</span>}
+                            {t.default_tools!.length > 4 && <span style={{ fontSize: 8, color: '#8797ab' }}>+{t.default_tools!.length - 4}</span>}
                           </div>
                         )}
                         <div style={{ fontSize: 11, color: col, fontWeight: 600, marginTop: 'auto' }}>Hire this employee →</div>

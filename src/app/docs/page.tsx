@@ -4,8 +4,8 @@ import { DOC_NAV } from './_nav'
 
 const SKY = '#0EA5E9'
 const TEXT = '#fafafa'
-const TEXT2 = '#a1a1aa'
-const TEXT3 = '#71717a'
+const TEXT2 = '#9aa8bb'
+const TEXT3 = '#8797ab'
 const CARD = '#111118'
 const BORDER = 'rgba(255,255,255,0.06)'
 
@@ -55,7 +55,7 @@ export default function DocsIndexPage() {
           <div style={{ fontSize: 15, fontWeight: 700, color: TEXT, marginBottom: 5 }}>New to WyberAi?</div>
           <div style={{ fontSize: 13, color: TEXT3 }}>Start with the getting-started guide — you'll have an app live in minutes.</div>
         </div>
-        <Link href="/docs/getting-started/what-is-wyber" style={{ padding: '9px 20px', borderRadius: 8, background: SKY, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap' }}>
+        <Link href="/docs/getting-started/what-is-wyber" style={{ padding: '9px 20px', borderRadius: 8, background: SKY, color: '#03111c', fontSize: 13, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap' }}>
           Get started →
         </Link>
       </div>

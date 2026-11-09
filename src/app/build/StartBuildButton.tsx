@@ -43,7 +43,7 @@ export function StartBuildButton({
         padding: variant === 'compact' ? '11px 24px' : '13px 28px',
         borderRadius: 10,
         background: color,
-        color: '#fff',
+        color: '#03111c',
         fontSize: variant === 'compact' ? 14 : 15,
         fontWeight: 700,
         border: 'none',

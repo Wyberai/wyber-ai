@@ -186,19 +186,19 @@ function InventoryLayoutInner({ children }: { children: React.ReactNode }) {
                           width: 18, height: 18, borderRadius: "50%",
                           background: meta.color,
                           display: "flex", alignItems: "center", justifyContent: "center",
-                          color: "#fff", fontSize: 10, fontWeight: 700,
+                          color: "#fff", fontSize: 11, fontWeight: 700,
                         }}>✓</div>
                       )}
                       <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
                         <span style={{ fontSize: isMobile ? 15 : 18 }}>{meta.icon}</span>
                         <span style={{
-                          fontSize: 10, fontWeight: 700, padding: "2px 6px",
+                          fontSize: 11, fontWeight: 700, padding: "2px 6px",
                           borderRadius: 5, background: `${meta.color}18`,
                           color: meta.color,
                         }}>{meta.title}</span>
                       </div>
                       <div style={{ fontWeight: 700, fontSize: isMobile ? 12 : 13, color: "#1e293b", marginBottom: 2 }}>{meta.name}</div>
-                      <div style={{ fontSize: 10, color: "#94a3b8", lineHeight: 1.3 }}>{desc}</div>
+                      <div style={{ fontSize: 11, color: "#94a3b8", lineHeight: 1.3 }}>{desc}</div>
                     </div>
                   );
                 })}
@@ -276,7 +276,7 @@ function InventoryLayoutInner({ children }: { children: React.ReactNode }) {
             <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#f59e0b", flexShrink: 0 }} />
             <span style={{ color: "#fbbf24", fontSize: 11, fontWeight: 500 }}>Demo Mode</span>
           </div>
-          <div style={{ color: "#475569", fontSize: 10, marginTop: 6, padding: "0 2px" }}>Set SAP_BASE_URL to connect live SAP</div>
+          <div style={{ color: "#475569", fontSize: 11, marginTop: 6, padding: "0 2px" }}>Set SAP_BASE_URL to connect live SAP</div>
         </div>
       )}
 
@@ -321,7 +321,7 @@ function InventoryLayoutInner({ children }: { children: React.ReactNode }) {
           </div>
           <div style={{ marginTop: 5, marginLeft: 16 }}>
             <span style={{
-              fontSize: 10, fontWeight: 600, padding: "2px 7px", borderRadius: 4,
+              fontSize: 11, fontWeight: 600, padding: "2px 7px", borderRadius: 4,
               background: `${roleMeta.color}22`, color: roleMeta.color, whiteSpace: "nowrap",
             }}>{roleMeta.label}</span>
           </div>

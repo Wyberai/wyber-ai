@@ -5,8 +5,8 @@ import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 
 const s = {
-  bg: '#09090b', card: '#111113', border: 'rgba(255,255,255,0.07)',
-  text: '#fafafa', muted: '#71717a', dim: '#52525b', sky: '#0EA5E9', orange: '#f97316',
+  bg: '#05080d', card: '#0d141e', border: 'rgba(255,255,255,0.07)',
+  text: '#fafafa', muted: '#8797ab', dim: '#8797ab', sky: '#0EA5E9', orange: '#f97316',
 }
 
 const COMPANY_SIZES = ['1–10', '11–50', '51–200', '201–500', '500–1000', '1000+']
@@ -101,7 +101,7 @@ export default function GTMSetupPage() {
               <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: s.muted, marginBottom: 6 }}>Company URL</label>
               <div style={{ display: 'flex', gap: 8 }}>
                 <input value={form.company_url} onChange={e => up('company_url', e.target.value)} placeholder="https://yourcompany.com" style={{ flex: 1, background: s.card, border: `1px solid ${s.border}`, borderRadius: 8, padding: '10px 12px', fontSize: 13, color: s.text, fontFamily: 'inherit', outline: 'none' }} />
-                <button onClick={aiScrape} disabled={aiLoading || !form.company_url} style={{ padding: '10px 16px', borderRadius: 8, background: s.orange, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', border: 'none', opacity: !form.company_url ? 0.5 : 1 }}>
+                <button onClick={aiScrape} disabled={aiLoading || !form.company_url} style={{ padding: '10px 16px', borderRadius: 8, background: s.orange, color: '#03111c', fontSize: 13, fontWeight: 700, cursor: 'pointer', border: 'none', opacity: !form.company_url ? 0.5 : 1 }}>
                   {aiLoading ? 'Analysing...' : 'AI extract →'}
                 </button>
               </div>
@@ -174,8 +174,8 @@ export default function GTMSetupPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 28 }}>
           {step > 0 ? <button onClick={() => setStep(s => s - 1)} style={{ padding: '10px 20px', borderRadius: 8, background: 'transparent', border: `1px solid ${s.border}`, color: s.muted, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Back</button> : <div />}
           {step < 2
-            ? <button onClick={() => setStep(s => s + 1)} style={{ padding: '10px 24px', borderRadius: 8, background: s.orange, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', border: 'none' }}>Continue →</button>
-            : <button onClick={save} disabled={loading} style={{ padding: '10px 24px', borderRadius: 8, background: s.orange, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', border: 'none' }}>
+            ? <button onClick={() => setStep(s => s + 1)} style={{ padding: '10px 24px', borderRadius: 8, background: s.orange, color: '#03111c', fontSize: 13, fontWeight: 700, cursor: 'pointer', border: 'none' }}>Continue →</button>
+            : <button onClick={save} disabled={loading} style={{ padding: '10px 24px', borderRadius: 8, background: s.orange, color: '#03111c', fontSize: 13, fontWeight: 700, cursor: 'pointer', border: 'none' }}>
                 {loading ? 'Saving...' : 'Save & see my market →'}
               </button>
           }

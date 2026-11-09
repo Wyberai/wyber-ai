@@ -44,7 +44,7 @@ export function TwoFactorGate({ appName }: { appName: string }) {
         />
         {error && <div style={{ fontSize: 12.5, color: '#DC2626', marginBottom: 12 }}>{error}</div>}
         <button onClick={submit} disabled={busy || code.length !== 6}
-          style={{ width: '100%', padding: '12px', borderRadius: 10, background: '#0EA5E9', color: '#fff', fontWeight: 700, fontSize: 14, border: 'none', cursor: busy || code.length !== 6 ? 'default' : 'pointer', opacity: busy || code.length !== 6 ? 0.5 : 1, fontFamily: 'inherit' }}>
+          style={{ width: '100%', padding: '12px', borderRadius: 10, background: '#0EA5E9', color: '#03111c', fontWeight: 700, fontSize: 14, border: 'none', cursor: busy || code.length !== 6 ? 'default' : 'pointer', opacity: busy || code.length !== 6 ? 0.5 : 1, fontFamily: 'inherit' }}>
           {busy ? 'Verifying…' : 'Verify'}
         </button>
       </div>

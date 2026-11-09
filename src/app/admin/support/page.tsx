@@ -38,29 +38,29 @@ export default async function AdminSupportPage({ searchParams }: Props) {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#09090b', color: '#e4e4e7', fontFamily: 'system-ui, sans-serif', padding: '48px 24px' }}>
+    <div style={{ minHeight: '100vh', background: '#05080d', color: '#e8eef7', fontFamily: 'system-ui, sans-serif', padding: '48px 24px' }}>
       <div style={{ maxWidth: 720, margin: '0 auto' }}>
         <h1 style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>🛠 Support — find a customer project</h1>
-        <p style={{ fontSize: 13, color: '#71717a', marginBottom: 20 }}>Search by project name (what the customer sees in their top bar) or paste a project ID. Opening a result puts the editor in support mode — saves and publishes apply to the customer&apos;s account.</p>
+        <p style={{ fontSize: 13, color: '#8797ab', marginBottom: 20 }}>Search by project name (what the customer sees in their top bar) or paste a project ID. Opening a result puts the editor in support mode — saves and publishes apply to the customer&apos;s account.</p>
         <form method="GET" style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
           <input
             name="q" defaultValue={query} placeholder="Project name or ID…" autoFocus
-            style={{ flex: 1, padding: '10px 14px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.12)', background: '#18181b', color: '#fafafa', fontSize: 14, outline: 'none' }}
+            style={{ flex: 1, padding: '10px 14px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.12)', background: '#111b28', color: '#fafafa', fontSize: 14, outline: 'none' }}
           />
-          <button type="submit" style={{ padding: '10px 20px', borderRadius: 10, border: 'none', background: '#0EA5E9', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>Search</button>
+          <button type="submit" style={{ padding: '10px 20px', borderRadius: 10, border: 'none', background: '#0EA5E9', color: '#03111c', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>Search</button>
         </form>
 
         {query && results.length === 0 && (
-          <p style={{ fontSize: 13, color: '#a1a1aa' }}>No projects match “{query}”. Ask the customer for the exact name in their editor top bar, or their project URL.</p>
+          <p style={{ fontSize: 13, color: '#9aa8bb' }}>No projects match “{query}”. Ask the customer for the exact name in their editor top bar, or their project URL.</p>
         )}
         {results.map(p => (
-          <a key={p.id} href={`/project/${p.id}`} style={{ display: 'block', padding: '14px 16px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.08)', background: '#111113', marginBottom: 10, textDecoration: 'none', color: 'inherit' }}>
+          <a key={p.id} href={`/project/${p.id}`} style={{ display: 'block', padding: '14px 16px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.08)', background: '#0d141e', marginBottom: 10, textDecoration: 'none', color: 'inherit' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
               <span style={{ fontSize: 15, fontWeight: 700, color: '#fafafa' }}>{p.name}</span>
-              <span style={{ fontSize: 11, color: '#52525b' }}>{new Date(p.updated_at).toLocaleString()}</span>
+              <span style={{ fontSize: 11, color: '#8797ab' }}>{new Date(p.updated_at).toLocaleString()}</span>
             </div>
-            <div style={{ fontSize: 12, color: '#a1a1aa', marginTop: 4 }}>
-              {p.owner_email} · {p.is_public ? 'published' : 'private'} · <code style={{ fontSize: 11, color: '#71717a' }}>{p.id}</code>
+            <div style={{ fontSize: 12, color: '#9aa8bb', marginTop: 4 }}>
+              {p.owner_email} · {p.is_public ? 'published' : 'private'} · <code style={{ fontSize: 11, color: '#8797ab' }}>{p.id}</code>
             </div>
           </a>
         ))}

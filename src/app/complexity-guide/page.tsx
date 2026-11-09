@@ -11,7 +11,7 @@ const TIERS = [
   {
     name: 'Simple',
     delivery: '24 hours',
-    color: '#22c55e',
+    color: '#4ade80',
     icon: '⚡',
     desc: 'Single-purpose apps with no database, no auth, and 1–3 screens. Typically a landing page, tool, or static display.',
     examples: ['Landing page or coming soon page','Personal portfolio website','Single-tool app (calculator, converter, generator)','Static dashboard with hardcoded data','Email capture / waitlist page','Event or product launch page','Pricing or comparison page','Resume / profile page'],
@@ -29,7 +29,7 @@ const TIERS = [
   {
     name: 'Complex',
     delivery: '1 week',
-    color: '#8b5cf6',
+    color: '#a78bfa',
     icon: '🏗️',
     desc: 'Full-featured products with multiple user roles, payments, integrations, and 6+ screens. Production-ready SaaS or internal tools.',
     examples: ['Full SaaS with subscription billing','Multi-role app (admin + user + guest)','Marketplace or multi-vendor platform','App with Stripe or Dodo Payments','Platform with email automation','App with third-party API integrations','Real-time features (notifications, live updates)','Multi-tenant app (each customer gets own workspace)'],
@@ -48,14 +48,14 @@ const SIGNALS = [
 ]
 
 export default function ComplexityGuidePage() {
-  const s = { bg:'#09090b',card:'#111113',border:'rgba(255,255,255,0.08)',text:'#fafafa',muted:'#71717a',sky:'#0EA5E9' }
+  const s = { bg:'#05080d',card:'#0d141e',border:'rgba(255,255,255,0.08)',text:'#fafafa',muted:'#8797ab',sky:'#0EA5E9' }
   return (
     <div style={{minHeight:'100vh',background:s.bg,color:s.text,fontFamily: 'var(--font-display)'}}>
       <nav style={{padding:'0 clamp(16px,4vw,48px)',height:60,display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:`1px solid ${s.border}`,position:'sticky',top:0,zIndex:100,background:'rgba(9,9,11,0.95)',backdropFilter:'blur(16px)'}}>
         <Link href="/" style={{fontFamily: 'var(--font-display)',fontWeight:800,fontSize:14,textDecoration:'none',color:s.text,display:'flex',alignItems:'center',gap:8}}>
           <WyberLogo markSize={22} wordmarkSize={14} />
         </Link>
-        <Link href="/setup-call" style={{padding:'7px 16px',borderRadius:8,background:s.sky,color:'#fff',fontSize:13,fontWeight:700,textDecoration:'none'}}>Book a session →</Link>
+        <Link href="/setup-call" style={{padding:'7px 16px',borderRadius:8,background:s.sky,color:'#03111c',fontSize:13,fontWeight:700,textDecoration:'none'}}>Book a session →</Link>
       </nav>
       <div style={{maxWidth:900,margin:'0 auto',padding:'clamp(40px,6vw,80px) clamp(16px,4vw,48px)'}}>
         <div style={{marginBottom:48}}>
@@ -70,7 +70,7 @@ export default function ComplexityGuidePage() {
           <table style={{width:'100%',borderCollapse:'collapse'}}>
             <thead><tr style={{borderBottom:`1px solid ${s.border}`}}>
               <th style={{padding:'10px 20px',textAlign:'left',fontSize:11,fontWeight:600,color:s.muted,textTransform:'uppercase'}}>Signal</th>
-              {[['Simple ⚡','#22c55e'],['Medium 🔧','#0EA5E9'],['Complex 🏗️','#8b5cf6']].map(([h,c])=>(
+              {[['Simple ⚡','#22c55e'],['Medium 🔧','#0EA5E9'],['Complex 🏗️','#a78bfa']].map(([h,c])=>(
                 <th key={h} style={{padding:'10px 16px',textAlign:'center',fontSize:11,fontWeight:700,color:c,textTransform:'uppercase'}}>{h}</th>
               ))}
             </tr></thead>
@@ -78,7 +78,7 @@ export default function ComplexityGuidePage() {
               <tr key={row.q} style={{borderBottom:`1px solid ${s.border}`,background:i%2===0?'rgba(255,255,255,0.01)':'transparent'}}>
                 <td style={{padding:'12px 20px',fontSize:13}}>{row.q}</td>
                 {[row.simple,row.medium,row.complex].map((val,j)=>(
-                  <td key={j} style={{padding:'12px 16px',fontSize:13,textAlign:'center',fontWeight:600,color:val==='✗'?s.muted:val==='✓'?['#22c55e','#0EA5E9','#8b5cf6'][j]:s.text}}>{val}</td>
+                  <td key={j} style={{padding:'12px 16px',fontSize:13,textAlign:'center',fontWeight:600,color:val==='✗'?s.muted:val==='✓'?['#22c55e','#0EA5E9','#a78bfa'][j]:s.text}}>{val}</td>
                 ))}
               </tr>
             ))}</tbody>
@@ -127,7 +127,7 @@ export default function ComplexityGuidePage() {
         <div style={{textAlign:'center',padding:36,background:s.card,borderRadius:14,border:`1px solid ${s.border}`}}>
           <div style={{fontSize:20,fontWeight:700,fontFamily: 'var(--font-display)',marginBottom:8}}>Not sure which tier?</div>
           <div style={{fontSize:14,color:s.muted,marginBottom:20}}>That's what the consultation is for. Describe your idea, we scope it, you get a firm quote and timeline.</div>
-          <Link href="/setup-call" style={{display:'inline-block',padding:'12px 28px',borderRadius:10,background:s.sky,color:'#fff',fontSize:14,fontWeight:700,textDecoration:'none'}}>Book a consultation →</Link>
+          <Link href="/setup-call" style={{display:'inline-block',padding:'12px 28px',borderRadius:10,background:s.sky,color:'#03111c',fontSize:14,fontWeight:700,textDecoration:'none'}}>Book a consultation →</Link>
         </div>
       </div>
 

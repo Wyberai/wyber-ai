@@ -161,7 +161,7 @@ export function MobileLayout({ initialProject, initialProfile }: Props) {
   }, [initialProject?.id])
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', paddingBottom: 'env(safe-area-inset-bottom, 0px)', background: '#09090b', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', paddingBottom: 'env(safe-area-inset-bottom, 0px)', background: '#05080d', overflow: 'hidden' }}>
       {/* Top bar */}
       <div role="banner" style={{ height: 48, display: 'flex', alignItems: 'center', padding: '0 16px', gap: 12, borderBottom: '1px solid rgba(255,255,255,0.06)', background: '#10121a', flexShrink: 0 }}>
         <a href="/dashboard" style={{ textDecoration: 'none' }}>
@@ -181,7 +181,7 @@ export function MobileLayout({ initialProject, initialProfile }: Props) {
           <span
             onClick={() => { setNameInput(displayName); setEditingName(true); }}
             title={t('clickToRenameTitle')}
-            style={{ fontSize: 13, color: '#a1a1aa', fontFamily: 'var(--font-display)', cursor: 'pointer', padding: '1px 4px', borderRadius: 4, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+            style={{ fontSize: 13, color: '#9aa8bb', fontFamily: 'var(--font-display)', cursor: 'pointer', padding: '1px 4px', borderRadius: 4, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
             onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
             onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
           >{displayName}</span>
@@ -225,7 +225,7 @@ export function MobileLayout({ initialProject, initialProfile }: Props) {
                 style={{
                   flex: 1, padding: '12px 0', fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer',
                   background: mobileView === key ? 'rgba(14,165,233,0.10)' : 'transparent',
-                  color: mobileView === key ? '#0EA5E9' : '#71717a',
+                  color: mobileView === key ? '#0EA5E9' : '#8797ab',
                   borderTop: mobileView === key ? '2px solid #0EA5E9' : '2px solid transparent',
                 }}
               >{label}</button>

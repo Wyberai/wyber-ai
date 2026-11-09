@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
-          background: '#09090b',
+          background: '#05080d',
           fontFamily: 'General Sans',
           position: 'relative',
           overflow: 'hidden',
@@ -109,7 +109,7 @@ export async function GET(req: NextRequest) {
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           padding: '0 48px 40px',
         }}>
-          <span style={{ fontSize: 14, color: '#3f3f46' }}>wyberai.com/learn</span>
+          <span style={{ fontSize: 14, color: '#8797ab' }}>wyberai.com/learn</span>
           <div style={{
             padding: '8px 20px', borderRadius: 20,
             background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.25)',

@@ -115,8 +115,8 @@ const POSTS = [
 ]
 
 const s = {
-  bg: '#09090b', card: '#111113', border: 'rgba(255,255,255,0.07)',
-  text: '#fafafa', muted: '#71717a', dim: '#52525b', sky: '#0EA5E9',
+  bg: '#05080d', card: '#0d141e', border: 'rgba(255,255,255,0.07)',
+  text: '#fafafa', muted: '#8797ab', dim: '#8797ab', sky: '#0EA5E9',
 }
 
 export default function BlogPage() {
@@ -129,7 +129,7 @@ export default function BlogPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <Link href="/learn" style={{ fontSize: 13, color: s.muted, textDecoration: 'none' }}>Learn</Link>
           <Link href="/docs" style={{ fontSize: 13, color: s.muted, textDecoration: 'none' }}>Docs</Link>
-          <Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: s.sky, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Start free →</Link>
+          <Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: s.sky, color: '#03111c', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Start free →</Link>
         </div>
       </nav>
 
@@ -153,7 +153,7 @@ export default function BlogPage() {
                     {post.tag}
                   </span>
                   {post.isNew && (
-                    <span style={{ padding: '2px 8px', borderRadius: 20, background: 'rgba(14,165,233,0.12)', border: '1px solid rgba(14,165,233,0.25)', fontSize: 10, fontWeight: 700, color: s.sky, letterSpacing: '0.05em' }}>
+                    <span style={{ padding: '2px 8px', borderRadius: 20, background: 'rgba(14,165,233,0.12)', border: '1px solid rgba(14,165,233,0.25)', fontSize: 11, fontWeight: 700, color: s.sky, letterSpacing: '0.05em' }}>
                       NEW
                     </span>
                   )}

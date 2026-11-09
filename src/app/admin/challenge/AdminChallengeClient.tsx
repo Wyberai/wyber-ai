@@ -57,20 +57,20 @@ export function AdminChallengeClient({ period, entries, tableReady }: { period: 
 
   return (
     <div style={{ minHeight: '100vh', background: '#08080b', color: '#fff', fontFamily: 'var(--font-display), system-ui' }}>
-      <nav style={{ borderBottom: '1px solid #1a1a22', background: '#0d0d11', padding: '0 32px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 50 }}>
+      <nav style={{ borderBottom: '1px solid #14202e', background: '#0a1018', padding: '0 32px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 50 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <Link href="/admin" style={{ fontSize: 12, color: '#52525b', textDecoration: 'none' }}>← Command Center</Link>
+          <Link href="/admin" style={{ fontSize: 12, color: '#8797ab', textDecoration: 'none' }}>← Command Center</Link>
           <span style={{ fontSize: 15, fontWeight: 800, letterSpacing: '-0.02em' }}>🏆 Wyber Premier League</span>
         </div>
-        <span style={{ fontSize: 12, color: '#52525b' }}>Month {period}</span>
+        <span style={{ fontSize: 12, color: '#8797ab' }}>Month {period}</span>
       </nav>
 
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px' }}>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 16, marginBottom: 8 }}>
           <h1 style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.03em', margin: 0 }}>Entries</h1>
-          <span style={{ fontSize: 14, color: '#71717a' }}>{entries.length} this month</span>
+          <span style={{ fontSize: 14, color: '#8797ab' }}>{entries.length} this month</span>
         </div>
-        <p style={{ fontSize: 13, color: '#71717a', margin: '0 0 24px' }}>
+        <p style={{ fontSize: 13, color: '#8797ab', margin: '0 0 24px' }}>
           Award <strong style={{ color: GOLD }}>WPL Champion</strong> ($1,000) and <strong style={{ color: VIOLET }}>Most Creative</strong> ($300) to your picks; <strong style={{ color: SKY }}>Fan Favorite</strong> ($500) goes to the community vote leader. These are real cash prizes — awarding does not move any credits, it just records the win; pay out manually via bank transfer/PayPal after. One win per person per month is enforced automatically.
         </p>
 
@@ -87,20 +87,20 @@ export function AdminChallengeClient({ period, entries, tableReady }: { period: 
         )}
 
         {tableReady && entries.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px 24px', color: '#52525b', border: '1px dashed #1e1e26', borderRadius: 14 }}>No entries yet this month.</div>
+          <div style={{ textAlign: 'center', padding: '60px 24px', color: '#8797ab', border: '1px dashed #1b2a3b', borderRadius: 14 }}>No entries yet this month.</div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {entries.map((e, i) => (
-              <div key={e.id} style={{ display: 'grid', gridTemplateColumns: '28px 1fr auto', gap: 14, alignItems: 'center', padding: '14px 18px', borderRadius: 12, border: `1px solid ${e.award ? AWARD_COLOR[e.award] + '66' : '#1a1a22'}`, background: e.award ? AWARD_COLOR[e.award] + '10' : '#0d0d11' }}>
-                <div style={{ fontSize: 13, fontWeight: 800, color: '#3f3f46', textAlign: 'center' }}>{i + 1}</div>
+              <div key={e.id} style={{ display: 'grid', gridTemplateColumns: '28px 1fr auto', gap: 14, alignItems: 'center', padding: '14px 18px', borderRadius: 12, border: `1px solid ${e.award ? AWARD_COLOR[e.award] + '66' : '#14202e'}`, background: e.award ? AWARD_COLOR[e.award] + '10' : '#0a1018' }}>
+                <div style={{ fontSize: 13, fontWeight: 800, color: '#8797ab', textAlign: 'center' }}>{i + 1}</div>
                 <div style={{ minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                     <span style={{ fontSize: 15, fontWeight: 700 }}>{e.title}</span>
-                    {e.award && <span style={{ fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 20, textTransform: 'uppercase', letterSpacing: '0.04em', background: AWARD_COLOR[e.award] + '22', color: AWARD_COLOR[e.award] }}>{AWARD_LABEL[e.award]}</span>}
-                    {e.status === 'hidden' && <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: '#3f3f4622', color: '#71717a' }}>HIDDEN</span>}
+                    {e.award && <span style={{ fontSize: 11, fontWeight: 800, padding: '2px 8px', borderRadius: 20, textTransform: 'uppercase', letterSpacing: '0.04em', background: AWARD_COLOR[e.award] + '22', color: AWARD_COLOR[e.award] }}>{AWARD_LABEL[e.award]}</span>}
+                    {e.status === 'hidden' && <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: '#3f3f4622', color: '#8797ab' }}>HIDDEN</span>}
                   </div>
-                  <div style={{ fontSize: 13, color: '#a1a1aa', margin: '3px 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.description}</div>
-                  <div style={{ fontSize: 12, color: '#52525b', display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                  <div style={{ fontSize: 13, color: '#9aa8bb', margin: '3px 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.description}</div>
+                  <div style={{ fontSize: 12, color: '#8797ab', display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                     <span>{e.email}</span>
                     {e.handle && <span>{e.handle}</span>}
                     {e.live_url && <a href={e.live_url} target="_blank" rel="noopener noreferrer" style={{ color: SKY, textDecoration: 'none' }}>project ↗</a>}
@@ -110,11 +110,11 @@ export function AdminChallengeClient({ period, entries, tableReady }: { period: 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                   <div style={{ textAlign: 'center', minWidth: 44 }}>
                     <div style={{ fontSize: 18, fontWeight: 800 }}>▲ {e.vote_count}</div>
-                    <div style={{ fontSize: 10, color: '#52525b' }}>votes</div>
+                    <div style={{ fontSize: 11, color: '#8797ab' }}>votes</div>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {e.award ? (
-                      <button disabled={busyId === e.id} onClick={() => act(e.id, e.award!, 'revoke')} style={btn('#3f3f46', busyId === e.id)}>Revoke</button>
+                      <button disabled={busyId === e.id} onClick={() => act(e.id, e.award!, 'revoke')} style={btn('#8797ab', busyId === e.id)}>Revoke</button>
                     ) : (
                       <>
                         <button disabled={busyId === e.id || editorTaken} onClick={() => act(e.id, 'editor', 'award')} style={btn(GOLD, busyId === e.id || editorTaken)}>🏆 WPL Champion</button>

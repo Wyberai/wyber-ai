@@ -73,7 +73,7 @@ export function VersionHistory({ projectId }: Props) {
                   {entry.prompt.replace(/^\[Image:[^\]]+\]\n/, '').slice(0, 80)}
                   {entry.prompt.length > 80 ? '...' : ''}
                 </div>
-                <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>Prompt #{localHistory.length - i}</div>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Prompt #{localHistory.length - i}</div>
               </div>
             ))}
           </div>
@@ -104,11 +104,11 @@ export function VersionHistory({ projectId }: Props) {
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                      <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{formatTime(entry.created_at)}</span>
+                      <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{formatTime(entry.created_at)}</span>
                       {entry.files_changed && entry.files_changed.length > 0 && (
-                        <span style={{ fontSize: 10, color: 'var(--accent)' }}>{entry.files_changed.length} files</span>
+                        <span style={{ fontSize: 11, color: 'var(--accent)' }}>{entry.files_changed.length} files</span>
                       )}
-                      <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>
+                      <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
                         {(entry.prompt_tokens + entry.completion_tokens).toLocaleString()} tokens
                       </span>
                     </div>

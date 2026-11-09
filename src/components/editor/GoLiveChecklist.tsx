@@ -118,7 +118,7 @@ export function GoLiveChecklist({ projectId, projectName }: { projectId: string;
 
       <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
         {pending.length > 0 && (
-          <button onClick={save} disabled={busy !== null} style={{ padding: '7px 12px', borderRadius: 7, border: 'none', background: '#0EA5E9', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+          <button onClick={save} disabled={busy !== null} style={{ padding: '7px 12px', borderRadius: 7, border: 'none', background: '#0EA5E9', color: '#03111c', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
             {busy === 'saving' ? 'Saving…' : `Save ${pending.length} setting${pending.length === 1 ? '' : 's'}`}
           </button>
         )}

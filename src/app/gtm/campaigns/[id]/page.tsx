@@ -4,8 +4,8 @@ import { WyberLogo } from '@/components/shared/WyberLogo'
 import { notFound } from 'next/navigation'
 
 const s = {
-  bg: '#09090b', card: '#111113', border: 'rgba(255,255,255,0.07)',
-  text: '#fafafa', muted: '#71717a', dim: '#52525b',
+  bg: '#05080d', card: '#0d141e', border: 'rgba(255,255,255,0.07)',
+  text: '#fafafa', muted: '#8797ab', dim: '#8797ab',
   orange: '#f97316', green: '#10b981', yellow: '#f59e0b', sky: '#0EA5E9', violet: '#8b5cf6',
 }
 

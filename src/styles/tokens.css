@@ -1,0 +1,38 @@
+/*
+ * Site-wide dark tokens, aligned with Signal (see signal.css). The older pages read these variables, so
+ * overriding them here moves the whole site onto one palette without editing each page. Loaded after
+ * globals.css and brand.css, which are left as they were (brand.css is frozen).
+ *
+ * The important change is secondary text: --text3 was #3D4468 (about 2:1 on the page background) and
+ * --brand-text-faint #545c6e (about 3:1). Both are now at least 5.9:1.
+ */
+[data-theme="dark"] {
+  --bg: #05080d;
+  --bg2: #0a1018;
+  --bg3: #0d141e;
+  --bg4: #111b28;
+  --border: rgba(150, 190, 235, .16);
+  --border2: rgba(150, 190, 235, .26);
+  --text: #e8eef7;
+  --text2: #9aa8bb;
+  --text3: #8797ab;
+  --card: #0d141e;
+  --card2: #0a1018;
+  --statement-fg: #e8eef7;
+  --statement-sub: #9aa8bb;
+}
+:root {
+  --brand-bg: #05080d;
+  --brand-bg-raised: #0a1018;
+  --brand-bg-overlay: #111b28;
+  --brand-text: #e8eef7;
+  --brand-text-dim: #9aa8bb;
+  --brand-text-faint: #8797ab;
+  --brand-border: rgba(150, 190, 235, .14);
+  --brand-border-strong: rgba(150, 190, 235, .24);
+}
+
+/*
+ * White text on the sky-blue brand fill is about 2.1 to 2.8:1. Brand fills carry dark text, as on the Signal pages.
+ */
+.wy-btn-primary, .mk-btn, .wy-btn-sky { color: #03111c; }

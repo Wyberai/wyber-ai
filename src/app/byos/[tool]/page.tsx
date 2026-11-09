@@ -38,7 +38,7 @@ export async function generateMetadata({ params }: { params: Promise<{ tool: str
 
 const s = { bg: 'var(--brand-bg)', card: 'var(--brand-bg-raised)', border: 'var(--brand-border)', text: 'var(--brand-text)', muted: 'var(--brand-text-dim)', dim: 'var(--brand-text-faint)', accent: '#0EA5E9' }
 const eyebrow: React.CSSProperties = { fontSize: 13, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: s.dim, margin: '0 0 10px' }
-const cta: React.CSSProperties = { display: 'inline-block', padding: '13px 28px', borderRadius: 10, background: s.accent, color: '#fff', fontSize: 15, fontWeight: 700, textDecoration: 'none' }
+const cta: React.CSSProperties = { display: 'inline-block', padding: '13px 28px', borderRadius: 10, background: s.accent, color: '#03111c', fontSize: 15, fontWeight: 700, textDecoration: 'none' }
 
 export default async function ReplaceToolPage({ params }: { params: Promise<{ tool: string }> }) {
   const found = load((await params).tool)

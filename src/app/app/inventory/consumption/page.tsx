@@ -159,7 +159,7 @@ export default function ConsumptionPage() {
                 {sel.anomaly && <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 8, height: 8, borderRadius: "50%", background: "#ef4444", display: "inline-block" }} />Anomaly</span>}
               </div>
               <SparkLine plan={sel.plan} actual={sel.actual} anomalyDays={sel.anomalyDays} height={120} width={isMobile ? 260 : 520} />
-              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4, fontSize: 10, color: "#94a3b8" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4, fontSize: 11, color: "#94a3b8" }}>
                 <span>Aug 1</span><span>Aug 8</span><span>Aug 15</span><span>Aug 22</span><span>Aug 30</span>
               </div>
             </div>
@@ -240,11 +240,11 @@ export default function ConsumptionPage() {
                     <div style={{ fontSize: 11, color: "#64748b", marginBottom: 8 }}>{m.description.slice(0, 22)}</div>
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4 }}>
                       <div>
-                        <div style={{ fontSize: 10, color: "#94a3b8" }}>Actual</div>
+                        <div style={{ fontSize: 11, color: "#94a3b8" }}>Actual</div>
                         <div style={{ fontWeight: 700, fontSize: 14, color: "#0f172a" }}>{m.monthlyTotal} {m.unit}</div>
                       </div>
                       <div>
-                        <div style={{ fontSize: 10, color: "#94a3b8" }}>Planned</div>
+                        <div style={{ fontSize: 11, color: "#94a3b8" }}>Planned</div>
                         <div style={{ fontWeight: 700, fontSize: 14, color: "#64748b" }}>{m.plan} {m.unit}</div>
                       </div>
                     </div>

@@ -134,7 +134,7 @@ const TRACKS: Track[] = [
   {
     id: 'mobile',
     title: 'Mobile Apps',
-    color: '#8b5cf6',
+    color: '#a78bfa',
     accent: 'rgba(139,92,246,0.12)',
     icon: <IconPhone />,
     tagline: 'Generate full React Native apps that run on iOS and Android via Expo.',
@@ -176,7 +176,7 @@ const TRACKS: Track[] = [
   {
     id: 'agents',
     title: 'AI Agents',
-    color: '#10b981',
+    color: '#34d399',
     accent: 'rgba(16,185,129,0.12)',
     icon: <IconAgent />,
     tagline: 'Build agents that monitor, decide, and act — on a schedule or a trigger.',
@@ -302,7 +302,7 @@ const TRACKS: Track[] = [
   {
     id: 'gtm',
     title: 'GTM Engine',
-    color: '#10b981',
+    color: '#34d399',
     accent: 'rgba(16,185,129,0.12)',
     icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>,
     tagline: 'Define your ICP, find leads, and launch outreach sequences — all from one place.',
@@ -390,7 +390,7 @@ function CopyButton({ text }: { text: string }) {
         padding: '5px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer',
         border: `1px solid ${copied ? 'rgba(16,185,129,0.4)' : 'rgba(255,255,255,0.12)'}`,
         background: copied ? 'rgba(16,185,129,0.1)' : 'rgba(255,255,255,0.05)',
-        color: copied ? '#10b981' : 'var(--text3, #71717a)',
+        color: copied ? '#10b981' : 'var(--text3, #8797ab)',
         transition: 'all 0.15s',
         fontFamily: 'inherit',
       }}
@@ -426,7 +426,7 @@ function CertificateCard({ name, date }: { name: string; date: string }) {
         <span style={{ fontSize: 36 }}>🎓</span>
       </div>
 
-      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#6366f1', marginBottom: 10 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#a5b4fc', marginBottom: 10 }}>
         Certificate of Completion
       </div>
       <h2 style={{
@@ -568,7 +568,7 @@ export default function LearnPage() {
 
         {/* Hero */}
         <section style={{ textAlign: 'center', padding: 'clamp(48px,8vw,80px) clamp(20px,5vw,40px) clamp(32px,5vw,56px)', borderBottom: '1px solid var(--border, rgba(255,255,255,0.06))' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#6366f1', marginBottom: 14 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#a5b4fc', marginBottom: 14 }}>
             Interactive Learning
           </div>
           <h1 style={{
@@ -636,9 +636,9 @@ export default function LearnPage() {
                     <span style={{ flexShrink: 0, opacity: isActive ? 1 : 0.6 }}>{t.icon}</span>
                     <span style={{ flex: 1 }}>{t.title}</span>
                     {trackComplete
-                      ? <span style={{ width: 18, height: 18, borderRadius: '50%', background: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#fff' }}><IconCheck /></span>
+                      ? <span style={{ width: 18, height: 18, borderRadius: '50%', background: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#03111c' }}><IconCheck /></span>
                       : trackStepsDone > 0
-                        ? <span style={{ fontSize: 10, fontWeight: 700, color: t.color, flexShrink: 0 }}>{trackStepsDone}/{t.steps.length}</span>
+                        ? <span style={{ fontSize: 11, fontWeight: 700, color: t.color, flexShrink: 0 }}>{trackStepsDone}/{t.steps.length}</span>
                         : null
                     }
                   </button>
@@ -662,7 +662,7 @@ export default function LearnPage() {
                   {track.title}
                 </h2>
                 {progress.completedTracks.includes(track.id) && (
-                  <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 20, background: 'rgba(16,185,129,0.12)', color: '#10b981', border: '1px solid rgba(16,185,129,0.25)' }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 20, background: 'rgba(16,185,129,0.12)', color: '#34d399', border: '1px solid rgba(16,185,129,0.25)' }}>
                     Complete ✓
                   </span>
                 )}
@@ -705,7 +705,7 @@ export default function LearnPage() {
 
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
-                          <span style={{ fontSize: 10, fontWeight: 700, color: track.color, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: track.color, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
                             Step {idx + 1}
                           </span>
                           <h3 style={{
@@ -727,7 +727,7 @@ export default function LearnPage() {
                             borderRadius: 10, padding: '12px 14px', marginBottom: 14,
                           }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, gap: 8, flexWrap: 'wrap' }}>
-                              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text3, #52526a)' }}>
+                              <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text3, #52526a)' }}>
                                 Try this prompt
                               </span>
                               <CopyButton text={step.prompt} />
@@ -776,7 +776,7 @@ export default function LearnPage() {
               <div style={{ marginTop: 24, padding: '16px 20px', borderRadius: 12, background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.2)', display: 'flex', alignItems: 'center', gap: 12 }}>
                 <span style={{ fontSize: 20 }}>🎉</span>
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: '#10b981', marginBottom: 2 }}>{track.title} complete!</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: '#34d399', marginBottom: 2 }}>{track.title} complete!</div>
                   <div style={{ fontSize: 13, color: 'var(--text2, #8b8b9a)' }}>
                     {progress.completedTracks.length < 5
                       ? `${5 - progress.completedTracks.length} track${5 - progress.completedTracks.length !== 1 ? 's' : ''} to go for your certificate.`

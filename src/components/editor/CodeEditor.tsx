@@ -85,7 +85,7 @@ export function CodeEditor() {
           colors: {
             'editor.background': '#141416',
             'editor.foreground': '#eeffff',
-            'editor.lineHighlightBackground': '#1a1a22',
+            'editor.lineHighlightBackground': '#14202e',
             'editorLineNumber.foreground': '#2e2e50',
             'editorLineNumber.activeForeground': '#5555aa',
             'editor.selectionBackground': '#3d3d6680',

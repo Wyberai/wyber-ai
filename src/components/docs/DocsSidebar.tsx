@@ -4,11 +4,11 @@ import { usePathname } from 'next/navigation'
 import { DOC_NAV } from '@/app/docs/_nav'
 
 const SKY = '#0EA5E9'
-const BG = '#09090b'
+const BG = '#05080d'
 const SIDEBAR_BG = '#0d0d0f'
 const BORDER = 'rgba(255,255,255,0.06)'
 const TEXT = '#fafafa'
-const MUTED = '#71717a'
+const MUTED = '#8797ab'
 const ACTIVE_BG = 'rgba(14,165,233,0.10)'
 
 function SectionIcon({ icon }: { icon: string }) {
@@ -41,7 +41,7 @@ export function DocsSidebar({ onNav }: { onNav?: () => void }) {
     <nav style={{ display: 'flex', flexDirection: 'column', gap: 2, paddingBottom: 40 }}>
       {DOC_NAV.map(section => (
         <div key={section.slug} style={{ marginBottom: 4 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 10px 5px', fontSize: 10, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 10px 5px', fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
             <SectionIcon icon={section.icon} />
             {section.title}
           </div>
@@ -58,7 +58,7 @@ export function DocsSidebar({ onNav }: { onNav?: () => void }) {
                   borderRadius: 7,
                   fontSize: 13,
                   fontWeight: active ? 600 : 400,
-                  color: active ? SKY : '#a1a1aa',
+                  color: active ? SKY : '#9aa8bb',
                   background: active ? ACTIVE_BG : 'transparent',
                   textDecoration: 'none',
                   transition: 'all 0.12s',
@@ -66,7 +66,7 @@ export function DocsSidebar({ onNav }: { onNav?: () => void }) {
                   marginLeft: 2,
                 }}
                 onMouseEnter={e => { if (!active) (e.currentTarget as HTMLElement).style.color = TEXT }}
-                onMouseLeave={e => { if (!active) (e.currentTarget as HTMLElement).style.color = '#a1a1aa' }}
+                onMouseLeave={e => { if (!active) (e.currentTarget as HTMLElement).style.color = '#9aa8bb' }}
               >
                 {link.label}
               </Link>

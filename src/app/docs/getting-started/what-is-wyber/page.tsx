@@ -11,7 +11,7 @@ export default function Page() {
       intro="WyberAi is a plain-English product builder. Describe what you want to build and Wyber generates a working app — web, mobile, agent, or workflow — with no code required."
     >
       <DocSection title="The Wyber platform">
-        <p style={{ fontSize: 14, color: '#a1a1aa', lineHeight: 1.7, marginBottom: 16 }}>
+        <p style={{ fontSize: 14, color: '#9aa8bb', lineHeight: 1.7, marginBottom: 16 }}>
           Web and mobile app building are live today. Four more capabilities are in early access and roll out over the coming weeks — all on one platform, one credit balance:
         </p>
         <ul style={{ margin: '0 0 16px', paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -23,7 +23,7 @@ export default function Page() {
             ['AI Employees', '/employees', 'Early access — hire from 100 roles; senior-specialist equivalents that run on a schedule and report back.'],
             ['GTM Engine', '/gtm', 'Early access — ICP-driven lead discovery, outreach sequences, and a visual campaign canvas.'],
           ].map(([name, href, desc]) => (
-            <li key={href as string} style={{ fontSize: 14, color: '#a1a1aa', lineHeight: 1.6 }}>
+            <li key={href as string} style={{ fontSize: 14, color: '#9aa8bb', lineHeight: 1.6 }}>
               <Link href={href as string} style={{ color: '#0EA5E9', fontWeight: 600, textDecoration: 'none' }}>{name}</Link>
               {' — '}{desc}
             </li>
@@ -34,7 +34,7 @@ export default function Page() {
       </DocSection>
 
       <DocSection title="How it works (in one sentence)">
-        <p style={{ fontSize: 14, color: '#a1a1aa', lineHeight: 1.7 }}>
+        <p style={{ fontSize: 14, color: '#9aa8bb', lineHeight: 1.7 }}>
           You type a prompt → Wyber calls Claude to generate code → the code is built and previewed in real time → you iterate with follow-up prompts → you publish or export when done.
         </p>
       </DocSection>
@@ -46,7 +46,7 @@ export default function Page() {
             'A coding assistant (GitHub Copilot). Wyber builds complete running apps, not autocomplete.',
             'A templates library. Every output is generated fresh from your prompt.',
           ].map((item, i) => (
-            <li key={i} style={{ fontSize: 14, color: '#a1a1aa', lineHeight: 1.65 }}>{item}</li>
+            <li key={i} style={{ fontSize: 14, color: '#9aa8bb', lineHeight: 1.65 }}>{item}</li>
           ))}
         </ul>
       </DocSection>

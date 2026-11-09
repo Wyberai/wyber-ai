@@ -200,7 +200,7 @@ export default function ReportButton({ slug }: { slug: string }) {
 
 const primaryBtn: React.CSSProperties = {
   background: '#0EA5E9',
-  color: '#fff',
+  color: '#03111c',
   border: 'none',
   borderRadius: 9,
   padding: '11px 20px',

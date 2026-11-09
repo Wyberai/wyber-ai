@@ -14,14 +14,14 @@ export const metadata: Metadata = {
   },
 }
 
-const s = { bg: '#09090b', card: '#111113', border: 'rgba(255,255,255,0.07)', text: '#fafafa', muted: '#71717a', dim: '#52525b', sky: '#0EA5E9', green: '#10b981' }
+const s = { bg: '#05080d', card: '#0d141e', border: 'rgba(255,255,255,0.07)', text: '#fafafa', muted: '#8797ab', dim: '#8797ab', sky: '#0EA5E9', green: '#10b981' }
 
 export default function Post() {
   return (
     <div style={{ minHeight: '100vh', background: s.bg, color: s.text, fontFamily: 'var(--font-display)' }}>
       <nav style={{ padding: '0 clamp(16px,4vw,48px)', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${s.border}`, position: 'sticky', top: 0, zIndex: 100, background: 'rgba(9,9,11,0.9)', backdropFilter: 'blur(16px)' }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none', color: 'inherit' }}><WyberLogo markSize={24} wordmarkSize={14} /></Link>
-        <Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: s.sky, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Start free →</Link>
+        <Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: s.sky, color: '#03111c', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Start free →</Link>
       </nav>
 
       <article style={{ maxWidth: 680, margin: '0 auto', padding: 'clamp(40px,6vw,80px) clamp(16px,4vw,48px)' }}>
@@ -90,7 +90,7 @@ export default function Post() {
           <div style={{ marginTop: 36, padding: '24px 28px', background: `${s.green}10`, border: `1px solid ${s.green}25`, borderRadius: 12 }}>
             <div style={{ fontSize: 16, fontWeight: 700, color: s.text, marginBottom: 8 }}>Build your first agent — free</div>
             <p style={{ fontSize: 14, margin: '0 0 16px' }}>Describe what you want the agent to watch and do. WyberAi builds the canvas, picks the tools, and runs it for you.</p>
-            <Link href="/dashboard?new=agent" style={{ display: 'inline-block', padding: '10px 22px', borderRadius: 8, background: s.green, color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
+            <Link href="/dashboard?new=agent" style={{ display: 'inline-block', padding: '10px 22px', borderRadius: 8, background: s.green, color: '#03111c', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
               Build my agent →
             </Link>
           </div>

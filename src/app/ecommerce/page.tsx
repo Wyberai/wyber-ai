@@ -54,7 +54,7 @@ export default function EcommerceDashboardLanding() {
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none', color: 'inherit' }}>
           <WyberLogo markSize={22} wordmarkSize={14} />
         </Link>
-        <Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: color, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Try free →</Link>
+        <Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: color, color: '#03111c', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Try free →</Link>
       </nav>
 
       <div style={{ maxWidth: 780, margin: '0 auto', padding: 'clamp(32px,6vw,72px) clamp(16px,4vw,48px) clamp(48px,8vw,96px)' }}>
@@ -71,7 +71,7 @@ export default function EcommerceDashboardLanding() {
             See what one dashboard could look like below — then pick exactly what yours should track.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <a href="#example" style={{ padding: '13px 28px', borderRadius: 10, background: color, color: '#fff', fontSize: 15, fontWeight: 700, textDecoration: 'none' }}>See it built out ↓</a>
+            <a href="#example" style={{ padding: '13px 28px', borderRadius: 10, background: color, color: '#03111c', fontSize: 15, fontWeight: 700, textDecoration: 'none' }}>See it built out ↓</a>
             <a href="#build" style={{ padding: '13px 28px', borderRadius: 10, background: 'transparent', border: `1px solid ${s.border}`, color: s.muted, fontSize: 15, fontWeight: 600, textDecoration: 'none' }}>Skip to building →</a>
           </div>
         </header>
@@ -100,7 +100,7 @@ export default function EcommerceDashboardLanding() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 16 }}>
             {FEATURES.map((f, i) => (
               <div key={i} style={{ background: s.card, border: `1px solid ${s.border}`, borderRadius: 12, padding: '20px 22px' }}>
-                <div style={{ width: 28, height: 28, borderRadius: 8, background: `${color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12, fontSize: 14 }}>✓</div>
+                <div style={{ width: 28, height: 28, borderRadius: 8, background: `${color}18`, color, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12, fontSize: 14 }}>✓</div>
                 <div style={{ fontSize: 14, fontWeight: 700, color: s.text, marginBottom: 6 }}>{f.title}</div>
                 <div style={{ fontSize: 13, color: s.muted, lineHeight: 1.6 }}>{f.desc}</div>
               </div>

@@ -81,7 +81,7 @@ export default function VsIndex() {
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none', color: 'inherit' }}>
           <WyberLogo markSize={22} wordmarkSize={14} />
         </Link>
-        <Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: s.sky, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Try free →</Link>
+        <Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: s.sky, color: '#03111c', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Try free →</Link>
       </nav>
 
       <div style={{ maxWidth: 960, margin: '0 auto', padding: 'clamp(40px,6vw,72px) clamp(16px,4vw,48px)' }}>
@@ -117,7 +117,7 @@ export default function VsIndex() {
                     <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, letterSpacing: '-0.02em', margin: 0, color: s.text }}>
                       WyberAi vs {c.name}
                     </h2>
-                    <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: 'rgba(255,255,255,0.05)', color: s.muted, border: `1px solid ${s.border}` }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: 'rgba(255,255,255,0.05)', color: s.muted, border: `1px solid ${s.border}` }}>
                       {c.tag}
                     </span>
                   </div>
@@ -142,7 +142,7 @@ export default function VsIndex() {
         <div style={{ textAlign: 'center', padding: 'clamp(24px,4vw,40px)', background: s.card, borderRadius: 14, border: `1px solid ${s.border}` }}>
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, margin: '0 0 8px' }}>Try WyberAi free — 30 credits/month</h2>
           <p style={{ fontSize: 14, color: s.muted, margin: '0 0 20px' }}>Web app, mobile app, AI agent, or workflow. No credit card required.</p>
-          <Link href="/signup" style={{ display: 'inline-block', padding: '12px 28px', borderRadius: 10, background: s.sky, color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
+          <Link href="/signup" style={{ display: 'inline-block', padding: '12px 28px', borderRadius: 10, background: s.sky, color: '#03111c', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
             Start building free →
           </Link>
         </div>

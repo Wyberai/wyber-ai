@@ -120,7 +120,7 @@ Check for: hardcoded secrets/API keys, missing input validation, XSS vulnerabili
               {result.vulnerabilities.map((v, i) => (
                 <div key={i} style={{ padding: '10px 12px', borderRadius: 8, border: `1px solid ${severityColor[v.severity]}33`, background: `${severityColor[v.severity]}08` }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                    <span style={{ fontSize: 10, fontWeight: 700, color: severityColor[v.severity], textTransform: 'uppercase', letterSpacing: '0.06em' }}>{v.severity}</span>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: severityColor[v.severity], textTransform: 'uppercase', letterSpacing: '0.06em' }}>{v.severity}</span>
                     <button onClick={() => autoFix(v)} disabled={!!fixing} style={{ fontSize: 11, padding: '2px 8px', borderRadius: 4, border: '1px solid var(--border)', background: 'var(--bg-base)', color: 'var(--accent)', cursor: 'pointer' }}>
                       {fixing === v.issue ? '⟳' : '⚡ Auto-fix'}
                     </button>

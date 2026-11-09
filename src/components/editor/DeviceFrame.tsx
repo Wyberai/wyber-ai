@@ -140,7 +140,7 @@ export function DeviceFrame({ device, js, platform }: Props) {
             ) : (
               <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
                 <div style={{ width: 24, height: 24, border: '2px solid rgba(14,165,233,0.2)', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-                <div style={{ fontSize: 12, color: '#52525b' }}>{t('deviceFrameLoadingPreview')}</div>
+                <div style={{ fontSize: 12, color: '#8797ab' }}>{t('deviceFrameLoadingPreview')}</div>
               </div>
             )}
 

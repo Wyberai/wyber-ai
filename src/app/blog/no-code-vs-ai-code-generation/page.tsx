@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   openGraph: { title: 'No-code vs AI code generation — which one should you use in 2026?', url: 'https://wyberai.com/blog/no-code-vs-ai-code-generation', type: 'article' },
 }
 
-const s = { bg: '#09090b', card: '#111113', border: 'rgba(255,255,255,0.07)', text: '#fafafa', muted: '#71717a', dim: '#52525b', sky: '#0EA5E9', green: '#10b981' }
+const s = { bg: '#05080d', card: '#0d141e', border: 'rgba(255,255,255,0.07)', text: '#fafafa', muted: '#8797ab', dim: '#8797ab', sky: '#0EA5E9', green: '#10b981' }
 
 export default function Post() {
   return (
@@ -19,7 +19,7 @@ export default function Post() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
           <Link href="/blog" style={{ fontSize: 13, color: s.muted, textDecoration: 'none' }}>Learn</Link>
           <Link href="/docs" style={{ fontSize: 13, color: s.muted, textDecoration: 'none' }}>Docs</Link>
-          <Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: s.sky, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Start free &rarr;</Link>
+          <Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: s.sky, color: '#03111c', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Start free &rarr;</Link>
         </div>
       </nav>
       <article style={{ maxWidth: 680, margin: '0 auto', padding: 'clamp(40px,6vw,80px) clamp(16px,4vw,48px)' }}>
@@ -73,7 +73,7 @@ export default function Post() {
           <div style={{ marginTop: 36, padding: '24px 28px', background: `${s.sky}10`, border: `1px solid ${s.sky}25`, borderRadius: 12 }}>
             <div style={{ fontSize: 16, fontWeight: 700, color: s.text, marginBottom: 8 }}>Try AI code generation for free</div>
             <p style={{ fontSize: 14, margin: '0 0 16px' }}>30 free credits on signup. Generate a full app from a prompt — keep the code forever.</p>
-            <Link href="/signup" style={{ display: 'inline-block', padding: '10px 22px', borderRadius: 8, background: s.sky, color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>Start building free &rarr;</Link>
+            <Link href="/signup" style={{ display: 'inline-block', padding: '10px 22px', borderRadius: 8, background: s.sky, color: '#03111c', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>Start building free &rarr;</Link>
           </div>
         </div>
       </article>

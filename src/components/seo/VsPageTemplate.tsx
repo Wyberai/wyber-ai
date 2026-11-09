@@ -112,7 +112,7 @@ export function VsPageTemplate({
         </Link>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
           <Link href={lp('/vs')} style={{ fontSize: 12, color: s.muted, textDecoration: 'none', fontWeight: 500 }}>{t('allComparisons')}</Link>
-          <Link href={lp('/signup')} style={{ padding: '7px 16px', borderRadius: 8, background: s.sky, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>{t('tryFree')}</Link>
+          <Link href={lp('/signup')} style={{ padding: '7px 16px', borderRadius: 8, background: s.sky, color: '#03111c', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>{t('tryFree')}</Link>
         </div>
       </nav>
 
@@ -228,7 +228,7 @@ export function VsPageTemplate({
         <section style={{ textAlign: 'center', padding: 'clamp(24px,4vw,40px)', background: s.card, borderRadius: 14, border: `1px solid ${s.border}` }}>
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, marginBottom: 8, margin: '0 0 8px' }}>{t('ctaHeading')}</h2>
           <p style={{ fontSize: 14, color: s.muted, marginBottom: 20 }}>{t('ctaBody')}</p>
-          <Link href={lp('/signup')} style={{ display: 'inline-block', padding: '12px 28px', borderRadius: 10, background: s.sky, color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
+          <Link href={lp('/signup')} style={{ display: 'inline-block', padding: '12px 28px', borderRadius: 10, background: s.sky, color: '#03111c', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
             {t('ctaButton')}
           </Link>
         </section>

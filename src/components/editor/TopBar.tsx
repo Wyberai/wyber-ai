@@ -576,7 +576,7 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
               <button
                 onClick={() => { saveSnapshot(snapshotLabel); setSnapshotLabel(''); }}
                 disabled={savingSnapshot}
-                style={{ background: '#0EA5E9', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 700, cursor: savingSnapshot ? 'not-allowed' : 'pointer', opacity: savingSnapshot ? 0.6 : 1, flexShrink: 0 }}
+                style={{ background: '#0EA5E9', color: '#03111c', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 700, cursor: savingSnapshot ? 'not-allowed' : 'pointer', opacity: savingSnapshot ? 0.6 : 1, flexShrink: 0 }}
               >
                 {savingSnapshot ? tc('saving') : t('saveCurrentVersion')}
               </button>
@@ -812,7 +812,7 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
                 <option value="viewer">Viewer</option>
               </select>
               <button onClick={sendInvite} disabled={inviting || !inviteEmail.trim()}
-                style={{ padding: '7px 16px', borderRadius: 7, border: 'none', background: '#0EA5E9', color: '#fff', fontSize: 12, fontWeight: 700, cursor: inviting ? 'not-allowed' : 'pointer', opacity: !inviteEmail.trim() ? 0.5 : 1 }}>
+                style={{ padding: '7px 16px', borderRadius: 7, border: 'none', background: '#0EA5E9', color: '#03111c', fontSize: 12, fontWeight: 700, cursor: inviting ? 'not-allowed' : 'pointer', opacity: !inviteEmail.trim() ? 0.5 : 1 }}>
                 {inviting ? '...' : 'Invite'}
               </button>
             </div>

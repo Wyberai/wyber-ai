@@ -16,13 +16,13 @@ export default function ToolsClient() {
   const [tab, setTab] = useState<Tab>('security')
 
   return (
-    <div style={{ minHeight: '100vh', background: '#09090b', color: '#fafafa', fontFamily: 'var(--font-display)', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100vh', background: '#05080d', color: '#fafafa', fontFamily: 'var(--font-display)', display: 'flex', flexDirection: 'column' }}>
       <nav style={{ padding: '0 clamp(16px,4vw,48px)', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none', color: 'inherit' }}>
           <WyberLogo />
           <span style={{ fontWeight: 800, fontSize: 15, letterSpacing: '-0.03em' }}>WyberAi</span>
         </Link>
-        <Link href="/dashboard" style={{ padding: '7px 16px', borderRadius: 8, background: SKY, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>
+        <Link href="/dashboard" style={{ padding: '7px 16px', borderRadius: 8, background: SKY, color: '#03111c', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>
           Build an app →
         </Link>
       </nav>
@@ -36,7 +36,7 @@ export default function ToolsClient() {
             <h1 style={{ fontSize: 'clamp(30px,6vw,46px)', fontWeight: 800, lineHeight: 1.1, margin: 0, letterSpacing: '-0.03em' }}>
               Is your app safe<br />and findable?
             </h1>
-            <p style={{ color: '#a1a1aa', fontSize: 16, marginTop: 16, lineHeight: 1.6 }}>
+            <p style={{ color: '#9aa8bb', fontSize: 16, marginTop: 16, lineHeight: 1.6 }}>
               Two checks every founder should run. A real attacker’s-eye <b style={{ color: '#fafafa' }}>security scan</b> of your
               database, and a full <b style={{ color: '#fafafa' }}>SEO audit</b> of your site. Results in seconds.
             </p>
@@ -46,7 +46,7 @@ export default function ToolsClient() {
           <div style={{ display: 'flex', gap: 8, background: 'rgba(255,255,255,0.04)', padding: 5, borderRadius: 14, marginBottom: 20 }}>
             {(['security', 'seo'] as Tab[]).map((t) => (
               <button key={t} onClick={() => setTab(t)}
-                style={{ flex: 1, padding: '11px 12px', borderRadius: 10, border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 700, color: tab === t ? '#09090b' : '#a1a1aa', background: tab === t ? SKY : 'transparent', transition: 'all .15s' }}>
+                style={{ flex: 1, padding: '11px 12px', borderRadius: 10, border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 700, color: tab === t ? '#05080d' : '#9aa8bb', background: tab === t ? SKY : 'transparent', transition: 'all .15s' }}>
                 {t === 'security' ? '🛡️ Security Scan' : '🔍 SEO Audit'}
               </button>
             ))}
@@ -57,12 +57,12 @@ export default function ToolsClient() {
           {/* Funnel CTA */}
           <div style={{ marginTop: 40, padding: 24, borderRadius: 16, background: 'rgba(14,165,233,0.06)', border: '1px solid rgba(14,165,233,0.2)', textAlign: 'center' }}>
             <p style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Found problems? Build the fixed version in minutes.</p>
-            <p style={{ color: '#a1a1aa', fontSize: 14, margin: '8px 0 16px', lineHeight: 1.6 }}>
+            <p style={{ color: '#9aa8bb', fontSize: 14, margin: '8px 0 16px', lineHeight: 1.6 }}>
               Every app you build on WyberAi is scanned for these leaks <b style={{ color: '#fafafa' }}>before it can publish</b>, and
               ships SEO-ready out of the box. Describe your app, get a working web + mobile version.
             </p>
             <Link href="/?utm_source=tools&utm_campaign=scanner" onClick={() => track('tools_cta_clicked', { tab })}
-              style={{ display: 'inline-block', padding: '12px 28px', borderRadius: 10, background: SKY, color: '#fff', fontSize: 15, fontWeight: 700, textDecoration: 'none' }}>
+              style={{ display: 'inline-block', padding: '12px 28px', borderRadius: 10, background: SKY, color: '#03111c', fontSize: 15, fontWeight: 700, textDecoration: 'none' }}>
               Build a safe app free →
             </Link>
           </div>
@@ -78,7 +78,7 @@ const inputStyle: React.CSSProperties = {
 }
 const btnStyle: React.CSSProperties = {
   padding: '13px 24px', borderRadius: 10, border: 'none', cursor: 'pointer', fontSize: 15, fontWeight: 700,
-  background: SKY, color: '#fff',
+  background: SKY, color: '#03111c',
 }
 const cardStyle: React.CSSProperties = {
   padding: 20, borderRadius: 14, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)',
@@ -114,7 +114,7 @@ function LeadCapture(props: { tool: Tab; url: string; score: number; findingsCou
   if (state === 'done') {
     return (
       <div style={{ marginTop: 16, padding: 16, borderRadius: 12, background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.3)', textAlign: 'center' }}>
-        <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#10B981' }}>✓ Sent — check your inbox for the full report.</p>
+        <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#34d399' }}>✓ Sent — check your inbox for the full report.</p>
       </div>
     )
   }
@@ -143,7 +143,7 @@ function ScoreDial({ score }: { score: number }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
       <div style={{ fontSize: 46, fontWeight: 800, color, lineHeight: 1 }}>{score}</div>
-      <div style={{ fontSize: 13, color: '#a1a1aa' }}>/ 100<br />{score >= 80 ? 'Strong' : score >= 50 ? 'Needs work' : 'At risk'}</div>
+      <div style={{ fontSize: 13, color: '#9aa8bb' }}>/ 100<br />{score >= 80 ? 'Strong' : score >= 50 ? 'Needs work' : 'At risk'}</div>
     </div>
   )
 }
@@ -172,7 +172,7 @@ function SecurityTool() {
   return (
     <div style={cardStyle}>
       <p style={{ margin: '0 0 4px', fontWeight: 700, fontSize: 15 }}>Probe your live database the way an attacker would.</p>
-      <p style={{ margin: '0 0 16px', color: '#a1a1aa', fontSize: 13, lineHeight: 1.6 }}>
+      <p style={{ margin: '0 0 16px', color: '#9aa8bb', fontSize: 13, lineHeight: 1.6 }}>
         We use your <b style={{ color: '#fafafa' }}>public</b> anon key (safe to share — it ships in every built app) to try reading each
         table with nobody logged in. We show table names and row counts only, never your actual data. Scan apps you own.
       </p>
@@ -187,26 +187,26 @@ function SecurityTool() {
       {report && (
         <div style={{ marginTop: 20 }}>
           {!report.reachable ? (
-            <p style={{ color: '#10B981', fontSize: 14 }}>✓ {report.note || 'Nothing was reachable with the anon key.'}</p>
+            <p style={{ color: '#34d399', fontSize: 14 }}>✓ {report.note || 'Nothing was reachable with the anon key.'}</p>
           ) : (
             <>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
                 <ScoreDial score={report.score} />
-                <div style={{ textAlign: 'right', fontSize: 13, color: '#a1a1aa' }}>
+                <div style={{ textAlign: 'right', fontSize: 13, color: '#9aa8bb' }}>
                   {report.tablesScanned} tables scanned<br />
                   <b style={{ color: report.findings.length ? '#EF4444' : '#10B981' }}>{report.findings.length} leak{report.findings.length === 1 ? '' : 's'}</b>
                 </div>
               </div>
               {report.findings.length === 0 ? (
-                <p style={{ color: '#10B981', fontSize: 14 }}>✓ No anon-readable data found. Your RLS is holding.</p>
+                <p style={{ color: '#34d399', fontSize: 14 }}>✓ No anon-readable data found. Your RLS is holding.</p>
               ) : report.findings.map((f) => (
                 <div key={f.table} style={{ padding: 14, borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', marginBottom: 10, borderLeft: `3px solid ${sevColor(f.severity)}` }}>
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                    <span style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', color: sevColor(f.severity), letterSpacing: '0.05em' }}>{f.severity}</span>
+                    <span style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: sevColor(f.severity), letterSpacing: '0.05em' }}>{f.severity}</span>
                     <code style={{ fontSize: 13, fontWeight: 700 }}>{f.table}</code>
                   </div>
                   <p style={{ margin: '6px 0 0', fontSize: 13, color: '#d4d4d8', lineHeight: 1.5 }}>{f.issue}</p>
-                  <p style={{ margin: '4px 0 0', fontSize: 12, color: '#71717a' }}>{f.evidence}</p>
+                  <p style={{ margin: '4px 0 0', fontSize: 12, color: '#8797ab' }}>{f.evidence}</p>
                 </div>
               ))}
             </>
@@ -243,7 +243,7 @@ function SeoTool() {
   return (
     <div style={cardStyle}>
       <p style={{ margin: '0 0 4px', fontWeight: 700, fontSize: 15 }}>Can Google find and rank your site?</p>
-      <p style={{ margin: '0 0 16px', color: '#a1a1aa', fontSize: 13, lineHeight: 1.6 }}>
+      <p style={{ margin: '0 0 16px', color: '#9aa8bb', fontSize: 13, lineHeight: 1.6 }}>
         We fetch your page and grade the on-page signals that decide rankings and how your links look when shared.
       </p>
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
@@ -257,7 +257,7 @@ function SeoTool() {
         <div style={{ marginTop: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
             <ScoreDial score={report.score} />
-            <div style={{ textAlign: 'right', fontSize: 13, color: '#a1a1aa' }}>{report.passed}/{report.total} checks passed</div>
+            <div style={{ textAlign: 'right', fontSize: 13, color: '#9aa8bb' }}>{report.passed}/{report.total} checks passed</div>
           </div>
           {report.checks.map((c) => (
             <div key={c.id} style={{ padding: 14, borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', marginBottom: 10, borderLeft: `3px solid ${sevColor(c.severity)}` }}>

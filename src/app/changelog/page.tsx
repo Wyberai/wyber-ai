@@ -16,7 +16,7 @@ const RELEASES = [
     { type:'improved', text:'ErrorBoundary + crash-guard injection in every generated app, expanded secret-pattern detection, rate limits on publish/deploy/export' },
     { type:'fixed', text:'Instant signup — no confirmation-email wait; magic-link sign-in delivers in seconds' },
   ]},
-  { date:'July 10, 2026', version:'v1.1', tag:'Design engine', color:'#7C3AED', items:[
+  { date:'July 10, 2026', version:'v1.1', tag:'Design engine', color:'#a78bfa', items:[
     { type:'new', text:'Wyber UI kit — 31 premium components injected into every build, with 30 curated palettes' },
     { type:'new', text:'Visual edits without AI — click any text or color in preview and change it directly, 0 credits' },
     { type:'new', text:'Themes panel — restyle your whole app in one click, 0 credits' },
@@ -25,7 +25,7 @@ const RELEASES = [
     { type:'improved', text:'Smart model routing — the strongest AI model for builds, faster models for edits, chosen automatically' },
     { type:'improved', text:'Design seeds — every app gets a distinct visual identity, not the same AI-generated look' },
   ]},
-  { date:'June 20, 2026', version:'v1.0', tag:'The AI Business Platform', color:'#10b981', items:[
+  { date:'June 20, 2026', version:'v1.0', tag:'The AI Business Platform', color:'#34d399', items:[
     { type:'new', text:'Auto error fix — build errors detected and resolved automatically, 0 credits charged' },
     { type:'new', text:'Command palette (Cmd+K) — instant access to any page, template, or action' },
     { type:'new', text:'Persona onboarding — solo founder, team, agency, or enterprise' },
@@ -71,7 +71,7 @@ const RELEASES = [
     { type:'improved', text:'PreviewPanel — live indicator, glass overlay, premium empty state' },
     { type:'improved', text:'Design system — consistent tokens, skeleton loading, smooth transitions' },
   ]},
-  { date:'May 23, 2026', version:'v0.8', tag:'IDE overhaul', color:'#7C3AED', items:[
+  { date:'May 23, 2026', version:'v0.8', tag:'IDE overhaul', color:'#a78bfa', items:[
     { type:'new', text:'Agent Mode — describe a full feature, Agent builds each step autonomously' },
     { type:'new', text:'Version history — auto-commit on every generation, restore any state' },
     { type:'new', text:'GitHub sync — push to any repo, branch management, commit history' },
@@ -80,7 +80,7 @@ const RELEASES = [
     { type:'new', text:'33 starter templates — dashboard, auth, landing page, CRM, and more' },
     { type:'improved', text:'Deploy to Vercel — one-click production deployment from the IDE' },
   ]},
-  { date:'May 15, 2026', version:'v0.7', tag:'Launch', color:'#059669', items:[
+  { date:'May 15, 2026', version:'v0.7', tag:'Launch', color:'#34d399', items:[
     { type:'new', text:'Public launch — WyberAi is live at wyberai.com' },
     { type:'new', text:'Core AI generation — React, Vue, Next.js, Vanilla JS from plain English' },
     { type:'new', text:'E2B sandbox — live preview of every generation' },
@@ -90,7 +90,7 @@ const RELEASES = [
   ]},
 ];
 const TS: Record<string, { bg:string; color:string; label:string }> = {
-  new: { bg:'rgba(5,150,105,0.1)', color:'#059669', label:'New' },
+  new: { bg:'rgba(5,150,105,0.1)', color:'#34d399', label:'New' },
   improved: { bg:'rgba(14,165,233,0.1)', color:'#0EA5E9', label:'Improved' },
   fixed: { bg:'rgba(245,158,11,0.1)', color:'#F59E0B', label:'Fixed' },
 };
@@ -114,7 +114,7 @@ export default function ChangelogPage() {
                   const s=TS[item.type];
                   return (
                     <div key={i} style={{ display:'flex', gap:10, alignItems:'flex-start' }}>
-                      <span style={{ fontSize:10, padding:'2px 8px', borderRadius:20, background:s.bg, color:s.color, fontWeight:700, flexShrink:0, marginTop:2 }}>{s.label}</span>
+                      <span style={{ fontSize: 11, padding:'2px 8px', borderRadius:20, background:s.bg, color:s.color, fontWeight:700, flexShrink:0, marginTop:2 }}>{s.label}</span>
                       <span style={{ fontSize:13, color:'var(--text2)', lineHeight:1.6 }}>{item.text}</span>
                     </div>
                   );

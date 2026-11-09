@@ -33,7 +33,7 @@ export default function Post() {
       <div style={{ maxWidth: 720, margin: '0 auto', padding: 'clamp(40px,6vw,72px) clamp(16px,4vw,40px)' }}>
         <Link href="/blog" style={{ fontSize: 13, color: 'var(--text3)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 5, marginBottom: 32 }}>&larr; Back to blog</Link>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 20 }}>
-          <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, background: 'rgba(124,58,237,0.1)', color: '#7C3AED', fontWeight: 700, border: '1px solid rgba(124,58,237,0.2)' }}>Comparison</span>
+          <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 20, background: 'rgba(124,58,237,0.1)', color: '#a78bfa', fontWeight: 700, border: '1px solid rgba(124,58,237,0.2)' }}>Comparison</span>
           <span style={{ fontSize: 12, color: 'var(--text3)' }}>May 27, 2026 &middot; 8 min read</span>
         </div>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px,4vw,44px)', fontWeight: 700, letterSpacing: '-0.025em', color: 'var(--text)', lineHeight: 1.15, marginBottom: 32 }}>
@@ -68,7 +68,7 @@ export default function Post() {
           <p>Choose Lovable if you want the most mature tool with the largest community. Choose WyberAi if you want framework flexibility, free error fixes, and lower pricing.</p>
           <div style={{ padding: '20px 24px', borderRadius: 12, background: 'var(--sky3)', border: '1px solid rgba(14,165,233,0.2)', marginTop: 24 }}>
             <p style={{ fontSize: 14, color: 'var(--text2)', margin: '0 0 14px' }}>Try WyberAi free -- 30 credits/month, no card required.</p>
-            <Link href="/signup" style={{ fontSize: 13, padding: '8px 18px', borderRadius: 8, background: 'var(--sky)', color: '#fff', fontWeight: 700, textDecoration: 'none', display: 'inline-block' }}>Start building free &rarr;</Link>
+            <Link href="/signup" style={{ fontSize: 13, padding: '8px 18px', borderRadius: 8, background: 'var(--sky)', color: '#03111c', fontWeight: 700, textDecoration: 'none', display: 'inline-block' }}>Start building free &rarr;</Link>
           </div>
         </div>
       </div>

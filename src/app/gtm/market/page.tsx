@@ -51,7 +51,7 @@ export default function GTMMarketPage() {
             <div style={{ fontSize: 32, marginBottom: 12 }}>🎯</div>
             <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>Set up your ICP first</div>
             <p style={{ fontSize: 13, color: s.muted, marginBottom: 20 }}>We need your ideal customer profile to calculate your market.</p>
-            <Link href="/gtm/setup" style={{ padding: '10px 20px', borderRadius: 8, background: s.orange, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Set up ICP →</Link>
+            <Link href="/gtm/setup" style={{ padding: '10px 20px', borderRadius: 8, background: s.orange, color: '#03111c', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Set up ICP →</Link>
           </div>
         )}
 
@@ -92,7 +92,7 @@ export default function GTMMarketPage() {
                   <div style={{ fontSize: 28, marginBottom: 8 }}>{stat.icon}</div>
                   <div style={{ fontSize: 38, fontWeight: 800, color: stat.color, letterSpacing: '-0.04em', fontFamily: 'var(--font-display)', lineHeight: 1, marginBottom: 6 }}>{stat.value}</div>
                   <div style={{ fontSize: 12, color: s.muted }}>{stat.label}</div>
-                  {noKey && <div style={{ fontSize: 10, color: s.dim, marginTop: 4 }}>estimated</div>}
+                  {noKey && <div style={{ fontSize: 11, color: s.dim, marginTop: 4 }}>estimated</div>}
                 </div>
               ))}
             </div>
@@ -135,7 +135,7 @@ export default function GTMMarketPage() {
             )}
 
             <div style={{ display: 'flex', gap: 10 }}>
-              <Link href="/gtm/leads/import" style={{ flex: 1, padding: '12px 20px', borderRadius: 9, background: s.orange, color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none', textAlign: 'center' }}>Import leads from this market →</Link>
+              <Link href="/gtm/leads/import" style={{ flex: 1, padding: '12px 20px', borderRadius: 9, background: s.orange, color: '#03111c', fontSize: 14, fontWeight: 700, textDecoration: 'none', textAlign: 'center' }}>Import leads from this market →</Link>
               <Link href="/gtm/campaigns/new" style={{ padding: '12px 20px', borderRadius: 9, background: s.card, border: `1px solid ${s.border}`, color: s.text, fontSize: 14, fontWeight: 600, textDecoration: 'none' }}>Build campaign</Link>
             </div>
           </>

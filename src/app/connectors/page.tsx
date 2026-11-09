@@ -44,7 +44,7 @@ const CONNECTORS = [
   { name:'NetSuite', icon:'◒', color:'#EA7600', cat:'Finance', slug:'netsuite' },
   { name:'OpenAI', icon:'✦', color:'#10A37F', cat:'AI', slug:'openai' },
   { name:'Anthropic', icon:'◎', color:'#D4A574', cat:'AI', soon:true },
-  { name:'ElevenLabs', icon:'🎙', color:'#9333EA', cat:'AI', slug:'elevenlabs', url:'https://try.elevenlabs.io/si0z5cfaw6nq' },
+  { name:'ElevenLabs', icon:'🎙', color:'#c084fc', cat:'AI', slug:'elevenlabs', url:'https://try.elevenlabs.io/si0z5cfaw6nq' },
   { name:'Perplexity', icon:'🔎', color:'#20B2AA', cat:'AI', soon:true },
   { name:'Replicate', icon:'◈', color:'#374151', cat:'AI', slug:'replicate' },
   { name:'GitHub', icon:'⌥', color:'#24292E', cat:'Dev', slug:'github' },
@@ -104,7 +104,7 @@ export default function ConnectorsPage() {
                 <ConnectorLogo slug={c.slug} emoji={c.icon} color={c.color} name={c.name} />
                 <div>
                   <div style={{ fontSize:13, fontWeight:600, color:'var(--text)', letterSpacing:'-0.01em' }}>{c.name}</div>
-                  <div style={{ fontSize:10, color:'var(--text3)', marginTop:1 }}>{c.soon ? 'Coming soon' : c.cat}</div>
+                  <div style={{ fontSize: 11, color:'var(--text3)', marginTop:1 }}>{c.soon ? 'Coming soon' : c.cat}</div>
                 </div>
               </>
             )

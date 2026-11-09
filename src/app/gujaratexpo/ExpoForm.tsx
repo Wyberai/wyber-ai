@@ -104,10 +104,10 @@ export function ExpoForm({ audience, onAudienceChange }: { audience: AudienceId;
         </div>
       </div>
       {state === 'error' && <div role="alert" style={{ color: '#f87171', fontSize: 14 }}>{error}</div>}
-      <button type="submit" disabled={state === 'sending'} style={{ padding: '14px 22px', borderRadius: 10, border: 'none', background: s.sky, color: '#fff', fontSize: 16, fontWeight: 800, cursor: state === 'sending' ? 'wait' : 'pointer', opacity: state === 'sending' ? 0.7 : 1 }}>
+      <button type="submit" disabled={state === 'sending'} style={{ padding: '14px 22px', borderRadius: 10, border: 'none', background: s.sky, color: '#03111c', fontSize: 16, fontWeight: 800, cursor: state === 'sending' ? 'wait' : 'pointer', opacity: state === 'sending' ? 0.7 : 1 }}>
         {state === 'sending' ? 'Sending…' : 'Book 15 minutes at the booth'}
       </button>
-      <p style={{ margin: 0, fontSize: 12, color: '#545c6e', lineHeight: 1.6 }}>
+      <p style={{ margin: 0, fontSize: 12, color: '#8797ab', lineHeight: 1.6 }}>
         We use your details to confirm your slot. If you add an email, you&apos;ll get a confirmation, a reminder before your day, and two short follow-ups after the expo. Every email has an unsubscribe link. We don&apos;t sell or share your details.
       </p>
     </form>

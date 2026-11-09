@@ -26,7 +26,7 @@ const BRAND = '#0EA5E9'
 const PRIZES = [
   { key: 'editor', title: 'WPL Champion', amount: '$1,000', worthINR: '₹83,000', color: '#f59e0b', emoji: '🏆', by: 'Chosen by the WyberAi team — the build we think is best.' },
   { key: 'upvoted', title: 'Fan Favorite', amount: '$500', worthINR: '₹41,500', color: '#0EA5E9', emoji: '🥈', by: 'Voted by the community — the most-upvoted build wins.' },
-  { key: 'creative', title: 'Most Creative', amount: '$300', worthINR: '₹24,900', color: '#a855f7', emoji: '🎨', by: "Chosen by the WyberAi team — the build that made us say wow." },
+  { key: 'creative', title: 'Most Creative', amount: '$300', worthINR: '₹24,900', color: '#c084fc', emoji: '🎨', by: "Chosen by the WyberAi team — the build that made us say wow." },
 ]
 
 const RULES = [
@@ -65,13 +65,13 @@ export default async function PremierLeaguePage() {
   const owner = await isOwnerPreview()
 
   return (
-    <div style={{ minHeight: '100vh', background: '#09090b', color: '#fafafa', fontFamily: 'var(--font-display)' }}>
+    <div style={{ minHeight: '100vh', background: '#05080d', color: '#fafafa', fontFamily: 'var(--font-display)' }}>
       {/* Nav */}
       <nav style={{ padding: '0 clamp(16px,4vw,48px)', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <Link href="/" style={{ textDecoration: 'none', color: 'inherit' }}>
           <WyberLogo markSize={26} wordmarkSize={15} />
         </Link>
-        <Link href="/signup" style={{ padding: '8px 20px', borderRadius: 8, background: BRAND, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>
+        <Link href="/signup" style={{ padding: '8px 20px', borderRadius: 8, background: BRAND, color: '#03111c', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>
           Start Building →
         </Link>
       </nav>
@@ -87,25 +87,25 @@ export default async function PremierLeaguePage() {
               Premier League
             </span>
           </h1>
-          <p style={{ fontSize: 18, color: '#a1a1aa', lineHeight: 1.6, marginBottom: 24, maxWidth: 560, margin: '0 auto 24px' }}>
+          <p style={{ fontSize: 18, color: '#9aa8bb', lineHeight: 1.6, marginBottom: 24, maxWidth: 560, margin: '0 auto 24px' }}>
             Build a real web app, website, or SaaS on WyberAi and enter — free, unlimited entries. Our team picks the top build; the community upvotes the runner-up. <strong style={{ color: '#fafafa' }}>Win up to {isIndia ? '₹83,000' : '$1,000'}, every single month.</strong>
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link href="/signup" style={{ padding: '14px 32px', borderRadius: 10, background: BRAND, color: '#fff', fontSize: 15, fontWeight: 700, textDecoration: 'none', boxShadow: '0 0 30px rgba(14,165,233,0.3)' }}>
+            <Link href="/signup" style={{ padding: '14px 32px', borderRadius: 10, background: BRAND, color: '#03111c', fontSize: 15, fontWeight: 700, textDecoration: 'none', boxShadow: '0 0 30px rgba(14,165,233,0.3)' }}>
               Build &amp; Enter →
             </Link>
-            <a href="#rules" style={{ padding: '14px 32px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', color: '#a1a1aa', fontSize: 15, fontWeight: 600, textDecoration: 'none' }}>
+            <a href="#rules" style={{ padding: '14px 32px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', color: '#9aa8bb', fontSize: 15, fontWeight: 600, textDecoration: 'none' }}>
               How it works
             </a>
           </div>
-          <p style={{ fontSize: 12, color: '#52525b', marginTop: 16 }}>Free to enter · Unlimited entries · New winners on the 1st of every month</p>
+          <p style={{ fontSize: 12, color: '#8797ab', marginTop: 16 }}>Free to enter · Unlimited entries · New winners on the 1st of every month</p>
         </div>
       </section>
 
       {/* Prizes */}
       <section style={{ padding: '20px clamp(20px,4vw,48px) 60px', maxWidth: 900, margin: '0 auto' }}>
         <h2 style={{ textAlign: 'center', fontSize: 28, fontWeight: 800, marginBottom: 8, letterSpacing: '-0.03em' }}>This month&apos;s prizes</h2>
-        <p style={{ textAlign: 'center', fontSize: 14, color: '#71717a', marginBottom: 36 }}>Real cash, paid out by bank transfer or PayPal — enter every month</p>
+        <p style={{ textAlign: 'center', fontSize: 14, color: '#8797ab', marginBottom: 36 }}>Real cash, paid out by bank transfer or PayPal — enter every month</p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
           {PRIZES.map(p => (
             <div key={p.key} style={{ padding: '24px', borderRadius: 16, border: `1px solid ${p.color}55`, background: `${p.color}0d`, textAlign: 'left' }}>
@@ -114,11 +114,11 @@ export default async function PremierLeaguePage() {
                 <span style={{ fontSize: 12, fontWeight: 800, color: p.color, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{p.title}</span>
               </div>
               <div style={{ fontSize: 28, fontWeight: 800, color: '#fafafa', letterSpacing: '-0.03em' }}>{isIndia ? p.worthINR : p.amount}</div>
-              <div style={{ fontSize: 12.5, color: '#71717a', lineHeight: 1.5, marginTop: 10 }}>{p.by}</div>
+              <div style={{ fontSize: 12.5, color: '#8797ab', lineHeight: 1.5, marginTop: 10 }}>{p.by}</div>
             </div>
           ))}
         </div>
-        <p style={{ textAlign: 'center', fontSize: 12, color: '#52525b', marginTop: 16 }}>{isIndia ? '₹1,49,400' : '$1,800'} up for grabs, every month. One win per person per month.</p>
+        <p style={{ textAlign: 'center', fontSize: 12, color: '#8797ab', marginTop: 16 }}>{isIndia ? '₹1,49,400' : '$1,800'} up for grabs, every month. One win per person per month.</p>
       </section>
 
       {/* Submit — private by design, see EntrySubmit */}
@@ -132,7 +132,7 @@ export default async function PremierLeaguePage() {
             <div key={r.title} style={{ padding: '20px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
               <div style={{ fontSize: 24, marginBottom: 8 }}>{r.icon}</div>
               <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>{r.title}</div>
-              <div style={{ fontSize: 13, color: '#71717a', lineHeight: 1.5 }}>{r.desc}</div>
+              <div style={{ fontSize: 13, color: '#8797ab', lineHeight: 1.5 }}>{r.desc}</div>
             </div>
           ))}
         </div>
@@ -145,7 +145,7 @@ export default async function PremierLeaguePage() {
             <div key={t.title} style={{ padding: '24px', borderRadius: 16, border: '1px solid rgba(14,165,233,0.2)', background: 'rgba(14,165,233,0.05)' }}>
               <div style={{ fontSize: 24, marginBottom: 10 }}>{t.icon}</div>
               <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 6 }}>{t.title}</div>
-              <div style={{ fontSize: 13, color: '#a1a1aa', lineHeight: 1.6 }}>{t.desc}</div>
+              <div style={{ fontSize: 13, color: '#9aa8bb', lineHeight: 1.6 }}>{t.desc}</div>
             </div>
           ))}
         </div>
@@ -154,14 +154,14 @@ export default async function PremierLeaguePage() {
       {/* Judging */}
       <section style={{ padding: '40px clamp(20px,4vw,48px) 60px', maxWidth: 800, margin: '0 auto' }}>
         <h2 style={{ textAlign: 'center', fontSize: 28, fontWeight: 800, marginBottom: 8, letterSpacing: '-0.03em' }}>How we pick the top builds</h2>
-        <p style={{ textAlign: 'center', fontSize: 14, color: '#71717a', marginBottom: 36 }}>The community vote decides Fan Favorite — this is how our team chooses WPL Champion and Most Creative.</p>
+        <p style={{ textAlign: 'center', fontSize: 14, color: '#8797ab', marginBottom: 36 }}>The community vote decides Fan Favorite — this is how our team chooses WPL Champion and Most Creative.</p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {CRITERIA.map(c => (
             <div key={c.label} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '16px 20px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
-              <div style={{ width: 48, height: 48, borderRadius: 10, background: 'rgba(168,85,247,0.1)', border: '1px solid rgba(168,85,247,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800, color: '#a855f7', flexShrink: 0 }}>{c.weight}</div>
+              <div style={{ width: 48, height: 48, borderRadius: 10, background: 'rgba(168,85,247,0.1)', border: '1px solid rgba(168,85,247,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800, color: '#c084fc', flexShrink: 0 }}>{c.weight}</div>
               <div>
                 <div style={{ fontSize: 15, fontWeight: 700 }}>{c.label}</div>
-                <div style={{ fontSize: 13, color: '#71717a' }}>{c.desc}</div>
+                <div style={{ fontSize: 13, color: '#8797ab' }}>{c.desc}</div>
               </div>
             </div>
           ))}
@@ -171,10 +171,10 @@ export default async function PremierLeaguePage() {
       {/* Ideas */}
       <section style={{ padding: '20px clamp(20px,4vw,48px) 60px', maxWidth: 800, margin: '0 auto' }}>
         <h2 style={{ textAlign: 'center', fontSize: 28, fontWeight: 800, marginBottom: 8, letterSpacing: '-0.03em' }}>Need inspiration?</h2>
-        <p style={{ textAlign: 'center', fontSize: 14, color: '#71717a', marginBottom: 32 }}>Build one of these — or anything you want</p>
+        <p style={{ textAlign: 'center', fontSize: 14, color: '#8797ab', marginBottom: 32 }}>Build one of these — or anything you want</p>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
           {IDEAS.map(idea => (
-            <span key={idea} style={{ padding: '8px 16px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)', fontSize: 13, color: '#a1a1aa' }}>{idea}</span>
+            <span key={idea} style={{ padding: '8px 16px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)', fontSize: 13, color: '#9aa8bb' }}>{idea}</span>
           ))}
         </div>
       </section>
@@ -183,16 +183,16 @@ export default async function PremierLeaguePage() {
       <section style={{ padding: '40px clamp(20px,4vw,48px) 80px', textAlign: 'center' }}>
         <div style={{ maxWidth: 500, margin: '0 auto', padding: '48px 32px', borderRadius: 20, background: 'linear-gradient(135deg, rgba(168,85,247,0.1), rgba(14,165,233,0.1))', border: '1px solid rgba(168,85,247,0.2)' }}>
           <h2 style={{ fontSize: 28, fontWeight: 800, marginBottom: 12, letterSpacing: '-0.03em' }}>Ready to build?</h2>
-          <p style={{ fontSize: 14, color: '#a1a1aa', marginBottom: 24 }}>Ship a web app, website, or SaaS on WyberAi and enter. Winners announced the 1st of every month.</p>
-          <Link href="/signup" style={{ display: 'inline-block', padding: '14px 40px', borderRadius: 10, background: BRAND, color: '#fff', fontSize: 15, fontWeight: 700, textDecoration: 'none', boxShadow: '0 0 30px rgba(14,165,233,0.3)' }}>
+          <p style={{ fontSize: 14, color: '#9aa8bb', marginBottom: 24 }}>Ship a web app, website, or SaaS on WyberAi and enter. Winners announced the 1st of every month.</p>
+          <Link href="/signup" style={{ display: 'inline-block', padding: '14px 40px', borderRadius: 10, background: BRAND, color: '#03111c', fontSize: 15, fontWeight: 700, textDecoration: 'none', boxShadow: '0 0 30px rgba(14,165,233,0.3)' }}>
             Start Building — It&apos;s Free →
           </Link>
         </div>
       </section>
 
       {/* Footer */}
-      <footer style={{ padding: '24px', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.04)', fontSize: 12, color: '#3f3f46' }}>
-        © 2026 WyberAi · <Link href="/terms" style={{ color: '#52525b', textDecoration: 'none' }}>Terms</Link> · <Link href="/privacy" style={{ color: '#52525b', textDecoration: 'none' }}>Privacy</Link>
+      <footer style={{ padding: '24px', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.04)', fontSize: 12, color: '#8797ab' }}>
+        © 2026 WyberAi · <Link href="/terms" style={{ color: '#8797ab', textDecoration: 'none' }}>Terms</Link> · <Link href="/privacy" style={{ color: '#8797ab', textDecoration: 'none' }}>Privacy</Link>
       </footer>
 
       {owner && <OwnerRegionSwitcher current={currency} />}

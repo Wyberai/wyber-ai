@@ -57,7 +57,7 @@ export function TemplatesShowcase({ userId }: { userId?: string }) {
 
   if (loading) {
     return (
-      <div style={{ padding: '20px 0', color: 'var(--ide-text3, #71717a)', fontSize: 13 }}>
+      <div style={{ padding: '20px 0', color: 'var(--ide-text3, #8797ab)', fontSize: 13 }}>
         Loading templates...
       </div>
     );
@@ -70,7 +70,7 @@ export function TemplatesShowcase({ userId }: { userId?: string }) {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
         <div>
           <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--ide-text, #fafafa)', margin: 0 }}>Start from a template</h2>
-          <p style={{ fontSize: 12, color: 'var(--ide-text3, #71717a)', margin: '3px 0 0' }}>{templates.length} ready-made apps · open one and describe your changes</p>
+          <p style={{ fontSize: 12, color: 'var(--ide-text3, #8797ab)', margin: '3px 0 0' }}>{templates.length} ready-made apps · open one and describe your changes</p>
         </div>
       </div>
 
@@ -86,7 +86,7 @@ export function TemplatesShowcase({ userId }: { userId?: string }) {
               border: '1px solid',
               borderColor: activeCategory === cat ? 'rgba(14,165,233,0.4)' : 'var(--ide-border, rgba(255,255,255,0.08))',
               background: activeCategory === cat ? 'rgba(14,165,233,0.12)' : 'transparent',
-              color: activeCategory === cat ? '#0EA5E9' : 'var(--ide-text2, #a1a1aa)',
+              color: activeCategory === cat ? '#0EA5E9' : 'var(--ide-text2, #9aa8bb)',
               fontSize: 12,
               fontWeight: 600,
               cursor: 'pointer',
@@ -114,7 +114,7 @@ export function TemplatesShowcase({ userId }: { userId?: string }) {
                 border: '1px solid var(--ide-border, rgba(255,255,255,0.08))',
                 borderRadius: 12,
                 overflow: 'hidden',
-                background: 'var(--bg-surface, #18181b)',
+                background: 'var(--bg-surface, #111b28)',
                 cursor: opening ? 'wait' : 'pointer',
                 padding: 0,
                 fontFamily: 'inherit',
@@ -138,7 +138,7 @@ export function TemplatesShowcase({ userId }: { userId?: string }) {
               {/* Card body */}
               <div style={{ padding: '10px 12px' }}>
                 <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ide-text, #fafafa)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.name}</div>
-                {t.category && <div style={{ fontSize: 12, color: 'var(--ide-text3, #71717a)', marginTop: 2 }}>{t.category}</div>}
+                {t.category && <div style={{ fontSize: 12, color: 'var(--ide-text3, #8797ab)', marginTop: 2 }}>{t.category}</div>}
               </div>
             </button>
           );

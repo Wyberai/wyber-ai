@@ -89,7 +89,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
           <div style={{ width: 76, height: 76, borderRadius: 20, background: accent.solid, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 42, fontWeight: 700, color: '#ffffff' }}>
             {initial}
           </div>
-          <div style={{ display: 'flex', fontSize: 24, fontWeight: 600, color: '#a1a1aa', letterSpacing: '-0.01em' }}>
+          <div style={{ display: 'flex', fontSize: 24, fontWeight: 600, color: '#9aa8bb', letterSpacing: '-0.01em' }}>
             {`wyberai.com/app/${slug}`}
           </div>
         </div>
@@ -99,19 +99,19 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
             {title}
           </div>
           {desc ? (
-            <div style={{ display: 'flex', fontSize: 30, fontWeight: 600, color: '#a1a1aa', lineHeight: 1.35 }}>
+            <div style={{ display: 'flex', fontSize: 30, fontWeight: 600, color: '#9aa8bb', lineHeight: 1.35 }}>
               {clip(desc, 120)}
             </div>
           ) : null}
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 22px', borderRadius: 9999, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', fontSize: 22, fontWeight: 600, color: '#e4e4e7' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 22px', borderRadius: 9999, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', fontSize: 22, fontWeight: 600, color: '#e8eef7' }}>
             <div style={{ width: 10, height: 10, borderRadius: 9999, background: '#22c55e', display: 'flex' }} />
             Live now · tap to open
           </div>
           {showBadge ? (
-            <div style={{ display: 'flex', fontSize: 20, fontWeight: 600, color: '#71717a' }}>Built with WyberAi</div>
+            <div style={{ display: 'flex', fontSize: 20, fontWeight: 600, color: '#8797ab' }}>Built with WyberAi</div>
           ) : null}
         </div>
       </div>

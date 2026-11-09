@@ -17,9 +17,9 @@ const CATEGORY_KEY: Record<string, string> = {
 // All integrations from real agent_workflows required_tools data
 export const INTEGRATIONS: Record<string, { label: string; color: string; icon: string; category: string; fields: string[] }> = {
   // AI & LLM
-  llm:        { label: 'AI / LLM',        color: '#8b5cf6', icon: '🤖', category: 'AI',          fields: ['Model', 'System Prompt', 'Temperature'] },
+  llm:        { label: 'AI / LLM',        color: '#a78bfa', icon: '🤖', category: 'AI',          fields: ['Model', 'System Prompt', 'Temperature'] },
   openai:     { label: 'OpenAI',           color: '#10a37f', icon: '⚡', category: 'AI',          fields: ['Model', 'API Key', 'Prompt'] },
-  anthropic:  { label: 'Anthropic Claude', color: '#d97706', icon: '🧠', category: 'AI',          fields: ['Model', 'API Key', 'System Prompt'] },
+  anthropic:  { label: 'Anthropic Claude', color: '#fbbf24', icon: '🧠', category: 'AI',          fields: ['Model', 'API Key', 'System Prompt'] },
 
   // Communication
   slack:      { label: 'Slack',            color: '#611f69', icon: '💬', category: 'Comms',       fields: ['Channel', 'Message', 'Bot Token'] },
@@ -53,12 +53,12 @@ export const INTEGRATIONS: Record<string, { label: string; color: string; icon: 
   stripe:     { label: 'Stripe',           color: '#635bff', icon: '💳', category: 'Finance',     fields: ['Action', 'Customer', 'Amount', 'Currency'] },
   quickbooks: { label: 'QuickBooks',       color: '#2ca01c', icon: '📒', category: 'Finance',     fields: ['Action', 'Account', 'Amount'] },
   xero:       { label: 'Xero',             color: '#13b5ea', icon: '💰', category: 'Finance',     fields: ['Action', 'Account', 'Contact'] },
-  erp:        { label: 'ERP System',       color: '#6366f1', icon: '🏭', category: 'Finance',     fields: ['Module', 'Action', 'Parameters'] },
+  erp:        { label: 'ERP System',       color: '#a5b4fc', icon: '🏭', category: 'Finance',     fields: ['Module', 'Action', 'Parameters'] },
 
   // IT & Security
   okta:       { label: 'Okta / Azure AD',  color: '#007dc1', icon: '🔐', category: 'Security',    fields: ['Action', 'User', 'Group', 'App'] },
   github:     { label: 'GitHub',           color: '#24292e', icon: '🐙', category: 'Dev',          fields: ['Repo', 'Action', 'Branch'] },
-  vanta:      { label: 'Vanta / Drata',    color: '#7c3aed', icon: '🛡️', category: 'Security',    fields: ['Control', 'Evidence Type', 'Status'] },
+  vanta:      { label: 'Vanta / Drata',    color: '#a78bfa', icon: '🛡️', category: 'Security',    fields: ['Control', 'Evidence Type', 'Status'] },
 
   // Support
   support:    { label: 'Support Desk',     color: '#22c55e', icon: '🎫', category: 'Support',     fields: ['Action', 'Ticket ID', 'Status', 'Assignee'] },
@@ -68,7 +68,7 @@ export const INTEGRATIONS: Record<string, { label: string; color: string; icon: 
   // Marketing & Ads
   metaads:    { label: 'Meta Ads',         color: '#1877f2', icon: '📱', category: 'Marketing',   fields: ['Campaign', 'Metric', 'Date Range'] },
   googleads:  { label: 'Google Ads',       color: '#fbbc04', icon: '🎯', category: 'Marketing',   fields: ['Campaign', 'Metric', 'Date Range'] },
-  analytics:  { label: 'Analytics / BI',   color: '#a855f7', icon: '📈', category: 'Marketing',   fields: ['Metric', 'Dimension', 'Date Range'] },
+  analytics:  { label: 'Analytics / BI',   color: '#c084fc', icon: '📈', category: 'Marketing',   fields: ['Metric', 'Dimension', 'Date Range'] },
 
   // Data & Web
   websearch:  { label: 'Web Search / API', color: '#0EA5E9', icon: '🔍', category: 'Data',        fields: ['Query', 'Source', 'Results Limit'] },
@@ -131,16 +131,16 @@ export const IntegrationNode = memo(({ data }: { data: Record<string, any> }) =>
         </div>
         <div>
           <div style={{ fontSize: 11, fontWeight: 700, color: '#fafafa', lineHeight: 1.2 }}>{label}</div>
-          {data.action && <div style={{ fontSize: 10, color: '#52525b', marginTop: 2 }}>{data.action}</div>}
+          {data.action && <div style={{ fontSize: 10, color: '#8797ab', marginTop: 2 }}>{data.action}</div>}
         </div>
-        <div style={{ marginLeft: 'auto', width: 6, height: 6, borderRadius: '50%', background: data.connected ? '#22c55e' : '#3f3f46', flexShrink: 0 }} />
+        <div style={{ marginLeft: 'auto', width: 6, height: 6, borderRadius: '50%', background: data.connected ? '#22c55e' : '#8797ab', flexShrink: 0 }} />
       </div>
 
       {data.fields && data.fields.length > 0 && (
         <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
           {data.fields.slice(0, 2).map((field: string) => (
-            <div key={field} style={{ fontSize: 10, color: '#52525b', display: 'flex', alignItems: 'center', gap: 4 }}>
-              <div style={{ width: 3, height: 3, borderRadius: '50%', background: '#3f3f46', flexShrink: 0 }} />
+            <div key={field} style={{ fontSize: 10, color: '#8797ab', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <div style={{ width: 3, height: 3, borderRadius: '50%', background: '#8797ab', flexShrink: 0 }} />
               {field}
             </div>
           ))}
@@ -162,7 +162,7 @@ export function IntegrationPicker({ onAdd }: { onAdd: (key: string) => void }) {
     <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 16 }}>
       {categories.map(cat => (
         <div key={cat}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: '#52525b', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>{CATEGORY_KEY[cat] ? t(CATEGORY_KEY[cat]) : cat}</div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: '#8797ab', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>{CATEGORY_KEY[cat] ? t(CATEGORY_KEY[cat]) : cat}</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             {Object.entries(INTEGRATIONS)
               .filter(([, v]) => v.category === cat)
@@ -174,7 +174,7 @@ export function IntegrationPicker({ onAdd }: { onAdd: (key: string) => void }) {
                     display: 'flex', alignItems: 'center', gap: 8,
                     padding: '6px 10px', borderRadius: 8,
                     border: '1px solid rgba(255,255,255,0.06)',
-                    background: 'transparent', color: '#a1a1aa',
+                    background: 'transparent', color: '#9aa8bb',
                     fontSize: 12, cursor: 'pointer', textAlign: 'left',
                     fontFamily: 'inherit', transition: 'all 0.15s',
                   }}
@@ -186,7 +186,7 @@ export function IntegrationPicker({ onAdd }: { onAdd: (key: string) => void }) {
                   onMouseLeave={e => {
                     (e.currentTarget as HTMLElement).style.background = 'transparent'
                     ;(e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.06)'
-                    ;(e.currentTarget as HTMLElement).style.color = '#a1a1aa'
+                    ;(e.currentTarget as HTMLElement).style.color = '#9aa8bb'
                   }}
                 >
                   <span style={{ fontSize: 14 }}>{integration.icon}</span>

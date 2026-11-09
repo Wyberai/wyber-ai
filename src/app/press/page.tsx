@@ -113,7 +113,7 @@ export default function PressPage() {
           <p style={{ fontSize: 15, color: 'var(--text2)', marginBottom: 24, maxWidth: 480, marginInline: 'auto', lineHeight: 1.6 }}>
             Interviews, product briefings, logos, screenshots, or founder headshot — email us and we’ll respond within 24 hours.
           </p>
-          <a href="mailto:hello@wyberai.com" style={{ display: 'inline-block', padding: '13px 28px', borderRadius: 10, background: 'var(--sky)', color: '#fff', fontWeight: 700, fontSize: 15 }}>hello@wyberai.com</a>
+          <a href="mailto:hello@wyberai.com" style={{ display: 'inline-block', padding: '13px 28px', borderRadius: 10, background: 'var(--sky)', color: '#03111c', fontWeight: 700, fontSize: 15 }}>hello@wyberai.com</a>
         </div>
       </div>
 

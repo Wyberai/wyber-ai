@@ -128,7 +128,7 @@ export function PublishButton({ projectId, publishedUrl, onPublish, onUnpublish 
 
   return (
     <div>
-      <button onClick={() => publish()} disabled={loading} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', borderRadius: 9, background: 'var(--sky)', color: '#fff', fontWeight: 700, fontSize: 13, border: 'none', cursor: loading ? 'wait' : 'pointer', width: '100%', justifyContent: 'center', fontFamily: 'inherit' }}>
+      <button onClick={() => publish()} disabled={loading} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', borderRadius: 9, background: 'var(--sky)', color: '#03111c', fontWeight: 700, fontSize: 13, border: 'none', cursor: loading ? 'wait' : 'pointer', width: '100%', justifyContent: 'center', fontFamily: 'inherit' }}>
         {loading ? tc('publishing') : t('pbPublishToWebBtn')}
       </button>
       {error && <p style={{ color: '#EF4444', fontSize: 12, marginTop: 6 }}>{error}</p>}

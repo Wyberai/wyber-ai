@@ -39,7 +39,7 @@ export function LoopStopCard({
         <button
           onClick={() => onRetry(loopStop.retryPrompt)}
           title={t('fillsFreshApproachTooltip')}
-          style={{ fontSize: 12.5, fontWeight: 700, padding: '4px 10px', borderRadius: 6, border: 'none', background: 'var(--accent)', color: '#fff', cursor: 'pointer' }}
+          style={{ fontSize: 12.5, fontWeight: 700, padding: '4px 10px', borderRadius: 6, border: 'none', background: 'var(--accent)', color: '#03111c', cursor: 'pointer' }}
         >
           {t('tryDifferentApproach')}
         </button>

@@ -85,7 +85,7 @@ export default function AskClient() {
                     <div style={{ fontSize: 13.5 }}>{p.label}</div>
                     {p.state === 'done' || p.state === 'failed'
                       ? <div style={{ marginTop: 6, fontSize: 13, color: p.state === 'done' ? C.green : C.red }}>{p.result}</div>
-                      : <button onClick={() => confirm(i, k)} disabled={p.state === 'running'} style={{ marginTop: 8, padding: '7px 14px', borderRadius: 8, border: 'none', background: C.sky, color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', opacity: p.state === 'running' ? 0.6 : 1 }}>{p.state === 'running' ? 'Working…' : 'Confirm'}</button>}
+                      : <button onClick={() => confirm(i, k)} disabled={p.state === 'running'} style={{ marginTop: 8, padding: '7px 14px', borderRadius: 8, border: 'none', background: C.sky, color: '#03111c', fontWeight: 700, fontSize: 13, cursor: 'pointer', opacity: p.state === 'running' ? 0.6 : 1 }}>{p.state === 'running' ? 'Working…' : 'Confirm'}</button>}
                   </div>
                 ))}
               </div>
@@ -100,7 +100,7 @@ export default function AskClient() {
       <form onSubmit={e => { e.preventDefault(); send(text) }} style={{ display: 'flex', gap: 8, marginTop: 14, position: 'sticky', bottom: 0, background: C.bg, paddingTop: 8 }}>
         <input value={text} onChange={e => setText(e.target.value)} placeholder="Ask for any number or report…" maxLength={2000}
           style={{ flex: 1, padding: '13px 14px', fontSize: 15, borderRadius: 12, border: `1px solid ${C.border}`, background: C.card, color: C.text, fontFamily: 'inherit' }} />
-        <button type="submit" disabled={busy || !text.trim()} style={{ padding: '0 20px', borderRadius: 12, border: 'none', background: C.sky, color: '#fff', fontWeight: 700, fontSize: 15, cursor: 'pointer', opacity: busy || !text.trim() ? 0.5 : 1 }}>Ask</button>
+        <button type="submit" disabled={busy || !text.trim()} style={{ padding: '0 20px', borderRadius: 12, border: 'none', background: C.sky, color: '#03111c', fontWeight: 700, fontSize: 15, cursor: 'pointer', opacity: busy || !text.trim() ? 0.5 : 1 }}>Ask</button>
       </form>
     </div>
   )

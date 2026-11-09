@@ -55,7 +55,7 @@ export function FigmaImportPanel({ onImport }: Props) {
         )}
       </div>
 
-      <button onClick={importFigma} disabled={loading || !url.trim()} style={{ padding: '9px', borderRadius: 9, background: 'var(--sky)', color: '#fff', fontWeight: 700, fontSize: 13, border: 'none', cursor: loading ? 'wait' : 'pointer', fontFamily: 'inherit', opacity: !url.trim() ? 0.5 : 1 }}>
+      <button onClick={importFigma} disabled={loading || !url.trim()} style={{ padding: '9px', borderRadius: 9, background: 'var(--sky)', color: '#03111c', fontWeight: 700, fontSize: 13, border: 'none', cursor: loading ? 'wait' : 'pointer', fontFamily: 'inherit', opacity: !url.trim() ? 0.5 : 1 }}>
         {loading ? t('convertingDesign') : t('importFromFigma')}
       </button>
 

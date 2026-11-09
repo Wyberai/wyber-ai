@@ -24,7 +24,7 @@ const TAB_META: { id: Tab; labelKey: keyof typeof DASHBOARD_STRINGS['en']; color
     icon: <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>,
   },
   {
-    id: 'website', labelKey: 'tabWebsite', color: '#6366f1',
+    id: 'website', labelKey: 'tabWebsite', color: '#a5b4fc',
     icon: <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>,
   },
   {
@@ -437,7 +437,7 @@ export function ImportModal({ open, onClose }: Props) {
           <div style={{
             padding: '9px 13px', borderRadius: 8, marginBottom: 13,
             background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)',
-            fontSize: 12, color: '#d97706', lineHeight: 1.6,
+            fontSize: 12, color: '#fbbf24', lineHeight: 1.6,
           }}>
             {t('n8nExportNotePrefix')} <strong>File → Download</strong> {t('n8nExportNoteSuffix')}
           </div>

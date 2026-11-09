@@ -48,7 +48,7 @@ export function FileMentionDropdown({ query, files, onSelect, onClose }: Props) 
       left: 10,
       right: 10,
       marginBottom: 6,
-      background: 'var(--bg-elevated, #18181b)',
+      background: 'var(--bg-elevated, #111b28)',
       border: '1px solid var(--ide-border, rgba(255,255,255,0.1))',
       borderRadius: 10,
       boxShadow: '0 12px 32px rgba(0,0,0,0.4)',
@@ -57,7 +57,7 @@ export function FileMentionDropdown({ query, files, onSelect, onClose }: Props) 
       maxHeight: 240,
       overflowY: 'auto',
     }}>
-      <div style={{ padding: '6px 10px', fontSize: 10, color: 'var(--ide-text3, #71717a)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid var(--ide-border, rgba(255,255,255,0.06))' }}>
+      <div style={{ padding: '6px 10px', fontSize: 10, color: 'var(--ide-text3, #8797ab)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid var(--ide-border, rgba(255,255,255,0.06))' }}>
         {t('fileMentionHeader')}
       </div>
       {matches.map(path => {
@@ -77,7 +77,7 @@ export function FileMentionDropdown({ query, files, onSelect, onClose }: Props) 
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" strokeWidth="2" style={{ flexShrink: 0 }}><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
             <span style={{ fontWeight: 600 }}>{base}</span>
-            {dir && <span style={{ color: 'var(--ide-text3, #71717a)', fontSize: 11 }}>{dir}</span>}
+            {dir && <span style={{ color: 'var(--ide-text3, #8797ab)', fontSize: 11 }}>{dir}</span>}
           </button>
         );
       })}

@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 
-const s = { bg: '#0b0d12', card: '#111115', border: '#1e1e26', text: '#e4e4e7', muted: '#71717a', dim: '#3f3f46' }
+const s = { bg: '#05080d', card: '#0d141e', border: '#1b2a3b', text: '#e8eef7', muted: '#8797ab', dim: '#8797ab' }
 const SKY = '#0EA5E9', GREEN = '#22c55e', AMBER = '#f59e0b'
 
 interface HireRequest {

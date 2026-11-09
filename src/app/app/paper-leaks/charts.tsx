@@ -97,7 +97,7 @@ export function VerticalBarChart({ data, defaultColor, height = 132 }: { data: B
           const active = tip?.datum.key === d.key
           return (
             <div key={d.key} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end', gap: 6, minWidth: 0 }}>
-              <div style={{ fontSize: 10, fontFamily: 'var(--brand-mono)', color: active ? color : 'var(--brand-text-faint)', transition: 'color 0.15s' }}>{d.value}</div>
+              <div style={{ fontSize: 11, fontFamily: 'var(--brand-mono)', color: active ? color : 'var(--brand-text-faint)', transition: 'color 0.15s' }}>{d.value}</div>
               <div
                 role="img"
                 aria-label={`${d.label}: ${d.value}`}
@@ -113,7 +113,7 @@ export function VerticalBarChart({ data, defaultColor, height = 132 }: { data: B
                   boxShadow: active ? `0 0 12px ${color}` : 'none',
                 }}
               />
-              <div style={{ fontSize: 10, fontFamily: 'var(--brand-mono)', color: 'var(--brand-text-faint)' }}>{d.label}</div>
+              <div style={{ fontSize: 11, fontFamily: 'var(--brand-mono)', color: 'var(--brand-text-faint)' }}>{d.label}</div>
             </div>
           )
         })}
@@ -160,7 +160,7 @@ export function MosaicStrip({ data, defaultColor }: { data: BarDatum[]; defaultC
               {d.icon && <span aria-hidden style={{ fontSize: 13 }}>{d.icon}</span>}
               <div style={{ fontFamily: 'var(--brand-mono)', fontWeight: 700, fontSize: 15, color: '#fff', lineHeight: 1 }}>{d.value}</div>
               {showLabel && (
-                <div style={{ fontSize: 9.5, color: 'rgba(255,255,255,0.9)', textAlign: 'center', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', maxWidth: '100%' }}>{d.label}</div>
+                <div style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.9)', textAlign: 'center', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', maxWidth: '100%' }}>{d.label}</div>
               )}
             </div>
           )

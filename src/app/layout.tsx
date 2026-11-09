@@ -4,7 +4,9 @@ import "@/styles/brand.css";
 import "@/styles/editor.css";
 import "@/styles/signal.css";
 import "@/styles/motion.css";
+import "@/styles/tokens.css";
 import { ThemeProvider } from '@/lib/theme';
+import { MainLandmark } from '@/components/shared/MainLandmark';
 import { LocaleProvider } from '@/lib/i18n/LocaleProvider';
 import { DEFAULT_LOCALE, LOCALE_STORAGE_KEY } from '@/lib/i18n/locales';
 import { PlatformChrome } from '@/components/shared/PlatformChrome';
@@ -206,6 +208,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 renders NOTHING on white-label routes (/app/[slug]) so published
                 user apps stay 100% unbranded and untracked. */}
             <Suspense fallback={null}><PlatformChrome /></Suspense>
+            <MainLandmark />
           </LocaleProvider>
         </PostHogProvider>
         <Analytics />

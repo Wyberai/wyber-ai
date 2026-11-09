@@ -73,7 +73,7 @@ export function WidgetPicker() {
                   background: isOn ? color : 'transparent',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
-                  {isOn && <span style={{ color: '#fff', fontSize: 10, fontWeight: 800 }}>✓</span>}
+                  {isOn && <span style={{ color: '#03111c', fontSize: 12, fontWeight: 800 }}>✓</span>}
                 </div>
                 <div style={{ fontSize: 14, fontWeight: 700, color: s.text }}>{w.label}</div>
               </div>

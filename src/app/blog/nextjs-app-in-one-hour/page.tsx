@@ -17,7 +17,7 @@ export default function Post() {
       <div style={{ maxWidth: 720, margin: '0 auto', padding: 'clamp(40px,6vw,72px) clamp(16px,4vw,40px)' }}>
         <Link href="/blog" style={{ fontSize: 13, color: 'var(--text3)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 5, marginBottom: 32 }}>&larr; Back to blog</Link>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 20 }}>
-          <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, background: 'rgba(5,150,105,0.1)', color: 'var(--green)', fontWeight: 700, border: '1px solid rgba(5,150,105,0.2)' }}>Tutorial</span>
+          <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 20, background: 'rgba(5,150,105,0.1)', color: 'var(--green)', fontWeight: 700, border: '1px solid rgba(5,150,105,0.2)' }}>Tutorial</span>
           <span style={{ fontSize: 12, color: 'var(--text3)' }}>May 26, 2026 &middot; 5 min read</span>
         </div>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px,4vw,44px)', fontWeight: 700, letterSpacing: '-0.025em', color: 'var(--text)', lineHeight: 1.15, marginBottom: 32 }}>
@@ -48,7 +48,7 @@ export default function Post() {
           <p>Total: under an hour. From blank screen to live URL.</p>
           <div style={{ padding: '20px 24px', borderRadius: 12, background: 'var(--sky3)', border: '1px solid rgba(14,165,233,0.2)', marginTop: 24 }}>
             <p style={{ fontSize: 14, color: 'var(--text2)', margin: '0 0 14px' }}>Ready to try it? 30 free credits -- no card required.</p>
-            <Link href="/signup" style={{ fontSize: 13, padding: '8px 18px', borderRadius: 8, background: 'var(--sky)', color: '#fff', fontWeight: 700, textDecoration: 'none', display: 'inline-block' }}>Start building free &rarr;</Link>
+            <Link href="/signup" style={{ fontSize: 13, padding: '8px 18px', borderRadius: 8, background: 'var(--sky)', color: '#03111c', fontWeight: 700, textDecoration: 'none', display: 'inline-block' }}>Start building free &rarr;</Link>
           </div>
         </div>
       </div>

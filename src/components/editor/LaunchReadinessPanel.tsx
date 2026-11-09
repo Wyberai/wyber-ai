@@ -65,7 +65,7 @@ export function LaunchReadinessPanel({ projectId }: { projectId: string }) {
       </div>
 
       <button onClick={scan} disabled={scanning}
-        style={{ justifyContent: 'center', display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 8, border: 'none', background: '#0EA5E9', color: '#fff', fontSize: 13, fontWeight: 600, cursor: scanning ? 'default' : 'pointer', opacity: scanning ? 0.7 : 1 }}>
+        style={{ justifyContent: 'center', display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 8, border: 'none', background: '#0EA5E9', color: '#03111c', fontSize: 13, fontWeight: 600, cursor: scanning ? 'default' : 'pointer', opacity: scanning ? 0.7 : 1 }}>
         {scanning ? `⟳ ${t('checkingAppBtn')}` : `🚀 ${t('runLaunchScanBtn')}`}
       </button>
 

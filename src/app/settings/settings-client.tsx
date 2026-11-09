@@ -93,19 +93,19 @@ function CreditHistory() {
     <div style={{ marginTop: 20 }}>
       <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>{t('creditHistoryTitle')}</div>
       {loading ? (
-        <div style={{ fontSize: 12, color: '#52525b' }}>{tc('loading')}</div>
+        <div style={{ fontSize: 12, color: '#8797ab' }}>{tc('loading')}</div>
       ) : history.length === 0 ? (
-        <div style={{ fontSize: 12, color: '#52525b', padding: '16px 0' }}>{t('noCreditUsageYet')}</div>
+        <div style={{ fontSize: 12, color: '#8797ab', padding: '16px 0' }}>{t('noCreditUsageYet')}</div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           {history.slice(0, 20).map((h, i) => (
-            <div key={h.id || i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: '#111113', borderRadius: 8, fontSize: 12 }}>
+            <div key={h.id || i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: '#0d141e', borderRadius: 8, fontSize: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span>{reasonLabels[h.reason] || h.reason}</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <span style={{ color: '#ef4444', fontWeight: 600 }}>-{h.amount}</span>
-                <span style={{ color: '#52525b', fontSize: 10 }}>{new Date(h.created_at).toLocaleDateString()}</span>
+                <span style={{ color: '#8797ab', fontSize: 11 }}>{new Date(h.created_at).toLocaleDateString()}</span>
               </div>
             </div>
           ))}
@@ -207,22 +207,22 @@ function IntegrationsTab() {
 
   const S = {
     row: { display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 10, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', marginBottom: 6 } as const,
-    badge: (active: boolean) => ({ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: active ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.04)', color: active ? '#22c55e' : '#71717a', border: `1px solid ${active ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.06)'}` }) as const,
+    badge: (active: boolean) => ({ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: active ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.04)', color: active ? '#22c55e' : '#8797ab', border: `1px solid ${active ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.06)'}` }) as const,
     btnSm: (danger?: boolean) => ({ padding: '5px 12px', borderRadius: 7, border: `1px solid ${danger ? 'rgba(239,68,68,0.3)' : 'rgba(14,165,233,0.3)'}`, background: danger ? 'rgba(239,68,68,0.05)' : 'rgba(14,165,233,0.08)', color: danger ? '#ef4444' : '#0EA5E9', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }) as const,
   }
 
   return (
     <>
       <h1 style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', margin: '0 0 4px' }}>{t('integrationsTitle')}</h1>
-      <p style={{ fontSize: 13, color: '#71717a', marginBottom: 24 }}>{t('integrationsSub')}</p>
+      <p style={{ fontSize: 13, color: '#8797ab', marginBottom: 24 }}>{t('integrationsSub')}</p>
 
       {/* Connected accounts */}
       <div style={{ marginBottom: 28 }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: '#52525b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>{t('connectedCountLabel')} ({connections.filter(c => c.status === 'ACTIVE').length})</div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: '#8797ab', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>{t('connectedCountLabel')} ({connections.filter(c => c.status === 'ACTIVE').length})</div>
         {loading ? (
-          <div style={{ fontSize: 13, color: '#52525b' }}>{tc('loading')}</div>
+          <div style={{ fontSize: 13, color: '#8797ab' }}>{tc('loading')}</div>
         ) : connections.length === 0 ? (
-          <div style={{ fontSize: 13, color: '#52525b', padding: '20px', textAlign: 'center', border: '1px dashed rgba(255,255,255,0.08)', borderRadius: 10 }}>
+          <div style={{ fontSize: 13, color: '#8797ab', padding: '20px', textAlign: 'center', border: '1px dashed rgba(255,255,255,0.08)', borderRadius: 10 }}>
             {t('noIntegrationsYet')}
           </div>
         ) : (
@@ -231,7 +231,7 @@ function IntegrationsTab() {
               <img src={`https://img.logo.dev/${c.toolkit.replace('google', 'google')}.com?token=pk_X8nwEg6fR3yDYrGEOFKpkA`} alt="" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} style={{ width: 24, height: 24, borderRadius: 5, objectFit: 'contain' }} />
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: '#fafafa' }}>{DISPLAY_NAMES[c.toolkit] ?? c.toolkit}</div>
-                <div style={{ fontSize: 11, color: '#52525b' }}>{c.authScheme} · Connected {new Date(c.connectedAt).toLocaleDateString()}</div>
+                <div style={{ fontSize: 11, color: '#8797ab' }}>{c.authScheme} · Connected {new Date(c.connectedAt).toLocaleDateString()}</div>
               </div>
               <span style={S.badge(c.status === 'ACTIVE')}>{c.status}</span>
               <button
@@ -256,14 +256,14 @@ function IntegrationsTab() {
 
       {searchQuery.trim() ? (
         <div>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#52525b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#8797ab', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
             {searching ? t('searchingLabel') : `${t('resultsCountLabel')} (${searchResults.length})`}
           </div>
           {searchResults.map(tk => (
             <div key={tk.slug} style={S.row}>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: '#fafafa' }}>{tk.name}</div>
-                <div style={{ fontSize: 11, color: '#52525b' }}>{connectedSlugs.has(tk.slug) ? `✓ ${t('connectedCountLabel')}` : t('notConnectedLabel')}</div>
+                <div style={{ fontSize: 11, color: '#8797ab' }}>{connectedSlugs.has(tk.slug) ? `✓ ${t('connectedCountLabel')}` : t('notConnectedLabel')}</div>
               </div>
               {connectedSlugs.has(tk.slug)
                 ? <span style={S.badge(true)}>ACTIVE</span>
@@ -271,16 +271,16 @@ function IntegrationsTab() {
               }
             </div>
           ))}
-          {!searching && searchResults.length === 0 && <div style={{ fontSize: 13, color: '#52525b', textAlign: 'center', padding: 20 }}>{t('noResultsForPrefix')} "{searchQuery}"</div>}
+          {!searching && searchResults.length === 0 && <div style={{ fontSize: 13, color: '#8797ab', textAlign: 'center', padding: 20 }}>{t('noResultsForPrefix')} "{searchQuery}"</div>}
         </div>
       ) : (
         <div>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#52525b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>{t('popularIntegrationsLabel')}</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#8797ab', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>{t('popularIntegrationsLabel')}</div>
           {suggestedUnconnected.map(slug => (
             <div key={slug} style={S.row}>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: '#fafafa' }}>{DISPLAY_NAMES[slug] ?? slug}</div>
-                <div style={{ fontSize: 11, color: '#52525b' }}>{t('notConnectedLabel')}</div>
+                <div style={{ fontSize: 11, color: '#8797ab' }}>{t('notConnectedLabel')}</div>
               </div>
               <button
                 onClick={() => handleConnect(slug)}
@@ -397,21 +397,21 @@ export default function SettingsPage({ isIndia }: { isIndia?: boolean }) {
   };
 
   const S = {
-    page: { minHeight: '100vh', background: '#09090b', color: '#fafafa', fontFamily: 'var(--font-display)', display: 'flex' as const },
+    page: { minHeight: '100vh', background: '#05080d', color: '#fafafa', fontFamily: 'var(--font-display)', display: 'flex' as const },
     sidebar: { width: 220, borderRight: '1px solid rgba(255,255,255,0.07)', padding: '24px 12px', flexShrink: 0 as const, display: 'flex' as const, flexDirection: 'column' as const },
     main: { flex: 1, padding: '32px 48px', maxWidth: 680 },
-    tabBtn: (active: boolean) => ({ display: 'flex' as const, alignItems: 'center' as const, gap: 10, width: '100%', padding: '9px 12px', borderRadius: 8, border: 'none', background: active ? 'rgba(14,165,233,0.1)' : 'transparent', color: active ? '#0EA5E9' : '#a1a1aa', fontSize: 13, fontWeight: active ? 600 : 400, cursor: 'pointer', textAlign: 'left' as const, transition: 'all 0.15s', fontFamily: 'inherit', marginBottom: 2 }),
-    card: { background: '#111113', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: 20, marginBottom: 16 },
-    label: { fontSize: 11, fontWeight: 700, color: '#52525b', textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: 6, display: 'block' as const },
-    input: { width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: '#18181b', color: '#fafafa', fontSize: 14, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' as const },
-    btn: (color = '#0EA5E9') => ({ padding: '9px 20px', borderRadius: 8, border: 'none', background: color, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', transition: 'opacity 0.15s' }),
-    ghost: { padding: '9px 20px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#a1a1aa', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' },
+    tabBtn: (active: boolean) => ({ display: 'flex' as const, alignItems: 'center' as const, gap: 10, width: '100%', padding: '9px 12px', borderRadius: 8, border: 'none', background: active ? 'rgba(14,165,233,0.1)' : 'transparent', color: active ? '#0EA5E9' : '#9aa8bb', fontSize: 13, fontWeight: active ? 600 : 400, cursor: 'pointer', textAlign: 'left' as const, transition: 'all 0.15s', fontFamily: 'inherit', marginBottom: 2 }),
+    card: { background: '#0d141e', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: 20, marginBottom: 16 },
+    label: { fontSize: 11, fontWeight: 700, color: '#8797ab', textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: 6, display: 'block' as const },
+    input: { width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: '#111b28', color: '#fafafa', fontSize: 14, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' as const },
+    btn: (color = '#0EA5E9') => ({ padding: '9px 20px', borderRadius: 8, border: 'none', background: color, color: '#03111c', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', transition: 'opacity 0.15s' }),
+    ghost: { padding: '9px 20px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#9aa8bb', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' },
     h2: { fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 4 },
-    sub: { fontSize: 13, color: '#71717a', marginBottom: 24, lineHeight: 1.5 },
+    sub: { fontSize: 13, color: '#8797ab', marginBottom: 24, lineHeight: 1.5 },
     row: { display: 'flex' as const, alignItems: 'center' as const, justifyContent: 'space-between' as const },
   };
 
-  if (loading) return <div style={{ ...S.page, alignItems: 'center', justifyContent: 'center', fontSize: 14, color: '#52525b' }}>{tc('loading')}</div>;
+  if (loading) return <div style={{ ...S.page, alignItems: 'center', justifyContent: 'center', fontSize: 14, color: '#8797ab' }}>{tc('loading')}</div>;
 
   return (
     <div style={S.page}>
@@ -420,9 +420,9 @@ export default function SettingsPage({ isIndia }: { isIndia?: boolean }) {
         <a href="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 32, textDecoration: 'none', color: 'inherit' }}>
           <WyberLogo markSize={24} wordmarkSize={14} />
         </a>
-        <div style={{ fontSize: 10, fontWeight: 700, color: '#52525b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8, padding: '0 12px' }}>{tc('settings')}</div>
+        <div style={{ fontSize: 11, fontWeight: 700, color: '#8797ab', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8, padding: '0 12px' }}>{tc('settings')}</div>
         {TAB_META.map(tm => (
-          <button key={tm.id} onClick={() => setTab(tm.id)} style={{ ...S.tabBtn(tab === tm.id), color: tm.id === 'danger' ? (tab === tm.id ? '#ef4444' : '#71717a') : undefined }}>
+          <button key={tm.id} onClick={() => setTab(tm.id)} style={{ ...S.tabBtn(tab === tm.id), color: tm.id === 'danger' ? (tab === tm.id ? '#ef4444' : '#8797ab') : undefined }}>
             <span style={{ fontSize: 14 }}>{tm.icon}</span>{t(tm.labelKey)}
           </button>
         ))}
@@ -448,7 +448,7 @@ export default function SettingsPage({ isIndia }: { isIndia?: boolean }) {
               </div>
               <div>
                 <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 2 }}>{name || t('profileNameFallback')}</div>
-                <div style={{ fontSize: 13, color: '#71717a' }}>{profile?.email}</div>
+                <div style={{ fontSize: 13, color: '#8797ab' }}>{profile?.email}</div>
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 6, fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: 'rgba(14,165,233,0.1)', color: '#0EA5E9' }}>
                   {(profile?.plan || 'free').toUpperCase()} {t('planWord')} · {profile?.credits ?? 0} {t('creditsLeftSuffix')}
                 </div>
@@ -474,7 +474,7 @@ export default function SettingsPage({ isIndia }: { isIndia?: boolean }) {
             <div style={{ ...S.row, marginBottom: 0 }}>
               <div>
                 <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 2 }}>{t('appearanceTitle')}</div>
-                <div style={{ fontSize: 12, color: '#71717a' }}>{t('appearanceDesc')}</div>
+                <div style={{ fontSize: 12, color: '#8797ab' }}>{t('appearanceDesc')}</div>
               </div>
               <div style={{ display: 'flex', gap: 6 }}>
                 <span style={{ padding: '5px 12px', borderRadius: 7, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.08)', color: '#fafafa', fontSize: 12, fontFamily: 'inherit' }}>{t('appearanceDarkPill')}</span>
@@ -489,12 +489,12 @@ export default function SettingsPage({ isIndia }: { isIndia?: boolean }) {
               <div style={{ ...S.row, marginBottom: 0 }}>
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 2 }}>{t('languageTitle')}</div>
-                  <div style={{ fontSize: 12, color: '#71717a' }}>{t('languageDesc')}</div>
+                  <div style={{ fontSize: 12, color: '#8797ab' }}>{t('languageDesc')}</div>
                 </div>
                 <select
                   value={locale}
                   onChange={e => changeLocale(e.target.value as Locale)}
-                  style={{ padding: '7px 10px', borderRadius: 7, border: '1px solid rgba(255,255,255,0.1)', background: '#18181b', color: '#fafafa', fontSize: 13, fontFamily: 'inherit', outline: 'none' }}
+                  style={{ padding: '7px 10px', borderRadius: 7, border: '1px solid rgba(255,255,255,0.1)', background: '#111b28', color: '#fafafa', fontSize: 13, fontFamily: 'inherit', outline: 'none' }}
                 >
                   {LOCALES.map(l => <option key={l} value={l}>{LOCALE_LABEL[l]}</option>)}
                 </select>
@@ -515,36 +515,36 @@ export default function SettingsPage({ isIndia }: { isIndia?: boolean }) {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
                 <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800 }}>{plans.find(p => p.id === (profile?.plan || 'free'))?.name || 'Free'}</div>
-                <div style={{ fontSize: 13, color: '#71717a', marginTop: 2 }}>
+                <div style={{ fontSize: 13, color: '#8797ab', marginTop: 2 }}>
                   <span style={{ color: '#0EA5E9', fontWeight: 700 }}>{profile?.credits ?? 0} {t('creditsWord')}</span> {t('remainingThisMonth')}
                 </div>
               </div>
-              <a href="/pricing" style={{ padding: '9px 20px', borderRadius: 8, border: 'none', background: '#0EA5E9', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', textDecoration: 'none' }}>{t('upgradePlanBtn')}</a>
+              <a href="/pricing" style={{ padding: '9px 20px', borderRadius: 8, border: 'none', background: '#0EA5E9', color: '#03111c', fontSize: 13, fontWeight: 700, cursor: 'pointer', textDecoration: 'none' }}>{t('upgradePlanBtn')}</a>
             </div>
             {/* Credit bar */}
             <div style={{ marginTop: 14 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#52525b', marginBottom: 5 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#8797ab', marginBottom: 5 }}>
                 <span>{t('creditsUsedThisMonth')}</span>
                 <span>{Math.max(0, (plans.find(p => p.id === (profile?.plan || 'free'))?.credits || 50) - (profile?.credits || 0))} / {plans.find(p => p.id === (profile?.plan || 'free'))?.credits || 50}</span>
               </div>
               <div style={{ height: 6, borderRadius: 9999, background: 'rgba(255,255,255,0.06)' }}>
                 <div style={{ height: '100%', borderRadius: 9999, background: '#0EA5E9', width: Math.min(100, ((plans.find(p => p.id === (profile?.plan || 'free'))?.credits || 50) - (profile?.credits || 0)) / (plans.find(p => p.id === (profile?.plan || 'free'))?.credits || 50) * 100) + '%', transition: 'width 0.5s ease' }} />
               </div>
-              <div style={{ fontSize: 11, color: '#52525b', marginTop: 4 }}>{t('resetsOnFirst')}</div>
+              <div style={{ fontSize: 11, color: '#8797ab', marginTop: 4 }}>{t('resetsOnFirst')}</div>
             </div>
           </div>
 
           {/* Plan cards */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
             {plans.map(p => (
-              <div key={p.id} style={{ padding: 16, borderRadius: 10, background: '#111113', border: `1px solid ${p.id === (profile?.plan || 'free') ? p.color + '50' : 'rgba(255,255,255,0.07)'}` }}>
+              <div key={p.id} style={{ padding: 16, borderRadius: 10, background: '#0d141e', border: `1px solid ${p.id === (profile?.plan || 'free') ? p.color + '50' : 'rgba(255,255,255,0.07)'}` }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: p.color, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
                   {p.id === (profile?.plan || 'free') && '✓ '}{p.name}
                 </div>
-                <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, marginBottom: 8 }}>{p.price}<span style={{ fontSize: 11, fontWeight: 400, color: '#52525b' }}>/mo</span></div>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, marginBottom: 8 }}>{p.price}<span style={{ fontSize: 11, fontWeight: 400, color: '#8797ab' }}>/mo</span></div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <div style={{ fontSize: 11, color: '#71717a', display: 'flex', gap: 6 }}><span style={{ color: p.color }}>✓</span>{p.creditsLine}</div>
-                  {p.extraKeys.map(k => <div key={k} style={{ fontSize: 11, color: '#71717a', display: 'flex', gap: 6 }}><span style={{ color: p.color }}>✓</span>{t(k)}</div>)}
+                  <div style={{ fontSize: 11, color: '#8797ab', display: 'flex', gap: 6 }}><span style={{ color: p.color }}>✓</span>{p.creditsLine}</div>
+                  {p.extraKeys.map(k => <div key={k} style={{ fontSize: 11, color: '#8797ab', display: 'flex', gap: 6 }}><span style={{ color: p.color }}>✓</span>{t(k)}</div>)}
                 </div>
                 {p.id !== (profile?.plan || 'free') && (
                   <a href="/pricing" style={{ display: 'block', marginTop: 10, padding: '6px', borderRadius: 7, border: `1px solid ${p.color}40`, background: p.color + '12', color: p.color, fontSize: 12, fontWeight: 700, textAlign: 'center', textDecoration: 'none' }}>{t('switchToPrefix')} {p.name}</a>
@@ -557,7 +557,7 @@ export default function SettingsPage({ isIndia }: { isIndia?: boolean }) {
             <div style={{ ...S.row }}>
               <div>
                 <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 2 }}>{t('paymentMethodTitle')}</div>
-                <div style={{ fontSize: 12, color: '#71717a' }}>{t('paymentMethodDesc')}</div>
+                <div style={{ fontSize: 12, color: '#8797ab' }}>{t('paymentMethodDesc')}</div>
               </div>
               <button style={S.ghost}>{t('manageBillingBtn')}</button>
             </div>
@@ -592,18 +592,18 @@ export default function SettingsPage({ isIndia }: { isIndia?: boolean }) {
             <p style={S.sub}>{t('modelsSub')}</p>
 
             {/* Balance card */}
-            <div style={{ background: '#111113', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '20px 24px', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 24 }}>
+            <div style={{ background: '#0d141e', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '20px 24px', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 24 }}>
               <div>
-                <div style={{ fontSize: 11, color: '#52525b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>{t('currentBalanceLabel')}</div>
+                <div style={{ fontSize: 11, color: '#8797ab', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>{t('currentBalanceLabel')}</div>
                 <div style={{ fontSize: 36, fontWeight: 800, color: balance < 10 ? '#ef4444' : '#0EA5E9', letterSpacing: '-0.03em', lineHeight: 1 }}>{balance}</div>
-                <div style={{ fontSize: 12, color: '#71717a', marginTop: 4 }}>{t('creditsRemainingWord')}</div>
+                <div style={{ fontSize: 12, color: '#8797ab', marginTop: 4 }}>{t('creditsRemainingWord')}</div>
               </div>
               <div style={{ flex: 1, borderLeft: '1px solid rgba(255,255,255,0.06)', paddingLeft: 24 }}>
-                <div style={{ fontSize: 12, color: '#71717a', marginBottom: 6 }}>{t('recentSpendLabel')}</div>
+                <div style={{ fontSize: 12, color: '#8797ab', marginBottom: 6 }}>{t('recentSpendLabel')}</div>
                 {recentSpend.length === 0
-                  ? <div style={{ fontSize: 12, color: '#3f3f46' }}>{t('noRecentActivity')}</div>
+                  ? <div style={{ fontSize: 12, color: '#8797ab' }}>{t('noRecentActivity')}</div>
                   : recentSpend.map((row, i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#a1a1aa', marginBottom: 3 }}>
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#9aa8bb', marginBottom: 3 }}>
                       <span style={{ textTransform: 'capitalize' }}>{row.reason.replace(/-/g, ' ')}</span>
                       <span style={{ color: '#ef4444', fontWeight: 600 }}>−{row.amount} cr</span>
                     </div>
@@ -611,33 +611,33 @@ export default function SettingsPage({ isIndia }: { isIndia?: boolean }) {
                 }
               </div>
               <div style={{ borderLeft: '1px solid rgba(255,255,255,0.06)', paddingLeft: 24 }}>
-                <div style={{ fontSize: 12, color: '#71717a', marginBottom: 6 }}>{t('planLabelWord')}</div>
+                <div style={{ fontSize: 12, color: '#8797ab', marginBottom: 6 }}>{t('planLabelWord')}</div>
                 <div style={{ fontSize: 14, fontWeight: 700, color: '#fafafa', textTransform: 'capitalize' }}>{plan}</div>
                 <a href="/pricing" style={{ fontSize: 11, color: '#0EA5E9', display: 'block', marginTop: 4, textDecoration: 'none' }}>{t('upgradeArrow')}</a>
               </div>
             </div>
 
             {/* Model cards */}
-            <div style={{ fontSize: 13, fontWeight: 600, color: '#a1a1aa', marginBottom: 12 }}>{t('availableModelsLabel')}</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#9aa8bb', marginBottom: 12 }}>{t('availableModelsLabel')}</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 10, marginBottom: 28 }}>
               {tiers.map(tier => {
                 const meta = MODEL_META[tier]
                 const allowed = tierAllowedForPlan(tier, plan)
                 const bars = POWER_BARS[tier]
                 return (
-                  <div key={tier} style={{ background: '#111113', border: `1px solid ${allowed ? 'rgba(14,165,233,0.2)' : 'rgba(255,255,255,0.06)'}`, borderRadius: 12, padding: '16px', opacity: allowed ? 1 : 0.5 }}>
+                  <div key={tier} style={{ background: '#0d141e', border: `1px solid ${allowed ? 'rgba(14,165,233,0.2)' : 'rgba(255,255,255,0.06)'}`, borderRadius: 12, padding: '16px', opacity: allowed ? 1 : 0.5 }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: allowed ? '#fafafa' : '#71717a' }}>{meta.label}</div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: allowed ? '#fafafa' : '#8797ab' }}>{meta.label}</div>
                       <div style={{ display: 'flex', gap: 3 }}>
                         {[1,2,3,4].map(b => (
-                          <div key={b} style={{ width: 5, height: 14, borderRadius: 2, background: b <= bars ? (allowed ? '#0EA5E9' : '#3f3f46') : 'rgba(255,255,255,0.06)' }} />
+                          <div key={b} style={{ width: 5, height: 14, borderRadius: 2, background: b <= bars ? (allowed ? '#0EA5E9' : '#8797ab') : 'rgba(255,255,255,0.06)' }} />
                         ))}
                       </div>
                     </div>
-                    <div style={{ fontSize: 11, color: '#71717a', marginBottom: 10, lineHeight: 1.4 }}>{meta.tagline}</div>
-                    <div style={{ fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 8, display: 'inline-block',
+                    <div style={{ fontSize: 11, color: '#8797ab', marginBottom: 10, lineHeight: 1.4 }}>{meta.tagline}</div>
+                    <div style={{ fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 8, display: 'inline-block',
                       background: allowed ? 'rgba(14,165,233,0.1)' : 'rgba(255,255,255,0.04)',
-                      color: allowed ? '#0EA5E9' : '#52525b',
+                      color: allowed ? '#0EA5E9' : '#8797ab',
                       border: `1px solid ${allowed ? 'rgba(14,165,233,0.2)' : 'rgba(255,255,255,0.06)'}` }}>
                       {allowed ? `×${MODEL_MULTIPLIERS[tier]} ${t('multiplierWord')}` : `${meta.minPlan} ${t('planRequiredSuffix')}`}
                     </div>
@@ -647,10 +647,10 @@ export default function SettingsPage({ isIndia }: { isIndia?: boolean }) {
             </div>
 
             {/* Credit cost table */}
-            <div style={{ fontSize: 13, fontWeight: 600, color: '#a1a1aa', marginBottom: 12 }}>{t('estimatedCreditCostsLabel')}</div>
-            <div style={{ background: '#111113', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, overflow: 'hidden', marginBottom: 24 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#9aa8bb', marginBottom: 12 }}>{t('estimatedCreditCostsLabel')}</div>
+            <div style={{ background: '#0d141e', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, overflow: 'hidden', marginBottom: 24 }}>
               {/* Header */}
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr', padding: '10px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)', fontSize: 11, color: '#52525b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr', padding: '10px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)', fontSize: 11, color: '#8797ab', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 <div>{t('actionColumnHeader')}</div>
                 <div style={{ textAlign: 'center' }}>{t('tierFast')}</div>
                 <div style={{ textAlign: 'center' }}>{t('tierStandard')}</div>
@@ -659,9 +659,9 @@ export default function SettingsPage({ isIndia }: { isIndia?: boolean }) {
               </div>
               {ACTION_ROWS.map((row, i) => (
                 <div key={i} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr', padding: '10px 16px', borderBottom: i < ACTION_ROWS.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none', fontSize: 12 }}>
-                  <div style={{ color: '#a1a1aa' }}>{t(row.labelKey)}</div>
+                  <div style={{ color: '#9aa8bb' }}>{t(row.labelKey)}</div>
                   {tiers.map(tier => (
-                    <div key={tier} style={{ textAlign: 'center', color: tierAllowedForPlan(tier, plan) ? '#fafafa' : '#3f3f46', fontWeight: 500 }}>
+                    <div key={tier} style={{ textAlign: 'center', color: tierAllowedForPlan(tier, plan) ? '#fafafa' : '#8797ab', fontWeight: 500 }}>
                       {estimateCost(tier, row.hint)} cr
                     </div>
                   ))}
@@ -669,7 +669,7 @@ export default function SettingsPage({ isIndia }: { isIndia?: boolean }) {
               ))}
             </div>
 
-            <div style={{ fontSize: 12, color: '#52525b' }}>
+            <div style={{ fontSize: 12, color: '#8797ab' }}>
               {t('creditsFootnote')}
             </div>
           </>
@@ -683,7 +683,7 @@ export default function SettingsPage({ isIndia }: { isIndia?: boolean }) {
           <div style={S.card}>
             <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>{t('yourApiKeyLabel')}</div>
             <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-              <div style={{ flex: 1, padding: '9px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: '#18181b', fontSize: 13, fontFamily: 'monospace', color: '#0EA5E9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <div style={{ flex: 1, padding: '9px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: '#111b28', fontSize: 13, fontFamily: 'monospace', color: '#0EA5E9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {showKey ? apiKey : '•'.repeat(32)}
               </div>
               <button onClick={() => setShowKey(v => !v)} style={S.ghost}>{showKey ? t('hideLabel') : t('showLabel')}</button>
@@ -699,12 +699,12 @@ export default function SettingsPage({ isIndia }: { isIndia?: boolean }) {
 
           <div style={S.card}>
             <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>{t('usageThisMonthTitle')}</div>
-            <div style={{ fontSize: 12, color: '#71717a', marginBottom: 12 }}>{t('usageThisMonthDesc')}</div>
+            <div style={{ fontSize: 12, color: '#8797ab', marginBottom: 12 }}>{t('usageThisMonthDesc')}</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
               {[[t('apiCallsLabel'), '0'], [t('creditsUsedLabel'), '0'], [t('errorsLabel'), '0']].map(([l, v]) => (
-                <div key={l} style={{ padding: '12px', background: '#18181b', borderRadius: 8, textAlign: 'center' }}>
+                <div key={l} style={{ padding: '12px', background: '#111b28', borderRadius: 8, textAlign: 'center' }}>
                   <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700 }}>{v}</div>
-                  <div style={{ fontSize: 11, color: '#52525b', marginTop: 2 }}>{l}</div>
+                  <div style={{ fontSize: 11, color: '#8797ab', marginTop: 2 }}>{l}</div>
                 </div>
               ))}
             </div>
@@ -718,12 +718,12 @@ export default function SettingsPage({ isIndia }: { isIndia?: boolean }) {
 
           <div style={S.card}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: githubConnected ? 16 : 0 }}>
-              <div style={{ width: 44, height: 44, borderRadius: 10, background: '#18181b', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>⌥</div>
+              <div style={{ width: 44, height: 44, borderRadius: 10, background: '#111b28', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>⌥</div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 2 }}>
                   {githubConnected ? t('githubConnectedTitle') : t('githubConnectTitle')}
                 </div>
-                <div style={{ fontSize: 12, color: '#71717a' }}>
+                <div style={{ fontSize: 12, color: '#8797ab' }}>
                   {githubConnected ? t('githubConnectedDesc') : t('githubNotConnectedDesc')}
                 </div>
               </div>
@@ -743,7 +743,7 @@ export default function SettingsPage({ isIndia }: { isIndia?: boolean }) {
             <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10 }}>{t('githubSyncFeaturesTitle')}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {([t('githubFeature1'), t('githubFeature2'), t('githubFeature3'), t('githubFeature4')]).map(f => (
-                <div key={f} style={{ fontSize: 13, color: '#a1a1aa', display: 'flex', gap: 8 }}><span style={{ color: '#0EA5E9' }}>✓</span>{f}</div>
+                <div key={f} style={{ fontSize: 13, color: '#9aa8bb', display: 'flex', gap: 8 }}><span style={{ color: '#0EA5E9' }}>✓</span>{f}</div>
               ))}
             </div>
           </div>
@@ -763,11 +763,11 @@ export default function SettingsPage({ isIndia }: { isIndia?: boolean }) {
               <div key={id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 2 }}>{label}</div>
-                  <div style={{ fontSize: 12, color: '#71717a' }}>{desc}</div>
+                  <div style={{ fontSize: 12, color: '#8797ab' }}>{desc}</div>
                 </div>
                 <button
                   onClick={() => setNotifications(n => ({ ...n, [id]: !n[id as keyof typeof n] }))}
-                  style={{ width: 44, height: 24, borderRadius: 12, border: 'none', background: notifications[id as keyof typeof notifications] ? '#0EA5E9' : '#27272a', cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}
+                  style={{ width: 44, height: 24, borderRadius: 12, border: 'none', background: notifications[id as keyof typeof notifications] ? '#0EA5E9' : '#162231', cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}
                 >
                   <div style={{ position: 'absolute', top: 2, left: notifications[id as keyof typeof notifications] ? 22 : 2, width: 20, height: 20, borderRadius: '50%', background: '#fff', transition: 'left 0.2s' }} />
                 </button>
@@ -783,7 +783,7 @@ export default function SettingsPage({ isIndia }: { isIndia?: boolean }) {
 
           {/* Add secret form */}
           <div style={S.card}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#e4e4e7', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#e8eef7', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
               {t('addSecretTitle')}
             </div>
@@ -823,18 +823,18 @@ export default function SettingsPage({ isIndia }: { isIndia?: boolean }) {
 
           {/* Secrets list */}
           <div style={S.card}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#e4e4e7', marginBottom: 14 }}>
-              {t('storedSecretsTitle')} {secretsLoaded && <span style={{ fontSize: 11, fontWeight: 400, color: '#52525b', marginLeft: 6 }}>({secrets.length})</span>}
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#e8eef7', marginBottom: 14 }}>
+              {t('storedSecretsTitle')} {secretsLoaded && <span style={{ fontSize: 11, fontWeight: 400, color: '#8797ab', marginLeft: 6 }}>({secrets.length})</span>}
             </div>
 
             {!secretsLoaded && (
-              <div style={{ fontSize: 13, color: '#52525b', padding: '8px 0' }}>{tc('loading')}</div>
+              <div style={{ fontSize: 13, color: '#8797ab', padding: '8px 0' }}>{tc('loading')}</div>
             )}
 
             {secretsLoaded && secrets.length === 0 && (
               <div style={{ padding: '20px 0', textAlign: 'center' }}>
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block', margin: '0 auto 10px' }}><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                <div style={{ fontSize: 13, color: '#52525b' }}>{t('noSecretsYet')}</div>
+                <div style={{ fontSize: 13, color: '#8797ab' }}>{t('noSecretsYet')}</div>
               </div>
             )}
 
@@ -842,10 +842,10 @@ export default function SettingsPage({ isIndia }: { isIndia?: boolean }) {
               <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#e4e4e7', fontFamily: 'monospace' }}>{s.name}</div>
-                  <div style={{ fontSize: 11, color: '#52525b', fontFamily: 'monospace', marginTop: 1 }}>{s.preview}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#e8eef7', fontFamily: 'monospace' }}>{s.name}</div>
+                  <div style={{ fontSize: 11, color: '#8797ab', fontFamily: 'monospace', marginTop: 1 }}>{s.preview}</div>
                 </div>
-                <div style={{ fontSize: 11, color: '#3f3f46', flexShrink: 0 }}>
+                <div style={{ fontSize: 11, color: '#8797ab', flexShrink: 0 }}>
                   {new Date(s.created_at).toLocaleDateString()}
                 </div>
                 <button
@@ -858,8 +858,8 @@ export default function SettingsPage({ isIndia }: { isIndia?: boolean }) {
             ))}
           </div>
 
-          <div style={{ padding: '12px 14px', borderRadius: 8, background: 'rgba(14,165,233,0.04)', border: '1px solid rgba(14,165,233,0.12)', fontSize: 12, color: '#52525b', lineHeight: 1.6 }}>
-            <span style={{ color: '#0EA5E9', fontWeight: 700 }}>{t('secretsHowItWorksLabel')}</span> {t('secretsHowItWorksDesc')} <code style={{ fontFamily: 'monospace', color: '#a1a1aa' }}>getDecryptedSecret(userId, name)</code>.
+          <div style={{ padding: '12px 14px', borderRadius: 8, background: 'rgba(14,165,233,0.04)', border: '1px solid rgba(14,165,233,0.12)', fontSize: 12, color: '#8797ab', lineHeight: 1.6 }}>
+            <span style={{ color: '#0EA5E9', fontWeight: 700 }}>{t('secretsHowItWorksLabel')}</span> {t('secretsHowItWorksDesc')} <code style={{ fontFamily: 'monospace', color: '#9aa8bb' }}>getDecryptedSecret(userId, name)</code>.
           </div>
         </>}
 
@@ -876,13 +876,13 @@ export default function SettingsPage({ isIndia }: { isIndia?: boolean }) {
 
           <div style={{ ...S.card, border: '1px solid rgba(239,68,68,0.2)', background: 'rgba(239,68,68,0.03)' }}>
             <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>{t('deleteAllProjectsTitle')}</div>
-            <div style={{ fontSize: 13, color: '#71717a', marginBottom: 14 }}>{t('deleteAllProjectsDesc')}</div>
+            <div style={{ fontSize: 13, color: '#8797ab', marginBottom: 14 }}>{t('deleteAllProjectsDesc')}</div>
             <button style={{ ...S.btn('#ef4444'), fontSize: 12 }}>{t('deleteAllProjectsBtn')}</button>
           </div>
 
           <div style={{ ...S.card, border: '1px solid rgba(239,68,68,0.2)', background: 'rgba(239,68,68,0.03)' }}>
             <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>{t('deleteAccountTitle')}</div>
-            <div style={{ fontSize: 13, color: '#71717a', marginBottom: 14 }}>{t('deleteAccountDesc')}</div>
+            <div style={{ fontSize: 13, color: '#8797ab', marginBottom: 14 }}>{t('deleteAccountDesc')}</div>
             <label style={S.label}>{t('typeEmailToConfirm')}</label>
             <div style={{ display: 'flex', gap: 8 }}>
               <input value={deleteConfirm} onChange={e => setDeleteConfirm(e.target.value)} placeholder={profile?.email || 'your@email.com'} style={{ ...S.input, flex: 1 }} />

@@ -67,7 +67,7 @@ export default function VibeCupPage() {
           <Link href="/vibe-cup/marketplace" style={{ padding: '7px 16px', borderRadius: 8, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)', color: '#e6edf6', fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>
             Marketplace
           </Link>
-          <a href="#enter" style={{ padding: '8px 20px', borderRadius: 8, background: BRAND, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>
+          <a href="#enter" style={{ padding: '8px 20px', borderRadius: 8, background: BRAND, color: '#03111c', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>
             Enter Now →
           </a>
         </div>
@@ -92,7 +92,7 @@ export default function VibeCupPage() {
           </p>
 
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 56 }}>
-            <a href="#enter" style={{ padding: '16px 36px', borderRadius: 10, background: BRAND, color: '#fff', fontSize: 16, fontWeight: 800, textDecoration: 'none', letterSpacing: '-0.01em' }}>
+            <a href="#enter" style={{ padding: '16px 36px', borderRadius: 10, background: BRAND, color: '#03111c', fontSize: 16, fontWeight: 800, textDecoration: 'none', letterSpacing: '-0.01em' }}>
               Enter the Wybe Cup →
             </a>
             <Link href="/vibe-cup/marketplace" style={{ padding: '16px 28px', borderRadius: 10, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', color: '#e6edf6', fontSize: 16, fontWeight: 600, textDecoration: 'none' }}>
@@ -215,7 +215,7 @@ export default function VibeCupPage() {
           Build your app on WyberAi. Submit by October 31. Win up to $2,000.
         </p>
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-          <a href="#enter" style={{ padding: '14px 32px', borderRadius: 10, background: BRAND, color: '#fff', fontSize: 15, fontWeight: 700, textDecoration: 'none' }}>
+          <a href="#enter" style={{ padding: '14px 32px', borderRadius: 10, background: BRAND, color: '#03111c', fontSize: 15, fontWeight: 700, textDecoration: 'none' }}>
             Enter Now →
           </a>
           <Link href="/vibe-cup/marketplace" style={{ padding: '14px 28px', borderRadius: 10, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', color: '#e6edf6', fontSize: 15, fontWeight: 600, textDecoration: 'none' }}>

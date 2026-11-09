@@ -11,10 +11,10 @@ function inferWorkflow(name: string, tools: string, complexity: string): Workflo
 
   if (t.includes('slack')) steps.push({ id:'t', type:'trigger', label:'New message in Slack', tool:'Slack', color:'#E01E5A' })
   else if (t.includes('gmail') || t.includes('email')) steps.push({ id:'t', type:'trigger', label:'New email received', tool:'Gmail', color:'#EA4335' })
-  else if (n.includes('daily') || n.includes('morning') || n.includes('brief')) steps.push({ id:'t', type:'trigger', label:'Scheduled: Every day 7AM', tool:'Schedule', color:'#6366f1' })
-  else steps.push({ id:'t', type:'trigger', label:'Webhook trigger', tool:'Webhook', color:'#6366f1' })
+  else if (n.includes('daily') || n.includes('morning') || n.includes('brief')) steps.push({ id:'t', type:'trigger', label:'Scheduled: Every day 7AM', tool:'Schedule', color:'#a5b4fc' })
+  else steps.push({ id:'t', type:'trigger', label:'Webhook trigger', tool:'Webhook', color:'#a5b4fc' })
 
-  steps.push({ id:'ai', type:'ai', label:'Claude AI analyzes & decides', tool:'Claude AI', color:'#8b5cf6' })
+  steps.push({ id:'ai', type:'ai', label:'Claude AI analyzes & decides', tool:'Claude AI', color:'#a78bfa' })
 
   if (t.includes('hubspot') || t.includes('salesforce')) steps.push({ id:'crm', type:'action', label:'Update CRM record', tool:'HubSpot', color:'#FF7A59' })
   if (t.includes('airtable')) steps.push({ id:'db', type:'action', label:'Log to Airtable', tool:'Airtable', color:'#18BFFF' })
@@ -41,13 +41,13 @@ export function WorkflowVisualizer({ agentName, requiredTools, complexity }: Pro
             <div style={{ width:30, height:30, borderRadius:'50%', flexShrink:0, background:`${step.color}18`, border:`1.5px solid ${step.color}40`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:12 }}>{ICONS[step.type]}</div>
             <div style={{ flex:1 }}>
               <div style={{ fontSize:12, fontWeight:600, color:'#d4d4d8' }}>{step.label}</div>
-              <div style={{ fontSize:10, color:step.color, fontWeight:700, marginTop:1 }}>{step.type.toUpperCase()} · {step.tool}</div>
+              <div style={{ fontSize: 11, color:step.color, fontWeight:700, marginTop:1 }}>{step.type.toUpperCase()} · {step.tool}</div>
             </div>
           </div>
           {i < steps.length-1 && <div style={{ width:1, height:12, background:'rgba(255,255,255,0.07)', marginLeft:15, marginTop:2, marginBottom:2 }}/>}
         </div>
       ))}
-      <div style={{ marginTop:14, paddingTop:10, borderTop:'1px solid rgba(255,255,255,0.04)', fontSize:10, color:'#3f3f46' }}>
+      <div style={{ marginTop:14, paddingTop:10, borderTop:'1px solid rgba(255,255,255,0.04)', fontSize: 11, color:'#8797ab' }}>
         {steps.length} steps · Full visual builder coming soon
       </div>
     </div>

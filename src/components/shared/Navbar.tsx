@@ -68,7 +68,7 @@ const premierLeagueStyle: CSSProperties = {
   color: '#f5b942', textDecoration: 'none', transition: 'opacity 0.15s',
 };
 
-const soonPillStyle: CSSProperties = { fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#f59e0b', background: 'rgba(245,158,11,0.12)', borderRadius: 4, padding: '1px 4px', lineHeight: 1.4 };
+const soonPillStyle: CSSProperties = { fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#f59e0b', background: 'rgba(245,158,11,0.12)', borderRadius: 4, padding: '1px 4px', lineHeight: 1.4 };
 
 export function Navbar({ user, locale = DEFAULT_LOCALE }: Props) {
   const lp = (path: string) => localePath(path, locale);
@@ -261,7 +261,7 @@ export function Navbar({ user, locale = DEFAULT_LOCALE }: Props) {
                   return RESOURCES.map(group => (
                     <div key={group.heading}>
                       <div style={{
-                        fontSize: 10, fontWeight: 700, color: 'var(--sky)',
+                        fontSize: 11, fontWeight: 700, color: 'var(--sky)',
                         textTransform: 'uppercase', letterSpacing: '0.1em',
                         marginBottom: 6, paddingLeft: 12,
                       }}>
@@ -361,7 +361,7 @@ export function Navbar({ user, locale = DEFAULT_LOCALE }: Props) {
             <div style={{ paddingLeft: 12, paddingBottom: 4 }}>
               {RESOURCES.map(group => (
                 <div key={group.heading} style={{ marginTop: 12 }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--sky)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--sky)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>
                     {group.heading}
                   </div>
                   {group.items.map(item => (

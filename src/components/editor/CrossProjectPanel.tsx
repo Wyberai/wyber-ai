@@ -79,7 +79,7 @@ export function CrossProjectPanel({ projectId }: Props) {
           )}
 
           {selectedFiles.size > 0 && (
-            <button onClick={copyFiles} disabled={copying} style={{ padding: '9px', borderRadius: 9, background: 'var(--sky)', color: '#fff', fontWeight: 700, fontSize: 13, border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
+            <button onClick={copyFiles} disabled={copying} style={{ padding: '9px', borderRadius: 9, background: 'var(--sky)', color: '#03111c', fontWeight: 700, fontSize: 13, border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
               {copying ? t('crossProjectCopyingButton') : t('crossProjectCopyButton').replace('{count}', String(selectedFiles.size)).replace('{plural}', selectedFiles.size > 1 ? 's' : '')}
             </button>
           )}

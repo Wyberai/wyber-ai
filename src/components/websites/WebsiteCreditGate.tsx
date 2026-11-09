@@ -56,37 +56,37 @@ export function WebsiteCreditGate({
 
   return (
     <div onClick={onCancel} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: 'var(--bg2, #111114)', border: '1px solid var(--border, #27272a)', borderRadius: 16, padding: 24, width: 440, maxWidth: '100%', display: 'flex', flexDirection: 'column', gap: 16, color: 'var(--text, #fafafa)' }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: 'var(--bg2, #111114)', border: '1px solid var(--border, #162231)', borderRadius: 16, padding: 24, width: 440, maxWidth: '100%', display: 'flex', flexDirection: 'column', gap: 16, color: 'var(--text, #fafafa)' }}>
         <div>
           <div style={{ fontSize: 17, fontWeight: 700, marginBottom: 6 }}>
             {businessName ? `${businessName}’s complete website` : 'Your complete website'}
           </div>
-          <div style={{ fontSize: 13, color: 'var(--text2, #a1a1aa)', lineHeight: 1.55 }}>
+          <div style={{ fontSize: 13, color: 'var(--text2, #9aa8bb)', lineHeight: 1.55 }}>
             A launch-ready site uses about <strong style={{ color: 'var(--text, #fafafa)' }}>{est.min}–{est.max} credits</strong> at our normal prices. You have {balance}.
           </div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 12.5 }}>
           {est.steps.map(s => (
-            <div key={s.key} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, color: 'var(--text2, #a1a1aa)' }}>
+            <div key={s.key} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, color: 'var(--text2, #9aa8bb)' }}>
               <span>{s.label}</span>
               <span style={{ color: 'var(--text, #fafafa)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{s.max ? `${s.credits}–${s.max}` : s.credits}</span>
             </div>
           ))}
         </div>
         {short > 0 ? (
-          <button onClick={pay} disabled={busy !== null} style={{ background: '#0EA5E9', color: '#fff', border: 'none', borderRadius: 10, padding: '11px 14px', fontSize: 14, fontWeight: 700, cursor: busy ? 'wait' : 'pointer', fontFamily: 'inherit' }}>
+          <button onClick={pay} disabled={busy !== null} style={{ background: '#0EA5E9', color: '#03111c', border: 'none', borderRadius: 10, padding: '11px 14px', fontSize: 14, fontWeight: 700, cursor: busy ? 'wait' : 'pointer', fontFamily: 'inherit' }}>
             {busy === 'pay' ? 'Opening checkout…' : `Get the Studio pack · ${STUDIO.credits} credits · ${STUDIO[currency]}`}
           </button>
         ) : (
-          <button onClick={onReady} style={{ background: '#0EA5E9', color: '#fff', border: 'none', borderRadius: 10, padding: '11px 14px', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+          <button onClick={onReady} style={{ background: '#0EA5E9', color: '#03111c', border: 'none', borderRadius: 10, padding: '11px 14px', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
             Build my website
           </button>
         )}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <button onClick={recheck} disabled={busy !== null} style={{ background: 'none', border: 'none', color: 'var(--text2, #a1a1aa)', fontSize: 12, cursor: 'pointer', textDecoration: 'underline', padding: 0, fontFamily: 'inherit' }}>
+          <button onClick={recheck} disabled={busy !== null} style={{ background: 'none', border: 'none', color: 'var(--text2, #9aa8bb)', fontSize: 12, cursor: 'pointer', textDecoration: 'underline', padding: 0, fontFamily: 'inherit' }}>
             {busy === 'check' ? 'Checking…' : 'I’ve paid — check my credits'}
           </button>
-          <button onClick={onCancel} style={{ background: 'none', border: 'none', color: 'var(--text3, #71717a)', fontSize: 12, cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>Not now</button>
+          <button onClick={onCancel} style={{ background: 'none', border: 'none', color: 'var(--text3, #8797ab)', fontSize: 12, cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>Not now</button>
         </div>
         {error && <div style={{ fontSize: 12, color: '#f87171' }}>{error}</div>}
       </div>

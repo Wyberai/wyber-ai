@@ -100,11 +100,11 @@ export function SocialShare({
       )}
       <button
         onClick={copyCaption}
-        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 9, background: 'rgba(255,255,255,0.06)', color: '#e4e4e7', fontSize: 12.5, fontWeight: 700, border: '1px solid rgba(255,255,255,0.14)', cursor: 'pointer', fontFamily: 'inherit' }}
+        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 9, background: 'rgba(255,255,255,0.06)', color: '#e8eef7', fontSize: 12.5, fontWeight: 700, border: '1px solid rgba(255,255,255,0.14)', cursor: 'pointer', fontFamily: 'inherit' }}
       >
         {copied ? 'Copied ✓' : 'Copy link'}
       </button>
-      <span style={{ fontSize: 12, color: '#52525b', fontWeight: 600 }}>#{WYBER_HASHTAG}</span>
+      <span style={{ fontSize: 12, color: '#8797ab', fontWeight: 600 }}>#{WYBER_HASHTAG}</span>
     </div>
   )
 }

@@ -72,7 +72,7 @@ export function EnvironmentsPanel({ projectId, publishedUrl }: Props) {
         </div>
       </div>
 
-      <button onClick={promote} disabled={promoting} style={{ padding: '9px', borderRadius: 9, background: 'var(--sky)', color: '#fff', fontWeight: 700, fontSize: 13, border: 'none', cursor: promoting ? 'wait' : 'pointer', fontFamily: 'inherit' }}>
+      <button onClick={promote} disabled={promoting} style={{ padding: '9px', borderRadius: 9, background: 'var(--sky)', color: '#03111c', fontWeight: 700, fontSize: 13, border: 'none', cursor: promoting ? 'wait' : 'pointer', fontFamily: 'inherit' }}>
         {promoting ? t('promotingBtn') : t('promoteBtn')}
       </button>
 

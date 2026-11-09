@@ -74,14 +74,14 @@ export default function GalleryPage() {
   useEffect(() => { setPage(1) }, [activeCategory, activeGroup, search, sort])
 
   return (
-    <div style={{ minHeight: '100vh', background: '#09090b', color: '#fafafa', fontFamily: 'var(--font-display)' }}>
+    <div style={{ minHeight: '100vh', background: '#05080d', color: '#fafafa', fontFamily: 'var(--font-display)' }}>
       <nav style={{ position: 'sticky', top: 0, zIndex: 100, padding: '0 clamp(16px,4vw,48px)', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(9,9,11,0.9)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none', color: 'inherit' }}>
           <WyberLogo markSize={24} wordmarkSize={13} />
         </Link>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <Link href="/pricing" style={{ fontSize: 13, color: '#71717a', textDecoration: 'none' }}>Pricing</Link>
-          <Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: ACCENT, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Start building free →</Link>
+          <Link href="/pricing" style={{ fontSize: 13, color: '#8797ab', textDecoration: 'none' }}>Pricing</Link>
+          <Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: ACCENT, color: '#03111c', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Start building free →</Link>
         </div>
       </nav>
 
@@ -92,7 +92,7 @@ export default function GalleryPage() {
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(26px,3.5vw,40px)', fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 8 }}>
             {apps.length > 0 ? `${apps.length}` : ''} free, ready-to-use apps
           </h1>
-          <p style={{ fontSize: 15, color: '#71717a', maxWidth: 500 }}>Every app here is free to load — 0 credits. Click one to open it instantly, or go to the dashboard and describe something completely custom — AI builds it from scratch in minutes.</p>
+          <p style={{ fontSize: 15, color: '#8797ab', maxWidth: 500 }}>Every app here is free to load — 0 credits. Click one to open it instantly, or go to the dashboard and describe something completely custom — AI builds it from scratch in minutes.</p>
         </div>
 
         {/* Search + Sort bar */}
@@ -100,19 +100,19 @@ export default function GalleryPage() {
           <div style={{ position: 'relative', flex: 1, minWidth: 240 }}>
             <svg style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', opacity: 0.35 }} width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fafafa" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search templates..."
-              style={{ width: '100%', padding: '10px 14px 10px 38px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', background: '#111113', color: '#fafafa', fontSize: 13, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }}
+              style={{ width: '100%', padding: '10px 14px 10px 38px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', background: '#0d141e', color: '#fafafa', fontSize: 13, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }}
             />
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 12, color: '#52525b' }}>Sort by</span>
+            <span style={{ fontSize: 12, color: '#8797ab' }}>Sort by</span>
             <select value={sort} onChange={e => setSort(e.target.value as any)}
-              style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: '#111113', color: '#fafafa', fontSize: 12, fontFamily: 'inherit', outline: 'none', cursor: 'pointer' }}>
+              style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: '#0d141e', color: '#fafafa', fontSize: 12, fontFamily: 'inherit', outline: 'none', cursor: 'pointer' }}>
               <option value="popular">Most popular</option>
               <option value="name">A → Z</option>
               <option value="newest">Newest</option>
             </select>
           </div>
-          <div style={{ fontSize: 12, color: '#52525b' }}>
+          <div style={{ fontSize: 12, color: '#8797ab' }}>
             Showing {Math.min((page - 1) * PER_PAGE + 1, filtered.length)}–{Math.min(page * PER_PAGE, filtered.length)} of {filtered.length}
           </div>
         </div>
@@ -120,7 +120,7 @@ export default function GalleryPage() {
         <div style={{ display: 'flex', gap: 28 }}>
           {/* Sidebar */}
           <div style={{ width: 200, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Browse by category</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#8797ab', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Browse by category</div>
 
             {/* Group toggles */}
             {GROUP_ORDER.map(g => (
@@ -128,7 +128,7 @@ export default function GalleryPage() {
                 style={{
                   padding: '8px 12px', borderRadius: 8, border: 'none', textAlign: 'left',
                   background: activeGroup === g ? 'rgba(14,165,233,0.1)' : 'transparent',
-                  color: activeGroup === g ? ACCENT : '#a1a1aa',
+                  color: activeGroup === g ? ACCENT : '#9aa8bb',
                   fontSize: 13, fontWeight: activeGroup === g ? 700 : 500,
                   cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s',
                 }}
@@ -139,7 +139,7 @@ export default function GalleryPage() {
 
             {/* Category list */}
             <button onClick={() => setActiveCategory('All')}
-              style={{ padding: '6px 12px', borderRadius: 6, border: 'none', textAlign: 'left', background: activeCategory === 'All' ? 'rgba(14,165,233,0.08)' : 'transparent', color: activeCategory === 'All' ? ACCENT : '#71717a', fontSize: 12, fontWeight: activeCategory === 'All' ? 600 : 400, cursor: 'pointer', fontFamily: 'inherit' }}>
+              style={{ padding: '6px 12px', borderRadius: 6, border: 'none', textAlign: 'left', background: activeCategory === 'All' ? 'rgba(14,165,233,0.08)' : 'transparent', color: activeCategory === 'All' ? ACCENT : '#8797ab', fontSize: 12, fontWeight: activeCategory === 'All' ? 600 : 400, cursor: 'pointer', fontFamily: 'inherit' }}>
               All categories
             </button>
             {visibleCategories.sort().map(cat => {
@@ -150,13 +150,13 @@ export default function GalleryPage() {
                   style={{
                     padding: '6px 12px', borderRadius: 6, border: 'none', textAlign: 'left',
                     background: activeCategory === cat ? (CAT_COLORS[cat] || ACCENT) + '12' : 'transparent',
-                    color: activeCategory === cat ? (CAT_COLORS[cat] || ACCENT) : '#71717a',
+                    color: activeCategory === cat ? (CAT_COLORS[cat] || ACCENT) : '#8797ab',
                     fontSize: 12, fontWeight: activeCategory === cat ? 600 : 400,
                     cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.1s',
                     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                   }}>
                   <span>{displayName}</span>
-                  <span style={{ fontSize: 10, color: '#3f3f46' }}>{count}</span>
+                  <span style={{ fontSize: 11, color: '#8797ab' }}>{count}</span>
                 </button>
               )
             })}
@@ -167,11 +167,11 @@ export default function GalleryPage() {
             {loading ? (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 14 }}>
                 {Array(12).fill(0).map((_, i) => (
-                  <div key={i} style={{ height: 160, borderRadius: 14, background: '#111113', border: '1px solid rgba(255,255,255,0.06)', animation: 'pulse 1.5s ease infinite' }} />
+                  <div key={i} style={{ height: 160, borderRadius: 14, background: '#0d141e', border: '1px solid rgba(255,255,255,0.06)', animation: 'pulse 1.5s ease infinite' }} />
                 ))}
               </div>
             ) : filtered.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: 80, color: '#3f3f46' }}>
+              <div style={{ textAlign: 'center', padding: 80, color: '#8797ab' }}>
                 <div style={{ fontSize: 32, marginBottom: 12 }}>🔍</div>
                 <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>No templates found</div>
                 <div style={{ fontSize: 13 }}>Try a different search or category</div>
@@ -186,7 +186,7 @@ export default function GalleryPage() {
                       <Link key={app.id} href={`/templates/${app.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                         <div style={{
                           padding: '20px 18px', borderRadius: 14, height: '100%',
-                          background: `linear-gradient(135deg, ${color}08 0%, #111113 60%)`,
+                          background: `linear-gradient(135deg, ${color}08 0%, #0d141e 60%)`,
                           border: `1px solid ${color}20`,
                           display: 'flex', flexDirection: 'column', gap: 8,
                           cursor: 'pointer', transition: 'all 0.2s', boxSizing: 'border-box',
@@ -198,19 +198,19 @@ export default function GalleryPage() {
                             <div style={{ width: 32, height: 32, borderRadius: 8, background: color + '18', border: `1px solid ${color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>
                               {isMobile ? '📱' : '🌐'}
                             </div>
-                            <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: color + '15', color, border: `1px solid ${color}25`, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                            <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: color + '15', color, border: `1px solid ${color}25`, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                               {app.category?.replace(/^(Mobile|Website|WebApp)-/, '')}
                             </span>
                           </div>
 
                           <div style={{ fontSize: 14, fontWeight: 700, color: '#fafafa', lineHeight: 1.3 }}>{app.name}</div>
-                          <div style={{ fontSize: 11, color: '#71717a', lineHeight: 1.5, flex: 1, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                          <div style={{ fontSize: 11, color: '#8797ab', lineHeight: 1.5, flex: 1, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                             {app.description || `${app.name} — ready to use.`}
                           </div>
 
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
                             <span style={{ fontSize: 11, color: color, fontWeight: 600 }}>Use template →</span>
-                            <span style={{ fontSize: 10, color: '#3f3f46' }}>0 credits</span>
+                            <span style={{ fontSize: 11, color: '#8797ab' }}>0 credits</span>
                           </div>
                         </div>
                       </Link>
@@ -222,7 +222,7 @@ export default function GalleryPage() {
                 {totalPages > 1 && (
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 32 }}>
                     <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                      style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: page === 1 ? '#3f3f46' : '#a1a1aa', fontSize: 12, cursor: page === 1 ? 'default' : 'pointer', fontFamily: 'inherit' }}>
+                      style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: page === 1 ? '#8797ab' : '#9aa8bb', fontSize: 12, cursor: page === 1 ? 'default' : 'pointer', fontFamily: 'inherit' }}>
                       ← Prev
                     </button>
                     {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
@@ -230,13 +230,13 @@ export default function GalleryPage() {
                       if (p < 1 || p > totalPages) return null
                       return (
                         <button key={p} onClick={() => setPage(p)}
-                          style={{ width: 34, height: 34, borderRadius: 8, border: `1px solid ${page === p ? ACCENT + '40' : 'rgba(255,255,255,0.08)'}`, background: page === p ? ACCENT + '15' : 'transparent', color: page === p ? ACCENT : '#71717a', fontSize: 12, fontWeight: page === p ? 700 : 400, cursor: 'pointer', fontFamily: 'inherit' }}>
+                          style={{ width: 34, height: 34, borderRadius: 8, border: `1px solid ${page === p ? ACCENT + '40' : 'rgba(255,255,255,0.08)'}`, background: page === p ? ACCENT + '15' : 'transparent', color: page === p ? ACCENT : '#8797ab', fontSize: 12, fontWeight: page === p ? 700 : 400, cursor: 'pointer', fontFamily: 'inherit' }}>
                           {p}
                         </button>
                       )
                     })}
                     <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-                      style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: page === totalPages ? '#3f3f46' : '#a1a1aa', fontSize: 12, cursor: page === totalPages ? 'default' : 'pointer', fontFamily: 'inherit' }}>
+                      style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: page === totalPages ? '#8797ab' : '#9aa8bb', fontSize: 12, cursor: page === totalPages ? 'default' : 'pointer', fontFamily: 'inherit' }}>
                       Next →
                     </button>
                   </div>

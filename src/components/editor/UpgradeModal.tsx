@@ -242,7 +242,7 @@ export function UpgradeModal({ open, onClose, currency, trigger = 'out-of-credit
           onClick={onClose}
           style={{
             position: 'absolute', top: 14, right: 14,
-            background: 'none', border: 'none', color: '#52525b',
+            background: 'none', border: 'none', color: '#8797ab',
             cursor: 'pointer', fontSize: 20, lineHeight: 1, padding: 4,
           }}
         >×</button>
@@ -257,7 +257,7 @@ export function UpgradeModal({ open, onClose, currency, trigger = 'out-of-credit
           </h2>
 
           {isOutOfCredits ? (
-            <p style={{ margin: '10px 0 0', fontSize: 13, color: '#71717a' }}>{isLowCredit ? "Top up now so your next message doesn't get blocked." : 'Top up in seconds, or subscribe for ongoing credits.'}</p>
+            <p style={{ margin: '10px 0 0', fontSize: 13, color: '#8797ab' }}>{isLowCredit ? "Top up now so your next message doesn't get blocked." : 'Top up in seconds, or subscribe for ongoing credits.'}</p>
           ) : (
             <>
               {/* Countdown */}
@@ -267,11 +267,11 @@ export function UpgradeModal({ open, onClose, currency, trigger = 'out-of-credit
                   <span style={{ fontSize: 14, color: '#fb923c', fontWeight: 800, fontVariantNumeric: 'tabular-nums', fontFamily: 'monospace', minWidth: 42 }}>{timeLeft}</span>
                 </div>
               ) : (
-                <p style={{ margin: '10px 0 0', fontSize: 13, color: '#71717a' }}>Annual billing. Cancel any time.</p>
+                <p style={{ margin: '10px 0 0', fontSize: 13, color: '#8797ab' }}>Annual billing. Cancel any time.</p>
               )}
 
               {/* Social proof */}
-              <div style={{ marginTop: 10, fontSize: 11, color: '#52525b' }}>
+              <div style={{ marginTop: 10, fontSize: 11, color: '#8797ab' }}>
                 <span style={{ color: '#22c55e', fontWeight: 700 }}>●</span> {currency === 'INR' ? '120+ builders' : '200+ builders'} upgraded to annual this month
               </div>
             </>
@@ -291,7 +291,7 @@ export function UpgradeModal({ open, onClose, currency, trigger = 'out-of-credit
               Based on {projectName ? `"${projectName}"` : 'what you’re building'}, you’ll probably want next
             </div>
             {suggestionsLoading ? (
-              <div style={{ fontSize: 12, color: '#71717a', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ fontSize: 12, color: '#8797ab', display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span style={{ animation: 'wy-upgrade-spin 0.8s linear infinite', display: 'inline-block' }}>⟳</span> Looking at your project…
               </div>
             ) : (
@@ -300,7 +300,7 @@ export function UpgradeModal({ open, onClose, currency, trigger = 'out-of-credit
                   <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
                     <div style={{ minWidth: 0 }}>
                       <div style={{ fontSize: 12.5, fontWeight: 700, color: '#fafafa' }}>{s.title}</div>
-                      <div style={{ fontSize: 11, color: '#a1a1aa', marginTop: 2, lineHeight: 1.4 }}>{s.description}</div>
+                      <div style={{ fontSize: 11, color: '#9aa8bb', marginTop: 2, lineHeight: 1.4 }}>{s.description}</div>
                     </div>
                     <span style={{ fontSize: 11, fontWeight: 700, color: '#22c55e', whiteSpace: 'nowrap', padding: '3px 8px', borderRadius: 20, background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.25)', flexShrink: 0 }}>~{s.estimatedCredits}cr</span>
                   </div>
@@ -332,7 +332,7 @@ export function UpgradeModal({ open, onClose, currency, trigger = 'out-of-credit
                       padding: '14px 8px',
                       borderRadius: 12,
                       border: tu.badge ? '1px solid rgba(14,165,233,0.5)' : '1px solid rgba(255,255,255,0.1)',
-                      background: isLoading ? '#1a1a22' : tu.badge ? 'linear-gradient(160deg,#0d1a26,#0a1318)' : '#111113',
+                      background: isLoading ? '#14202e' : tu.badge ? 'linear-gradient(160deg,#0d1a26,#0a1318)' : '#0d141e',
                       cursor: loading ? 'not-allowed' : 'pointer',
                       fontFamily: 'inherit',
                       boxShadow: tu.badge ? '0 0 24px rgba(14,165,233,0.1)' : 'none',
@@ -341,22 +341,22 @@ export function UpgradeModal({ open, onClose, currency, trigger = 'out-of-credit
                     {tu.badge && (
                       <div style={{ position: 'absolute', top: -9, left: '50%', transform: 'translateX(-50%)', background: 'linear-gradient(90deg,#0ea5e9,#7c3aed)', color: '#fff', fontSize: 8, fontWeight: 800, padding: '2px 9px', borderRadius: 20, letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>BEST VALUE</div>
                     )}
-                    <span style={{ fontSize: 10, fontWeight: 700, color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{tu.label}</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: '#8797ab', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{tu.label}</span>
                     <span style={{ fontSize: 18, fontWeight: 800, color: '#fafafa', letterSpacing: '-0.02em' }}>{isLoading ? '…' : tu.price}</span>
                     <span style={{ fontSize: 10, color: '#22c55e', fontWeight: 700 }}>{tu.credits} credits</span>
-                    <span style={{ fontSize: 9, color: '#52525b' }}>{tu.desc}</span>
+                    <span style={{ fontSize: 9, color: '#8797ab' }}>{tu.desc}</span>
                   </button>
                 )
               })}
             </div>
-            <div style={{ textAlign: 'center', fontSize: 10.5, color: '#3f3f46', marginTop: 8 }}>One-time payment · Credits never expire</div>
+            <div style={{ textAlign: 'center', fontSize: 10.5, color: '#8797ab', marginTop: 8 }}>One-time payment · Credits never expire</div>
           </div>
         )}
 
         {isOutOfCredits && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '0 0 14px' }}>
             <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
-            <span style={{ fontSize: 10, color: '#3f3f46', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>or subscribe for ongoing credits</span>
+            <span style={{ fontSize: 10, color: '#8797ab', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>or subscribe for ongoing credits</span>
             <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
           </div>
         )}
@@ -371,7 +371,7 @@ export function UpgradeModal({ open, onClose, currency, trigger = 'out-of-credit
                 key={plan.id}
                 style={{
                   flex: 1,
-                  background: plan.highlight ? 'linear-gradient(160deg,#0d1a26,#0a1318)' : '#111113',
+                  background: plan.highlight ? 'linear-gradient(160deg,#0d1a26,#0a1318)' : '#0d141e',
                   border: `1px solid ${plan.highlight ? 'rgba(14,165,233,0.5)' : 'rgba(255,255,255,0.08)'}`,
                   borderRadius: 14,
                   padding: '18px 14px',
@@ -395,14 +395,14 @@ export function UpgradeModal({ open, onClose, currency, trigger = 'out-of-credit
 
                 {/* Price — annual with monthly strikethrough */}
                 <div style={{ marginBottom: 4 }}>
-                  <span style={{ fontSize: 11, color: '#52525b', textDecoration: 'line-through', marginRight: 6 }}>{plan.monthlyPrice}</span>
+                  <span style={{ fontSize: 11, color: '#8797ab', textDecoration: 'line-through', marginRight: 6 }}>{plan.monthlyPrice}</span>
                   <span style={{ fontSize: 22, fontWeight: 800, color: '#fafafa', letterSpacing: '-0.03em', fontFamily: 'var(--font-display)' }}>
                     {plan.annualPrice}
                   </span>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 10 }}>
-                  <span style={{ fontSize: 10, color: '#71717a' }}>{plan.annualTotal}</span>
+                  <span style={{ fontSize: 10, color: '#8797ab' }}>{plan.annualTotal}</span>
                   <span style={{ fontSize: 9, fontWeight: 800, padding: '2px 7px', borderRadius: 20, background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.25)', color: '#22c55e' }}>{plan.annualSavings}</span>
                 </div>
 
@@ -413,7 +413,7 @@ export function UpgradeModal({ open, onClose, currency, trigger = 'out-of-credit
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginBottom: 14 }}>
                   {plan.perks.map(p => (
-                    <div key={p} style={{ display: 'flex', alignItems: 'flex-start', gap: 5, fontSize: 11, color: '#a1a1aa' }}>
+                    <div key={p} style={{ display: 'flex', alignItems: 'flex-start', gap: 5, fontSize: 11, color: '#9aa8bb' }}>
                       <svg width="10" height="10" viewBox="0 0 12 12" style={{ flexShrink: 0, marginTop: 2 }}><path d="M2 6l3 3 5-5" stroke="#22c55e" strokeWidth="1.8" strokeLinecap="round" fill="none" /></svg>
                       {p}
                     </div>
@@ -426,12 +426,12 @@ export function UpgradeModal({ open, onClose, currency, trigger = 'out-of-credit
                   style={{
                     width: '100%', padding: '12px 0', borderRadius: 9,
                     background: isLoading
-                      ? '#1a1a22'
+                      ? '#14202e'
                       : plan.highlight
                         ? 'linear-gradient(135deg,#0ea5e9,#7c3aed)'
                         : 'rgba(255,255,255,0.07)',
                     border: plan.highlight ? 'none' : '1px solid rgba(255,255,255,0.12)',
-                    color: isLoading ? '#52525b' : '#fff',
+                    color: isLoading ? '#8797ab' : '#fff',
                     fontSize: 13, fontWeight: 700, cursor: isLoading ? 'not-allowed' : 'pointer',
                     fontFamily: 'inherit',
                     boxShadow: plan.highlight && !isLoading ? '0 4px 24px rgba(14,165,233,0.35)' : 'none',
@@ -455,15 +455,15 @@ export function UpgradeModal({ open, onClose, currency, trigger = 'out-of-credit
 
         {/* Monthly fallback — hidden by default, shown on demand */}
         {showMonthly && (
-          <div style={{ marginTop: 8, padding: '12px 14px', borderRadius: 10, background: '#111113', border: '1px solid rgba(255,255,255,0.07)' }}>
-            <div style={{ fontSize: 11, color: '#71717a', marginBottom: 8 }}>Monthly billing (no savings)</div>
+          <div style={{ marginTop: 8, padding: '12px 14px', borderRadius: 10, background: '#0d141e', border: '1px solid rgba(255,255,255,0.07)' }}>
+            <div style={{ fontSize: 11, color: '#8797ab', marginBottom: 8 }}>Monthly billing (no savings)</div>
             <div style={{ display: 'flex', gap: 8 }}>
               {plans.map(plan => (
                 <button
                   key={plan.id}
                   onClick={() => startCheckout(plan.monthlyKey, plan, 'monthly')}
                   disabled={!!loading}
-                  style={{ flex: 1, padding: '8px 0', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#a1a1aa', fontSize: 12, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}
+                  style={{ flex: 1, padding: '8px 0', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#9aa8bb', fontSize: 12, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}
                 >
                   {loading === plan.monthlyKey ? 'Redirecting…' : `${plan.name} ${plan.monthlyPrice}`}
                 </button>
@@ -474,15 +474,15 @@ export function UpgradeModal({ open, onClose, currency, trigger = 'out-of-credit
 
         {/* Footer */}
         <div style={{ textAlign: 'center', marginTop: 14, display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center' }}>
-          <div style={{ fontSize: 11, color: '#52525b', display: 'flex', alignItems: 'center', gap: 4 }}>
-            <svg width="10" height="10" viewBox="0 0 12 12"><path d="M6 1a5 5 0 100 10A5 5 0 006 1zm0 1.5a3.5 3.5 0 110 7 3.5 3.5 0 010-7zm0 1v2.25l1.5 1" stroke="#52525b" strokeWidth="1.2" strokeLinecap="round" fill="none"/></svg>
+          <div style={{ fontSize: 11, color: '#8797ab', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <svg width="10" height="10" viewBox="0 0 12 12"><path d="M6 1a5 5 0 100 10A5 5 0 006 1zm0 1.5a3.5 3.5 0 110 7 3.5 3.5 0 010-7zm0 1v2.25l1.5 1" stroke="#8797ab" strokeWidth="1.2" strokeLinecap="round" fill="none"/></svg>
             30-day money-back guarantee · Cancel any time
           </div>
           <button
             onClick={() => { setShowMonthly(v => !v); track('editor_upgrade_modal_monthly_toggle') }}
-            style={{ fontSize: 11, color: '#3f3f46', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#71717a' }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#3f3f46' }}
+            style={{ fontSize: 11, color: '#8797ab', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#8797ab' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#8797ab' }}
           >
             {showMonthly ? 'Hide monthly options' : 'Need to pay month-to-month instead? →'}
           </button>

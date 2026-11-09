@@ -136,8 +136,8 @@ export default function StockPage() {
                     </td>
                     <td style={{ padding: "10px 14px" }}>
                       <div style={{ display: "flex", gap: 4 }}>
-                        <span style={{ padding: "2px 6px", background: "#f1f5f9", borderRadius: 4, fontSize: 10, fontWeight: 600, color: "#475569" }}>{m.category}</span>
-                        <span style={{ padding: "2px 6px", background: "#eff6ff", borderRadius: 4, fontSize: 10, color: "#0070f2" }}>{m.warehouse}</span>
+                        <span style={{ padding: "2px 6px", background: "#f1f5f9", borderRadius: 4, fontSize: 11, fontWeight: 600, color: "#475569" }}>{m.category}</span>
+                        <span style={{ padding: "2px 6px", background: "#eff6ff", borderRadius: 4, fontSize: 11, color: "#0070f2" }}>{m.warehouse}</span>
                       </div>
                     </td>
                     <td style={{ padding: "10px 14px", fontWeight: 600, color: m.status === "critical" ? "#dc2626" : "#0f172a" }}>
@@ -150,7 +150,7 @@ export default function StockPage() {
                     <td style={{ padding: "10px 14px" }}><CoverBar days={m.daysOfCover} /></td>
                     <td style={{ padding: "10px 14px", color: "#64748b", fontSize: 12, display: isMobile ? "none" : undefined }}>
                       {m.reorderPoint} {m.unit}
-                      <div style={{ fontSize: 10, color: "#94a3b8" }}>Safety: {m.safetyStock}</div>
+                      <div style={{ fontSize: 11, color: "#94a3b8" }}>Safety: {m.safetyStock}</div>
                     </td>
                     <td style={{ padding: "10px 14px", fontWeight: 600, color: "#0f172a" }}>{fmt(m.stockValue)}</td>
                     <td style={{ padding: "10px 14px" }}><StatusBadge status={m.status} /></td>

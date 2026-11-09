@@ -10,7 +10,7 @@ import { COMMON_STRINGS } from '@/lib/i18n/dict/common';
 const BUILDER_TYPES = [
   { type: 'app',     label: 'Web App',  color: '#0EA5E9', desc: 'Dashboards, tools, CRMs' },
   { type: 'mobile',  label: 'Mobile',   color: '#f97316', desc: 'React Native iOS & Android' },
-  { type: 'website', label: 'Website',  color: '#6366f1', desc: 'Landing pages, marketing sites' },
+  { type: 'website', label: 'Website',  color: '#a5b4fc', desc: 'Landing pages, marketing sites' },
   { type: 'saas',    label: 'SaaS',     color: '#ec4899', desc: 'Auth, billing, teams, dashboard' },
 ] as const;
 
@@ -133,7 +133,7 @@ export function ProjectSettings({ projectId, userId }: { projectId?: string; use
 
       {/* Save */}
       <button onClick={handleSave} disabled={saving || !projectId}
-        style={{ ...S.btn, width: '100%', background: 'var(--accent)', color: '#fff', padding: '10px', marginBottom: 14, fontSize: 13 }}>
+        style={{ ...S.btn, width: '100%', background: 'var(--accent)', color: '#03111c', padding: '10px', marginBottom: 14, fontSize: 13 }}>
         {saving ? `⟳ ${tc('saving')}` : saved ? `✓ ${tc('saved')}` : tc('saveChanges')}
       </button>
 

@@ -44,7 +44,7 @@ export function CookieBanner() {
         <button onClick={decline} style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text3)', fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>
           Decline
         </button>
-        <button onClick={accept} style={{ padding: '8px 20px', borderRadius: 8, border: 'none', background: 'var(--sky)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>
+        <button onClick={accept} style={{ padding: '8px 20px', borderRadius: 8, border: 'none', background: 'var(--sky)', color: '#03111c', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>
           Accept cookies
         </button>
       </div>

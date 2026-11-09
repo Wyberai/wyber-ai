@@ -108,7 +108,7 @@ export function VersionHistory({ projectId }: { projectId: string }) {
             style={{ background: 'var(--bg-elevated)', border: '1px solid var(--ide-border)', borderRadius: 7, color: 'var(--ide-text)', fontSize: 12, padding: '8px 11px', outline: 'none', fontFamily: 'inherit' }}
           />
           <div style={{ display: 'flex', gap: 6 }}>
-            <button onClick={saveVersion} style={{ flex: 1, padding: '6px', borderRadius: 6, border: 'none', background: '#0EA5E9', color: 'white', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>{tc('save')}</button>
+            <button onClick={saveVersion} style={{ flex: 1, padding: '6px', borderRadius: 6, border: 'none', background: '#0EA5E9', color: '#03111c', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>{tc('save')}</button>
             <button onClick={() => { setNaming(false); setLabelInput('') }} style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--text-secondary)', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>{tc('cancel')}</button>
           </div>
         </div>

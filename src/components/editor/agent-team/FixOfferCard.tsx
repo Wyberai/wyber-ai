@@ -42,7 +42,7 @@ export function FixOfferCard({
         <button
           onClick={onFix}
           title={t('freeAutoFixTooltip')}
-          style={{ fontSize: 12.5, fontWeight: 700, padding: '4px 10px', borderRadius: 6, border: 'none', background: 'var(--accent)', color: '#fff', cursor: 'pointer' }}
+          style={{ fontSize: 12.5, fontWeight: 700, padding: '4px 10px', borderRadius: 6, border: 'none', background: 'var(--accent)', color: '#03111c', cursor: 'pointer' }}
         >
           {t('fixItFree')}
         </button>

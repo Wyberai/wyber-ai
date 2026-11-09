@@ -9,14 +9,14 @@ export const metadata: Metadata = {
   openGraph: { title: 'AI workflow automation without code', url: 'https://wyberai.com/blog/ai-workflow-automation-guide', type: 'article' },
 }
 
-const s = { bg: '#09090b', card: '#111113', border: 'rgba(255,255,255,0.07)', text: '#fafafa', muted: '#71717a', dim: '#52525b', sky: '#0EA5E9', amber: '#f59e0b' }
+const s = { bg: '#05080d', card: '#0d141e', border: 'rgba(255,255,255,0.07)', text: '#fafafa', muted: '#8797ab', dim: '#8797ab', sky: '#0EA5E9', amber: '#f59e0b' }
 
 export default function Post() {
   return (
     <div style={{ minHeight: '100vh', background: s.bg, color: s.text, fontFamily: 'var(--font-display)' }}>
       <nav style={{ padding: '0 clamp(16px,4vw,48px)', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${s.border}`, position: 'sticky', top: 0, zIndex: 100, background: 'rgba(9,9,11,0.9)', backdropFilter: 'blur(16px)' }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none', color: 'inherit' }}><WyberLogo markSize={24} wordmarkSize={14} /></Link>
-        <Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: s.sky, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Start free →</Link>
+        <Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: s.sky, color: '#03111c', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Start free →</Link>
       </nav>
 
       <article style={{ maxWidth: 680, margin: '0 auto', padding: 'clamp(40px,6vw,80px) clamp(16px,4vw,48px)' }}>

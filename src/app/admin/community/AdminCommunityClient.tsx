@@ -53,17 +53,17 @@ export function AdminCommunityClient({ submissions, tableReady }: { submissions:
 
   return (
     <div style={{ minHeight: '100vh', background: '#08080b', color: '#fff', fontFamily: 'var(--font-display), system-ui' }}>
-      <nav style={{ borderBottom: '1px solid #1a1a22', background: '#0d0d11', padding: '0 32px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 50 }}>
+      <nav style={{ borderBottom: '1px solid #14202e', background: '#0a1018', padding: '0 32px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 50 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <Link href="/admin" style={{ fontSize: 12, color: '#52525b', textDecoration: 'none' }}>← Command Center</Link>
+          <Link href="/admin" style={{ fontSize: 12, color: '#8797ab', textDecoration: 'none' }}>← Command Center</Link>
           <span style={{ fontSize: 15, fontWeight: 800, letterSpacing: '-0.02em' }}>🎁 Community Rewards</span>
         </div>
-        <span style={{ fontSize: 12, color: '#52525b' }}>{pendingCount} pending</span>
+        <span style={{ fontSize: 12, color: '#8797ab' }}>{pendingCount} pending</span>
       </nav>
 
       <div style={{ maxWidth: 1000, margin: '0 auto', padding: '32px' }}>
         <h1 style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.03em', margin: '0 0 8px' }}>Review queue</h1>
-        <p style={{ fontSize: 13, color: '#71717a', margin: '0 0 24px' }}>
+        <p style={{ fontSize: 13, color: '#8797ab', margin: '0 0 24px' }}>
           Approve to grant the reward instantly (credits land in the user&apos;s account and they&apos;re emailed). Discount programs are approved here but the discount itself is applied manually via a Dodo coupon. Revoke to claw a grant back.
         </p>
 
@@ -80,7 +80,7 @@ export function AdminCommunityClient({ submissions, tableReady }: { submissions:
         )}
 
         {tableReady && submissions.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px 24px', color: '#52525b', border: '1px dashed #1e1e26', borderRadius: 14 }}>No submissions yet.</div>
+          <div style={{ textAlign: 'center', padding: '60px 24px', color: '#8797ab', border: '1px dashed #1b2a3b', borderRadius: 14 }}>No submissions yet.</div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {submissions.map(s => {
@@ -89,15 +89,15 @@ export function AdminCommunityClient({ submissions, tableReady }: { submissions:
               const st = STATUS_STYLE[s.status] ?? STATUS_STYLE.pending
               const grantText = cfg?.kind === 'credits' && cfg.credits > 0 ? `+${cfg.credits} credits` : (cfg?.note ?? s.bonus_type)
               return (
-                <div key={s.id} style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 14, alignItems: 'center', padding: '14px 18px', borderRadius: 12, border: '1px solid #1a1a22', background: '#0d0d11' }}>
+                <div key={s.id} style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 14, alignItems: 'center', padding: '14px 18px', borderRadius: 12, border: '1px solid #14202e', background: '#0a1018' }}>
                   <div style={{ minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                       <span style={{ fontSize: 15, fontWeight: 700 }}>{label}</span>
-                      <span style={{ fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 20, textTransform: 'uppercase', letterSpacing: '0.04em', background: st.bg, color: st.fg }}>{st.label}</span>
+                      <span style={{ fontSize: 11, fontWeight: 800, padding: '2px 8px', borderRadius: 20, textTransform: 'uppercase', letterSpacing: '0.04em', background: st.bg, color: st.fg }}>{st.label}</span>
                       <span style={{ fontSize: 11, fontWeight: 700, color: SKY }}>{grantText}</span>
-                      {s.granted_credits ? <span style={{ fontSize: 11, color: '#52525b' }}>· granted {s.granted_credits}</span> : null}
+                      {s.granted_credits ? <span style={{ fontSize: 11, color: '#8797ab' }}>· granted {s.granted_credits}</span> : null}
                     </div>
-                    <div style={{ fontSize: 12, color: '#52525b', display: 'flex', gap: 10, flexWrap: 'wrap', margin: '4px 0 0' }}>
+                    <div style={{ fontSize: 12, color: '#8797ab', display: 'flex', gap: 10, flexWrap: 'wrap', margin: '4px 0 0' }}>
                       <span>{s.email}</span>
                       {s.proof_url && <a href={s.proof_url} target="_blank" rel="noopener noreferrer" style={{ color: SKY, textDecoration: 'none' }}>proof ↗</a>}
                       {!s.proof_url && s.proof_text && <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 340 }}>{s.proof_text}</span>}
@@ -105,11 +105,11 @@ export function AdminCommunityClient({ submissions, tableReady }: { submissions:
                   </div>
                   <div style={{ display: 'flex', gap: 6 }}>
                     {s.status === 'approved' ? (
-                      <button disabled={busyId === s.id} onClick={() => act(s.id, 'revoke')} style={btn('#3f3f46', busyId === s.id)}>Revoke</button>
+                      <button disabled={busyId === s.id} onClick={() => act(s.id, 'revoke')} style={btn('#8797ab', busyId === s.id)}>Revoke</button>
                     ) : (
                       <>
                         <button disabled={busyId === s.id} onClick={() => act(s.id, 'approve')} style={btn('#059669', busyId === s.id)}>Approve</button>
-                        {s.status !== 'rejected' && <button disabled={busyId === s.id} onClick={() => act(s.id, 'reject')} style={btn('#3f3f46', busyId === s.id)}>Reject</button>}
+                        {s.status !== 'rejected' && <button disabled={busyId === s.id} onClick={() => act(s.id, 'reject')} style={btn('#8797ab', busyId === s.id)}>Reject</button>}
                       </>
                     )}
                   </div>

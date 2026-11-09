@@ -56,12 +56,12 @@ const IconZap = () => <svg width="15" height="15" viewBox="0 0 32 32" fill="none
 const IconArrowUp = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#03111c" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5,12 12,5 19,12"/></svg>;
 // Workflow / flow-diagram icon (nodes + connectors) — matches the Workflows concept on the marketing site.
 const IconWorkflow = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="6" height="6" rx="1.5"/><rect x="15" y="9" width="6" height="6" rx="1.5"/><rect x="3" y="15" width="6" height="6" rx="1.5"/><path d="M9 6h3a3 3 0 0 1 3 3M9 18h3a3 3 0 0 0 3-3"/></svg>;
-const IconChevronDown = ({ rotated }: { rotated?: boolean }) => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#52525b" strokeWidth="2" style={{ transform: rotated ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}><path d="M6 9l6 6 6-6"/></svg>;
+const IconChevronDown = ({ rotated }: { rotated?: boolean }) => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8797ab" strokeWidth="2" style={{ transform: rotated ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}><path d="M6 9l6 6 6-6"/></svg>;
 const IconDot = () => <div style={{ width: 6, height: 6, borderRadius: 2, background: '#0EA5E9', flexShrink: 0 }} />;
 const IconTrash = () => <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="3,6 5,6 21,6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>;
 const IconCopy = () => <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>;
-const IconPlaceholder = () => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3f3f46" strokeWidth="1.5" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M9 21V9"/></svg>;
-const IconEmpty = () => <svg width="40" height="40" viewBox="0 0 48 48" fill="none" stroke="#3f3f46" strokeWidth="1.5" strokeLinecap="round"><rect x="6" y="10" width="36" height="28" rx="4"/><path d="M16 10V6M32 10V6M6 18h36"/></svg>;
+const IconPlaceholder = () => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#8797ab" strokeWidth="1.5" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M9 21V9"/></svg>;
+const IconEmpty = () => <svg width="40" height="40" viewBox="0 0 48 48" fill="none" stroke="#8797ab" strokeWidth="1.5" strokeLinecap="round"><rect x="6" y="10" width="36" height="28" rx="4"/><path d="M16 10V6M32 10V6M6 18h36"/></svg>;
 const IconDocs = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>;
 const IconLearn = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>;
 const IconPeople = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>;
@@ -70,10 +70,10 @@ const IconAgents = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="n
 // Project type badge
 const TYPE_META: Record<string, { label: string; color: string }> = {
   app:      { label: 'Web App',  color: '#0EA5E9' },
-  website:  { label: 'Website',  color: '#6366f1' },
+  website:  { label: 'Website',  color: '#a5b4fc' },
   saas:     { label: 'SaaS',     color: '#ec4899' },
-  mobile:   { label: 'Mobile',   color: '#8b5cf6' },
-  agent:    { label: 'Agent',    color: '#10b981' },
+  mobile:   { label: 'Mobile',   color: '#a78bfa' },
+  agent:    { label: 'Agent',    color: '#34d399' },
   workflow: { label: 'Workflow', color: '#f59e0b' },
 };
 
@@ -563,7 +563,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
 
           {COMING_SOON.length > 0 && (
             <div style={{ marginTop: 8, paddingTop: 8, borderTop: `1px solid ${BORDER}` }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '4px 10px 5px' }}>{tc('comingSoon')}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#8797ab', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '4px 10px 5px' }}>{tc('comingSoon')}</div>
               {COMING_SOON.map((n: any) => (
                 <Link key={n.label} href={'/coming-soon?product=' + encodeURIComponent(n.label)}
                   style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '6px 10px', borderRadius: 8, color: DIM, fontSize: 12, fontWeight: 400, textDecoration: 'none', marginBottom: 1, opacity: 0.6 }}>
@@ -574,7 +574,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
           )}
 
           {projects.length > 0 && <>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '12px 10px 5px' }}>{t('recentLabel')}</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#8797ab', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '12px 10px 5px' }}>{t('recentLabel')}</div>
             {projects.slice(0, 4).map(p => (
               <Link key={p.id} href={`/project/${p.id}`} className="dash-recent-link"
                 style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', borderRadius: 7, color: DIM, fontSize: 12, textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 1 }}>
@@ -598,7 +598,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
                 <div style={{ fontSize: 12, fontWeight: 800, color: '#fafafa' }}>Go Annual — Save 20%</div>
                 <span style={{ fontSize: 12, fontWeight: 800, padding: '2px 7px', borderRadius: 20, background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.25)', color: '#22c55e', whiteSpace: 'nowrap' }}>BEST VALUE</span>
               </div>
-              <div style={{ fontSize: 12, color: '#71717a' }}>150 credits/mo · 2 months free</div>
+              <div style={{ fontSize: 12, color: '#8797ab' }}>150 credits/mo · 2 months free</div>
             </Link>
           </div>
         )}
@@ -613,7 +613,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
               <span style={{ fontSize: 16 }}>⚡</span>
               <div>
                 <span style={{ fontSize: 13, fontWeight: 700, color: '#fafafa' }}>You&apos;re almost out of credits. </span>
-                <span style={{ fontSize: 13, color: '#a1a1aa' }}>You have {credits} credits left. Annual plan = 150/mo + 2 months free — pays for itself in one build.</span>
+                <span style={{ fontSize: 13, color: '#9aa8bb' }}>You have {credits} credits left. Annual plan = 150/mo + 2 months free — pays for itself in one build.</span>
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
@@ -624,7 +624,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
               >
                 Get Annual Plan →
               </Link>
-              <button onClick={dismissBanner} style={{ background: 'none', border: 'none', color: '#52525b', cursor: 'pointer', fontSize: 18, lineHeight: 1, padding: 2 }}>×</button>
+              <button onClick={dismissBanner} style={{ background: 'none', border: 'none', color: '#8797ab', cursor: 'pointer', fontSize: 18, lineHeight: 1, padding: 2 }}>×</button>
             </div>
           </div>
         )}
@@ -669,7 +669,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
                   {([
                     { mode: 'app' as const, label: t('webAppLabel'), color: '#0EA5E9', icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg> },
                     { mode: 'mobile' as const, label: t('mobileAppLabel'), color: '#f97316', icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg> },
-                    { mode: 'website' as const, label: t('websiteLabel'), color: '#6366f1', icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M2 9h20"/><path d="M7 3v6"/></svg> },
+                    { mode: 'website' as const, label: t('websiteLabel'), color: '#a5b4fc', icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M2 9h20"/><path d="M7 3v6"/></svg> },
                     { mode: 'saas' as const, label: t('saasLabel'), color: '#ec4899', icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><rect x="2" y="3" width="7" height="18" rx="1.5"/><rect x="12" y="3" width="10" height="8" rx="1.5"/><rect x="12" y="14" width="10" height="7" rx="1.5"/></svg> },
                   ]).map(({ mode, label, color, icon }) => (
                     <button key={mode} onClick={() => setBuildMode(mode)} aria-pressed={buildMode === mode}
@@ -679,12 +679,12 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
                     </button>
                   ))}
                 </div>
-                <span style={{ fontSize: 12, color: credits <= 10 ? '#ef4444' : '#3f3f46', fontWeight: credits <= 10 ? 600 : 400 }}>{credits} {t('creditsWord')}</span>
-                <span style={{ fontSize: 12, color: '#3f3f46' }}>{t('enterToBuild')}</span>
+                <span style={{ fontSize: 12, color: credits <= 10 ? '#ef4444' : '#8797ab', fontWeight: credits <= 10 ? 600 : 400 }}>{credits} {t('creditsWord')}</span>
+                <span style={{ fontSize: 12, color: '#8797ab' }}>{t('enterToBuild')}</span>
                 <VoiceButton size={26} disabled={creating} lang={LOCALE_SPEECH_CODE[locale]}
                   onTranscript={txt => { setPromptInput(prev => (prev ? prev + ' ' + txt : txt)); textareaRef.current?.focus(); track('dashboard_voice_used', { length: txt.length }); }} />
                 <button type="button" aria-label="Start building" onClick={submitPrompt} disabled={creating}
-                  style={{ width: 34, height: 34, borderRadius: 9, border: 'none', background: creating ? '#27272a' : BRAND, color: '#03111c', cursor: creating ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}>
+                  style={{ width: 34, height: 34, borderRadius: 9, border: 'none', background: creating ? '#162231' : BRAND, color: '#03111c', cursor: creating ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}>
                   {creating
                     ? <div style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
                     : <IconArrowUp />
@@ -729,7 +729,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
                     else if (view === 'app') startProject(undefined, 'app');
                     else openChooser();
                   }} disabled={creating}
-                    style={{ padding: '7px 16px', borderRadius: 8, border: 'none', background: BRAND, color: 'white', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                    style={{ padding: '7px 16px', borderRadius: 8, border: 'none', background: BRAND, color: '#03111c', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
                     {view === 'mobile' ? t('newMobileAppBtn') : view === 'website' ? 'New Website' : view === 'saas' ? 'New SaaS' : view === 'app' ? 'New Web App' : t('newProjectBtn')}
                   </button>
                 </div>

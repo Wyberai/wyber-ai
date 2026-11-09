@@ -15,7 +15,7 @@ export default async function OrgLandingPage({ searchParams }: { searchParams: P
 
   if (!org) {
     return (
-      <div style={{ minHeight: '100vh', background: '#0b0d12', fontFamily: 'var(--font-display)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, color: '#52525b' }}>
+      <div style={{ minHeight: '100vh', background: '#05080d', fontFamily: 'var(--font-display)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, color: '#8797ab' }}>
         <div style={{ fontSize: 32 }}>🤖</div>
         <p style={{ fontSize: 16 }}>No AI employees found for {domain}</p>
         <Link href="https://wyberai.com" style={{ color: '#0EA5E9', fontSize: 14 }}>Powered by WyberAi</Link>
@@ -31,28 +31,28 @@ export default async function OrgLandingPage({ searchParams }: { searchParams: P
   const clients = (org.clients ?? []).filter((c: { status: string }) => c.status === 'active')
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0b0d12', fontFamily: 'var(--font-display)', color: '#e4e4e7' }}>
-      <nav style={{ borderBottom: '1px solid #1a1a22', background: '#0d0d11', padding: '0 32px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+    <div style={{ minHeight: '100vh', background: '#05080d', fontFamily: 'var(--font-display)', color: '#e8eef7' }}>
+      <nav style={{ borderBottom: '1px solid #14202e', background: '#0a1018', padding: '0 32px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ fontSize: 16, fontWeight: 800, color: '#fff', letterSpacing: '-0.03em' }}>{org.name}</div>
-        <a href="https://wyberai.com" style={{ fontSize: 11, color: '#3f3f46', textDecoration: 'none' }}>Powered by WyberAi</a>
+        <a href="https://wyberai.com" style={{ fontSize: 11, color: '#8797ab', textDecoration: 'none' }}>Powered by WyberAi</a>
       </nav>
 
       <div style={{ maxWidth: 900, margin: '0 auto', padding: '56px 32px 80px' }}>
         <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.04em', color: '#fff', margin: '0 0 8px' }}>
           {org.name}'s AI Team
         </h1>
-        <p style={{ color: '#52525b', fontSize: 15, margin: '0 0 40px' }}>
+        <p style={{ color: '#8797ab', fontSize: 15, margin: '0 0 40px' }}>
           {employees.length} AI employee{employees.length !== 1 ? 's' : ''} working for {org.name}
         </p>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 14 }}>
           {employees.map((emp: { id: string; slug: string; emoji: string; name: string; role: string }) => (
             <Link key={emp.id} href={`/${emp.slug ?? emp.id}`} style={{ textDecoration: 'none' }}>
-              <div style={{ background: '#111115', border: '1px solid #1e1e26', borderRadius: 14, padding: '18px 20px', display: 'flex', gap: 14, alignItems: 'center' }}>
-                <div style={{ width: 44, height: 44, borderRadius: 11, background: '#1a1a22', border: '1px solid #2a2a35', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>{emp.emoji}</div>
+              <div style={{ background: '#0d141e', border: '1px solid #1b2a3b', borderRadius: 14, padding: '18px 20px', display: 'flex', gap: 14, alignItems: 'center' }}>
+                <div style={{ width: 44, height: 44, borderRadius: 11, background: '#14202e', border: '1px solid #2a2a35', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>{emp.emoji}</div>
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: '#e4e4e7' }}>{emp.name}</div>
-                  <div style={{ fontSize: 12, color: '#52525b', marginTop: 2 }}>{emp.role}</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: '#e8eef7' }}>{emp.name}</div>
+                  <div style={{ fontSize: 12, color: '#8797ab', marginTop: 2 }}>{emp.role}</div>
                 </div>
               </div>
             </Link>
@@ -62,11 +62,11 @@ export default async function OrgLandingPage({ searchParams }: { searchParams: P
         {clients.length > 0 && (
           <>
             <h2 style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-0.03em', color: '#fff', margin: '48px 0 8px' }}>Clients</h2>
-            <p style={{ color: '#52525b', fontSize: 13, margin: '0 0 20px' }}>{clients.length} active client{clients.length !== 1 ? 's' : ''}</p>
+            <p style={{ color: '#8797ab', fontSize: 13, margin: '0 0 20px' }}>{clients.length} active client{clients.length !== 1 ? 's' : ''}</p>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12 }}>
               {clients.map((c: { id: string; name: string; slug: string }) => (
                 <a key={c.id} href={`https://wyberai.com/client/${c.slug}`} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
-                  <div style={{ background: '#111115', border: '1px solid #1e1e26', borderRadius: 12, padding: '14px 16px', fontSize: 13, fontWeight: 600, color: '#e4e4e7' }}>{c.name} ↗</div>
+                  <div style={{ background: '#0d141e', border: '1px solid #1b2a3b', borderRadius: 12, padding: '14px 16px', fontSize: 13, fontWeight: 600, color: '#e8eef7' }}>{c.name} ↗</div>
                 </a>
               ))}
             </div>

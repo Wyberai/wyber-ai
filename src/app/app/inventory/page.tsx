@@ -236,7 +236,7 @@ export default function InventoryOverview() {
                 <div>
                   <div style={{ fontSize: 11, color: "rgba(255,255,255,0.45)", fontWeight: 500, marginBottom: 2 }}>{s.label}</div>
                   <div style={{ fontSize: 20, fontWeight: 800, color: (s as { valueColor?: string }).valueColor ?? "rgba(255,255,255,0.92)", letterSpacing: "-0.5px" }}>{s.value}</div>
-                  <div style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", marginTop: 1 }}>{s.note}</div>
+                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 1 }}>{s.note}</div>
                 </div>
               </div>
             ))}
@@ -328,7 +328,7 @@ export default function InventoryOverview() {
                     <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 3 }}>
                       <span style={{ fontWeight: 700, fontSize: 13, color: "#0f172a" }}>{a.mat}</span>
                       <span style={{ fontSize: 11, color: "#64748b", fontWeight: 500 }}>{a.desc}</span>
-                      <span style={{ padding: "2px 7px", background: sevColor + "18", color: sevColor, borderRadius: 5, fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em" }}>{a.sev}</span>
+                      <span style={{ padding: "2px 7px", background: sevColor + "18", color: sevColor, borderRadius: 5, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em" }}>{a.sev}</span>
                     </div>
                     <div style={{ fontSize: 12, color: "#475569", lineHeight: 1.5 }}>{a.msg}</div>
                   </div>
@@ -406,8 +406,8 @@ export default function InventoryOverview() {
                 }} />
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8 }}>
-                <span style={{ fontSize: 10, color: "#94a3b8" }}>0%</span>
-                <span style={{ fontSize: 10, color: "#94a3b8" }}>Capacity 100%</span>
+                <span style={{ fontSize: 11, color: "#94a3b8" }}>0%</span>
+                <span style={{ fontSize: 11, color: "#94a3b8" }}>Capacity 100%</span>
               </div>
             </div>
           ))}

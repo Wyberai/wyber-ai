@@ -83,12 +83,12 @@ export function IntentChooser({ prior, current, initialAsking, onChoose, onAskin
           <h1 style={{ margin: 0, fontSize: 'clamp(32px,6vw,60px)', lineHeight: 1.08, fontWeight: 800, color: 'var(--brand-text)' }}>{c.label}</h1>
           <p style={{ margin: '14px auto 0', maxWidth: 480, fontSize: 'clamp(15px,2vw,18px)', lineHeight: 1.5, color: 'var(--brand-text-dim)' }}>{c.askSub}</p>
         </div>
-        <div role="group" aria-label={c.label} style={{ display: 'grid', gap: 10, padding: 12, borderRadius: 26, background: '#0b0d12', border: '1px solid var(--brand-border-strong)' }}>
+        <div role="group" aria-label={c.label} style={{ display: 'grid', gap: 10, padding: 12, borderRadius: 26, background: '#05080d', border: '1px solid var(--brand-border-strong)' }}>
           {ANSWERS.map(a => (
             <button key={a.door} type="button" onClick={() => choose(a.door)}
               style={{ display: 'grid', gridTemplateColumns: '44px 1fr', alignItems: 'center', gap: 14, textAlign: 'left', padding: '16px 18px', borderRadius: 18, cursor: 'pointer', fontFamily: 'inherit', color: 'var(--brand-text)',
                 border: `1px solid ${current === a.door ? 'var(--brand-accent)' : 'var(--brand-border)'}`, background: current === a.door ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.035)' }}>
-              <span aria-hidden style={{ display: 'grid', placeItems: 'center', width: 44, height: 44, borderRadius: 14, background: 'var(--brand-accent)', color: '#fff', fontWeight: 800, fontSize: 18 }}>{a.letter}</span>
+              <span aria-hidden style={{ display: 'grid', placeItems: 'center', width: 44, height: 44, borderRadius: 14, background: 'var(--brand-accent)', color: '#03111c', fontWeight: 800, fontSize: 18 }}>{a.letter}</span>
               <span>
                 <span style={{ display: 'block', fontSize: 'clamp(18px,2.4vw,22px)', fontWeight: 700 }}>{c.doors[a.door]}</span>
                 <span style={{ display: 'block', fontSize: 14, lineHeight: 1.45, color: 'var(--brand-text-dim)', marginTop: 2 }}>{c.doorHints[a.door]}</span>

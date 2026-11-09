@@ -52,7 +52,7 @@ export default function BoothClient() {
         <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 15 }}>
           <input type="checkbox" checked={hot} onChange={e => setHot(e.target.checked)} style={{ width: 22, height: 22 }} /> Hot lead: follow up within hours
         </label>
-        <button onClick={save} disabled={busy} style={{ padding: 16, fontSize: 18, fontWeight: 800, borderRadius: 12, border: 'none', background: C.sky, color: '#fff', cursor: 'pointer', opacity: busy ? 0.6 : 1 }}>{busy ? 'Saving…' : 'Save'}</button>
+        <button onClick={save} disabled={busy} style={{ padding: 16, fontSize: 18, fontWeight: 800, borderRadius: 12, border: 'none', background: C.sky, color: '#03111c', cursor: 'pointer', opacity: busy ? 0.6 : 1 }}>{busy ? 'Saving…' : 'Save'}</button>
         {msg && <div role="status" style={{ padding: '12px 14px', borderRadius: 12, fontSize: 15, border: `1px solid ${msg.ok ? C.green : C.red}`, color: msg.ok ? C.green : C.red }}>{msg.text}</div>}
       </div>
 

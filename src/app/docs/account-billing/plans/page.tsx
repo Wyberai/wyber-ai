@@ -33,7 +33,7 @@ export default function Page() {
               name: 'Pro',
               price: '$199',
               sub: '/month',
-              color: '#8b5cf6',
+              color: '#a78bfa',
               credits: '1,500 credits/month',
               items: ['1,500 monthly credits', 'All 6 products', 'Priority support'],
             },

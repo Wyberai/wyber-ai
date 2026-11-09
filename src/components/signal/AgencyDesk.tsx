@@ -70,7 +70,7 @@ export function AgencyDesk() {
               <div className="sg-cards">
                 {visible.length === 0 ? <p>Nothing is shown yet. Turn a deliverable on.</p> : visible.map(d => (
                   <div className="sg-c" key={d.n}>
-                    <span className="sg-th2" style={{ background: `linear-gradient(135deg, ${color}, #1a1a22)` }} />
+                    <span className="sg-th2" style={{ background: `linear-gradient(135deg, ${color}, #14202e)` }} />
                     <div><b>{d.h || d.n}</b><span>{d.d}</span></div>
                     <span className="sg-open" style={{ background: color, color: ink }}>Open</span>
                   </div>

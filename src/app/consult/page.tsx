@@ -39,11 +39,11 @@ const OBJECTIONS = [
 ]
 
 const s = {
-  bg: '#09090b',
-  card: '#111115',
+  bg: '#05080d',
+  card: '#0d141e',
   border: 'rgba(255,255,255,0.07)',
   text: '#fafafa',
-  muted: '#71717a',
+  muted: '#8797ab',
   sky: '#0EA5E9',
   green: '#22c55e',
 }
@@ -59,7 +59,7 @@ export default function ConsultPage() {
         </Link>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <Link href="/pricing" style={{ fontSize: 13, color: s.muted, textDecoration: 'none' }}>Pricing</Link>
-          <Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: s.sky, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Start free →</Link>
+          <Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: s.sky, color: '#03111c', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Start free →</Link>
         </div>
       </nav>
 
@@ -152,7 +152,7 @@ export default function ConsultPage() {
           <div style={{ fontSize: 'clamp(18px,3vw,26px)', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 8 }}>Still not sure? Just show up.</div>
           <p style={{ fontSize: 14, color: s.muted, maxWidth: 400, margin: '0 auto 24px', lineHeight: 1.7 }}>The call is free. The worst outcome is 30 minutes and a clear answer on whether your idea is worth building.</p>
           <a href={CAL_LINK} target="_blank" rel="noopener noreferrer"
-            style={{ display: 'inline-block', padding: '14px 32px', borderRadius: 10, background: s.green, color: '#fff', fontSize: 15, fontWeight: 800, textDecoration: 'none', letterSpacing: '-0.01em' }}>
+            style={{ display: 'inline-block', padding: '14px 32px', borderRadius: 10, background: s.green, color: '#03111c', fontSize: 15, fontWeight: 800, textDecoration: 'none', letterSpacing: '-0.01em' }}>
             Book your free call →
           </a>
           <div style={{ fontSize: 12, color: s.muted, marginTop: 12 }}>Available 24/7 · Usually responds same day</div>

@@ -68,11 +68,11 @@ export default function WorkflowsPage() {
     ai: '#8b5cf6',
     action: '#0EA5E9',
     condition: '#22c55e',
-    end: '#52525b',
+    end: '#8797ab',
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#09090b', color: '#fafafa', fontFamily: 'var(--font-display)' }}>
+    <div style={{ minHeight: '100vh', background: '#05080d', color: '#fafafa', fontFamily: 'var(--font-display)' }}>
 
       {/* Header */}
       <div style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '0 32px', background: '#0d0d0f' }}>
@@ -81,9 +81,9 @@ export default function WorkflowsPage() {
             <WyberLogo markSize={24} wordmarkSize={13} />
           </Link>
           <span style={{ color: 'rgba(255,255,255,0.15)' }}>|</span>
-          <span style={{ fontSize: 13, color: '#71717a', fontWeight: 500 }}>Workflow Templates</span>
+          <span style={{ fontSize: 13, color: '#8797ab', fontWeight: 500 }}>Workflow Templates</span>
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 16, alignItems: 'center' }}>
-            <Link href="/flows" style={{ fontSize: 13, color: '#71717a', textDecoration: 'none' }}>My Automations</Link>
+            <Link href="/flows" style={{ fontSize: 13, color: '#8797ab', textDecoration: 'none' }}>My Automations</Link>
             <Link href="/dashboard" style={{ fontSize: 13, color: '#0EA5E9', textDecoration: 'none', fontWeight: 700 }}>Dashboard →</Link>
           </div>
         </div>
@@ -103,7 +103,7 @@ export default function WorkflowsPage() {
             Automate any business process<br />
             <span style={{ color: '#0EA5E9' }}>with one click</span>
           </h1>
-          <p style={{ fontSize: 15, color: '#71717a', maxWidth: 520, margin: '0 auto 28px', lineHeight: 1.65 }}>
+          <p style={{ fontSize: 15, color: '#8797ab', maxWidth: 520, margin: '0 auto 28px', lineHeight: 1.65 }}>
             {WORKFLOW_GALLERY.length} pre-built automation workflows across 7 business categories. Click any template to open it in the canvas builder with nodes pre-wired.
           </p>
           <div style={{ display: 'flex', gap: 8, maxWidth: 520, margin: '0 auto' }}>
@@ -113,7 +113,7 @@ export default function WorkflowsPage() {
               placeholder="Search workflows..."
               style={{ flex: 1, padding: '10px 16px', background: '#111118', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, color: '#fafafa', fontSize: 14, outline: 'none', fontFamily: 'inherit' }}
             />
-            <Link href="/flows" style={{ padding: '10px 20px', borderRadius: 10, background: '#0EA5E9', color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center' }}>
+            <Link href="/flows" style={{ padding: '10px 20px', borderRadius: 10, background: '#0EA5E9', color: '#03111c', fontSize: 14, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center' }}>
               + New Workflow
             </Link>
           </div>
@@ -134,7 +134,7 @@ export default function WorkflowsPage() {
                 padding: '5px 13px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', border: '1px solid',
                 background: category === cat ? '#0EA5E9' : 'transparent',
                 borderColor: category === cat ? '#0EA5E9' : 'rgba(255,255,255,0.08)',
-                color: category === cat ? 'white' : '#71717a',
+                color: category === cat ? 'white' : '#8797ab',
                 transition: 'all 0.15s',
               }}>
               {cat}
@@ -143,16 +143,16 @@ export default function WorkflowsPage() {
         </div>
 
         {/* Count */}
-        <div style={{ marginBottom: 20, fontSize: 12, color: '#52525b' }}>
+        <div style={{ marginBottom: 20, fontSize: 12, color: '#8797ab' }}>
           {filtered.length} workflow{filtered.length !== 1 ? 's' : ''}{category !== 'All' ? ` in ${category}` : ''}
           {search ? ` matching "${search}"` : ''}
         </div>
 
         {/* Grid */}
         {filtered.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '80px 0', color: '#52525b' }}>
+          <div style={{ textAlign: 'center', padding: '80px 0', color: '#8797ab' }}>
             <div style={{ fontSize: 40, marginBottom: 12 }}>⚡</div>
-            <div style={{ fontSize: 16, fontWeight: 600, color: '#a1a1aa', marginBottom: 8 }}>No workflows found</div>
+            <div style={{ fontSize: 16, fontWeight: 600, color: '#9aa8bb', marginBottom: 8 }}>No workflows found</div>
             <div style={{ fontSize: 13 }}>Try a different search or category</div>
           </div>
         ) : (
@@ -170,12 +170,12 @@ export default function WorkflowsPage() {
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 14, fontWeight: 700, color: '#fafafa', marginBottom: 3 }}>{t.name}</div>
-                    <div style={{ fontSize: 11, color: '#52525b' }}>{t.category} · {t.nodes.length} steps</div>
+                    <div style={{ fontSize: 11, color: '#8797ab' }}>{t.category} · {t.nodes.length} steps</div>
                   </div>
                 </div>
 
                 {/* Description */}
-                <p style={{ fontSize: 12, color: '#a1a1aa', lineHeight: 1.55, margin: '0 0 14px', flex: 1 }}>
+                <p style={{ fontSize: 12, color: '#9aa8bb', lineHeight: 1.55, margin: '0 0 14px', flex: 1 }}>
                   {t.description}
                 </p>
 
@@ -186,7 +186,7 @@ export default function WorkflowsPage() {
                     return (
                     <div key={node.id} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                       <span style={{
-                        fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 8,
+                        fontSize: 11, fontWeight: 700, padding: '2px 7px', borderRadius: 8,
                         background: `${NODE_TYPE_COLOR[node.type]}12`,
                         color: NODE_TYPE_COLOR[node.type],
                         border: `1px solid ${NODE_TYPE_COLOR[node.type]}25`,
@@ -198,7 +198,7 @@ export default function WorkflowsPage() {
                       </span>
                       {i < t.nodes.length - 1 && (
                         <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                          <path d="M2 5h6M6 3l2 2-2 2" stroke="#3f3f46" strokeWidth="1.2" strokeLinecap="round"/>
+                          <path d="M2 5h6M6 3l2 2-2 2" stroke="#8797ab" strokeWidth="1.2" strokeLinecap="round"/>
                         </svg>
                       )}
                     </div>
@@ -208,7 +208,7 @@ export default function WorkflowsPage() {
 
                 {/* Footer */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: 'rgba(34,197,94,0.1)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.2)' }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: 'rgba(34,197,94,0.1)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.2)' }}>
                     ⚡ {t.nodes.length} steps
                   </span>
                   <button
@@ -216,7 +216,7 @@ export default function WorkflowsPage() {
                     disabled={launching === t.id}
                     style={{
                       fontSize: 12, fontWeight: 700,
-                      color: launching === t.id ? '#52525b' : '#0EA5E9',
+                      color: launching === t.id ? '#8797ab' : '#0EA5E9',
                       border: `1px solid ${launching === t.id ? 'rgba(255,255,255,0.08)' : 'rgba(14,165,233,0.3)'}`,
                       borderRadius: 8,
                       background: launching === t.id ? 'transparent' : 'rgba(14,165,233,0.08)',
@@ -240,8 +240,8 @@ export default function WorkflowsPage() {
         <div style={{ marginTop: 56, padding: '36px', background: 'rgba(14,165,233,0.04)', border: '1px solid rgba(14,165,233,0.12)', borderRadius: 16, textAlign: 'center' }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: '#0EA5E9', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>Build from scratch</div>
           <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 8, fontFamily: 'var(--font-display)' }}>Need a custom automation?</div>
-          <div style={{ fontSize: 14, color: '#71717a', marginBottom: 20 }}>Start with a blank canvas and drag in triggers, AI steps, and actions.</div>
-          <Link href="/flows" style={{ display: 'inline-block', padding: '11px 24px', borderRadius: 10, background: '#0EA5E9', color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
+          <div style={{ fontSize: 14, color: '#8797ab', marginBottom: 20 }}>Start with a blank canvas and drag in triggers, AI steps, and actions.</div>
+          <Link href="/flows" style={{ display: 'inline-block', padding: '11px 24px', borderRadius: 10, background: '#0EA5E9', color: '#03111c', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
             Create blank flow →
           </Link>
         </div>
@@ -250,7 +250,7 @@ export default function WorkflowsPage() {
       <style>{`
         
         @keyframes spin { to { transform: rotate(360deg) } }
-        input::placeholder { color: #52525b }
+        input::placeholder { color: #8797ab }
       `}</style>
     </div>
   )

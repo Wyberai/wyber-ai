@@ -188,7 +188,7 @@ export function SupabasePanel({ projectId }: { projectId: string }) {
               {copied === 'key' ? tc('copied') : tc('copy')}
             </button>
           </div>
-          <code style={{ fontSize: 12, color: '#a1a1aa', fontFamily: 'monospace' }}>{maskedKey}</code>
+          <code style={{ fontSize: 12, color: '#9aa8bb', fontFamily: 'monospace' }}>{maskedKey}</code>
         </div>
 
         {/* Info box */}

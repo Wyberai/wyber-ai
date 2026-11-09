@@ -48,14 +48,14 @@ export default function GrowthClient({ initial }: { initial?: Snapshot } = {}) {
                 <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 96 }} aria-label="Signups per day, last 14 days">
                   {d.signups?.per_day.map(x => (
                     <div key={x.date} title={`${x.date}: ${x.count}`} style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'center', height: '100%', gap: 3 }}>
-                      <span style={{ fontSize: 10.5, color: C.muted }}>{x.count || ''}</span>
+                      <span style={{ fontSize: 11, color: C.muted }}>{x.count || ''}</span>
                       <div style={{ width: '100%', background: C.sky, height: `${Math.max(x.count ? 6 : 3, (x.count / max) * 78)}%`, borderRadius: 3, opacity: x.count ? 1 : 0.25 }} />
                     </div>
                   ))}
                 </div>
                 {target > 0 && (
                   <div title={`Needed today: ${target} a day`} style={{ position: 'absolute', left: 0, right: 0, bottom: `calc(${(target / max) * 78}% * 0.96 + 0px)`, borderTop: `1px dashed ${C.amber}`, pointerEvents: 'none' }}>
-                    <span style={{ position: 'absolute', right: 0, top: -16, fontSize: 10.5, color: C.amber }}>needed: {target} a day</span>
+                    <span style={{ position: 'absolute', right: 0, top: -16, fontSize: 11, color: C.amber }}>needed: {target} a day</span>
                   </div>
                 )}
               </div>

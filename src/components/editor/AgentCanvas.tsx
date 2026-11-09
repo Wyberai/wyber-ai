@@ -112,7 +112,7 @@ const TOOL_DOMAINS: Record<string, string> = {
 function ToolIcon({ toolId, logoUrl, size = 24 }: { toolId?: string; logoUrl?: string; size?: number }) {
   const domain = toolId ? TOOL_DOMAINS[toolId.toLowerCase()] : null
   const src = logoUrl || (domain ? `https://img.logo.dev/${domain}?token=pk_X4yCW7j3RwCjVnhfq2UWNw&size=64&format=webp` : null)
-  if (!src) return <IcoTool size={size * 0.8} color="#71717a" />
+  if (!src) return <IcoTool size={size * 0.8} color="#8797ab" />
   return (
     <img
       src={src}
@@ -128,15 +128,15 @@ function ToolIcon({ toolId, logoUrl, size = 24 }: { toolId?: string; logoUrl?: s
 
 const NODE_META: Record<WyberNodeType, { color: string; bg: string; label: string; helpText: string; Icon: React.FC<{ size?: number; color?: string }> }> = {
   trigger:   { color: '#0EA5E9', bg: 'rgba(14,165,233,0.08)',  label: 'When this starts', helpText: 'How and when this agent begins running', Icon: IcoZap },
-  aiagent:   { color: '#8b5cf6', bg: 'rgba(139,92,246,0.08)', label: 'AI Step',           helpText: 'Claude reads inputs and decides what to do', Icon: IcoBrain },
-  tool:      { color: '#10b981', bg: 'rgba(16,185,129,0.08)', label: 'Use a tool',        helpText: 'Connect to an external app (Gmail, Slack, etc.)', Icon: IcoTool },
+  aiagent:   { color: '#a78bfa', bg: 'rgba(139,92,246,0.08)', label: 'AI Step',           helpText: 'Claude reads inputs and decides what to do', Icon: IcoBrain },
+  tool:      { color: '#34d399', bg: 'rgba(16,185,129,0.08)', label: 'Use a tool',        helpText: 'Connect to an external app (Gmail, Slack, etc.)', Icon: IcoTool },
   condition: { color: '#f59e0b', bg: 'rgba(245,158,11,0.08)', label: 'Decision point',    helpText: 'Take different paths based on a condition', Icon: IcoDiamond },
   output:    { color: '#22c55e', bg: 'rgba(34,197,94,0.08)',  label: 'Final result',      helpText: 'What the agent produces or sends when done', Icon: IcoCheck },
   error:     { color: '#ef4444', bg: 'rgba(239,68,68,0.08)',  label: 'Error handler',     helpText: 'Catch errors from previous steps and handle gracefully', Icon: IcoX },
   webhook:   { color: '#06b6d4', bg: 'rgba(6,182,212,0.08)', label: 'Webhook trigger',   helpText: 'Start this flow when an external system sends a request', Icon: IcoZap },
-  transform: { color: '#a855f7', bg: 'rgba(168,85,247,0.08)', label: 'Transform data',   helpText: 'Parse JSON, map fields, filter arrays, or reshape data', Icon: IcoCpu },
+  transform: { color: '#c084fc', bg: 'rgba(168,85,247,0.08)', label: 'Transform data',   helpText: 'Parse JSON, map fields, filter arrays, or reshape data', Icon: IcoCpu },
   loop:      { color: '#f97316', bg: 'rgba(249,115,22,0.08)', label: 'Loop / iterate',   helpText: 'Repeat steps for each item in a list', Icon: IcoCpu },
-  delay:     { color: '#52525b', bg: 'rgba(82,82,91,0.08)',   label: 'Wait / delay',     helpText: 'Pause the flow for a set duration before continuing', Icon: IcoDiamond },
+  delay:     { color: '#8797ab', bg: 'rgba(82,82,91,0.08)',   label: 'Wait / delay',     helpText: 'Pause the flow for a set duration before continuing', Icon: IcoDiamond },
   subflow:   { color: '#0d9488', bg: 'rgba(13,148,136,0.08)', label: 'Sub-workflow',    helpText: 'Run another saved flow as a reusable module inside this flow', Icon: IcoCpu },
   parallel:  { color: '#e879f9', bg: 'rgba(232,121,249,0.08)', label: 'Parallel split',  helpText: 'Run multiple branches at the same time, then merge results', Icon: IcoZap },
 }
@@ -190,7 +190,7 @@ function WyberNode({ id, type, data, selected }: NodeProps<Node<WyberNodeData>>)
 
       {/* Subtitle */}
       {data.subtitle
-        ? <div style={{ padding: '0 14px 12px', paddingTop: 4, fontSize: 11, color: '#71717a', lineHeight: 1.45, borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+        ? <div style={{ padding: '0 14px 12px', paddingTop: 4, fontSize: 11, color: '#8797ab', lineHeight: 1.45, borderTop: '1px solid rgba(255,255,255,0.04)' }}>
             {(data.subtitle as string).slice(0, 70)}{(data.subtitle as string).length > 70 ? '...' : ''}
           </div>
         : <div style={{ height: 10 }} />
@@ -335,7 +335,7 @@ function ComposioConnectButton({ toolkit, onConnected }: { toolkit: string; onCo
       style={{
         padding: '7px 14px', borderRadius: 7, border: '1px solid rgba(14,165,233,0.4)',
         background: connecting ? 'rgba(14,165,233,0.05)' : 'rgba(14,165,233,0.1)',
-        color: connecting ? '#52525b' : '#0EA5E9', fontSize: 11, fontWeight: 700,
+        color: connecting ? '#8797ab' : '#0EA5E9', fontSize: 11, fontWeight: 700,
         cursor: connecting ? 'wait' : 'pointer', fontFamily: 'inherit',
         display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap',
       }}
@@ -414,7 +414,7 @@ function ComposioToolPicker({ nodeId, cfg, updateNodeData }: {
             style={fieldStyle}
           />
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '16px 0', color: '#52525b', fontSize: 11 }}>{tc('loading')}</div>
+            <div style={{ textAlign: 'center', padding: '16px 0', color: '#8797ab', fontSize: 11 }}>{tc('loading')}</div>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, maxHeight: 260, overflowY: 'auto' }}>
               {filtered.slice(0, 40).map(t => (
@@ -432,9 +432,9 @@ function ComposioToolPicker({ nodeId, cfg, updateNodeData }: {
                 >
                   {t.logo
                     ? <img src={t.logo} alt={t.name} width={22} height={22} style={{ borderRadius: 4, objectFit: 'contain' }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
-                    : <IcoTool size={18} color="#52525b" />
+                    : <IcoTool size={18} color="#8797ab" />
                   }
-                  <span style={{ fontSize: 9, color: isConnected(t.slug) ? '#22c55e' : '#a1a1aa', fontWeight: 600, textAlign: 'center', lineHeight: 1.2, maxWidth: 70, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name}</span>
+                  <span style={{ fontSize: 9, color: isConnected(t.slug) ? '#22c55e' : '#9aa8bb', fontWeight: 600, textAlign: 'center', lineHeight: 1.2, maxWidth: 70, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name}</span>
                 </button>
               ))}
             </div>
@@ -453,7 +453,7 @@ function ComposioToolPicker({ nodeId, cfg, updateNodeData }: {
             </div>
             <button
               onClick={() => updateNodeData(nodeId, { config: { ...cfg, toolkit: '', action: '', logo: '' } })}
-              style={{ background: 'none', border: 'none', color: '#52525b', cursor: 'pointer', fontSize: 12, padding: '2px 4px' }}
+              style={{ background: 'none', border: 'none', color: '#8797ab', cursor: 'pointer', fontSize: 12, padding: '2px 4px' }}
               title={t('changeToolkitTooltip')}
             >✕</button>
           </div>
@@ -465,9 +465,9 @@ function ComposioToolPicker({ nodeId, cfg, updateNodeData }: {
 
           {/* Action picker */}
           <div>
-            <div style={{ fontSize: 10, fontWeight: 600, color: '#71717a', marginBottom: 6 }}>{t('actionLabel')}</div>
+            <div style={{ fontSize: 10, fontWeight: 600, color: '#8797ab', marginBottom: 6 }}>{t('actionLabel')}</div>
             {actionsLoading ? (
-              <div style={{ fontSize: 11, color: '#52525b', padding: '8px 0' }}>{t('loadingActionsText')}</div>
+              <div style={{ fontSize: 11, color: '#8797ab', padding: '8px 0' }}>{t('loadingActionsText')}</div>
             ) : actions.length === 0 ? null : (() => {
               const toolkit = cfg.toolkit?.toUpperCase() ?? ''
               const topSlugs = TOOLKIT_TOP_ACTIONS[toolkit] ?? []
@@ -504,9 +504,9 @@ function ComposioToolPicker({ nodeId, cfg, updateNodeData }: {
                     onMouseEnter={e => { if (!isSelected) { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.16)'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.03)' } }}
                     onMouseLeave={e => { if (!isSelected) { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.07)'; (e.currentTarget as HTMLElement).style.background = '#111118' } }}
                   >
-                    <div style={{ fontSize: 12, fontWeight: 600, color: isSelected ? '#0EA5E9' : '#e4e4e7', marginBottom: a.description ? 2 : 0 }}>{label}</div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: isSelected ? '#0EA5E9' : '#e8eef7', marginBottom: a.description ? 2 : 0 }}>{label}</div>
                     {a.description && (
-                      <div style={{ fontSize: 10, color: '#71717a', lineHeight: 1.45, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const, overflow: 'hidden' }}>
+                      <div style={{ fontSize: 10, color: '#8797ab', lineHeight: 1.45, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const, overflow: 'hidden' }}>
                         {a.description}
                       </div>
                     )}
@@ -530,19 +530,19 @@ function ComposioToolPicker({ nodeId, cfg, updateNodeData }: {
                       <>
                         {[...displayTop, ...displayRest].map(a => <ActionRow key={a.slug} a={a} />)}
                         {displayTop.length === 0 && displayRest.length === 0 && (
-                          <div style={{ fontSize: 11, color: '#52525b', padding: '8px 0' }}>{t('noMatchingActions')}</div>
+                          <div style={{ fontSize: 11, color: '#8797ab', padding: '8px 0' }}>{t('noMatchingActions')}</div>
                         )}
                       </>
                     ) : showAllActions ? (
                       /* Expanded: all actions in one flat list */
                       <>
-                        <div style={{ fontSize: 9, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>
+                        <div style={{ fontSize: 9, fontWeight: 700, color: '#8797ab', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>
                           {t('allActionsCountPrefix')}{actions.length}{t('allActionsCountSuffix')}
                         </div>
                         {[...topActions, ...restActions].map(a => <ActionRow key={a.slug} a={a} />)}
                         <button
                           onClick={() => setShowAllActions(false)}
-                          style={{ width: '100%', padding: '6px 0', background: 'none', border: 'none', color: '#52525b', fontSize: 10, fontWeight: 600, cursor: 'pointer', marginTop: 2 }}
+                          style={{ width: '100%', padding: '6px 0', background: 'none', border: 'none', color: '#8797ab', fontSize: 10, fontWeight: 600, cursor: 'pointer', marginTop: 2 }}
                         >
                           {t('showFewer')}
                         </button>
@@ -551,7 +551,7 @@ function ComposioToolPicker({ nodeId, cfg, updateNodeData }: {
                       /* Default: pinned common actions + "Show all" toggle */
                       <>
                         {topActions.length > 0 && (
-                          <div style={{ fontSize: 9, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>
+                          <div style={{ fontSize: 9, fontWeight: 700, color: '#8797ab', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>
                             {t('commonActionsLabel')}
                           </div>
                         )}
@@ -559,7 +559,7 @@ function ComposioToolPicker({ nodeId, cfg, updateNodeData }: {
                         {restActions.length > 0 && (
                           <button
                             onClick={() => setShowAllActions(true)}
-                            style={{ width: '100%', padding: '6px 0', background: 'none', border: 'none', color: '#52525b', fontSize: 10, fontWeight: 600, cursor: 'pointer', marginTop: 2 }}
+                            style={{ width: '100%', padding: '6px 0', background: 'none', border: 'none', color: '#8797ab', fontSize: 10, fontWeight: 600, cursor: 'pointer', marginTop: 2 }}
                           >
                             {t('showAllActionsPrefix')}{actions.length}{t('showAllActionsSuffix')}
                           </button>
@@ -574,7 +574,7 @@ function ComposioToolPicker({ nodeId, cfg, updateNodeData }: {
 
           {cfg.action && (
             <div style={{
-              padding: '7px 9px', borderRadius: 7, fontSize: 10, color: '#71717a',
+              padding: '7px 9px', borderRadius: 7, fontSize: 10, color: '#8797ab',
               background: connected ? 'rgba(34,197,94,0.06)' : 'rgba(239,68,68,0.06)',
               border: `1px solid ${connected ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)'}`,
             }}>
@@ -602,7 +602,7 @@ function ConfigPanel() {
   const meta = NODE_META[nodeType]
 
   const fieldStyle = { width: '100%', padding: '8px 10px', background: '#111118', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#fafafa', fontSize: 13, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' as const }
-  const labelStyle = { fontSize: 11, fontWeight: 600 as const, color: '#71717a', display: 'block' as const, marginBottom: 5 }
+  const labelStyle = { fontSize: 11, fontWeight: 600 as const, color: '#8797ab', display: 'block' as const, marginBottom: 5 }
 
   return (
     <div style={{ width: 260, background: '#0a0a0d', borderLeft: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column', overflowY: 'auto', flexShrink: 0 }}>
@@ -619,9 +619,9 @@ function ConfigPanel() {
         </div>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 10, color: meta.color, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t(NODE_LABEL_KEY[nodeType])}</div>
-          <div style={{ fontSize: 11, color: '#52525b' }}>{t(NODE_HELP_KEY[nodeType])}</div>
+          <div style={{ fontSize: 11, color: '#8797ab' }}>{t(NODE_HELP_KEY[nodeType])}</div>
         </div>
-        <button onClick={() => setSelectedNode(null)} style={{ background: 'none', border: 'none', color: '#52525b', cursor: 'pointer', fontSize: 16, lineHeight: 1 }}>×</button>
+        <button onClick={() => setSelectedNode(null)} style={{ background: 'none', border: 'none', color: '#8797ab', cursor: 'pointer', fontSize: 16, lineHeight: 1 }}>×</button>
       </div>
 
       <div style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 12, fontFamily: 'var(--font-display)' }}>
@@ -655,7 +655,7 @@ function ConfigPanel() {
                 <div>
                   <label style={labelStyle}>{t('urlLabel')}</label>
                   <input value={(node.data.config as Record<string,string>).url || ''} onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), url: e.target.value } })} placeholder="https://api.example.com/endpoint" style={fieldStyle} />
-                  <div style={{ fontSize: 10, color: '#52525b', marginTop: 3 }}>{t('secretVaultHint')}</div>
+                  <div style={{ fontSize: 10, color: '#8797ab', marginTop: 3 }}>{t('secretVaultHint')}</div>
                 </div>
                 <div>
                   <label style={labelStyle}>{t('headersJsonLabel')}</label>
@@ -678,7 +678,7 @@ function ConfigPanel() {
                     updateNodeData={updateNodeData}
                   />
                 </div>
-                <div style={{ padding: '6px 9px', borderRadius: 7, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', fontSize: 10, color: '#3f3f46', lineHeight: 1.5 }}>
+                <div style={{ padding: '6px 9px', borderRadius: 7, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', fontSize: 10, color: '#8797ab', lineHeight: 1.5 }}>
                   {t('mustConnectToolkitNote')}
                   {/* TODO (next brief): add inline "Connect now" button that initiates OAuth */}
                 </div>
@@ -706,7 +706,7 @@ function ConfigPanel() {
                   { label: t('presetDaily9am'),    cron: '0 9 * * *'  },
                   { label: t('presetWeeklyMon9am'),cron: '0 9 * * 1'  },
                 ].map(p => (
-                  <label key={p.cron} style={{ display: 'flex', alignItems: 'center', gap: 7, cursor: 'pointer', fontSize: 12, color: '#a1a1aa' }}>
+                  <label key={p.cron} style={{ display: 'flex', alignItems: 'center', gap: 7, cursor: 'pointer', fontSize: 12, color: '#9aa8bb' }}>
                     <input
                       type="radio"
                       name={`sched-${node.id}`}
@@ -718,7 +718,7 @@ function ConfigPanel() {
                     {p.label}
                   </label>
                 ))}
-                <label style={{ display: 'flex', alignItems: 'center', gap: 7, cursor: 'pointer', fontSize: 12, color: '#a1a1aa' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 7, cursor: 'pointer', fontSize: 12, color: '#9aa8bb' }}>
                   <input
                     type="radio"
                     name={`sched-${node.id}`}
@@ -737,7 +737,7 @@ function ConfigPanel() {
                     style={{ ...fieldStyle, fontFamily: 'monospace', fontSize: 11 }}
                   />
                 )}
-                <div style={{ fontSize: 10, color: '#52525b', lineHeight: 1.5, marginTop: 2 }}>
+                <div style={{ fontSize: 10, color: '#8797ab', lineHeight: 1.5, marginTop: 2 }}>
                   {t('creditsCheckedNote')}
                 </div>
               </div>
@@ -747,7 +747,7 @@ function ConfigPanel() {
                 <div style={{ padding: '8px 10px', borderRadius: 7, background: 'rgba(14,165,233,0.06)', border: '1px solid rgba(14,165,233,0.15)', fontSize: 11, color: '#7dd3fc', lineHeight: 1.6 }}>
                   {t('gmailInboxCheckNote')}
                 </div>
-                <div style={{ fontSize: 10, color: '#52525b', lineHeight: 1.5 }}>
+                <div style={{ fontSize: 10, color: '#8797ab', lineHeight: 1.5 }}>
                   {t('creditsCheckedNote')}
                 </div>
               </div>
@@ -768,7 +768,7 @@ function ConfigPanel() {
           <div>
             <label style={labelStyle}>{t('whatConditionDecidesPath')}</label>
             <input value={(node.data.config as Record<string,string>).rule || ''} onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), rule: e.target.value } })} placeholder="e.g. score > 80   or   status === 'urgent'" style={fieldStyle} />
-            <div style={{ fontSize: 10, color: '#52525b', marginTop: 4 }}>{t('trueFalseExpressionHint')}</div>
+            <div style={{ fontSize: 10, color: '#8797ab', marginTop: 4 }}>{t('trueFalseExpressionHint')}</div>
           </div>
         )}
 
@@ -781,7 +781,7 @@ function ConfigPanel() {
                   <input
                     readOnly
                     value={`${typeof window !== 'undefined' ? window.location.origin : 'https://wyberai.com'}${_canvasWebhookUrl}`}
-                    style={{ ...fieldStyle, flex: 1, fontFamily: 'monospace', fontSize: 10, color: '#a1a1aa' }}
+                    style={{ ...fieldStyle, flex: 1, fontFamily: 'monospace', fontSize: 10, color: '#9aa8bb' }}
                   />
                   <button
                     onClick={() => navigator.clipboard.writeText(`${window.location.origin}${_canvasWebhookUrl}`)}
@@ -795,12 +795,12 @@ function ConfigPanel() {
                   {t('saveFlowForWebhookNote')}
                 </div>
               )}
-              <div style={{ fontSize: 10, color: '#52525b', marginTop: 4 }}>{t('webhookPostRequestPrefix')} <code style={{ color: '#06b6d4' }}>{'{{webhook.body}}'}</code> {t('webhookPostRequestSuffix')}</div>
+              <div style={{ fontSize: 10, color: '#8797ab', marginTop: 4 }}>{t('webhookPostRequestPrefix')} <code style={{ color: '#06b6d4' }}>{'{{webhook.body}}'}</code> {t('webhookPostRequestSuffix')}</div>
             </div>
             <div>
               <label style={labelStyle}>{t('secretHeaderLabel')}</label>
               <input value={(node.data.config as Record<string,string>).secret || ''} onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), secret: e.target.value } })} placeholder="e.g. my-secret-token" style={fieldStyle} />
-              <div style={{ fontSize: 10, color: '#52525b', marginTop: 3 }}>{t('secretHeaderNotePrefix')} <code style={{ color: '#a1a1aa' }}>X-Wyber-Secret</code>.</div>
+              <div style={{ fontSize: 10, color: '#8797ab', marginTop: 3 }}>{t('secretHeaderNotePrefix')} <code style={{ color: '#9aa8bb' }}>X-Wyber-Secret</code>.</div>
             </div>
           </>
         )}
@@ -834,7 +834,7 @@ function ConfigPanel() {
                 rows={4}
                 style={{ ...fieldStyle, resize: 'vertical', fontFamily: 'monospace', fontSize: 10 }}
               />
-              <div style={{ fontSize: 10, color: '#52525b', marginTop: 3 }}>{t('stepFieldReferenceHint')}</div>
+              <div style={{ fontSize: 10, color: '#8797ab', marginTop: 3 }}>{t('stepFieldReferenceHint')}</div>
             </div>
           </>
         )}
@@ -849,7 +849,7 @@ function ConfigPanel() {
                 placeholder="e.g. {{trigger.leads}} or {{ai_step.results}}"
                 style={fieldStyle}
               />
-              <div style={{ fontSize: 10, color: '#52525b', marginTop: 3 }}>{t('loopItemHint')}</div>
+              <div style={{ fontSize: 10, color: '#8797ab', marginTop: 3 }}>{t('loopItemHint')}</div>
             </div>
             <div>
               <label style={labelStyle}>{t('maxIterationsLabel')}</label>
@@ -937,7 +937,7 @@ function ConfigPanel() {
                 <option value="days">{t('unitDays')}</option>
               </select>
             </div>
-            <div style={{ fontSize: 10, color: '#52525b', marginTop: 6 }}>{t('delayPauseNote')}</div>
+            <div style={{ fontSize: 10, color: '#8797ab', marginTop: 6 }}>{t('delayPauseNote')}</div>
           </div>
         )}
 
@@ -950,7 +950,7 @@ function ConfigPanel() {
               placeholder={t('pasteFlowIdPlaceholder')}
               style={fieldStyle}
             />
-            <div style={{ fontSize: 10, color: '#52525b', marginTop: 3 }}>{t('subflowRunsNote')}</div>
+            <div style={{ fontSize: 10, color: '#8797ab', marginTop: 3 }}>{t('subflowRunsNote')}</div>
             <label style={{ ...labelStyle, marginTop: 10 }}>{t('passInputAsLabel')}</label>
             <select
               value={(node.data.config as Record<string,string>).input_mode || 'inherit'}
@@ -974,7 +974,7 @@ function ConfigPanel() {
               onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), branches: e.target.value } })}
               style={{ ...fieldStyle, width: 80 }}
             />
-            <div style={{ fontSize: 10, color: '#52525b', marginTop: 3 }}>{t('allBranchesRunNote')}</div>
+            <div style={{ fontSize: 10, color: '#8797ab', marginTop: 3 }}>{t('allBranchesRunNote')}</div>
             <label style={{ ...labelStyle, marginTop: 10 }}>{t('mergeStrategyLabel')}</label>
             <select
               value={(node.data.config as Record<string,string>).merge || 'wait_all'}
@@ -1014,11 +1014,11 @@ function ExecutionLog() {
   return (
     <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 180, background: '#070709', borderTop: `1px solid ${hasErrors ? 'rgba(239,68,68,0.25)' : 'rgba(255,255,255,0.06)'}`, display: 'flex', flexDirection: 'column', zIndex: 10, fontFamily: 'var(--font-display)' }}>
       <div style={{ padding: '6px 14px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-        <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'flex', alignItems: 'center', gap: 6, color: hasErrors ? '#ef4444' : '#52525b' }}>
+        <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'flex', alignItems: 'center', gap: 6, color: hasErrors ? '#ef4444' : '#8797ab' }}>
           {isRunning && <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#0EA5E9', animation: 'pulse 1s ease infinite' }} />}
           {hasErrors ? t('executionErrors') : isRunning ? t('runningEllipsis') : t('executionTrace')}
         </div>
-        <button onClick={clearLogs} style={{ background: 'none', border: 'none', color: '#3f3f46', cursor: 'pointer', fontSize: 10, fontWeight: 600 }}>{t('clearButton')}</button>
+        <button onClick={clearLogs} style={{ background: 'none', border: 'none', color: '#8797ab', cursor: 'pointer', fontSize: 10, fontWeight: 600 }}>{t('clearButton')}</button>
       </div>
       <div ref={logEndRef} style={{ flex: 1, overflowY: 'auto', padding: '6px 14px', display: 'flex', flexDirection: 'column', gap: 2 }}>
         {executionLogs.map((log, i) => {
@@ -1040,8 +1040,8 @@ function ExecutionLog() {
                 {isErr && <IcoX color="#ef4444" />}
                 {isRun && <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#0EA5E9', animation: 'pulse 1s ease infinite', marginTop: 1 }} />}
               </span>
-              <span style={{ color: isErr ? '#ef4444' : isOk ? '#a1a1aa' : '#71717a', flex: 1, wordBreak: 'break-all', lineHeight: 1.4 }}>{log.message}</span>
-              {log.duration != null && <span style={{ color: '#3f3f46', fontSize: 9, flexShrink: 0, marginTop: 2 }}>{log.duration}ms</span>}
+              <span style={{ color: isErr ? '#ef4444' : isOk ? '#9aa8bb' : '#8797ab', flex: 1, wordBreak: 'break-all', lineHeight: 1.4 }}>{log.message}</span>
+              {log.duration != null && <span style={{ color: '#8797ab', fontSize: 9, flexShrink: 0, marginTop: 2 }}>{log.duration}ms</span>}
               {connectMatch && (
                 <a
                   href="/settings?tab=integrations"
@@ -1289,8 +1289,8 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
 
   if (loadingCanvas) {
     return (
-      <div style={{ height: '100vh', background: '#09090b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, color: '#52525b' }}>
+      <div style={{ height: '100vh', background: '#05080d', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, color: '#8797ab' }}>
           <div style={{ width: 32, height: 32, border: '2px solid rgba(255,255,255,0.06)', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
           <div style={{ fontSize: 13 }}>{t('loadingCanvasText')}</div>
         </div>
@@ -1300,11 +1300,11 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#09090b', fontFamily: 'var(--font-display)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#05080d', fontFamily: 'var(--font-display)' }}>
 
       {/* Top bar */}
       <div style={{ height: 48, display: 'flex', alignItems: 'center', padding: '0 12px', gap: 10, borderBottom: '1px solid rgba(255,255,255,0.06)', background: '#0d0d0f', flexShrink: 0, zIndex: 20 }}>
-        <button onClick={() => router.push('/dashboard')} style={{ background: 'none', border: 'none', color: '#71717a', cursor: 'pointer', fontSize: 12, padding: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
+        <button onClick={() => router.push('/dashboard')} style={{ background: 'none', border: 'none', color: '#8797ab', cursor: 'pointer', fontSize: 12, padding: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M15 18l-6-6 6-6"/></svg>
           {t('dashboardLabel')}
         </button>
@@ -1341,7 +1341,7 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
         </div>
 
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 7, alignItems: 'center' }}>
-          <div style={{ fontSize: 11, color: credits < 10 ? '#ef4444' : '#52525b', padding: '3px 9px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.06)' }}>
+          <div style={{ fontSize: 11, color: credits < 10 ? '#ef4444' : '#8797ab', padding: '3px 9px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.06)' }}>
             {credits} cr
           </div>
           {/* Run mode button */}
@@ -1352,7 +1352,7 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
               const modeLabel = cfg.type === 'schedule' ? t('modeScheduled') : cfg.type === 'email' ? t('modeOnEmail') : t('modeManual')
               return (
                 <button onClick={() => setShowRunPanel(v => !v)}
-                  style={{ padding: '5px 10px', borderRadius: 7, border: `1px solid ${showRunPanel ? 'rgba(14,165,233,0.4)' : 'rgba(255,255,255,0.08)'}`, background: showRunPanel ? 'rgba(14,165,233,0.08)' : 'transparent', color: showRunPanel ? '#0EA5E9' : '#71717a', fontSize: 11, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}>
+                  style={{ padding: '5px 10px', borderRadius: 7, border: `1px solid ${showRunPanel ? 'rgba(14,165,233,0.4)' : 'rgba(255,255,255,0.08)'}`, background: showRunPanel ? 'rgba(14,165,233,0.08)' : 'transparent', color: showRunPanel ? '#0EA5E9' : '#8797ab', fontSize: 11, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}>
                   {modeLabel}
                 </button>
               )
@@ -1377,7 +1377,7 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
               }
               return (
                 <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 6, width: 260, background: '#111118', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: 14, zIndex: 1000, boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#52525b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>{t('howShouldThisRun')}</div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#8797ab', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>{t('howShouldThisRun')}</div>
                   {[
                     { type: 'manual', icon: '▶', label: t('runManualLabel'), desc: t('runManualDesc') },
                     { type: 'schedule', icon: '⏱', label: t('runScheduleLabel'), desc: t('runScheduleDesc') },
@@ -1387,15 +1387,15 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
                       style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '8px 10px', borderRadius: 8, marginBottom: 4, cursor: 'pointer', background: currentType === opt.type ? 'rgba(14,165,233,0.08)' : 'transparent', border: `1px solid ${currentType === opt.type ? 'rgba(14,165,233,0.25)' : 'transparent'}` }}>
                       <span style={{ fontSize: 14, marginTop: 1 }}>{opt.icon}</span>
                       <div>
-                        <div style={{ fontSize: 12, fontWeight: 700, color: currentType === opt.type ? '#7dd3fc' : '#a1a1aa' }}>{opt.label}</div>
-                        <div style={{ fontSize: 10, color: '#52525b' }}>{opt.desc}</div>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: currentType === opt.type ? '#7dd3fc' : '#9aa8bb' }}>{opt.label}</div>
+                        <div style={{ fontSize: 10, color: '#8797ab' }}>{opt.desc}</div>
                       </div>
                     </div>
                   ))}
                   {currentType === 'schedule' && (
                     <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
                       {PRESETS.map(p => (
-                        <label key={p.cron} style={{ display: 'flex', alignItems: 'center', gap: 7, cursor: 'pointer', fontSize: 12, color: '#a1a1aa', marginBottom: 4 }}>
+                        <label key={p.cron} style={{ display: 'flex', alignItems: 'center', gap: 7, cursor: 'pointer', fontSize: 12, color: '#9aa8bb', marginBottom: 4 }}>
                           <input type="radio" name="run-panel-cron" value={p.cron} checked={cfg.cron_expression === p.cron} onChange={() => setCron(p.cron)} style={{ accentColor: '#0EA5E9' }} />
                           {p.label}
                         </label>
@@ -1403,7 +1403,7 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
                     </div>
                   )}
                   <button onClick={() => { handleSave(); setShowRunPanel(false) }}
-                    style={{ marginTop: 10, width: '100%', padding: '7px 0', borderRadius: 7, border: 'none', background: '#0EA5E9', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                    style={{ marginTop: 10, width: '100%', padding: '7px 0', borderRadius: 7, border: 'none', background: '#0EA5E9', color: '#03111c', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
                     {t('saveApplyButton')}
                   </button>
                 </div>
@@ -1413,17 +1413,17 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
           {saveTarget === 'flow' && (
             <button onClick={() => { setShowRunHistory(v => !v); if (!showRunHistory) loadRunHistory() }}
               title={t('runHistoryTitle')}
-              style={{ padding: '5px 10px', borderRadius: 7, border: `1px solid ${showRunHistory ? 'rgba(14,165,233,0.4)' : 'rgba(255,255,255,0.08)'}`, background: showRunHistory ? 'rgba(14,165,233,0.08)' : 'transparent', color: showRunHistory ? '#0EA5E9' : '#71717a', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+              style={{ padding: '5px 10px', borderRadius: 7, border: `1px solid ${showRunHistory ? 'rgba(14,165,233,0.4)' : 'rgba(255,255,255,0.08)'}`, background: showRunHistory ? 'rgba(14,165,233,0.08)' : 'transparent', color: showRunHistory ? '#0EA5E9' : '#8797ab', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
               {t('runsButton')}
             </button>
           )}
-          <button onClick={handleSave} style={{ padding: '5px 12px', borderRadius: 7, border: '1px solid rgba(255,255,255,0.08)', background: saved ? 'rgba(34,197,94,0.08)' : 'transparent', color: saved ? '#22c55e' : '#71717a', fontSize: 11, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: 5 }}>
+          <button onClick={handleSave} style={{ padding: '5px 12px', borderRadius: 7, border: '1px solid rgba(255,255,255,0.08)', background: saved ? 'rgba(34,197,94,0.08)' : 'transparent', color: saved ? '#22c55e' : '#8797ab', fontSize: 11, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: 5 }}>
             {saved ? <><IcoCheckSm color="#22c55e" /> {tc('saved')}</> : tc('save')}
           </button>
           <button
             onClick={() => runFlow({ sourceId: projectId, sourceType: saveTarget === 'project' ? 'project' : 'flow' })}
             disabled={isRunning}
-            style={{ padding: '5px 14px', borderRadius: 7, border: 'none', background: isRunning ? '#1a1a24' : '#0EA5E9', color: isRunning ? '#52525b' : '#fff', fontSize: 11, fontWeight: 700, cursor: isRunning ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.2s' }}>
+            style={{ padding: '5px 14px', borderRadius: 7, border: 'none', background: isRunning ? '#1a1a24' : '#0EA5E9', color: isRunning ? '#8797ab' : '#fff', fontSize: 11, fontWeight: 700, cursor: isRunning ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.2s' }}>
             {isRunning ? <><IcoSpinner /> {t('runningButton')}</> : <><svg width="9" height="10" viewBox="0 0 9 10" fill="currentColor"><path d="M0 0l9 5-9 5V0z"/></svg> {t('runButton')}</>}
           </button>
         </div>
@@ -1434,7 +1434,7 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
 
         {/* Left palette */}
         <div style={{ width: 160, background: '#0d0d0f', borderRight: '1px solid rgba(255,255,255,0.06)', padding: '10px 8px', display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4, padding: '0 4px' }}>{t('nodesHeading')}</div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: '#8797ab', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4, padding: '0 4px' }}>{t('nodesHeading')}</div>
           {PALETTE.map(({ type }) => {
             const m = NODE_META[type]
             return (
@@ -1445,7 +1445,7 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
                 <m.Icon size={14} color={m.color} />
                 <div>
                   <div style={{ color: m.color, fontWeight: 600, fontSize: 11 }}>{t(NODE_LABEL_KEY[type])}</div>
-                  <div style={{ color: '#52525b', fontSize: 10 }}>{t(PALETTE_DESC_KEY[type])}</div>
+                  <div style={{ color: '#8797ab', fontSize: 10 }}>{t(PALETTE_DESC_KEY[type])}</div>
                 </div>
               </button>
             )
@@ -1457,7 +1457,7 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
               <IcoTool size={12} color="#0EA5E9" />
               {t('browseToolsButton')}
             </button>
-            <div style={{ fontSize: 9, color: '#3f3f46', lineHeight: 1.55 }}>{t('dragHandleHint')}</div>
+            <div style={{ fontSize: 9, color: '#8797ab', lineHeight: 1.55 }}>{t('dragHandleHint')}</div>
           </div>
         </div>
 
@@ -1466,7 +1466,7 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
           <div style={{ position: 'absolute', left: 160, top: 0, bottom: 0, width: 280, background: '#0d0d0f', borderRight: '1px solid rgba(255,255,255,0.08)', zIndex: 10, display: 'flex', flexDirection: 'column', padding: '12px 10px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
               <span style={{ fontSize: 11, fontWeight: 700, color: '#0EA5E9', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{t('toolCatalogueTitle')}</span>
-              <button onClick={() => setShowToolBrowse(false)} style={{ background: 'none', border: 'none', color: '#52525b', cursor: 'pointer', fontSize: 14, padding: 2, lineHeight: 1 }}>✕</button>
+              <button onClick={() => setShowToolBrowse(false)} style={{ background: 'none', border: 'none', color: '#8797ab', cursor: 'pointer', fontSize: 14, padding: 2, lineHeight: 1 }}>✕</button>
             </div>
             <input
               value={toolBrowseSearch}
@@ -1475,7 +1475,7 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
               style={{ width: '100%', padding: '7px 10px', background: '#111118', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 7, color: '#fafafa', fontSize: 12, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', marginBottom: 8 }}
             />
             {toolBrowseLoading ? (
-              <div style={{ textAlign: 'center', padding: '24px 0', color: '#52525b', fontSize: 11 }}>{tc('loading')}</div>
+              <div style={{ textAlign: 'center', padding: '24px 0', color: '#8797ab', fontSize: 11 }}>{tc('loading')}</div>
             ) : (
               <div style={{ overflowY: 'auto', flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 5, alignContent: 'start' }}>
                 {toolBrowseList
@@ -1491,14 +1491,14 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
                       onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.07)'; (e.currentTarget as HTMLButtonElement).style.background = '#111118' }}>
                       {t.logo
                         ? <img src={t.logo} alt={t.name} width={20} height={20} style={{ borderRadius: 4, objectFit: 'contain' }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
-                        : <IcoTool size={16} color="#52525b" />
+                        : <IcoTool size={16} color="#8797ab" />
                       }
-                      <span style={{ fontSize: 9, color: '#a1a1aa', fontWeight: 600, textAlign: 'center', lineHeight: 1.2, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name}</span>
+                      <span style={{ fontSize: 9, color: '#9aa8bb', fontWeight: 600, textAlign: 'center', lineHeight: 1.2, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name}</span>
                     </button>
                   ))}
               </div>
             )}
-            <div style={{ marginTop: 8, fontSize: 10, color: '#3f3f46', textAlign: 'center' }}>{t('clickToolToAddHint')}</div>
+            <div style={{ marginTop: 8, fontSize: 10, color: '#8797ab', textAlign: 'center' }}>{t('clickToolToAddHint')}</div>
           </div>
         )}
 
@@ -1513,7 +1513,7 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
             nodeTypes={NODE_TYPES}
             defaultViewport={{ zoom: 0.75, x: 0, y: 0 }}
             defaultEdgeOptions={{ type: 'wyber', markerEnd: 'url(#wyber-arrow)', style: { stroke: '#0EA5E9', strokeWidth: 2 } }}
-            style={{ background: '#09090b' }}
+            style={{ background: '#05080d' }}
             edgeTypes={EDGE_TYPES}
           >
             <WyberMarkerDefs />
@@ -1526,17 +1526,17 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
             />
             {nodes.length <= 1 && (
               <Panel position="top-center">
-                <div style={{ marginTop: 60, textAlign: 'center', color: '#a1a1aa', pointerEvents: 'auto', fontFamily: 'var(--font-display)', maxWidth: 400 }}>
+                <div style={{ marginTop: 60, textAlign: 'center', color: '#9aa8bb', pointerEvents: 'auto', fontFamily: 'var(--font-display)', maxWidth: 400 }}>
                   <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12, opacity: 0.6 }}>
                     {isAgent ? <IcoCpu size={36} color="#8b5cf6" /> : <IcoZap size={36} color="#0EA5E9" />}
                   </div>
-                  <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 6, color: '#e4e4e7' }}>
+                  <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 6, color: '#e8eef7' }}>
                     {isAgent ? t('buildYourAgentTitle') : t('buildYourWorkflowTitle')}
                   </div>
-                  <div style={{ fontSize: 13, color: '#71717a', lineHeight: 1.5, marginBottom: 16 }}>
+                  <div style={{ fontSize: 13, color: '#8797ab', lineHeight: 1.5, marginBottom: 16 }}>
                     {isAgent ? t('buildAgentDesc') : t('buildWorkflowDesc')}
                   </div>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: '#52525b', marginBottom: 12 }}>{t('quickStartLabel')}</div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: '#8797ab', marginBottom: 12 }}>{t('quickStartLabel')}</div>
                   <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
                     {[
                       { label: t('quickTrigger'), type: 'trigger' as const },
@@ -1575,18 +1575,18 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
             <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
               <div>
                 <div style={{ fontSize: 15, fontWeight: 700, color: '#f0f0f5' }}>{t('runHistoryTitle')}</div>
-                <div style={{ fontSize: 12, color: '#52525b', marginTop: 2 }}>{t('last20ExecutionsDesc')}</div>
+                <div style={{ fontSize: 12, color: '#8797ab', marginTop: 2 }}>{t('last20ExecutionsDesc')}</div>
               </div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <button onClick={loadRunHistory} style={{ padding: '5px 12px', borderRadius: 7, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#71717a', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>{tc('refresh')}</button>
-                <button onClick={() => setShowRunHistory(false)} style={{ background: 'none', border: 'none', color: '#52525b', cursor: 'pointer', fontSize: 18, lineHeight: 1, padding: '2px 6px' }}>×</button>
+                <button onClick={loadRunHistory} style={{ padding: '5px 12px', borderRadius: 7, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#8797ab', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>{tc('refresh')}</button>
+                <button onClick={() => setShowRunHistory(false)} style={{ background: 'none', border: 'none', color: '#8797ab', cursor: 'pointer', fontSize: 18, lineHeight: 1, padding: '2px 6px' }}>×</button>
               </div>
             </div>
             <div style={{ flex: 1, overflowY: 'auto', padding: '12px 20px' }}>
               {runHistoryLoading ? (
-                <div style={{ textAlign: 'center', padding: '32px 0', color: '#52525b', fontSize: 13 }}>{tc('loading')}</div>
+                <div style={{ textAlign: 'center', padding: '32px 0', color: '#8797ab', fontSize: 13 }}>{tc('loading')}</div>
               ) : runHistory.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '32px 0', color: '#52525b', fontSize: 13 }}>{t('noRunsYetMessage')}</div>
+                <div style={{ textAlign: 'center', padding: '32px 0', color: '#8797ab', fontSize: 13 }}>{t('noRunsYetMessage')}</div>
               ) : (
                 runHistory.map(run => {
                   const isExpanded = expandedRunId === run.id
@@ -1598,26 +1598,26 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
                         style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
                         <span style={{ fontSize: 12, fontWeight: 700, color: statusColor, width: 16 }}>{statusIcon}</span>
                         <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: 12, color: '#a1a1aa', fontWeight: 600 }}>{new Date(run.created_at).toLocaleString()}</div>
-                          <div style={{ fontSize: 11, color: '#52525b', marginTop: 2 }}>
+                          <div style={{ fontSize: 12, color: '#9aa8bb', fontWeight: 600 }}>{new Date(run.created_at).toLocaleString()}</div>
+                          <div style={{ fontSize: 11, color: '#8797ab', marginTop: 2 }}>
                             {run.node_count} {t('nodesUnit')} · {run.duration_ms}ms · {run.triggered_by}
                           </div>
                         </div>
-                        <span style={{ color: '#3f3f46', fontSize: 11 }}>{isExpanded ? '▲' : '▼'}</span>
+                        <span style={{ color: '#8797ab', fontSize: 11 }}>{isExpanded ? '▲' : '▼'}</span>
                       </div>
                       {isExpanded && (
                         <div style={{ borderTop: '1px solid rgba(255,255,255,0.04)', padding: '10px 14px' }}>
                           {(run.steps || []).map((step, i) => (
                             <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 6, fontSize: 11 }}>
-                              <span style={{ color: step.status === 'success' ? '#22c55e' : step.status === 'error' ? '#ef4444' : '#52525b', flexShrink: 0 }}>
+                              <span style={{ color: step.status === 'success' ? '#22c55e' : step.status === 'error' ? '#ef4444' : '#8797ab', flexShrink: 0 }}>
                                 {step.status === 'success' ? '✓' : step.status === 'error' ? '✗' : '○'}
                               </span>
                               <div style={{ flex: 1 }}>
-                                <span style={{ color: '#a1a1aa', fontWeight: 600 }}>{step.nodeLabel}</span>
-                                <span style={{ color: '#3f3f46', marginLeft: 6 }}>({step.nodeType})</span>
-                                {step.durationMs > 0 && <span style={{ color: '#3f3f46', marginLeft: 6 }}>{step.durationMs}ms</span>}
+                                <span style={{ color: '#9aa8bb', fontWeight: 600 }}>{step.nodeLabel}</span>
+                                <span style={{ color: '#8797ab', marginLeft: 6 }}>({step.nodeType})</span>
+                                {step.durationMs > 0 && <span style={{ color: '#8797ab', marginLeft: 6 }}>{step.durationMs}ms</span>}
                                 {step.log?.length > 0 && (
-                                  <div style={{ marginTop: 3, fontFamily: 'monospace', color: '#52525b', fontSize: 10, lineHeight: 1.5 }}>
+                                  <div style={{ marginTop: 3, fontFamily: 'monospace', color: '#8797ab', fontSize: 10, lineHeight: 1.5 }}>
                                     {step.log.map((l, li) => <div key={li}>{l}</div>)}
                                   </div>
                                 )}
@@ -1642,7 +1642,7 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
         .react-flow__handle { transition: all 0.15s; }
         .react-flow__handle:hover { transform: scale(1.5); }
         .react-flow__controls-button { background: #111118 !important; border-color: rgba(255,255,255,0.08) !important; }
-        .react-flow__controls-button svg { fill: #71717a !important; }
+        .react-flow__controls-button svg { fill: #8797ab !important; }
         .react-flow__controls-button:hover { background: #1a1a24 !important; }
       `}</style>
     </div>

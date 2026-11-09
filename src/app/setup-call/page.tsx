@@ -7,7 +7,7 @@ const CAL_LINK = 'https://cal.com/wyberai/wyber-ai-build-consultation'
 const TIERS = [
   { name:'Simple',  delivery:'24 hours',       color:'#22c55e', icon:'⚡', examples:'Landing pages, portfolios, single-tool apps, static dashboards' },
   { name:'Medium',  delivery:'3 working days',  color:'#0EA5E9', icon:'🔧', examples:'SaaS MVPs, booking systems, CRMs, apps with login + database' },
-  { name:'Complex', delivery:'1 week',           color:'#8b5cf6', icon:'🏗️', examples:'Full SaaS with payments, multi-role apps, marketplace platforms' },
+  { name:'Complex', delivery:'1 week',           color:'#a78bfa', icon:'🏗️', examples:'Full SaaS with payments, multi-role apps, marketplace platforms' },
 ]
 
 // Free is a US-only, English-only offer for now (matches the pricing/homepage
@@ -45,7 +45,7 @@ export default async function SetupCallPage() {
   const isFree = true // free globally — cost recovered during build
   const STEPS = getSteps(isFree)
   const FAQ = getFaq(isFree)
-  const s = { bg:'#09090b', card:'#111113', border:'rgba(255,255,255,0.08)', text:'#fafafa', muted:'#71717a', sky:'#0EA5E9' }
+  const s = { bg:'#05080d', card:'#0d141e', border:'rgba(255,255,255,0.08)', text:'#fafafa', muted:'#8797ab', sky:'#0EA5E9' }
 
   return (
     <div style={{ minHeight:'100vh', background:s.bg, color:s.text, fontFamily: 'var(--font-display)' }}>
@@ -55,7 +55,7 @@ export default async function SetupCallPage() {
         </Link>
         <div style={{ display:'flex', gap:8, alignItems:'center' }}>
           <Link href="/pricing" style={{ fontSize:13, color:s.muted, textDecoration:'none' }}>← Pricing</Link>
-          <Link href="/signup" style={{ padding:'7px 16px', borderRadius:8, background:s.sky, color:'#fff', fontSize:13, fontWeight:700, textDecoration:'none' }}>Start free →</Link>
+          <Link href="/signup" style={{ padding:'7px 16px', borderRadius:8, background:s.sky, color:'#03111c', fontSize:13, fontWeight:700, textDecoration:'none' }}>Start free →</Link>
         </div>
       </nav>
 
@@ -150,7 +150,7 @@ export default async function SetupCallPage() {
         <div style={{ textAlign:'center', padding:32, background:s.card, borderRadius:14, border:`1px solid ${s.border}` }}>
           <div style={{ fontSize:16, fontWeight:700, fontFamily: 'var(--font-display)', marginBottom:6 }}>Questions before booking?</div>
           <div style={{ fontSize:13, color:s.muted, marginBottom:16 }}>Email us — usually reply within a few hours.</div>
-          <a href="mailto:hello@wyberai.com?subject=Build Session Enquiry" style={{ display:'inline-block', padding:'10px 22px', borderRadius:9, background:s.sky, color:'#fff', fontSize:13, fontWeight:700, textDecoration:'none' }}>hello@wyberai.com →</a>
+          <a href="mailto:hello@wyberai.com?subject=Build Session Enquiry" style={{ display:'inline-block', padding:'10px 22px', borderRadius:9, background:s.sky, color:'#03111c', fontSize:13, fontWeight:700, textDecoration:'none' }}>hello@wyberai.com →</a>
         </div>
       </div>
 

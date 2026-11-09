@@ -6,7 +6,7 @@ const SKY = '#0EA5E9'
 const GREEN = '#22c55e'
 const AMBER = '#f59e0b'
 const RED = '#ef4444'
-const MUTED = '#71717a'
+const MUTED = '#8797ab'
 
 const STATUS_COLOR: Record<string, string> = {
   scheduled: SKY,
@@ -101,13 +101,13 @@ async function patch(id: string, body: Record<string, unknown>) {
 
 function StatCard({ label, value, sub, color = SKY, icon }: { label: string; value: string | number; sub?: string; color?: string; icon: string }) {
   return (
-    <div style={{ background: '#111115', border: '1px solid #1e1e26', borderRadius: 16, padding: '22px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <div style={{ background: '#0d141e', border: '1px solid #1b2a3b', borderRadius: 16, padding: '22px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <span style={{ fontSize: 12, color: MUTED, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</span>
         <span style={{ fontSize: 18 }}>{icon}</span>
       </div>
       <div style={{ fontSize: 30, fontWeight: 800, letterSpacing: '-0.04em', color, lineHeight: 1 }}>{value}</div>
-      {sub && <div style={{ fontSize: 11, color: '#3f3f46' }}>{sub}</div>}
+      {sub && <div style={{ fontSize: 11, color: '#8797ab' }}>{sub}</div>}
     </div>
   )
 }
@@ -140,17 +140,17 @@ function BriefPanel({ meeting, onBriefGenerated }: { meeting: Meeting; onBriefGe
   return (
     <div style={{ gridColumn: '1 / -1', background: '#09090f', border: '1px solid #1e2030', borderRadius: 14, padding: '18px 20px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: brief ? 16 : 0 }}>
-        <span style={{ fontSize: 11, color: '#6366f1', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase' }}>
+        <span style={{ fontSize: 11, color: '#a5b4fc', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase' }}>
           AI Call Brief
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           {brief && (
-            <span style={{ fontSize: 10, color: MUTED }}>
+            <span style={{ fontSize: 11, color: MUTED }}>
               Generated {new Date(brief.generated_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: true })}
             </span>
           )}
           <button onClick={generate} disabled={loading}
-            style={{ fontSize: 12, fontWeight: 700, padding: '6px 14px', borderRadius: 8, border: 'none', background: loading ? '#1e1e26' : '#6366f1', color: loading ? MUTED : '#fff', cursor: loading ? 'not-allowed' : 'pointer', transition: 'all 0.15s' }}>
+            style={{ fontSize: 12, fontWeight: 700, padding: '6px 14px', borderRadius: 8, border: 'none', background: loading ? '#1b2a3b' : '#6366f1', color: loading ? MUTED : '#fff', cursor: loading ? 'not-allowed' : 'pointer', transition: 'all 0.15s' }}>
             {loading ? 'Generating…' : brief ? 'Regenerate' : 'Generate Brief'}
           </button>
         </div>
@@ -169,7 +169,7 @@ function BriefPanel({ meeting, onBriefGenerated }: { meeting: Meeting; onBriefGe
 
             {/* Questions */}
             <div style={{ background: '#0e0e18', border: '1px solid #1e1e2e', borderRadius: 10, padding: '14px 16px' }}>
-              <div style={{ fontSize: 11, color: '#6366f1', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 10 }}>Ask on the call</div>
+              <div style={{ fontSize: 11, color: '#a5b4fc', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 10 }}>Ask on the call</div>
               <ol style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {brief.questions.map((q, i) => (
                   <li key={i} style={{ fontSize: 12, color: '#d4d4e4', lineHeight: 1.6 }}>{q}</li>
@@ -203,19 +203,19 @@ function BriefPanel({ meeting, onBriefGenerated }: { meeting: Meeting; onBriefGe
                 <div style={{ borderTop: '1px solid #1e1e2e', marginTop: 4, paddingTop: 8 }}>
                   <Row label="Practical total" value={fmt(brief.self_serve.total_practical_inr)} highlight />
                 </div>
-                <div style={{ fontSize: 11, color: '#52525b', lineHeight: 1.5, marginTop: 4 }}>{brief.self_serve.hard_part}</div>
+                <div style={{ fontSize: 11, color: '#8797ab', lineHeight: 1.5, marginTop: 4 }}>{brief.self_serve.hard_part}</div>
               </div>
             </div>
 
             <div style={{ background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.25)', borderRadius: 10, padding: '14px 16px' }}>
-              <div style={{ fontSize: 11, color: '#6366f1', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 10 }}>Done for you (your quote)</div>
+              <div style={{ fontSize: 11, color: '#a5b4fc', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 10 }}>Done for you (your quote)</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <Row label="Tier" value={brief.dfy.tier} />
                 <Row label="Timeline" value={brief.dfy.timeline} />
                 <div style={{ borderTop: '1px solid rgba(99,102,241,0.2)', marginTop: 4, paddingTop: 8 }}>
                   <Row label="Price" value={fmt(brief.dfy.price_inr)} highlight />
                 </div>
-                <div style={{ fontSize: 11, color: '#52525b', lineHeight: 1.5, marginTop: 4 }}>{brief.dfy.includes}</div>
+                <div style={{ fontSize: 11, color: '#8797ab', lineHeight: 1.5, marginTop: 4 }}>{brief.dfy.includes}</div>
                 {brief.dfy.external_costs && (
                   <div style={{ fontSize: 11, color: AMBER, lineHeight: 1.5 }}>External: {brief.dfy.external_costs}</div>
                 )}
@@ -243,11 +243,11 @@ function BriefPanel({ meeting, onBriefGenerated }: { meeting: Meeting; onBriefGe
           {brief.architecture_mermaid && (
             <div style={{ background: '#0e0e18', border: '1px solid #1e1e2e', borderRadius: 10, padding: '14px 16px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                <div style={{ fontSize: 11, color: '#6366f1', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Architecture — share on screen during call</div>
+                <div style={{ fontSize: 11, color: '#a5b4fc', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Architecture — share on screen during call</div>
                 <a
                   href={`https://mermaid.live/edit#base64:${btoa(unescape(encodeURIComponent(JSON.stringify({ code: brief.architecture_mermaid, mermaid: { theme: 'dark' } }))))}`}
                   target="_blank" rel="noopener noreferrer"
-                  style={{ fontSize: 11, fontWeight: 700, color: '#6366f1', textDecoration: 'none', padding: '4px 12px', border: '1px solid rgba(99,102,241,0.4)', borderRadius: 6, background: 'rgba(99,102,241,0.08)', whiteSpace: 'nowrap' }}
+                  style={{ fontSize: 11, fontWeight: 700, color: '#a5b4fc', textDecoration: 'none', padding: '4px 12px', border: '1px solid rgba(99,102,241,0.4)', borderRadius: 6, background: 'rgba(99,102,241,0.08)', whiteSpace: 'nowrap' }}
                 >
                   Open diagram →
                 </a>
@@ -289,7 +289,7 @@ function SendSummaryPanel({ meeting, onSent }: { meeting: Meeting; onSent: (sent
   }
 
   return (
-    <div style={{ background: '#0e0e14', border: `1px solid ${sent ? 'rgba(34,197,94,0.25)' : '#1e1e26'}`, borderRadius: 12, padding: '16px 18px' }}>
+    <div style={{ background: '#0e0e14', border: `1px solid ${sent ? 'rgba(34,197,94,0.25)' : '#1b2a3b'}`, borderRadius: 12, padding: '16px 18px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
           <SectionLabel>Post-call summary email</SectionLabel>
@@ -300,7 +300,7 @@ function SendSummaryPanel({ meeting, onSent }: { meeting: Meeting; onSent: (sent
           )}
         </div>
         <button onClick={() => setOpen(o => !o)}
-          style={{ fontSize: 12, fontWeight: 600, padding: '6px 14px', borderRadius: 8, border: `1px solid ${sent ? 'rgba(34,197,94,0.3)' : '#2a2a35'}`, background: sent ? 'rgba(34,197,94,0.08)' : '#111115', color: sent ? GREEN : SKY, cursor: 'pointer' }}>
+          style={{ fontSize: 12, fontWeight: 600, padding: '6px 14px', borderRadius: 8, border: `1px solid ${sent ? 'rgba(34,197,94,0.3)' : '#2a2a35'}`, background: sent ? 'rgba(34,197,94,0.08)' : '#0d141e', color: sent ? GREEN : SKY, cursor: 'pointer' }}>
           {open ? 'Close' : sent ? 'Resend' : 'Compose →'}
         </button>
       </div>
@@ -311,13 +311,13 @@ function SendSummaryPanel({ meeting, onSent }: { meeting: Meeting; onSent: (sent
             <SectionLabel>One-liner — what they&apos;re building</SectionLabel>
             <input placeholder="e.g. an SMS platform with dedicated US numbers per user" value={ideaLine}
               onChange={e => setIdeaLine(e.target.value)}
-              style={{ background: '#111115', border: '1px solid #2a2a35', borderRadius: 8, color: '#e4e4e7', padding: '8px 12px', fontSize: 13, width: '100%', boxSizing: 'border-box' }} />
+              style={{ background: '#0d141e', border: '1px solid #2a2a35', borderRadius: 8, color: '#e8eef7', padding: '8px 12px', fontSize: 13, width: '100%', boxSizing: 'border-box' }} />
           </div>
           <div>
             <SectionLabel>What was covered on the call (bullet points, one per line)</SectionLabel>
             <textarea rows={6} placeholder="- They want to build X&#10;- Key concern was Y&#10;- They have Z already&#10;- Next step agreed: …"
               value={summary} onChange={e => setSummary(e.target.value)}
-              style={{ background: '#111115', border: '1px solid #2a2a35', borderRadius: 8, color: '#e4e4e7', padding: '10px 12px', fontSize: 13, width: '100%', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6, boxSizing: 'border-box' }} />
+              style={{ background: '#0d141e', border: '1px solid #2a2a35', borderRadius: 8, color: '#e8eef7', padding: '10px 12px', fontSize: 13, width: '100%', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6, boxSizing: 'border-box' }} />
           </div>
           {err && <div style={{ fontSize: 12, color: RED, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, padding: '8px 12px' }}>{err}</div>}
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
@@ -326,7 +326,7 @@ function SendSummaryPanel({ meeting, onSent }: { meeting: Meeting; onSent: (sent
               Cancel
             </button>
             <button onClick={send} disabled={sending}
-              style={{ padding: '8px 22px', borderRadius: 8, border: 'none', background: GREEN, color: '#fff', fontSize: 13, fontWeight: 700, cursor: sending ? 'not-allowed' : 'pointer', opacity: sending ? 0.7 : 1 }}>
+              style={{ padding: '8px 22px', borderRadius: 8, border: 'none', background: GREEN, color: '#03111c', fontSize: 13, fontWeight: 700, cursor: sending ? 'not-allowed' : 'pointer', opacity: sending ? 0.7 : 1 }}>
               {sending ? 'Sending…' : `Send to ${meeting.attendee_email}`}
             </button>
           </div>
@@ -340,7 +340,7 @@ function Row({ label, value, highlight, muted }: { label: string; value: string;
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
       <span style={{ fontSize: 11, color: MUTED, flexShrink: 0 }}>{label}</span>
-      <span style={{ fontSize: highlight ? 14 : 12, fontWeight: highlight ? 700 : 500, color: highlight ? '#e4e4f7' : muted ? '#3f3f46' : '#a0a0b8', textDecoration: muted ? 'line-through' : 'none', fontVariantNumeric: 'tabular-nums', textAlign: 'right' }}>{value}</span>
+      <span style={{ fontSize: highlight ? 14 : 12, fontWeight: highlight ? 700 : 500, color: highlight ? '#e4e4f7' : muted ? '#8797ab' : '#a0a0b8', textDecoration: muted ? 'line-through' : 'none', fontVariantNumeric: 'tabular-nums', textAlign: 'right' }}>{value}</span>
     </div>
   )
 }
@@ -393,10 +393,10 @@ function BreakdownPanel({ meeting, onSent }: { meeting: Meeting; onSent: (sentAt
   }
 
   return (
-    <div style={{ gridColumn: '1 / -1', background: '#0a0a10', border: `1px solid ${sent ? 'rgba(34,197,94,0.25)' : '#1e1e26'}`, borderRadius: 12, padding: '16px 18px' }}>
+    <div style={{ gridColumn: '1 / -1', background: '#0a0a10', border: `1px solid ${sent ? 'rgba(34,197,94,0.25)' : '#1b2a3b'}`, borderRadius: 12, padding: '16px 18px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: open ? 20 : 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontSize: 14, fontWeight: 700, color: sent ? GREEN : '#e4e4e7' }}>
+          <span style={{ fontSize: 14, fontWeight: 700, color: sent ? GREEN : '#e8eef7' }}>
             {sent ? '✓ Breakdown sent' : 'Send breakdown email'}
           </span>
           {sent && meeting.breakdown_sent_at && (
@@ -407,7 +407,7 @@ function BreakdownPanel({ meeting, onSent }: { meeting: Meeting; onSent: (sentAt
         </div>
         <button
           onClick={() => setOpen(o => !o)}
-          style={{ fontSize: 12, fontWeight: 600, padding: '6px 14px', borderRadius: 8, border: `1px solid ${sent ? 'rgba(34,197,94,0.3)' : '#2a2a35'}`, background: sent ? 'rgba(34,197,94,0.08)' : '#111115', color: sent ? GREEN : SKY, cursor: 'pointer' }}
+          style={{ fontSize: 12, fontWeight: 600, padding: '6px 14px', borderRadius: 8, border: `1px solid ${sent ? 'rgba(34,197,94,0.3)' : '#2a2a35'}`, background: sent ? 'rgba(34,197,94,0.08)' : '#0d141e', color: sent ? GREEN : SKY, cursor: 'pointer' }}
         >
           {open ? 'Close' : sent ? 'Resend' : 'Compose →'}
         </button>
@@ -418,11 +418,11 @@ function BreakdownPanel({ meeting, onSent }: { meeting: Meeting; onSent: (sentAt
           <span style={{ fontSize: 11, background: 'rgba(14,165,233,0.1)', border: '1px solid rgba(14,165,233,0.2)', color: SKY, borderRadius: 6, padding: '3px 10px' }}>
             {meeting.breakdown_payload.complexity}
           </span>
-          <span style={{ fontSize: 11, background: 'rgba(14,165,233,0.08)', border: '1px solid #1e1e26', color: '#a0a0b0', borderRadius: 6, padding: '3px 10px' }}>
+          <span style={{ fontSize: 11, background: 'rgba(14,165,233,0.08)', border: '1px solid #1b2a3b', color: '#a0a0b0', borderRadius: 6, padding: '3px 10px' }}>
             {meeting.breakdown_payload.credits_low}–{meeting.breakdown_payload.credits_high} credits
           </span>
           {meeting.breakdown_payload.tools.map(t => (
-            <span key={t} style={{ fontSize: 11, background: 'rgba(255,255,255,0.04)', border: '1px solid #1e1e26', color: MUTED, borderRadius: 6, padding: '3px 10px' }}>{t}</span>
+            <span key={t} style={{ fontSize: 11, background: 'rgba(255,255,255,0.04)', border: '1px solid #1b2a3b', color: MUTED, borderRadius: 6, padding: '3px 10px' }}>{t}</span>
           ))}
         </div>
       )}
@@ -435,9 +435,9 @@ function BreakdownPanel({ meeting, onSent }: { meeting: Meeting; onSent: (sentAt
             <div style={{ display: 'flex', gap: 8 }}>
               {(['Simple', 'Standard', 'Complex'] as const).map(c => (
                 <button key={c} onClick={() => setComplexityAndCredits(c)}
-                  style={{ flex: 1, padding: '10px 0', borderRadius: 10, border: `1px solid ${complexity === c ? SKY : '#2a2a35'}`, background: complexity === c ? 'rgba(14,165,233,0.12)' : '#111115', color: complexity === c ? SKY : MUTED, fontWeight: 700, fontSize: 13, cursor: 'pointer', transition: 'all 0.12s' }}>
+                  style={{ flex: 1, padding: '10px 0', borderRadius: 10, border: `1px solid ${complexity === c ? SKY : '#2a2a35'}`, background: complexity === c ? 'rgba(14,165,233,0.12)' : '#0d141e', color: complexity === c ? SKY : MUTED, fontWeight: 700, fontSize: 13, cursor: 'pointer', transition: 'all 0.12s' }}>
                   {c}
-                  <div style={{ fontSize: 11, fontWeight: 400, marginTop: 3, color: complexity === c ? 'rgba(14,165,233,0.7)' : '#3f3f46' }}>
+                  <div style={{ fontSize: 11, fontWeight: 400, marginTop: 3, color: complexity === c ? 'rgba(14,165,233,0.7)' : '#8797ab' }}>
                     {COMPLEXITY_CREDITS[c][0]}–{COMPLEXITY_CREDITS[c][1]} cr
                   </div>
                 </button>
@@ -450,9 +450,9 @@ function BreakdownPanel({ meeting, onSent }: { meeting: Meeting; onSent: (sentAt
             <SectionLabel>Tools needed</SectionLabel>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(175px, 1fr))', gap: 6 }}>
               {TOOLS_LIST.map(t => (
-                <label key={t} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 8, border: `1px solid ${tools.includes(t) ? 'rgba(14,165,233,0.3)' : '#1e1e26'}`, background: tools.includes(t) ? 'rgba(14,165,233,0.07)' : 'transparent', cursor: 'pointer', transition: 'all 0.1s' }}>
+                <label key={t} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 8, border: `1px solid ${tools.includes(t) ? 'rgba(14,165,233,0.3)' : '#1b2a3b'}`, background: tools.includes(t) ? 'rgba(14,165,233,0.07)' : 'transparent', cursor: 'pointer', transition: 'all 0.1s' }}>
                   <input type="checkbox" checked={tools.includes(t)} onChange={() => toggleTool(t)} style={{ accentColor: SKY, width: 14, height: 14, flexShrink: 0 }} />
-                  <span style={{ fontSize: 12, color: tools.includes(t) ? '#e4e4e7' : MUTED, fontWeight: tools.includes(t) ? 600 : 400 }}>{t}</span>
+                  <span style={{ fontSize: 12, color: tools.includes(t) ? '#e8eef7' : MUTED, fontWeight: tools.includes(t) ? 600 : 400 }}>{t}</span>
                 </label>
               ))}
             </div>
@@ -463,10 +463,10 @@ function BreakdownPanel({ meeting, onSent }: { meeting: Meeting; onSent: (sentAt
             <SectionLabel>Credits estimate</SectionLabel>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <input type="number" value={creditsLow} onChange={e => setCreditsLow(e.target.value)}
-                style={{ background: '#111115', border: '1px solid #2a2a35', borderRadius: 8, color: '#e4e4e7', padding: '8px 12px', fontSize: 14, fontWeight: 700, width: 100, textAlign: 'center' }} />
+                style={{ background: '#0d141e', border: '1px solid #2a2a35', borderRadius: 8, color: '#e8eef7', padding: '8px 12px', fontSize: 14, fontWeight: 700, width: 100, textAlign: 'center' }} />
               <span style={{ color: MUTED }}>to</span>
               <input type="number" value={creditsHigh} onChange={e => setCreditsHigh(e.target.value)}
-                style={{ background: '#111115', border: '1px solid #2a2a35', borderRadius: 8, color: '#e4e4e7', padding: '8px 12px', fontSize: 14, fontWeight: 700, width: 100, textAlign: 'center' }} />
+                style={{ background: '#0d141e', border: '1px solid #2a2a35', borderRadius: 8, color: '#e8eef7', padding: '8px 12px', fontSize: 14, fontWeight: 700, width: 100, textAlign: 'center' }} />
               <span style={{ fontSize: 13, color: MUTED }}>credits</span>
             </div>
           </div>
@@ -476,7 +476,7 @@ function BreakdownPanel({ meeting, onSent }: { meeting: Meeting; onSent: (sentAt
             <SectionLabel>Scope notes (shown in email)</SectionLabel>
             <textarea rows={4} value={note} onChange={e => setNote(e.target.value)}
               placeholder="Describe the MVP scope, any key constraints, what's in vs out of this credit range…"
-              style={{ background: '#111115', border: '1px solid #2a2a35', borderRadius: 8, color: '#e4e4e7', padding: '10px 12px', fontSize: 13, width: '100%', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6, boxSizing: 'border-box' }} />
+              style={{ background: '#0d141e', border: '1px solid #2a2a35', borderRadius: 8, color: '#e8eef7', padding: '10px 12px', fontSize: 13, width: '100%', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6, boxSizing: 'border-box' }} />
           </div>
 
           {sendError && (
@@ -490,7 +490,7 @@ function BreakdownPanel({ meeting, onSent }: { meeting: Meeting; onSent: (sentAt
               Cancel
             </button>
             <button onClick={sendBreakdown} disabled={sending}
-              style={{ padding: '9px 22px', borderRadius: 8, border: 'none', background: GREEN, color: '#fff', fontSize: 13, fontWeight: 700, cursor: sending ? 'not-allowed' : 'pointer', opacity: sending ? 0.7 : 1, transition: 'opacity 0.15s' }}>
+              style={{ padding: '9px 22px', borderRadius: 8, border: 'none', background: GREEN, color: '#03111c', fontSize: 13, fontWeight: 700, cursor: sending ? 'not-allowed' : 'pointer', opacity: sending ? 0.7 : 1, transition: 'opacity 0.15s' }}>
               {sending ? 'Sending…' : `Send to ${meeting.attendee_email} →`}
             </button>
           </div>
@@ -528,16 +528,16 @@ function MeetingRow({ meeting, onUpdate }: { meeting: Meeting; onUpdate: (id: st
     <>
       <tr
         onClick={() => setExpanded(e => !e)}
-        style={{ borderBottom: '1px solid #1a1a22', cursor: 'pointer', transition: 'background 0.1s' }}
+        style={{ borderBottom: '1px solid #14202e', cursor: 'pointer', transition: 'background 0.1s' }}
         onMouseEnter={e => (e.currentTarget.style.background = '#13131a')}
         onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
       >
         <td style={{ padding: '12px 16px', whiteSpace: 'nowrap' }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#e4e4e7' }}>{dateStr}</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#e8eef7' }}>{dateStr}</div>
           <div style={{ fontSize: 11, color: MUTED }}>{timeStr} IST</div>
         </td>
         <td style={{ padding: '12px 16px' }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#e4e4e7' }}>{meeting.attendee_name || '—'}</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#e8eef7' }}>{meeting.attendee_name || '—'}</div>
           <div style={{ fontSize: 11, color: MUTED }}>{meeting.attendee_email}</div>
         </td>
         <td style={{ padding: '12px 16px' }}>
@@ -574,7 +574,7 @@ function MeetingRow({ meeting, onUpdate }: { meeting: Meeting; onUpdate: (id: st
 
       {expanded && (
         <tr style={{ background: '#0d0d12' }}>
-          <td colSpan={9} style={{ padding: '20px 16px 24px', borderBottom: '1px solid #1a1a22' }}>
+          <td colSpan={9} style={{ padding: '20px 16px 24px', borderBottom: '1px solid #14202e' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, maxWidth: 980 }}>
 
               {/* AI Brief — full width, always first */}
@@ -584,16 +584,16 @@ function MeetingRow({ meeting, onUpdate }: { meeting: Meeting; onUpdate: (id: st
               />
 
               {/* Intake answers */}
-              <div style={{ background: '#0a0a10', border: '1px solid #1e1e26', borderRadius: 12, padding: '16px 18px' }}>
+              <div style={{ background: '#0a0a10', border: '1px solid #1b2a3b', borderRadius: 12, padding: '16px 18px' }}>
                 <SectionLabel>What they told us (intake)</SectionLabel>
                 {intakeEntries.length === 0 ? (
-                  <p style={{ fontSize: 13, color: '#3f3f46', margin: 0 }}>No intake answers captured yet — questions appear once added to the Cal.com event type.</p>
+                  <p style={{ fontSize: 13, color: '#8797ab', margin: 0 }}>No intake answers captured yet — questions appear once added to the Cal.com event type.</p>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                     {intakeEntries.map(([q, a], i) => (
                       <div key={i}>
                         <div style={{ fontSize: 11, color: MUTED, fontWeight: 600, marginBottom: 4 }}>{q}</div>
-                        <div style={{ fontSize: 13, color: '#e4e4e7', lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>{a}</div>
+                        <div style={{ fontSize: 13, color: '#e8eef7', lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>{a}</div>
                       </div>
                     ))}
                   </div>
@@ -605,7 +605,7 @@ function MeetingRow({ meeting, onUpdate }: { meeting: Meeting; onUpdate: (id: st
                 <div>
                   <SectionLabel>Status</SectionLabel>
                   <select value={status} onChange={e => { setStatus(e.target.value); save({ status: e.target.value }) }}
-                    style={{ background: '#111115', border: '1px solid #2a2a35', borderRadius: 8, color: '#e4e4e7', padding: '8px 12px', fontSize: 13, width: '100%' }}>
+                    style={{ background: '#0d141e', border: '1px solid #2a2a35', borderRadius: 8, color: '#e8eef7', padding: '8px 12px', fontSize: 13, width: '100%' }}>
                     {STATUS_LABELS.map(s => <option key={s} value={s}>{s.replace('_', ' ')}</option>)}
                   </select>
                 </div>
@@ -613,19 +613,19 @@ function MeetingRow({ meeting, onUpdate }: { meeting: Meeting; onUpdate: (id: st
                   <SectionLabel>Recording URL</SectionLabel>
                   <input type="url" placeholder="Google Meet / Loom link…" value={recording}
                     onChange={e => setRecording(e.target.value)} onBlur={() => save({ recording_url: recording || null })}
-                    style={{ background: '#111115', border: '1px solid #2a2a35', borderRadius: 8, color: '#e4e4e7', padding: '8px 12px', fontSize: 13, width: '100%', boxSizing: 'border-box' }} />
+                    style={{ background: '#0d141e', border: '1px solid #2a2a35', borderRadius: 8, color: '#e8eef7', padding: '8px 12px', fontSize: 13, width: '100%', boxSizing: 'border-box' }} />
                 </div>
                 <div>
                   <SectionLabel>Conversion</SectionLabel>
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                     <button onClick={() => { const v = !converted; setConverted(v); save({ converted: v }) }}
-                      style={{ background: converted ? 'rgba(34,197,94,0.12)' : '#111115', border: `1px solid ${converted ? GREEN : '#2a2a35'}`, borderRadius: 8, color: converted ? GREEN : MUTED, padding: '8px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
+                      style={{ background: converted ? 'rgba(34,197,94,0.12)' : '#0d141e', border: `1px solid ${converted ? GREEN : '#2a2a35'}`, borderRadius: 8, color: converted ? GREEN : MUTED, padding: '8px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
                       {converted ? '✓ Converted' : 'Mark converted'}
                     </button>
                     {converted && (
                       <input type="number" placeholder="Deal $" value={deal}
                         onChange={e => setDeal(e.target.value)} onBlur={() => { if (deal !== '') save({ deal_value: parseFloat(deal) }) }}
-                        style={{ background: '#111115', border: '1px solid #2a2a35', borderRadius: 8, color: '#e4e4e7', padding: '8px 12px', fontSize: 13, width: 110 }} />
+                        style={{ background: '#0d141e', border: '1px solid #2a2a35', borderRadius: 8, color: '#e8eef7', padding: '8px 12px', fontSize: 13, width: 110 }} />
                     )}
                   </div>
                 </div>
@@ -636,7 +636,7 @@ function MeetingRow({ meeting, onUpdate }: { meeting: Meeting; onUpdate: (id: st
                 <SectionLabel>Call notes</SectionLabel>
                 <textarea rows={5} placeholder="Pain points, budget, timeline, what they said, next steps…"
                   value={notes} onChange={e => setNotes(e.target.value)} onBlur={() => save({ notes: notes || null })}
-                  style={{ background: '#111115', border: '1px solid #2a2a35', borderRadius: 8, color: '#e4e4e7', padding: '10px 12px', fontSize: 13, width: '100%', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6, boxSizing: 'border-box' }} />
+                  style={{ background: '#0d141e', border: '1px solid #2a2a35', borderRadius: 8, color: '#e8eef7', padding: '10px 12px', fontSize: 13, width: '100%', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6, boxSizing: 'border-box' }} />
               </div>
 
               {/* Conversion ideas */}
@@ -644,7 +644,7 @@ function MeetingRow({ meeting, onUpdate }: { meeting: Meeting; onUpdate: (id: st
                 <SectionLabel>Conversion ideas</SectionLabel>
                 <textarea rows={5} placeholder="How to close this person — objections to address, follow-up timing, specific angle…"
                   value={convIdeas} onChange={e => setConvIdeas(e.target.value)} onBlur={() => save({ conversion_ideas: convIdeas || null })}
-                  style={{ background: '#111115', border: '1px solid #2a2a35', borderRadius: 8, color: '#e4e4e7', padding: '10px 12px', fontSize: 13, width: '100%', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6, boxSizing: 'border-box' }} />
+                  style={{ background: '#0d141e', border: '1px solid #2a2a35', borderRadius: 8, color: '#e8eef7', padding: '10px 12px', fontSize: 13, width: '100%', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6, boxSizing: 'border-box' }} />
               </div>
 
               {/* Breakdown sender */}
@@ -673,9 +673,9 @@ function MeetingRow({ meeting, onUpdate }: { meeting: Meeting; onUpdate: (id: st
                     ['Breakdown', meeting.breakdown_sent_at],
                     ['Call summary', meeting.summary_sent_at],
                   ] as [string, string | null][]).map(([label, ts]) => (
-                    <div key={label} style={{ background: ts ? 'rgba(34,197,94,0.08)' : 'rgba(255,255,255,0.03)', border: `1px solid ${ts ? 'rgba(34,197,94,0.25)' : '#1e1e26'}`, borderRadius: 8, padding: '6px 12px' }}>
-                      <div style={{ fontSize: 11, fontWeight: 600, color: ts ? GREEN : '#3f3f46' }}>{label}</div>
-                      <div style={{ fontSize: 10, color: MUTED, marginTop: 2 }}>
+                    <div key={label} style={{ background: ts ? 'rgba(34,197,94,0.08)' : 'rgba(255,255,255,0.03)', border: `1px solid ${ts ? 'rgba(34,197,94,0.25)' : '#1b2a3b'}`, borderRadius: 8, padding: '6px 12px' }}>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: ts ? GREEN : '#8797ab' }}>{label}</div>
+                      <div style={{ fontSize: 11, color: MUTED, marginTop: 2 }}>
                         {ts ? new Date(ts).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'not sent'}
                       </div>
                     </div>
@@ -768,22 +768,22 @@ function NewMeetingPanel({ onCreated }: { onCreated: (m: Meeting) => void }) {
   }
 
   const inputStyle: React.CSSProperties = {
-    background: '#111115', border: '1px solid #2a2a35', borderRadius: 8,
-    color: '#e4e4e7', padding: '8px 12px', fontSize: 13, width: '100%', boxSizing: 'border-box',
+    background: '#0d141e', border: '1px solid #2a2a35', borderRadius: 8,
+    color: '#e8eef7', padding: '8px 12px', fontSize: 13, width: '100%', boxSizing: 'border-box',
   }
 
   return (
     <div>
       <button
         onClick={() => setOpen(o => !o)}
-        style={{ fontSize: 12, fontWeight: 700, padding: '8px 16px', borderRadius: 8, border: 'none', background: GREEN, color: '#fff', cursor: 'pointer' }}
+        style={{ fontSize: 12, fontWeight: 700, padding: '8px 16px', borderRadius: 8, border: 'none', background: GREEN, color: '#03111c', cursor: 'pointer' }}
       >
         + New Meeting
       </button>
 
       {open && (
-        <form onSubmit={submit} style={{ marginTop: 16, background: '#0e0e14', border: '1px solid #1e1e26', borderRadius: 14, padding: '24px 20px' }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#e4e4e7', marginBottom: 18 }}>Add meeting manually</div>
+        <form onSubmit={submit} style={{ marginTop: 16, background: '#0e0e14', border: '1px solid #1b2a3b', borderRadius: 14, padding: '24px 20px' }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#e8eef7', marginBottom: 18 }}>Add meeting manually</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div>
               <div style={{ fontSize: 11, color: MUTED, fontWeight: 600, marginBottom: 4 }}>NAME</div>
@@ -828,7 +828,7 @@ function NewMeetingPanel({ onCreated }: { onCreated: (m: Meeting) => void }) {
               Cancel
             </button>
             <button type="submit" disabled={saving}
-              style={{ padding: '8px 20px', borderRadius: 8, border: 'none', background: GREEN, color: '#fff', fontSize: 13, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1 }}>
+              style={{ padding: '8px 20px', borderRadius: 8, border: 'none', background: GREEN, color: '#03111c', fontSize: 13, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1 }}>
               {saving ? 'Saving…' : 'Add Meeting'}
             </button>
           </div>
@@ -862,7 +862,7 @@ export default function ConsultationsClient({ initialMeetings }: { initialMeetin
   const FILTER_TABS = ['all', 'scheduled', 'completed', 'no_show', 'cancelled']
 
   return (
-    <div style={{ minHeight: '100vh', background: '#09090b', color: '#fafafa', fontFamily: 'system-ui, -apple-system, sans-serif', padding: '40px 24px' }}>
+    <div style={{ minHeight: '100vh', background: '#05080d', color: '#fafafa', fontFamily: 'system-ui, -apple-system, sans-serif', padding: '40px 24px' }}>
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
 
         {/* Header */}
@@ -874,7 +874,7 @@ export default function ConsultationsClient({ initialMeetings }: { initialMeetin
           </div>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
             <NewMeetingPanel onCreated={handleCreate} />
-            <a href="/admin" style={{ fontSize: 12, color: MUTED, textDecoration: 'none', padding: '8px 14px', border: '1px solid #1e1e26', borderRadius: 8 }}>← Admin</a>
+            <a href="/admin" style={{ fontSize: 12, color: MUTED, textDecoration: 'none', padding: '8px 14px', border: '1px solid #1b2a3b', borderRadius: 8 }}>← Admin</a>
           </div>
         </div>
 
@@ -892,7 +892,7 @@ export default function ConsultationsClient({ initialMeetings }: { initialMeetin
         <div style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap' }}>
           {FILTER_TABS.map(f => (
             <button key={f} onClick={() => setFilter(f)}
-              style={{ fontSize: 12, fontWeight: 600, padding: '6px 14px', borderRadius: 20, border: `1px solid ${filter === f ? SKY : '#1e1e26'}`, background: filter === f ? 'rgba(14,165,233,0.1)' : 'transparent', color: filter === f ? SKY : MUTED, cursor: 'pointer', textTransform: 'capitalize' }}>
+              style={{ fontSize: 12, fontWeight: 600, padding: '6px 14px', borderRadius: 20, border: `1px solid ${filter === f ? SKY : '#1b2a3b'}`, background: filter === f ? 'rgba(14,165,233,0.1)' : 'transparent', color: filter === f ? SKY : MUTED, cursor: 'pointer', textTransform: 'capitalize' }}>
               {f === 'no_show' ? 'No-show' : f}
               {f === 'all' ? ` (${meetings.length})` : ` (${meetings.filter(m => m.status === f).length})`}
             </button>
@@ -900,12 +900,12 @@ export default function ConsultationsClient({ initialMeetings }: { initialMeetin
         </div>
 
         {/* Table */}
-        <div style={{ background: '#0e0e14', border: '1px solid #1a1a22', borderRadius: 16, overflow: 'auto' }}>
+        <div style={{ background: '#0e0e14', border: '1px solid #14202e', borderRadius: 16, overflow: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 820 }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid #1a1a22' }}>
+              <tr style={{ borderBottom: '1px solid #14202e' }}>
                 {['Date / Time', 'Attendee', 'Status', 'Converted', 'Deal $', 'Breakdown', 'Recording', 'Emails', ''].map(h => (
-                  <th key={h} style={{ padding: '10px 16px', color: MUTED, fontWeight: 700, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.07em', textAlign: h === 'Deal $' ? 'right' : 'left', whiteSpace: 'nowrap' }}>{h}</th>
+                  <th key={h} style={{ padding: '10px 16px', color: MUTED, fontWeight: 700, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.07em', textAlign: h === 'Deal $' ? 'right' : 'left', whiteSpace: 'nowrap' }}>{h}</th>
                 ))}
               </tr>
             </thead>

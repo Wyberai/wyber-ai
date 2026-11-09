@@ -208,7 +208,7 @@ export function IDELayout({ initialProject, initialProfile, indiaFeatures = fals
                 style={{
                   flex: 1, padding: '12px 0', fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer',
                   background: mobileView === key ? 'var(--bg-elevated, rgba(255,255,255,0.06))' : 'transparent',
-                  color: mobileView === key ? 'var(--accent, #0EA5E9)' : 'var(--text-muted, #71717a)',
+                  color: mobileView === key ? 'var(--accent, #0EA5E9)' : 'var(--text-muted, #8797ab)',
                   borderTop: mobileView === key ? '2px solid var(--accent, #0EA5E9)' : '2px solid transparent',
                 }}
               >{label}</button>

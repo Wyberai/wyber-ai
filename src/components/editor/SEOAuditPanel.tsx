@@ -45,7 +45,7 @@ export function SEOAuditPanel({ projectUrl, projectFiles }: Props) {
         )}
       </div>
 
-      <button onClick={runAudit} disabled={loading} style={{ padding: '8px', borderRadius: 8, background: 'var(--sky)', color: '#fff', fontWeight: 700, fontSize: 12, border: 'none', cursor: loading ? 'wait' : 'pointer', fontFamily: 'inherit' }}>
+      <button onClick={runAudit} disabled={loading} style={{ padding: '8px', borderRadius: 8, background: 'var(--sky)', color: '#03111c', fontWeight: 700, fontSize: 12, border: 'none', cursor: loading ? 'wait' : 'pointer', fontFamily: 'inherit' }}>
         {loading ? t('seoAuditAuditing') : t('seoAuditRunButton')}
       </button>
 

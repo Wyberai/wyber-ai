@@ -91,7 +91,7 @@ export default async function AuthorizePage({ searchParams }: { searchParams: Pr
           <input type="hidden" name="scope" value={scope} />
           <input type="hidden" name="state" value={state} />
           <button type="submit" name="decision" value="approve"
-            style={{ padding: '12px 16px', borderRadius: 10, background: '#0EA5E9', color: '#fff', fontWeight: 700, fontSize: 14, border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
+            style={{ padding: '12px 16px', borderRadius: 10, background: '#0EA5E9', color: '#03111c', fontWeight: 700, fontSize: 14, border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
             Authorize
           </button>
           <button type="submit" name="decision" value="deny"

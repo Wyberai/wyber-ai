@@ -24,7 +24,7 @@ export default function BuildIndexPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <Link href="/use-cases" style={{ fontSize: 13, color: s.muted, textDecoration: 'none' }}>Use Cases</Link>
           <Link href="/pricing" style={{ fontSize: 13, color: s.muted, textDecoration: 'none' }}>Pricing</Link>
-          <Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: s.sky, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Try free →</Link>
+          <Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: s.sky, color: '#03111c', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Try free →</Link>
         </div>
       </nav>
 
@@ -60,7 +60,7 @@ export default function BuildIndexPage() {
         <div style={{ textAlign: 'center', padding: 'clamp(24px,4vw,40px)', background: s.card, borderRadius: 14, border: `1px solid ${s.border}`, marginTop: 16 }}>
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, margin: '0 0 8px' }}>Don&apos;t see your idea?</h2>
           <p style={{ fontSize: 14, color: s.muted, margin: '0 0 20px' }}>These are starting points, not limits — describe anything and WyberAi engineers it.</p>
-          <Link href="/signup" style={{ display: 'inline-block', padding: '12px 28px', borderRadius: 10, background: s.sky, color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
+          <Link href="/signup" style={{ display: 'inline-block', padding: '12px 28px', borderRadius: 10, background: s.sky, color: '#03111c', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
             Describe your app free →
           </Link>
         </div>

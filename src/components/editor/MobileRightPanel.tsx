@@ -27,7 +27,7 @@ function CopyBtn({ text }: { text: string }) {
   const tc = useT(COMMON_STRINGS)
   const copy = () => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 1500) }
   return (
-    <button onClick={copy} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, color: '#71717a', cursor: 'pointer', padding: '2px 8px', fontSize: 12, fontWeight: 600 }}>
+    <button onClick={copy} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, color: '#8797ab', cursor: 'pointer', padding: '2px 8px', fontSize: 12, fontWeight: 600 }}>
       {copied ? t('copiedLabel') : tc('copy')}
     </button>
   )
@@ -36,11 +36,11 @@ function CopyBtn({ text }: { text: string }) {
 function Field({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
   return (
     <div style={{ marginBottom: 14 }}>
-      <div style={{ fontSize: 12, fontWeight: 700, color: '#52525b', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ fontSize: 12, fontWeight: 700, color: '#8797ab', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <span>{label}</span>
         <CopyBtn text={value} />
       </div>
-      <div style={{ background: '#111118', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 7, padding: '8px 10px', fontSize: 12, color: '#e4e4e7', lineHeight: 1.5, fontFamily: mono ? 'monospace' : 'inherit', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+      <div style={{ background: '#111118', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 7, padding: '8px 10px', fontSize: 12, color: '#e8eef7', lineHeight: 1.5, fontFamily: mono ? 'monospace' : 'inherit', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
         {value}
       </div>
     </div>
@@ -103,11 +103,11 @@ function StoreListing({ projectId, projectName }: { projectId?: string; projectN
     return (
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24, textAlign: 'center' }}>
         <svg width="40" height="40" viewBox="0 0 40 40" fill="none"><rect width="40" height="40" rx="10" fill="rgba(14,165,233,0.06)" stroke="rgba(14,165,233,0.15)" strokeWidth="1"/><path d="M13 20h14M20 13v14" stroke="#0EA5E9" strokeWidth="2" strokeLinecap="round"/></svg>
-        <div style={{ fontSize: 13, fontWeight: 600, color: '#e4e4e7' }}>{t('generateStoreListingTitle')}</div>
-        <div style={{ fontSize: 12, color: '#71717a', lineHeight: 1.5 }}>{t('generateStoreListingDesc')}</div>
+        <div style={{ fontSize: 13, fontWeight: 600, color: '#e8eef7' }}>{t('generateStoreListingTitle')}</div>
+        <div style={{ fontSize: 12, color: '#8797ab', lineHeight: 1.5 }}>{t('generateStoreListingDesc')}</div>
         {error && <div style={{ fontSize: 12, color: '#ef4444' }}>{error}</div>}
         <button onClick={generate}
-          style={{ background: '#0EA5E9', color: 'white', border: 'none', borderRadius: 8, padding: '9px 22px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+          style={{ background: '#0EA5E9', color: '#03111c', border: 'none', borderRadius: 8, padding: '9px 22px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
           {t('generateWithAiBtn')}
         </button>
       </div>
@@ -118,7 +118,7 @@ function StoreListing({ projectId, projectName }: { projectId?: string; projectN
     return (
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
         <IcoSpinner />
-        <span style={{ fontSize: 12, color: '#71717a' }}>{t('writingStoreListing')}</span>
+        <span style={{ fontSize: 12, color: '#8797ab' }}>{t('writingStoreListing')}</span>
       </div>
     )
   }
@@ -128,9 +128,9 @@ function StoreListing({ projectId, projectName }: { projectId?: string; projectN
   return (
     <div style={{ flex: 1, overflowY: 'auto', padding: '16px 14px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-        <span style={{ fontSize: 12, fontWeight: 700, color: '#e4e4e7' }}>{t('appStoreListingHeader')}</span>
+        <span style={{ fontSize: 12, fontWeight: 700, color: '#e8eef7' }}>{t('appStoreListingHeader')}</span>
         <button onClick={generate}
-          style={{ background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, color: '#71717a', cursor: 'pointer', padding: '2px 8px', fontSize: 12, fontWeight: 600 }}>
+          style={{ background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, color: '#8797ab', cursor: 'pointer', padding: '2px 8px', fontSize: 12, fontWeight: 600 }}>
           {t('regenerateBtn')}
         </button>
       </div>
@@ -205,16 +205,16 @@ Google Play:       https://play.google.com/console`,
 
   return (
     <div style={{ flex: 1, overflowY: 'auto', padding: '16px 14px' }}>
-      <div style={{ fontSize: 12, fontWeight: 700, color: '#e4e4e7', marginBottom: 14 }}>{t('publishGuideHeader')}</div>
+      <div style={{ fontSize: 12, fontWeight: 700, color: '#e8eef7', marginBottom: 14 }}>{t('publishGuideHeader')}</div>
       {steps.map((step, i) => (
         <div key={i} style={{ marginBottom: 8, border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, overflow: 'hidden' }}>
           <button onClick={() => setOpen(open === i ? null : i)}
-            style={{ width: '100%', textAlign: 'left', background: open === i ? 'rgba(14,165,233,0.06)' : '#111118', border: 'none', padding: '10px 12px', fontSize: 12, fontWeight: 600, color: open === i ? '#0EA5E9' : '#a1a1aa', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            style={{ width: '100%', textAlign: 'left', background: open === i ? 'rgba(14,165,233,0.06)' : '#111118', border: 'none', padding: '10px 12px', fontSize: 12, fontWeight: 600, color: open === i ? '#0EA5E9' : '#9aa8bb', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             {step.title}
             <span style={{ fontSize: 14, opacity: 0.5 }}>{open === i ? '−' : '+'}</span>
           </button>
           {open === i && (
-            <div style={{ background: '#0a0a0f', padding: '10px 12px', fontSize: 12, color: '#a1a1aa', fontFamily: 'monospace', whiteSpace: 'pre-wrap', lineHeight: 1.7, borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+            <div style={{ background: '#0a0a0f', padding: '10px 12px', fontSize: 12, color: '#9aa8bb', fontFamily: 'monospace', whiteSpace: 'pre-wrap', lineHeight: 1.7, borderTop: '1px solid rgba(255,255,255,0.04)' }}>
               {step.body}
             </div>
           )}
@@ -309,15 +309,15 @@ function DatabaseTab({ projectId }: { projectId?: string }) {
       <div style={{ marginBottom: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" stroke="#0EA5E9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-          <span style={{ fontSize: 13, fontWeight: 700, color: '#e4e4e7' }}>WyberCloud</span>
+          <span style={{ fontSize: 13, fontWeight: 700, color: '#e8eef7' }}>WyberCloud</span>
           <span style={{ fontSize: 12, fontWeight: 700, background: 'rgba(14,165,233,0.12)', color: '#38bdf8', border: '1px solid rgba(14,165,233,0.25)', borderRadius: 4, padding: '1px 5px', letterSpacing: '0.05em' }}>FREE · 2 YRS</span>
         </div>
-        <div style={{ fontSize: 12, color: '#52525b', marginBottom: 12, lineHeight: 1.5 }}>
+        <div style={{ fontSize: 12, color: '#8797ab', marginBottom: 12, lineHeight: 1.5 }}>
           Managed Postgres, on us — no setup needed.
         </div>
 
         {cloudLoading ? (
-          <div style={{ fontSize: 12, color: '#52525b' }}>Checking…</div>
+          <div style={{ fontSize: 12, color: '#8797ab' }}>Checking…</div>
         ) : firstDb ? (
           <div style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 10, padding: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
@@ -326,13 +326,13 @@ function DatabaseTab({ projectId }: { projectId?: string }) {
                 {firstDb.status === 'ready' ? 'Connected' : firstDb.status === 'provisioning' ? 'Setting up…' : 'Failed'}
               </span>
             </div>
-            <div style={{ fontSize: 12, color: '#71717a' }}>{firstDb.name || firstDb.db_name}</div>
+            <div style={{ fontSize: 12, color: '#8797ab' }}>{firstDb.name || firstDb.db_name}</div>
           </div>
         ) : (
           <>
             {cloudError && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 8 }}>{cloudError}</div>}
             <button onClick={provisionCloud} disabled={provisioning}
-              style={{ width: '100%', padding: '10px 0', borderRadius: 8, background: provisioning ? '#1a1a22' : '#0EA5E9', color: '#fff', fontSize: 13, fontWeight: 700, border: 'none', cursor: provisioning ? 'not-allowed' : 'pointer' }}>
+              style={{ width: '100%', padding: '10px 0', borderRadius: 8, background: provisioning ? '#14202e' : '#0EA5E9', color: '#fff', fontSize: 13, fontWeight: 700, border: 'none', cursor: provisioning ? 'not-allowed' : 'pointer' }}>
               {provisioning ? 'Provisioning…' : '🎁 Get Free Database'}
             </button>
           </>
@@ -343,32 +343,32 @@ function DatabaseTab({ projectId }: { projectId?: string }) {
       <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 14 }}>
         <button onClick={() => setShowSupabase(v => !v)}
           style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: 5, marginBottom: showSupabase ? 12 : 0 }}>
-          <span style={{ fontSize: 12, fontWeight: 600, color: '#52525b', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Advanced: connect Supabase</span>
-          <span style={{ fontSize: 12, color: '#3f3f46' }}>{showSupabase ? '▲' : '▼'}</span>
+          <span style={{ fontSize: 12, fontWeight: 600, color: '#8797ab', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Advanced: connect Supabase</span>
+          <span style={{ fontSize: 12, color: '#8797ab' }}>{showSupabase ? '▲' : '▼'}</span>
         </button>
 
         {showSupabase && (
           connected ? (
             <div style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 10, padding: 12 }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: '#22c55e', marginBottom: 4 }}>{t('connectedLabel')}</div>
-              <div style={{ fontSize: 12, color: '#71717a', wordBreak: 'break-all' }}>{url}</div>
-              <button onClick={() => { setConnected(false); setUrl(''); setAnonKey('') }} style={{ marginTop: 8, background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 6, color: '#71717a', cursor: 'pointer', padding: '3px 8px', fontSize: 12 }}>{t('disconnectBtn')}</button>
+              <div style={{ fontSize: 12, color: '#8797ab', wordBreak: 'break-all' }}>{url}</div>
+              <button onClick={() => { setConnected(false); setUrl(''); setAnonKey('') }} style={{ marginTop: 8, background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 6, color: '#8797ab', cursor: 'pointer', padding: '3px 8px', fontSize: 12 }}>{t('disconnectBtn')}</button>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
               <div>
-                <div style={{ fontSize: 12, fontWeight: 600, color: '#71717a', marginBottom: 3 }}>{t('projectUrlLabel')}</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: '#8797ab', marginBottom: 3 }}>{t('projectUrlLabel')}</div>
                 <input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://xxxxx.supabase.co"
-                  style={{ width: '100%', padding: '7px 10px', background: '#111118', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 7, color: '#e4e4e7', fontSize: 12, outline: 'none', fontFamily: 'monospace', boxSizing: 'border-box' }} />
+                  style={{ width: '100%', padding: '7px 10px', background: '#111118', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 7, color: '#e8eef7', fontSize: 12, outline: 'none', fontFamily: 'monospace', boxSizing: 'border-box' }} />
               </div>
               <div>
-                <div style={{ fontSize: 12, fontWeight: 600, color: '#71717a', marginBottom: 3 }}>{t('anonKeyLabel')}</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: '#8797ab', marginBottom: 3 }}>{t('anonKeyLabel')}</div>
                 <input value={anonKey} onChange={e => setAnonKey(e.target.value)} placeholder="eyJhbGciOi..."
-                  style={{ width: '100%', padding: '7px 10px', background: '#111118', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 7, color: '#e4e4e7', fontSize: 12, outline: 'none', fontFamily: 'monospace', boxSizing: 'border-box' }} />
+                  style={{ width: '100%', padding: '7px 10px', background: '#111118', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 7, color: '#e8eef7', fontSize: 12, outline: 'none', fontFamily: 'monospace', boxSizing: 'border-box' }} />
               </div>
               {supabaseError && <div style={{ fontSize: 12, color: '#ef4444' }}>{supabaseError}</div>}
               <button onClick={handleConnect} disabled={testing || !url.trim() || !anonKey.trim()}
-                style={{ padding: '8px 0', borderRadius: 8, background: testing ? '#1a1a22' : 'rgba(255,255,255,0.06)', color: '#a1a1aa', fontSize: 12, fontWeight: 700, border: '1px solid rgba(255,255,255,0.08)', cursor: testing ? 'not-allowed' : 'pointer' }}>
+                style={{ padding: '8px 0', borderRadius: 8, background: testing ? '#14202e' : 'rgba(255,255,255,0.06)', color: '#9aa8bb', fontSize: 12, fontWeight: 700, border: '1px solid rgba(255,255,255,0.08)', cursor: testing ? 'not-allowed' : 'pointer' }}>
                 {testing ? t('testingConnectionBtn') : t('connectSupabaseTitle')}
               </button>
             </div>
@@ -389,7 +389,7 @@ export function MobileRightPanel({ projectId, projectName }: Props) {
       <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
         {(['database', 'store', 'publish'] as const).map(tabKey => (
           <button key={tabKey} onClick={() => setTab(tabKey)}
-            style={{ flex: 1, padding: '10px 0', background: 'none', border: 'none', borderBottom: `2px solid ${tab === tabKey ? '#0EA5E9' : 'transparent'}`, color: tab === tabKey ? '#0EA5E9' : '#71717a', fontSize: 12, fontWeight: 700, cursor: 'pointer', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+            style={{ flex: 1, padding: '10px 0', background: 'none', border: 'none', borderBottom: `2px solid ${tab === tabKey ? '#0EA5E9' : 'transparent'}`, color: tab === tabKey ? '#0EA5E9' : '#8797ab', fontSize: 12, fontWeight: 700, cursor: 'pointer', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
             {tabKey === 'database' ? t('tabDatabase') : tabKey === 'store' ? t('tabStoreListing') : t('tabPublishGuide')}
           </button>
         ))}

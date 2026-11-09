@@ -49,7 +49,7 @@ export default async function PublicProjectPage({ params }: Props) {
   const previewUrl = project.deployed_url || project.published_url || null
 
   return (
-    <div style={{ minHeight: '100vh', background: '#09090b', color: '#fafafa', fontFamily: 'var(--font-display)' }}>
+    <div style={{ minHeight: '100vh', background: '#05080d', color: '#fafafa', fontFamily: 'var(--font-display)' }}>
 
       {/* Nav */}
       <nav style={{ padding: '0 clamp(16px,4vw,48px)', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(9,9,11,0.9)', backdropFilter: 'blur(16px)', position: 'sticky', top: 0, zIndex: 100 }}>
@@ -61,7 +61,7 @@ export default async function PublicProjectPage({ params }: Props) {
           </svg>
           <span style={{ fontSize: 15, fontWeight: 700, color: '#fafafa', letterSpacing: '-0.03em' }}>WyberAi</span>
         </Link>
-        <Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: '#0EA5E9', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none', boxShadow: '0 2px 12px rgba(14,165,233,0.35)' }}>
+        <Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: '#0EA5E9', color: '#03111c', fontSize: 13, fontWeight: 700, textDecoration: 'none', boxShadow: '0 2px 12px rgba(14,165,233,0.35)' }}>
           Build your own free →
         </Link>
       </nav>
@@ -75,7 +75,7 @@ export default async function PublicProjectPage({ params }: Props) {
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(24px,4vw,40px)', fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 12, lineHeight: 1.1, color: '#fafafa' }}>
             {project.name}
           </h1>
-          <p style={{ fontSize: 15, color: '#71717a', lineHeight: 1.65 }}>
+          <p style={{ fontSize: 15, color: '#8797ab', lineHeight: 1.65 }}>
             This app was built in minutes using WyberAi — no coding required.
           </p>
         </div>
@@ -88,7 +88,7 @@ export default async function PublicProjectPage({ params }: Props) {
               <div style={{ display: 'flex', gap: 5 }}>
                 {['#ef4444','#f59e0b','#22c55e'].map(c => <div key={c} style={{ width: 10, height: 10, borderRadius: '50%', background: c, opacity: 0.7 }} />)}
               </div>
-              <div style={{ flex: 1, background: 'rgba(255,255,255,0.05)', borderRadius: 6, padding: '4px 12px', fontSize: 11, color: '#52525b', textAlign: 'center', maxWidth: 300, margin: '0 auto' }}>
+              <div style={{ flex: 1, background: 'rgba(255,255,255,0.05)', borderRadius: 6, padding: '4px 12px', fontSize: 11, color: '#8797ab', textAlign: 'center', maxWidth: 300, margin: '0 auto' }}>
                 {previewUrl.replace('https://', '')}
               </div>
               <a href={previewUrl} target="_blank" rel="noopener noreferrer"
@@ -110,7 +110,7 @@ export default async function PublicProjectPage({ params }: Props) {
         ) : (
           <div style={{ borderRadius: 16, border: '1px solid rgba(255,255,255,0.08)', background: '#111118', marginBottom: 32, height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12 }}>
             <div style={{ fontSize: 48 }}>⚡</div>
-            <div style={{ fontSize: 15, color: '#52525b' }}>Preview not available</div>
+            <div style={{ fontSize: 15, color: '#8797ab' }}>Preview not available</div>
           </div>
         )}
 
@@ -120,12 +120,12 @@ export default async function PublicProjectPage({ params }: Props) {
           <div style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(20px,3vw,28px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 8, color: '#fafafa' }}>
             Build your own app in 60 seconds
           </div>
-          <div style={{ fontSize: 14, color: '#71717a', marginBottom: 24 }}>No code required. 30 free credits. No card needed.</div>
+          <div style={{ fontSize: 14, color: '#8797ab', marginBottom: 24 }}>No code required. 30 free credits. No card needed.</div>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link href="/signup" style={{ padding: '13px 28px', borderRadius: 10, background: '#0EA5E9', color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none', boxShadow: '0 4px 20px rgba(14,165,233,0.35)' }}>
+            <Link href="/signup" style={{ padding: '13px 28px', borderRadius: 10, background: '#0EA5E9', color: '#03111c', fontSize: 14, fontWeight: 700, textDecoration: 'none', boxShadow: '0 4px 20px rgba(14,165,233,0.35)' }}>
               Start building free →
             </Link>
-            <Link href="/gallery" style={{ padding: '13px 22px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', color: '#a1a1aa', fontSize: 14, textDecoration: 'none' }}>
+            <Link href="/gallery" style={{ padding: '13px 22px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', color: '#9aa8bb', fontSize: 14, textDecoration: 'none' }}>
               Browse gallery
             </Link>
           </div>

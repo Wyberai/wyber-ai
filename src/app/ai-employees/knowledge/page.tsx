@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { useState, useEffect, useCallback } from 'react'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 
-const s = { bg: '#0b0d12', card: '#111115', border: '#1e1e26', text: '#e4e4e7', muted: '#71717a', dim: '#3f3f46' }
+const s = { bg: '#05080d', card: '#0d141e', border: '#1b2a3b', text: '#e8eef7', muted: '#8797ab', dim: '#8797ab' }
 const SKY = '#0EA5E9', GREEN = '#22c55e'
 
 interface Doc { title: string; source?: string; chunks: number; embedded: number; created_at: string }
@@ -69,7 +69,7 @@ export default function KnowledgePage() {
               <input type="file" accept=".txt,.md,.csv,.json" onChange={onFile} style={{ display: 'none' }} />📎 Upload a file
             </label>
             <span style={{ fontSize: 11, color: s.dim }}>{content.length.toLocaleString()} chars</span>
-            <button onClick={save} disabled={saving} style={{ marginLeft: 'auto', padding: '10px 22px', borderRadius: 9, background: saving ? '#1a1a22' : SKY, border: 'none', color: saving ? s.dim : '#fff', fontSize: 14, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>{saving ? 'Saving…' : 'Add to knowledge'}</button>
+            <button onClick={save} disabled={saving} style={{ marginLeft: 'auto', padding: '10px 22px', borderRadius: 9, background: saving ? '#14202e' : SKY, border: 'none', color: saving ? s.dim : '#fff', fontSize: 14, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>{saving ? 'Saving…' : 'Add to knowledge'}</button>
           </div>
           {msg && <p style={{ fontSize: 12.5, color: msg.startsWith('Saved') ? GREEN : '#ef4444', margin: '12px 0 0' }}>{msg}</p>}
         </div>
@@ -97,4 +97,4 @@ export default function KnowledgePage() {
   )
 }
 
-const inp: React.CSSProperties = { width: '100%', boxSizing: 'border-box', background: '#0d0d11', border: '1px solid #2a2a35', borderRadius: 9, padding: '11px 13px', fontSize: 13.5, color: '#e4e4e7', outline: 'none', fontFamily: 'inherit' }
+const inp: React.CSSProperties = { width: '100%', boxSizing: 'border-box', background: '#0a1018', border: '1px solid #2a2a35', borderRadius: 9, padding: '11px 13px', fontSize: 13.5, color: '#e8eef7', outline: 'none', fontFamily: 'inherit' }

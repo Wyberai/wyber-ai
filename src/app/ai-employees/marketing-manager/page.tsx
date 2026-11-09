@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 import { MARKETING_MANAGER as M, MM_SCENARIO_COUNT } from '@/lib/ai-employees/marketing-manager-profile'
 
-const BG = '#0b0d12', CARD = '#111115', BORDER = '#1e1e26', TEXT = '#e4e4e7', MUTED = '#71717a', DIM = '#3f3f46'
+const BG = '#05080d', CARD = '#0d141e', BORDER = '#1b2a3b', TEXT = '#e8eef7', MUTED = '#8797ab', DIM = '#8797ab'
 const ACCENT = M.color // magenta
 const SKY = '#0EA5E9'
 
@@ -32,7 +32,7 @@ export default function MarketingManagerPage() {
         <Link href="/ai-employees" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none' }}><WyberLogo markSize={24} wordmarkSize={14} /></Link>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <Link href={interviewUrl} style={{ fontSize: 13, fontWeight: 600, color: ACCENT, textDecoration: 'none', padding: '8px 16px', borderRadius: 8, border: `1px solid ${ACCENT}40`, background: ACCENT + '12' }}>Interview him</Link>
-          <Link href={hireUrl} style={{ fontSize: 13, fontWeight: 700, color: '#fff', textDecoration: 'none', padding: '8px 20px', borderRadius: 8, background: SKY }}>Hire {M.name} →</Link>
+          <Link href={hireUrl} style={{ fontSize: 13, fontWeight: 700, color: '#03111c', textDecoration: 'none', padding: '8px 20px', borderRadius: 8, background: SKY }}>Hire {M.name} →</Link>
         </div>
       </nav>
 
@@ -47,7 +47,7 @@ export default function MarketingManagerPage() {
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 52, fontWeight: 800, letterSpacing: '-0.04em', margin: '0 0 8px', lineHeight: 1.05 }}>
             Meet {M.name}, your<br />AI {M.title}
           </h1>
-          <p style={{ fontSize: 18, color: '#a1a1aa', lineHeight: 1.6, maxWidth: 620, margin: '16px auto 0' }}>{M.tagline}</p>
+          <p style={{ fontSize: 18, color: '#9aa8bb', lineHeight: 1.6, maxWidth: 620, margin: '16px auto 0' }}>{M.tagline}</p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 32 }}>
             <Link href={hireUrl} style={{ padding: '15px 36px', borderRadius: 12, background: SKY, color: '#fff', fontSize: 16, fontWeight: 700, textDecoration: 'none', boxShadow: `0 8px 30px ${SKY}40` }}>Hire {M.name} →</Link>
             <Link href={interviewUrl} style={{ padding: '15px 28px', borderRadius: 12, background: 'transparent', color: TEXT, fontSize: 16, fontWeight: 600, textDecoration: 'none', border: `1px solid ${BORDER}` }}>Interview him first</Link>
@@ -69,7 +69,7 @@ export default function MarketingManagerPage() {
 
       <div style={{ maxWidth: 960, margin: '0 auto', padding: '64px 32px 80px' }}>
         {/* Intro */}
-        <p style={{ fontSize: 17, color: '#a1a1aa', lineHeight: 1.75, textAlign: 'center', maxWidth: 720, margin: '0 auto 64px' }}>{M.intro}</p>
+        <p style={{ fontSize: 17, color: '#9aa8bb', lineHeight: 1.75, textAlign: 'center', maxWidth: 720, margin: '0 auto 64px' }}>{M.intro}</p>
 
         {/* How he works */}
         <Section eyebrow="How he works" title="A department head, not a chatbot" />
@@ -103,7 +103,7 @@ export default function MarketingManagerPage() {
               <p style={{ fontSize: 12.5, color: MUTED, lineHeight: 1.5, margin: '0 0 14px' }}>{c.blurb}</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
                 {c.scenarios.map(s => (
-                  <div key={s} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#a1a1aa', lineHeight: 1.45 }}>
+                  <div key={s} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#9aa8bb', lineHeight: 1.45 }}>
                     <span style={{ color: ACCENT, flexShrink: 0, fontWeight: 700 }}>›</span>{s}
                   </div>
                 ))}
@@ -137,7 +137,7 @@ export default function MarketingManagerPage() {
             <div key={k.name} style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 14, padding: 20, textAlign: 'center' }}>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 800, color: ACCENT }}>{k.target.toLocaleString()}</div>
               <div style={{ fontSize: 11, color: DIM, marginBottom: 6 }}>{k.unit}</div>
-              <div style={{ fontSize: 12.5, color: '#a1a1aa' }}>{k.name}</div>
+              <div style={{ fontSize: 12.5, color: '#9aa8bb' }}>{k.name}</div>
             </div>
           ))}
         </div>

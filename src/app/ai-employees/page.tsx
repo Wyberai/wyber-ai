@@ -45,21 +45,21 @@ function EmployeeCard({ emp, onRun, onToggle, onDelete, running }: {
 }) {
   const lastRun = emp.ai_employee_runs?.[0]
   return (
-    <div style={{ background:'#111115', border:`1px solid ${emp.is_active?'#1e1e26':'#111115'}`, borderRadius:16, padding:22, display:'flex', flexDirection:'column', gap:14, opacity:emp.is_active?1:0.6, transition:'all 0.2s' }}>
+    <div style={{ background:'#0d141e', border:`1px solid ${emp.is_active?'#1b2a3b':'#0d141e'}`, borderRadius:16, padding:22, display:'flex', flexDirection:'column', gap:14, opacity:emp.is_active?1:0.6, transition:'all 0.2s' }}>
       <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:12 }}>
         <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-          <div style={{ width:46, height:46, borderRadius:12, background:'#1a1a22', border:'1px solid #2a2a35', display:'flex', alignItems:'center', justifyContent:'center', fontSize:22, flexShrink:0 }}>{emp.emoji}</div>
+          <div style={{ width:46, height:46, borderRadius:12, background:'#14202e', border:'1px solid #2a2a35', display:'flex', alignItems:'center', justifyContent:'center', fontSize:22, flexShrink:0 }}>{emp.emoji}</div>
           <div>
-            <div style={{ fontSize:16, fontWeight:700, color:'#e4e4e7', letterSpacing:'-0.02em' }}>{emp.name}</div>
-            <div style={{ fontSize:12, color:'#52525b', marginTop:2 }}>{emp.role}</div>
+            <div style={{ fontSize:16, fontWeight:700, color:'#e8eef7', letterSpacing:'-0.02em' }}>{emp.name}</div>
+            <div style={{ fontSize:12, color:'#8797ab', marginTop:2 }}>{emp.role}</div>
           </div>
         </div>
-        <span style={{ fontSize:10, fontWeight:700, padding:'3px 8px', borderRadius:20, background:emp.is_active?'rgba(34,197,94,0.1)':'rgba(82,82,91,0.15)', color:emp.is_active?GREEN:'#52525b', textTransform:'uppercase', letterSpacing:'0.05em' }}>{emp.is_active?'Active':'Paused'}</span>
+        <span style={{ fontSize: 11, fontWeight:700, padding:'3px 8px', borderRadius:20, background:emp.is_active?'rgba(34,197,94,0.1)':'rgba(82,82,91,0.15)', color:emp.is_active?GREEN:'#8797ab', textTransform:'uppercase', letterSpacing:'0.05em' }}>{emp.is_active?'Active':'Paused'}</span>
       </div>
       {emp.tools.length > 0 && (
         <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
           {emp.tools.map(t => { const domain = getBrandDomain(t.toLowerCase()); return (
-            <span key={t} style={{ fontSize:10, fontWeight:600, padding:'2px 8px', borderRadius:6, background:'rgba(14,165,233,0.08)', color:SKY, border:'1px solid rgba(14,165,233,0.15)', letterSpacing:'0.05em', display:'inline-flex', alignItems:'center', gap:4 }}>
+            <span key={t} style={{ fontSize: 11, fontWeight:600, padding:'2px 8px', borderRadius:6, background:'rgba(14,165,233,0.08)', color:SKY, border:'1px solid rgba(14,165,233,0.15)', letterSpacing:'0.05em', display:'inline-flex', alignItems:'center', gap:4 }}>
               {domain && <BrandLogo domain={domain} name={t} size={14} />}
               {t}
             </span>
@@ -67,14 +67,14 @@ function EmployeeCard({ emp, onRun, onToggle, onDelete, running }: {
         </div>
       )}
       <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
-        <span style={{ fontSize:12, color:'#52525b' }}>⏰ {scheduleLabel(emp)}</span>
+        <span style={{ fontSize:12, color:'#8797ab' }}>⏰ {scheduleLabel(emp)}</span>
         {lastRun && <span style={{ fontSize:12, color:lastRun.status==='success'?GREEN:lastRun.status==='error'?RED:'#f59e0b' }}>{lastRun.status==='success'?'✓':'✕'} {fmtRelative(lastRun.started_at)}</span>}
       </div>
-      {lastRun?.summary && <p style={{ margin:0, fontSize:12, color:'#71717a', lineHeight:1.5, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{lastRun.summary}</p>}
+      {lastRun?.summary && <p style={{ margin:0, fontSize:12, color:'#8797ab', lineHeight:1.5, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{lastRun.summary}</p>}
       <div style={{ display:'flex', gap:8, marginTop:4 }}>
-        <button onClick={() => onRun(emp.id)} disabled={running} style={{ flex:1, padding:'8px 0', borderRadius:8, background:running?'#1a1a22':SKY, border:'none', color:running?'#52525b':'#fff', fontSize:13, fontWeight:600, cursor:running?'not-allowed':'pointer', fontFamily:'inherit' }}>{running?'Running…':'▶ Run now'}</button>
-        <Link href={`/ai-employees/${emp.id}`} style={{ padding:'8px 14px', borderRadius:8, background:'#1a1a22', border:'1px solid #2a2a35', color:'#a1a1aa', fontSize:13, textDecoration:'none', display:'flex', alignItems:'center' }}>Logs</Link>
-        <button onClick={() => onToggle(emp.id, !emp.is_active)} style={{ padding:'8px 14px', borderRadius:8, background:'#1a1a22', border:'1px solid #2a2a35', color:'#a1a1aa', fontSize:13, cursor:'pointer', fontFamily:'inherit' }}>{emp.is_active?'Pause':'Resume'}</button>
+        <button onClick={() => onRun(emp.id)} disabled={running} style={{ flex:1, padding:'8px 0', borderRadius:8, background:running?'#14202e':SKY, border:'none', color:running?'#8797ab':'#fff', fontSize:13, fontWeight:600, cursor:running?'not-allowed':'pointer', fontFamily:'inherit' }}>{running?'Running…':'▶ Run now'}</button>
+        <Link href={`/ai-employees/${emp.id}`} style={{ padding:'8px 14px', borderRadius:8, background:'#14202e', border:'1px solid #2a2a35', color:'#9aa8bb', fontSize:13, textDecoration:'none', display:'flex', alignItems:'center' }}>Logs</Link>
+        <button onClick={() => onToggle(emp.id, !emp.is_active)} style={{ padding:'8px 14px', borderRadius:8, background:'#14202e', border:'1px solid #2a2a35', color:'#9aa8bb', fontSize:13, cursor:'pointer', fontFamily:'inherit' }}>{emp.is_active?'Pause':'Resume'}</button>
         <button onClick={() => onDelete(emp.id)} style={{ padding:'8px 12px', borderRadius:8, background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.15)', color:RED, fontSize:13, cursor:'pointer', fontFamily:'inherit' }}>✕</button>
       </div>
     </div>
@@ -88,7 +88,7 @@ const DEPARTMENT_HEADS = [
   { title: 'Operations Manager', tagline: 'Automates repetitive processes, moves data between tools, manages inventory, tracks KPIs, and keeps your ops running.', tools: ['Google Sheets', 'Slack', 'Notion', 'Airtable'], department: 'Operations', emoji: '⚙️', color: '#f59e0b' },
   { title: 'Finance Manager', tagline: 'Tracks invoices, chases payments, reconciles accounts, generates financial reports, and alerts on anomalies.', tools: ['Google Sheets', 'Gmail', 'Slack', 'Stripe'], department: 'Finance', emoji: '💰', color: '#22c55e' },
   { title: 'Customer Success Manager', tagline: 'Monitors customer health, handles support tickets, sends NPS surveys, drafts responses, and escalates issues.', tools: ['Gmail', 'Slack', 'Notion', 'HubSpot'], department: 'Support', emoji: '🎧', color: '#06b6d4' },
-  { title: 'HR Manager', tagline: 'Posts job listings, screens resumes, schedules interviews, manages onboarding docs, and tracks employee satisfaction.', tools: ['Gmail', 'Google Docs', 'Notion', 'Google Calendar'], department: 'HR', emoji: '👥', color: '#8b5cf6' },
+  { title: 'HR Manager', tagline: 'Posts job listings, screens resumes, schedules interviews, manages onboarding docs, and tracks employee satisfaction.', tools: ['Gmail', 'Google Docs', 'Notion', 'Google Calendar'], department: 'HR', emoji: '👥', color: '#a78bfa' },
   { title: 'Engineering Manager', tagline: 'Reviews PRs, triages bugs, writes release notes, monitors alerts, and keeps your dev team unblocked.', tools: ['GitHub', 'Slack', 'Linear', 'Notion'], department: 'Engineering', emoji: '🔧', color: '#ef4444' },
   { title: 'Product Manager', tagline: 'Gathers user feedback, prioritizes features, writes specs, tracks roadmap progress, and reports to stakeholders.', tools: ['Notion', 'Slack', 'Linear', 'Gmail'], department: 'Product', emoji: '📋', color: '#f97316' },
 ]
@@ -157,7 +157,7 @@ export default function AIEmployeesPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0b0d12', fontFamily: 'var(--font-display)', color: '#e4e4e7' }}>
+    <div style={{ minHeight: '100vh', background: '#05080d', fontFamily: 'var(--font-display)', color: '#e8eef7' }}>
 
       {/* Toast */}
       {toast && (
@@ -167,16 +167,16 @@ export default function AIEmployeesPage() {
       )}
 
       {/* Nav */}
-      <nav style={{ borderBottom:'1px solid #1a1a22', background:'#0d0d11', padding:'0 32px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', position:'sticky', top:0, zIndex:50 }}>
+      <nav style={{ borderBottom:'1px solid #14202e', background:'#0a1018', padding:'0 32px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', position:'sticky', top:0, zIndex:50 }}>
         <Link href="/" style={{ display:'flex', alignItems:'center', gap:9, textDecoration:'none' }}>
           <WyberLogo markSize={24} wordmarkSize={14} />
         </Link>
         <div style={{ display:'flex', gap:10, alignItems:'center' }}>
-          <Link href="/dashboard" style={{ fontSize:12, color:'#52525b', textDecoration:'none', padding:'5px 12px', borderRadius:7, border:'1px solid #1e1e26' }}>← Dashboard</Link>
-          <Link href="/employees" style={{ fontSize:12, color:'#52525b', textDecoration:'none', padding:'5px 12px', borderRadius:7, border:'1px solid #1e1e26' }}>Browse 100 templates</Link>
-          <Link href="/org" style={{ fontSize:12, color:'#52525b', textDecoration:'none', padding:'5px 12px', borderRadius:7, border:'1px solid #1e1e26' }}>Organizations</Link>
-          <Link href="/ai-employees/knowledge" style={{ fontSize:12, color:'#52525b', textDecoration:'none', padding:'5px 12px', borderRadius:7, border:'1px solid #1e1e26' }}>🧠 Company knowledge</Link>
-          <Link href="/ai-employees/new" style={{ fontSize:13, fontWeight:600, color:'#fff', textDecoration:'none', padding:'7px 16px', borderRadius:8, background:SKY }}>+ Hire employee</Link>
+          <Link href="/dashboard" style={{ fontSize:12, color:'#8797ab', textDecoration:'none', padding:'5px 12px', borderRadius:7, border:'1px solid #1b2a3b' }}>← Dashboard</Link>
+          <Link href="/employees" style={{ fontSize:12, color:'#8797ab', textDecoration:'none', padding:'5px 12px', borderRadius:7, border:'1px solid #1b2a3b' }}>Browse 100 templates</Link>
+          <Link href="/org" style={{ fontSize:12, color:'#8797ab', textDecoration:'none', padding:'5px 12px', borderRadius:7, border:'1px solid #1b2a3b' }}>Organizations</Link>
+          <Link href="/ai-employees/knowledge" style={{ fontSize:12, color:'#8797ab', textDecoration:'none', padding:'5px 12px', borderRadius:7, border:'1px solid #1b2a3b' }}>🧠 Company knowledge</Link>
+          <Link href="/ai-employees/new" style={{ fontSize:13, fontWeight:600, color:'#03111c', textDecoration:'none', padding:'7px 16px', borderRadius:8, background:SKY }}>+ Hire employee</Link>
         </div>
       </nav>
 
@@ -187,20 +187,20 @@ export default function AIEmployeesPage() {
             Coming soon · first hire Mon, Jul 6
           </div>
           <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.04em', color: '#fff', margin: '0 0 6px' }}>AI Employees</h1>
-          <p style={{ color: '#3f3f46', fontSize: 14, margin: 0 }}>Hire AI department heads that connect your tools, run tasks, and report back. Chat with them like colleagues.</p>
+          <p style={{ color: '#8797ab', fontSize: 14, margin: 0 }}>Hire AI department heads that connect your tools, run tasks, and report back. Chat with them like colleagues.</p>
         </div>
 
         {/* Featured employee of the week */}
         <Link href="/ai-employees/marketing-manager" style={{ display: 'block', textDecoration: 'none', marginBottom: 32 }}>
-          <div style={{ position: 'relative', overflow: 'hidden', borderRadius: 18, border: '1px solid #2a2030', background: 'linear-gradient(110deg, #16101c, #111115 60%)', padding: '26px 28px', display: 'flex', alignItems: 'center', gap: 22 }}>
+          <div style={{ position: 'relative', overflow: 'hidden', borderRadius: 18, border: '1px solid #2a2030', background: 'linear-gradient(110deg, #16101c, #0d141e 60%)', padding: '26px 28px', display: 'flex', alignItems: 'center', gap: 22 }}>
             <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(420px 200px at 12% 0%, rgba(232,121,249,0.18), transparent 70%)', pointerEvents: 'none' }} />
             <div style={{ width: 64, height: 64, borderRadius: 18, background: 'rgba(232,121,249,0.14)', border: '2px solid rgba(232,121,249,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, flexShrink: 0, position: 'relative' }}>📣</div>
             <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: '#e879f9', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>★ Featured · New this week</div>
               <div style={{ fontSize: 20, fontWeight: 800, color: '#fff', fontFamily: 'var(--font-display)', letterSpacing: '-0.02em' }}>Meet Marcus — your AI Marketing Manager</div>
-              <div style={{ fontSize: 13, color: '#a1a1aa', marginTop: 4 }}>12 years experience · runs campaigns, commands a fleet of marketing agents, reports like a VP.</div>
+              <div style={{ fontSize: 13, color: '#9aa8bb', marginTop: 4 }}>12 years experience · runs campaigns, commands a fleet of marketing agents, reports like a VP.</div>
             </div>
-            <div style={{ position: 'relative', fontSize: 13, fontWeight: 700, color: '#fff', background: SKY, padding: '10px 20px', borderRadius: 10, whiteSpace: 'nowrap', flexShrink: 0 }}>Meet him →</div>
+            <div style={{ position: 'relative', fontSize: 13, fontWeight: 700, color: '#03111c', background: SKY, padding: '10px 20px', borderRadius: 10, whiteSpace: 'nowrap', flexShrink: 0 }}>Meet him →</div>
           </div>
         </Link>
 
@@ -212,7 +212,7 @@ export default function AIEmployeesPage() {
         )}
 
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '80px 0', color: '#3f3f46' }}>Loading…</div>
+          <div style={{ textAlign: 'center', padding: '80px 0', color: '#8797ab' }}>Loading…</div>
         ) : employees.length === 0 && !loadError ? (
           <div>
             {/* Empty state hero */}
@@ -224,18 +224,18 @@ export default function AIEmployeesPage() {
               <h2 style={{ fontSize: 'clamp(22px,3vw,36px)', fontWeight: 800, color: '#fff', margin: '0 0 12px', letterSpacing: '-0.03em', fontFamily: 'var(--font-display)' }}>
                 Hire your first AI department head
               </h2>
-              <p style={{ color: '#52525b', fontSize: 15, margin: '0 0 28px', maxWidth: 500, marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.65 }}>
+              <p style={{ color: '#8797ab', fontSize: 15, margin: '0 0 28px', maxWidth: 500, marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.65 }}>
                 Pick a role, connect your tools, set a schedule. It works automatically and emails you a digest after every run.
               </p>
               <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 16 }}>
-                <Link href="/ai-employees/new" style={{ display: 'inline-block', background: SKY, color: '#fff', textDecoration: 'none', padding: '13px 28px', borderRadius: 10, fontSize: 15, fontWeight: 700, boxShadow: '0 4px 20px rgba(14,165,233,0.3)' }}>
+                <Link href="/ai-employees/new" style={{ display: 'inline-block', background: SKY, color: '#03111c', textDecoration: 'none', padding: '13px 28px', borderRadius: 10, fontSize: 15, fontWeight: 700, boxShadow: '0 4px 20px rgba(14,165,233,0.3)' }}>
                   + Hire your first employee
                 </Link>
-                <Link href="/employees" style={{ display: 'inline-block', color: '#a1a1aa', textDecoration: 'none', padding: '13px 22px', borderRadius: 10, fontSize: 15, fontWeight: 500, border: '1px solid rgba(255,255,255,0.1)' }}>
+                <Link href="/employees" style={{ display: 'inline-block', color: '#9aa8bb', textDecoration: 'none', padding: '13px 22px', borderRadius: 10, fontSize: 15, fontWeight: 500, border: '1px solid rgba(255,255,255,0.1)' }}>
                   Browse 100 templates
                 </Link>
               </div>
-              <p style={{ fontSize: 12, color: '#3f3f46' }}>No engineers needed · 5 min setup · Email digest after every run</p>
+              <p style={{ fontSize: 12, color: '#8797ab' }}>No engineers needed · 5 min setup · Email digest after every run</p>
             </div>
 
             {/* How it works */}
@@ -245,12 +245,12 @@ export default function AIEmployeesPage() {
                 { icon: '🔗', step: '02', title: 'Connect tools', body: 'Link Gmail, Slack, HubSpot, Notion in one click. Your employee gets access to do real work.' },
                 { icon: '💬', step: '03', title: 'Chat & instruct', body: 'Talk to your employee like a colleague. Give instructions, ask questions, review their work.' },
               ].map(s => (
-                <div key={s.step} style={{ padding: '18px 20px', background: '#111113', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+                <div key={s.step} style={{ padding: '18px 20px', background: '#0d141e', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, display: 'flex', gap: 14, alignItems: 'flex-start' }}>
                   <div style={{ fontSize: 26, flexShrink: 0 }}>{s.icon}</div>
                   <div>
-                    <div style={{ fontSize: 9, fontWeight: 800, color: SKY, letterSpacing: '0.1em', marginBottom: 4 }}>{s.step}</div>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: SKY, letterSpacing: '0.1em', marginBottom: 4 }}>{s.step}</div>
                     <div style={{ fontSize: 14, fontWeight: 700, color: '#fafafa', marginBottom: 5 }}>{s.title}</div>
-                    <div style={{ fontSize: 12, color: '#71717a', lineHeight: 1.6 }}>{s.body}</div>
+                    <div style={{ fontSize: 12, color: '#8797ab', lineHeight: 1.6 }}>{s.body}</div>
                   </div>
                 </div>
               ))}
@@ -268,10 +268,10 @@ export default function AIEmployeesPage() {
                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(14,165,233,0.2)'; (e.currentTarget as HTMLElement).style.background = 'rgba(14,165,233,0.04)' }}>
                 <div style={{ width: 48, height: 48, borderRadius: 14, background: 'rgba(14,165,233,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, marginBottom: 12, color: SKY }}>+</div>
                 <div style={{ fontSize: 15, fontWeight: 700, color: '#fafafa', marginBottom: 4 }}>Create your own</div>
-                <div style={{ fontSize: 12, color: '#71717a', textAlign: 'center', lineHeight: 1.5 }}>Custom role, tools, KPIs, and instructions — build exactly the employee you need</div>
+                <div style={{ fontSize: 12, color: '#8797ab', textAlign: 'center', lineHeight: 1.5 }}>Custom role, tools, KPIs, and instructions — build exactly the employee you need</div>
               </Link>
               {EMPLOYEE_ROLES.map(role => (
-                <Link key={role.slug} href={`/ai-employees/roles/${role.slug}`} style={{ textDecoration: 'none', display: 'block', padding: '20px', background: '#111113', border: `1px solid ${role.color}15`, borderRadius: 14, transition: 'all 0.2s' }}
+                <Link key={role.slug} href={`/ai-employees/roles/${role.slug}`} style={{ textDecoration: 'none', display: 'block', padding: '20px', background: '#0d141e', border: `1px solid ${role.color}15`, borderRadius: 14, transition: 'all 0.2s' }}
                   onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = role.color + '40'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)' }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = role.color + '15'; (e.currentTarget as HTMLElement).style.transform = 'none' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
@@ -281,34 +281,34 @@ export default function AIEmployeesPage() {
                       <div style={{ fontSize: 11, color: role.color, fontWeight: 600 }}>{role.department}</div>
                     </div>
                   </div>
-                  <p style={{ margin: '0 0 12px', fontSize: 12, color: '#a1a1aa', lineHeight: 1.6 }}>{role.tagline}</p>
+                  <p style={{ margin: '0 0 12px', fontSize: 12, color: '#9aa8bb', lineHeight: 1.6 }}>{role.tagline}</p>
                   <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
                     {role.tools.slice(0, 4).map(t => { const domain = getBrandDomain(t.toLowerCase()); return (
-                      <span key={t} style={{ fontSize: 10, padding: '3px 8px', borderRadius: 6, background: 'rgba(255,255,255,0.04)', color: '#71717a', border: '1px solid rgba(255,255,255,0.07)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                      <span key={t} style={{ fontSize: 11, padding: '3px 8px', borderRadius: 6, background: 'rgba(255,255,255,0.04)', color: '#8797ab', border: '1px solid rgba(255,255,255,0.07)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                         {domain && <BrandLogo domain={domain} name={t} size={12} />}
                         {t}
                       </span>
                     ) })}
-                    {role.tools.length > 4 && <span style={{ fontSize: 10, color: '#52525b' }}>+{role.tools.length - 4}</span>}
+                    {role.tools.length > 4 && <span style={{ fontSize: 11, color: '#8797ab' }}>+{role.tools.length - 4}</span>}
                   </div>
                 </Link>
               ))}
             </div>
 
             <div style={{ textAlign: 'center', paddingBottom: 24 }}>
-              <Link href="/ai-employees/new" style={{ display: 'inline-block', background: SKY, color: '#fff', textDecoration: 'none', padding: '13px 32px', borderRadius: 10, fontSize: 15, fontWeight: 700, boxShadow: '0 4px 20px rgba(14,165,233,0.25)' }}>
+              <Link href="/ai-employees/new" style={{ display: 'inline-block', background: SKY, color: '#03111c', textDecoration: 'none', padding: '13px 32px', borderRadius: 10, fontSize: 15, fontWeight: 700, boxShadow: '0 4px 20px rgba(14,165,233,0.25)' }}>
                 Hire a custom employee →
               </Link>
-              <p style={{ fontSize: 12, color: '#3f3f46', marginTop: 8 }}>Or pick a department head above to get started faster</p>
+              <p style={{ fontSize: 12, color: '#8797ab', marginTop: 8 }}>Or pick a department head above to get started faster</p>
             </div>
           </div>
         ) : (
           <div>
             {/* Your employees */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Your employees ({employees.length})</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#8797ab', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Your employees ({employees.length})</div>
               <div style={{ display: 'flex', gap: 8 }}>
-                <Link href="/ai-employees/new" style={{ fontSize: 12, fontWeight: 600, color: '#fff', textDecoration: 'none', padding: '6px 14px', borderRadius: 8, background: SKY }}>+ Hire new</Link>
+                <Link href="/ai-employees/new" style={{ fontSize: 12, fontWeight: 600, color: '#03111c', textDecoration: 'none', padding: '6px 14px', borderRadius: 8, background: SKY }}>+ Hire new</Link>
               </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 16, marginBottom: 40 }}>
@@ -318,7 +318,7 @@ export default function AIEmployeesPage() {
             </div>
 
             {/* Browse more roles */}
-            <div style={{ borderTop: '1px solid #1e1e26', paddingTop: 32 }}>
+            <div style={{ borderTop: '1px solid #1b2a3b', paddingTop: 32 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 700, color: SKY, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>Hire more</div>
@@ -333,13 +333,13 @@ export default function AIEmployeesPage() {
                   <div style={{ fontSize: 13, fontWeight: 700, color: '#fafafa' }}>Custom role</div>
                 </Link>
                 {EMPLOYEE_ROLES.map(r => (
-                  <Link key={r.slug} href={`/ai-employees/roles/${r.slug}`} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10, padding: '14px', background: '#111113', border: '1px solid #1e1e26', borderRadius: 12, transition: 'border-color 0.15s' }}
+                  <Link key={r.slug} href={`/ai-employees/roles/${r.slug}`} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10, padding: '14px', background: '#0d141e', border: '1px solid #1b2a3b', borderRadius: 12, transition: 'border-color 0.15s' }}
                     onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = r.color + '40'}
-                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = '#1e1e26'}>
+                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = '#1b2a3b'}>
                     <span style={{ fontSize: 22 }}>{r.emoji}</span>
                     <div>
                       <div style={{ fontSize: 12, fontWeight: 600, color: '#fafafa' }}>{r.title}</div>
-                      <div style={{ fontSize: 10, color: r.color }}>{r.department}</div>
+                      <div style={{ fontSize: 11, color: r.color }}>{r.department}</div>
                     </div>
                   </Link>
                 ))}

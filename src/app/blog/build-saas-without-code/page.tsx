@@ -19,7 +19,7 @@ export default function Post() {
           &larr; Back to blog
         </Link>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 20 }}>
-          <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, background: 'rgba(14,165,233,0.1)', color: 'var(--sky)', fontWeight: 700, border: '1px solid rgba(14,165,233,0.2)' }}>Guide</span>
+          <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 20, background: 'rgba(14,165,233,0.1)', color: 'var(--sky)', fontWeight: 700, border: '1px solid rgba(14,165,233,0.2)' }}>Guide</span>
           <span style={{ fontSize: 12, color: 'var(--text3)' }}>May 28, 2026 &middot; 6 min read</span>
         </div>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px,4vw,44px)', fontWeight: 700, letterSpacing: '-0.025em', color: 'var(--text)', lineHeight: 1.15, marginBottom: 32 }}>
@@ -44,7 +44,7 @@ export default function Post() {
           <div style={{ padding: '20px 24px', borderRadius: 12, background: 'var(--sky3)', border: '1px solid rgba(14,165,233,0.2)', marginTop: 24 }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>Try it yourself</div>
             <p style={{ fontSize: 14, color: 'var(--text2)', margin: '0 0 14px' }}>30 credits/month free -- no card required.</p>
-            <Link href="/signup" style={{ fontSize: 13, padding: '8px 18px', borderRadius: 8, background: 'var(--sky)', color: '#fff', fontWeight: 700, textDecoration: 'none', display: 'inline-block' }}>Start building free &rarr;</Link>
+            <Link href="/signup" style={{ fontSize: 13, padding: '8px 18px', borderRadius: 8, background: 'var(--sky)', color: '#03111c', fontWeight: 700, textDecoration: 'none', display: 'inline-block' }}>Start building free &rarr;</Link>
           </div>
         </div>
       </div>

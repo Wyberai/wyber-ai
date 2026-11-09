@@ -29,7 +29,7 @@ import StatsGrid from './StatsGrid'
 import DataTable from './DataTable'
 export default function Dashboard() {
   return (
-    <main style={{flex:1,padding:24,overflow:'auto',background:'#09090b'}}>
+    <main style={{flex:1,padding:24,overflow:'auto',background:'#05080d'}}>
       <h1 style={{fontFamily: 'var(--font-display)',fontSize:24,fontWeight:800,color:'#fafafa',marginBottom:20}}>
         Overview
       </h1>
@@ -100,13 +100,13 @@ export function LiveDemo() {
     .replace(/(&lt;\/file&gt;)/g, '<span style="color:#0EA5E9;font-weight:700">$1</span>')
     .replace(/(import|export|default|from|return|const|function)/g, '<span style="color:#8b5cf6">$1</span>')
     .replace(/('[^']*')/g, '<span style="color:#10b981">$1</span>')
-    .replace(/(\/\/.*)/g, '<span style="color:#52525b">$1</span>')
+    .replace(/(\/\/.*)/g, '<span style="color:#8797ab">$1</span>')
 
   return (
     <div style={{
       maxWidth: 800,
       margin: '0 auto',
-      background: '#111113',
+      background: '#0d141e',
       border: '1px solid rgba(255,255,255,0.08)',
       borderRadius: 16,
       overflow: 'hidden',
@@ -120,11 +120,11 @@ export function LiveDemo() {
             <div key={c} style={{ width: 10, height: 10, borderRadius: '50%', background: c, opacity: 0.7 }} />
           ))}
         </div>
-        <div style={{ flex: 1, fontSize: 11, color: '#52525b', textAlign: 'center', fontFamily: 'monospace' }}>
+        <div style={{ flex: 1, fontSize: 11, color: '#8797ab', textAlign: 'center', fontFamily: 'monospace' }}>
           wyberai.com — Live Demo
         </div>
         {done && (
-          <button onClick={reset} style={{ fontSize: 11, color: '#71717a', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
+          <button onClick={reset} style={{ fontSize: 11, color: '#8797ab', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
             ↺ Reset
           </button>
         )}
@@ -134,7 +134,7 @@ export function LiveDemo() {
       <div style={{ padding: '16px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 11, color: '#52525b', marginBottom: 6, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            <div style={{ fontSize: 11, color: '#8797ab', marginBottom: 6, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               Describe your app
             </div>
             <input
@@ -148,7 +148,7 @@ export function LiveDemo() {
                 padding: '10px 14px',
                 borderRadius: 10,
                 border: '1px solid rgba(255,255,255,0.1)',
-                background: '#18181b',
+                background: '#111b28',
                 color: '#fafafa',
                 fontSize: 14,
                 outline: 'none',
@@ -167,8 +167,8 @@ export function LiveDemo() {
               padding: '10px 22px',
               borderRadius: 10,
               border: 'none',
-              background: running ? '#18181b' : done ? '#18181b' : '#0EA5E9',
-              color: running ? '#52525b' : done ? '#a1a1aa' : '#fff',
+              background: running ? '#111b28' : done ? '#111b28' : '#0EA5E9',
+              color: running ? '#8797ab' : done ? '#9aa8bb' : '#fff',
               fontSize: 13,
               fontWeight: 700,
               cursor: running ? 'wait' : 'pointer',
@@ -184,7 +184,7 @@ export function LiveDemo() {
           >
             {running ? (
               <>
-                <div style={{ width: 12, height: 12, border: '2px solid #52525b', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                <div style={{ width: 12, height: 12, border: '2px solid #8797ab', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
                 Building...
               </>
             ) : done ? '↺ Try again' : '⚡ Build it free'}
@@ -203,7 +203,7 @@ export function LiveDemo() {
                   borderRadius: 20,
                   border: '1px solid rgba(255,255,255,0.08)',
                   background: i === selected ? 'rgba(14,165,233,0.1)' : 'transparent',
-                  color: i === selected ? '#0EA5E9' : '#52525b',
+                  color: i === selected ? '#0EA5E9' : '#8797ab',
                   fontSize: 11,
                   cursor: 'pointer',
                   fontFamily: 'inherit',
@@ -233,7 +233,7 @@ export function LiveDemo() {
             padding: '14px 16px',
             fontSize: 12,
             lineHeight: 1.7,
-            color: '#a1a1aa',
+            color: '#9aa8bb',
             fontFamily: "'Fira Code', 'Consolas', monospace",
             whiteSpace: 'pre-wrap',
             wordBreak: 'break-all',
@@ -246,10 +246,10 @@ export function LiveDemo() {
       {/* Done state CTA */}
       {done && (
         <div style={{ padding: '14px 16px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(14,165,233,0.04)' }}>
-          <div style={{ fontSize: 13, color: '#a1a1aa' }}>
+          <div style={{ fontSize: 13, color: '#9aa8bb' }}>
             ✓ App generated — <span style={{ color: '#0EA5E9', fontWeight: 600 }}>3 files, 0 errors</span>
           </div>
-          <a href="/signup" style={{ padding: '8px 18px', borderRadius: 8, border: 'none', background: '#0EA5E9', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none', boxShadow: '0 4px 20px rgba(14,165,233,0.3)' }}>
+          <a href="/signup" style={{ padding: '8px 18px', borderRadius: 8, border: 'none', background: '#0EA5E9', color: '#03111c', fontSize: 13, fontWeight: 700, textDecoration: 'none', boxShadow: '0 4px 20px rgba(14,165,233,0.3)' }}>
             Build yours free →
           </a>
         </div>

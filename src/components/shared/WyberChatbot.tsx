@@ -224,17 +224,17 @@ export function WyberChatbot() {
             </div>
             <button
               onClick={() => setHumanMode(m => !m)}
-              style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 600, padding: '5px 10px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.12)', background: humanMode ? 'rgba(14,165,233,0.12)' : 'transparent', color: humanMode ? '#0EA5E9' : '#a1a1aa', cursor: 'pointer', whiteSpace: 'nowrap' }}
+              style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 600, padding: '5px 10px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.12)', background: humanMode ? 'rgba(14,165,233,0.12)' : 'transparent', color: humanMode ? '#0EA5E9' : '#9aa8bb', cursor: 'pointer', whiteSpace: 'nowrap' }}
             >
               {humanMode ? '← Back to AI' : '👋 Human'}
             </button>
-            <button onClick={() => setOpen(false)} style={{ background: 'none', border: 'none', color: '#52525b', cursor: 'pointer', fontSize: 18, lineHeight: 1, padding: 4 }}>×</button>
+            <button onClick={() => setOpen(false)} style={{ background: 'none', border: 'none', color: '#8797ab', cursor: 'pointer', fontSize: 18, lineHeight: 1, padding: 4 }}>×</button>
           </div>
           {humanMode ? <HumanSupportForm transcript={messages} /> : <>
           <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
             {messages.map((msg, i) => (
               <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
-                <div style={{ maxWidth: '85%', padding: '9px 12px', borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', background: msg.role === 'user' ? '#0EA5E9' : 'rgba(255,255,255,0.06)', color: msg.role === 'user' ? '#fff' : '#e4e4e7', fontSize: 13, lineHeight: 1.55 }}>
+                <div style={{ maxWidth: '85%', padding: '9px 12px', borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', background: msg.role === 'user' ? '#0EA5E9' : 'rgba(255,255,255,0.06)', color: msg.role === 'user' ? '#fff' : '#e8eef7', fontSize: 13, lineHeight: 1.55 }}>
                   {msg.role === 'assistant' && msg.content
                     ? renderMarkdown(msg.content)
                     : msg.content || <span style={{ opacity: 0.5 }}>▋</span>}
@@ -244,11 +244,11 @@ export function WyberChatbot() {
             {messages.length === 1 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 4 }}>
                 {SUGGESTED.map(q => (
-                  <button key={q} onClick={() => send(q)} style={{ textAlign: 'left', padding: '7px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)', color: '#a1a1aa', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}>{q}</button>
+                  <button key={q} onClick={() => send(q)} style={{ textAlign: 'left', padding: '7px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)', color: '#9aa8bb', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}>{q}</button>
                 ))}
               </div>
             )}
-            {loading && <div style={{ display: 'flex', gap: 4, padding: '8px 12px' }}>{[0,1,2].map(i => <div key={i} style={{ width: 6, height: 6, borderRadius: '50%', background: '#52525b', animation: `bounce 1s ease infinite ${i * 0.15}s` }} />)}</div>}
+            {loading && <div style={{ display: 'flex', gap: 4, padding: '8px 12px' }}>{[0,1,2].map(i => <div key={i} style={{ width: 6, height: 6, borderRadius: '50%', background: '#8797ab', animation: `bounce 1s ease infinite ${i * 0.15}s` }} />)}</div>}
             <div ref={bottomRef} />
           </div>
           <div style={{ padding: '10px 12px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', gap: 8 }}>
@@ -260,14 +260,14 @@ export function WyberChatbot() {
               style={{ width: 34, height: 34, borderRadius: 8, border: 'none', background: recording ? '#ef4444' : speaking ? 'rgba(14,165,233,0.25)' : 'rgba(255,255,255,0.06)', color: '#fff', cursor: loading || transcribing ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, animation: recording ? 'micPulse 1.2s ease infinite' : 'none' }}
             >
               {transcribing
-                ? <svg width="14" height="14" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#a1a1aa" strokeWidth="2.5" strokeDasharray="14 8" /></svg>
-                : <svg width="14" height="14" viewBox="0 0 24 24" fill={recording ? 'white' : 'none'} stroke={recording ? 'white' : '#a1a1aa'} strokeWidth="2"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2M12 19v3"/></svg>}
+                ? <svg width="14" height="14" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#9aa8bb" strokeWidth="2.5" strokeDasharray="14 8" /></svg>
+                : <svg width="14" height="14" viewBox="0 0 24 24" fill={recording ? 'white' : 'none'} stroke={recording ? 'white' : '#9aa8bb'} strokeWidth="2"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2M12 19v3"/></svg>}
             </button>
-            <button onClick={() => send()} disabled={loading || recording || transcribing || !input.trim()} style={{ width: 34, height: 34, borderRadius: 8, border: 'none', background: loading || !input.trim() ? '#27272a' : '#0EA5E9', color: '#fff', cursor: loading || !input.trim() ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <button onClick={() => send()} disabled={loading || recording || transcribing || !input.trim()} style={{ width: 34, height: 34, borderRadius: 8, border: 'none', background: loading || !input.trim() ? '#162231' : '#0EA5E9', color: '#fff', cursor: loading || !input.trim() ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5,12 12,5 19,12"/></svg>
             </button>
           </div>
-          <div style={{ textAlign: 'center', padding: '6px 0 10px', fontSize: 10, color: '#3f3f46' }}>
+          <div style={{ textAlign: 'center', padding: '6px 0 10px', fontSize: 11, color: '#8797ab' }}>
             Powered by WyberAi · <a href="/signup" style={{ color: '#0EA5E9', textDecoration: 'none' }}>Start building free →</a>
           </div>
           </>}

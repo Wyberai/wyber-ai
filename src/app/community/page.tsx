@@ -53,7 +53,7 @@ export default async function CommunityPage() {
             <div style={{ fontSize:48, marginBottom:16 }}>🚀</div>
             <div style={{ fontSize:18, fontWeight:700, marginBottom:8 }}>Be the first to share</div>
             <div style={{ fontSize:14, color:'var(--brand-text-faint)', marginBottom:24 }}>Build something amazing and make it public from the editor</div>
-            <Link href="/dashboard" style={{ padding:'10px 24px', borderRadius:8, background:'var(--brand-accent)', color:'white', fontWeight:700, fontSize:14, textDecoration:'none' }}>
+            <Link href="/dashboard" style={{ padding:'10px 24px', borderRadius:8, background:'var(--brand-accent)', color:'#03111c', fontWeight:700, fontSize:14, textDecoration:'none' }}>
               Start Building →
             </Link>
           </div>
@@ -67,7 +67,7 @@ export default async function CommunityPage() {
                     ? <img src={app.thumbnail_url} alt={app.name} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
                     : <div style={{ fontSize:40, opacity:0.3 }}>⚡</div>
                   }
-                  <div style={{ position:'absolute', top:10, left:10, fontSize:10, fontWeight:700, padding:'3px 8px', borderRadius:10, background:'rgba(34,197,94,0.2)', color:'#22c55e', border:'1px solid rgba(34,197,94,0.3)' }}>
+                  <div style={{ position:'absolute', top:10, left:10, fontSize: 11, fontWeight:700, padding:'3px 8px', borderRadius:10, background:'rgba(34,197,94,0.2)', color:'#22c55e', border:'1px solid rgba(34,197,94,0.3)' }}>
                     LIVE
                   </div>
                 </div>
@@ -86,7 +86,7 @@ export default async function CommunityPage() {
                       </a>
                     )}
                     <Link href={`/dashboard?clone=${app.id}`}
-                      style={{ flex:2, padding:'7px 0', borderRadius:7, border:'none', background:'var(--brand-accent)', color:'white', fontSize:12, fontWeight:700, cursor:'pointer', textAlign:'center', textDecoration:'none', display:'block' }}>
+                      style={{ flex:2, padding:'7px 0', borderRadius:7, border:'none', background:'var(--brand-accent)', color:'#03111c', fontSize:12, fontWeight:700, cursor:'pointer', textAlign:'center', textDecoration:'none', display:'block' }}>
                       ⎘ Clone this app
                     </Link>
                   </div>

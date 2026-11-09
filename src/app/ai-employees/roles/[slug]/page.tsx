@@ -5,7 +5,7 @@ import { getRoleBySlug, EMPLOYEE_ROLES } from '@/lib/employee-roles'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 import { BrandLogo, getBrandDomain } from '@/components/shared/BrandLogo'
 
-const s = { bg: '#0b0d12', card: '#111115', border: '#1e1e26', text: '#e4e4e7', muted: '#71717a', dim: '#3f3f46' }
+const s = { bg: '#05080d', card: '#0d141e', border: '#1b2a3b', text: '#e8eef7', muted: '#8797ab', dim: '#8797ab' }
 
 export default function RolePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params)
@@ -36,7 +36,7 @@ export default function RolePage({ params }: { params: Promise<{ slug: string }>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <Link href="/ai-employees" style={{ fontSize: 12, color: s.muted, textDecoration: 'none', padding: '5px 12px', borderRadius: 7, border: `1px solid ${s.border}` }}>← All employees</Link>
           <Link href={`/ai-employees/roles/${slug}/interview`} style={{ fontSize: 13, fontWeight: 600, color: role.color, textDecoration: 'none', padding: '8px 16px', borderRadius: 8, border: `1px solid ${role.color}40`, background: role.color + '12' }}>Interview first</Link>
-          <Link href={hireUrl} style={{ fontSize: 13, fontWeight: 700, color: '#fff', textDecoration: 'none', padding: '8px 20px', borderRadius: 8, background: '#0EA5E9' }}>Hire {role.title} →</Link>
+          <Link href={hireUrl} style={{ fontSize: 13, fontWeight: 700, color: '#03111c', textDecoration: 'none', padding: '8px 20px', borderRadius: 8, background: '#0EA5E9' }}>Hire {role.title} →</Link>
         </div>
       </nav>
 
@@ -115,7 +115,7 @@ export default function RolePage({ params }: { params: Promise<{ slug: string }>
           <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 14, margin: '0 0 14px' }}>Try asking them</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {role.examplePrompts.map((p, i) => (
-              <div key={i} style={{ fontSize: 13, color: '#a1a1aa', padding: '10px 14px', borderRadius: 8, background: 'rgba(255,255,255,0.02)', border: `1px solid ${s.border}`, fontStyle: 'italic' }}>
+              <div key={i} style={{ fontSize: 13, color: '#9aa8bb', padding: '10px 14px', borderRadius: 8, background: 'rgba(255,255,255,0.02)', border: `1px solid ${s.border}`, fontStyle: 'italic' }}>
                 &ldquo;{p}&rdquo;
               </div>
             ))}
@@ -124,7 +124,7 @@ export default function RolePage({ params }: { params: Promise<{ slug: string }>
 
         {/* CTA */}
         <div style={{ textAlign: 'center', padding: '24px 0 48px' }}>
-          <Link href={hireUrl} style={{ display: 'inline-block', padding: '16px 40px', borderRadius: 12, background: '#0EA5E9', color: '#fff', fontSize: 16, fontWeight: 700, textDecoration: 'none', boxShadow: '0 4px 24px rgba(14,165,233,0.3)' }}>
+          <Link href={hireUrl} style={{ display: 'inline-block', padding: '16px 40px', borderRadius: 12, background: '#0EA5E9', color: '#03111c', fontSize: 16, fontWeight: 700, textDecoration: 'none', boxShadow: '0 4px 24px rgba(14,165,233,0.3)' }}>
             Hire {role.title} →
           </Link>
           <p style={{ fontSize: 12, color: s.dim, marginTop: 10 }}>Set up in 2 minutes · Starts working immediately</p>

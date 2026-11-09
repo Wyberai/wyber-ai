@@ -96,7 +96,7 @@ export function CommandPalette() {
         onClick={e => e.stopPropagation()}
         style={{
           width: '100%', maxWidth: 560,
-          background: '#111115', border: '1px solid rgba(255,255,255,0.1)',
+          background: '#0d141e', border: '1px solid rgba(255,255,255,0.1)',
           borderRadius: 16, overflow: 'hidden',
           boxShadow: '0 24px 80px rgba(0,0,0,0.5)',
           animation: 'cmdSlideIn 0.2s ease',
@@ -104,7 +104,7 @@ export function CommandPalette() {
       >
         {/* Search input */}
         <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 12 }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#52525b" strokeWidth="2" strokeLinecap="round">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8797ab" strokeWidth="2" strokeLinecap="round">
             <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
           </svg>
           <input
@@ -119,7 +119,7 @@ export function CommandPalette() {
             }}
           />
           <kbd style={{
-            fontSize: 10, color: '#52525b', background: 'rgba(255,255,255,0.06)',
+            fontSize: 11, color: '#8797ab', background: 'rgba(255,255,255,0.06)',
             border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5,
             padding: '2px 6px', fontFamily: 'monospace',
           }}>ESC</kbd>
@@ -128,7 +128,7 @@ export function CommandPalette() {
         {/* Results */}
         <div style={{ maxHeight: 400, overflowY: 'auto', padding: '8px 0' }}>
           {filtered.length === 0 && (
-            <div style={{ padding: '24px 20px', textAlign: 'center', color: '#3f3f46', fontSize: 13 }}>
+            <div style={{ padding: '24px 20px', textAlign: 'center', color: '#8797ab', fontSize: 13 }}>
               No results for "{query}"
             </div>
           )}
@@ -136,7 +136,7 @@ export function CommandPalette() {
             const catItems = filtered.filter(i => i.category === cat)
             return (
               <div key={cat}>
-                <div style={{ padding: '8px 20px 4px', fontSize: 10, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                <div style={{ padding: '8px 20px 4px', fontSize: 11, fontWeight: 700, color: '#8797ab', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                   {cat}
                 </div>
                 {catItems.map(item => {
@@ -158,11 +158,11 @@ export function CommandPalette() {
                     >
                       <span style={{ fontSize: 18, width: 28, textAlign: 'center', flexShrink: 0 }}>{item.icon}</span>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: isSelected ? '#0EA5E9' : '#e4e4e7' }}>{item.label}</div>
-                        {item.desc && <div style={{ fontSize: 11, color: '#52525b', marginTop: 1 }}>{item.desc}</div>}
+                        <div style={{ fontSize: 13, fontWeight: 600, color: isSelected ? '#0EA5E9' : '#e8eef7' }}>{item.label}</div>
+                        {item.desc && <div style={{ fontSize: 11, color: '#8797ab', marginTop: 1 }}>{item.desc}</div>}
                       </div>
                       {isSelected && (
-                        <span style={{ fontSize: 10, color: '#3f3f46', fontFamily: 'monospace' }}>Enter ↵</span>
+                        <span style={{ fontSize: 11, color: '#8797ab', fontFamily: 'monospace' }}>Enter ↵</span>
                       )}
                     </button>
                   )
@@ -176,7 +176,7 @@ export function CommandPalette() {
         <div style={{
           padding: '10px 20px', borderTop: '1px solid rgba(255,255,255,0.06)',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          fontSize: 11, color: '#3f3f46',
+          fontSize: 11, color: '#8797ab',
         }}>
           <div style={{ display: 'flex', gap: 12 }}>
             <span>↑↓ navigate</span>
@@ -184,8 +184,8 @@ export function CommandPalette() {
             <span>esc close</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <kbd style={{ fontSize: 9, padding: '1px 4px', borderRadius: 3, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)' }}>⌘</kbd>
-            <kbd style={{ fontSize: 9, padding: '1px 4px', borderRadius: 3, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)' }}>K</kbd>
+            <kbd style={{ fontSize: 11, padding: '1px 4px', borderRadius: 3, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)' }}>⌘</kbd>
+            <kbd style={{ fontSize: 11, padding: '1px 4px', borderRadius: 3, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)' }}>K</kbd>
           </div>
         </div>
       </div>

@@ -4,8 +4,8 @@ import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 
 const s = {
-  bg: '#09090b', card: '#111113', border: 'rgba(255,255,255,0.07)',
-  text: '#fafafa', muted: '#71717a', dim: '#52525b',
+  bg: '#05080d', card: '#0d141e', border: 'rgba(255,255,255,0.07)',
+  text: '#fafafa', muted: '#8797ab', dim: '#8797ab',
   sky: '#0EA5E9', orange: '#f97316', green: '#10b981', violet: '#8b5cf6',
 }
 
@@ -58,8 +58,8 @@ export default function GTMDashboardClient({ user, profile, campaigns, totalLead
             {editing ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <input value={gtmName} onChange={e => setGtmName(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleRename()} autoFocus
-                  style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(22px,3vw,28px)', fontWeight: 800, letterSpacing: '-0.03em', background: '#111113', border: `1px solid ${s.border}`, borderRadius: 8, color: s.text, padding: '4px 12px', outline: 'none', width: 320 }} />
-                <button onClick={handleRename} disabled={saving} style={{ padding: '6px 14px', borderRadius: 6, background: s.sky, color: '#fff', border: 'none', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>{saving ? '...' : 'Save'}</button>
+                  style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(22px,3vw,28px)', fontWeight: 800, letterSpacing: '-0.03em', background: '#0d141e', border: `1px solid ${s.border}`, borderRadius: 8, color: s.text, padding: '4px 12px', outline: 'none', width: 320 }} />
+                <button onClick={handleRename} disabled={saving} style={{ padding: '6px 14px', borderRadius: 6, background: s.sky, color: '#03111c', border: 'none', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>{saving ? '...' : 'Save'}</button>
                 <button onClick={() => setEditing(false)} style={{ padding: '6px 14px', borderRadius: 6, background: 'transparent', color: s.muted, border: `1px solid ${s.border}`, fontSize: 12, cursor: 'pointer' }}>Cancel</button>
               </div>
             ) : (
@@ -72,7 +72,7 @@ export default function GTMDashboardClient({ user, profile, campaigns, totalLead
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             <Link href="/gtm/settings" style={{ padding: '9px 16px', borderRadius: 8, background: s.card, border: `1px solid ${s.border}`, color: s.muted, fontSize: 13, fontWeight: 600, textDecoration: 'none' }}>Connectors</Link>
-            <Link href="/gtm/campaigns/new" style={{ padding: '9px 18px', borderRadius: 8, background: s.orange, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>+ New campaign</Link>
+            <Link href="/gtm/campaigns/new" style={{ padding: '9px 18px', borderRadius: 8, background: s.orange, color: '#03111c', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>+ New campaign</Link>
           </div>
         </div>
 
@@ -83,7 +83,7 @@ export default function GTMDashboardClient({ user, profile, campaigns, totalLead
               <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>Set up your GTM profile first</div>
               <div style={{ fontSize: 13, color: s.muted }}>Tell us about your company and ICP — Wyber auto-generates your campaign strategy and finds your market.</div>
             </div>
-            <Link href="/gtm/setup" style={{ padding: '10px 20px', borderRadius: 8, background: s.orange, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap' }}>Set up ICP →</Link>
+            <Link href="/gtm/setup" style={{ padding: '10px 20px', borderRadius: 8, background: s.orange, color: '#03111c', fontSize: 13, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap' }}>Set up ICP →</Link>
           </div>
         )}
 
@@ -111,7 +111,7 @@ export default function GTMDashboardClient({ user, profile, campaigns, totalLead
                 <div style={{ fontSize: 32, marginBottom: 10 }}>📣</div>
                 <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 6 }}>No campaigns yet</div>
                 <div style={{ fontSize: 13, color: s.muted, marginBottom: 20 }}>Build your first campaign on the visual canvas — email, calls, and branches in one flow.</div>
-                <Link href="/gtm/campaigns/new" style={{ padding: '9px 18px', borderRadius: 8, background: s.orange, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Build campaign →</Link>
+                <Link href="/gtm/campaigns/new" style={{ padding: '9px 18px', borderRadius: 8, background: s.orange, color: '#03111c', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Build campaign →</Link>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -121,7 +121,7 @@ export default function GTMDashboardClient({ user, profile, campaigns, totalLead
                     <Link key={c.id} href={`/gtm/campaigns/${c.id}`} style={{ display: 'block', textDecoration: 'none', background: s.card, border: `1px solid ${s.border}`, borderRadius: 10, padding: '14px 16px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                         <span style={{ fontSize: 13, fontWeight: 600, color: s.text }}>{c.name}</span>
-                        <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: statusColor + '15', border: `1px solid ${statusColor}30`, color: statusColor }}>{c.status}</span>
+                        <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: statusColor + '15', border: `1px solid ${statusColor}30`, color: statusColor }}>{c.status}</span>
                       </div>
                       <div style={{ display: 'flex', gap: 16, fontSize: 12, color: s.muted }}>
                         <span>📤 {c.stats?.sent || 0} sent</span>

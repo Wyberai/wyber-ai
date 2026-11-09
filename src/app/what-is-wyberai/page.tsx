@@ -85,7 +85,7 @@ export default function WhatIsWyberAiPage() {
 
         {/* CTA */}
         <div style={{ textAlign: 'center', padding: '48px 0 24px' }}>
-          <a href="/signup" style={{ display: 'inline-block', padding: '13px 28px', borderRadius: 10, background: 'var(--sky)', color: '#fff', fontWeight: 700, fontSize: 15 }}>Start building free →</a>
+          <a href="/signup" style={{ display: 'inline-block', padding: '13px 28px', borderRadius: 10, background: 'var(--sky)', color: '#03111c', fontWeight: 700, fontSize: 15 }}>Start building free →</a>
           <p style={{ fontSize: 13, color: 'var(--text3)', marginTop: 16 }}>30 credits/month · no credit card required</p>
         </div>
       </div>

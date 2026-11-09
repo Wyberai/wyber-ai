@@ -47,8 +47,8 @@ export default async function ClientDeliveryPage({ params }: { params: Promise<{
     .sort((a, b) => a.sort_order - b.sort_order)
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0b0d12', fontFamily: 'var(--font-display, system-ui)', color: '#e4e4e7' }}>
-      <nav style={{ borderBottom: '1px solid #1a1a22', background: '#0d0d11', padding: '0 32px', height: 64, display: 'flex', alignItems: 'center', gap: 12 }}>
+    <div style={{ minHeight: '100vh', background: '#05080d', fontFamily: 'var(--font-display, system-ui)', color: '#e8eef7' }}>
+      <nav style={{ borderBottom: '1px solid #14202e', background: '#0a1018', padding: '0 32px', height: 64, display: 'flex', alignItems: 'center', gap: 12 }}>
         {client.logo_url && <img src={client.logo_url} alt={client.name} style={{ height: 28, width: 'auto' }} />}
         <div style={{ fontSize: 17, fontWeight: 800, color: '#fff', letterSpacing: '-0.03em' }}>{client.name}</div>
       </nav>
@@ -58,24 +58,24 @@ export default async function ClientDeliveryPage({ params }: { params: Promise<{
           Your build{deliverables.length !== 1 ? 's' : ''}
         </h1>
         {client.intro_text && (
-          <p style={{ color: '#a1a1aa', fontSize: 15, lineHeight: 1.7, margin: '0 0 40px', maxWidth: 640 }}>{client.intro_text}</p>
+          <p style={{ color: '#9aa8bb', fontSize: 15, lineHeight: 1.7, margin: '0 0 40px', maxWidth: 640 }}>{client.intro_text}</p>
         )}
 
         {deliverables.length === 0 ? (
-          <p style={{ color: '#52525b', fontSize: 14 }}>Nothing shared yet — check back soon.</p>
+          <p style={{ color: '#8797ab', fontSize: 14 }}>Nothing shared yet — check back soon.</p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {deliverables.map(d => {
               const project = d.projects!
               const liveUrl = liveUrlFor(project)
               return (
-                <div key={d.id} style={{ background: '#111115', border: '1px solid #1e1e26', borderRadius: 14, padding: 24, display: 'flex', gap: 20, alignItems: 'center', flexWrap: 'wrap' }}>
+                <div key={d.id} style={{ background: '#0d141e', border: '1px solid #1b2a3b', borderRadius: 14, padding: 24, display: 'flex', gap: 20, alignItems: 'center', flexWrap: 'wrap' }}>
                   {project.thumbnail_url && (
-                    <img src={project.thumbnail_url} alt={project.name} style={{ width: 140, height: 90, objectFit: 'cover', borderRadius: 9, border: '1px solid #1e1e26', flexShrink: 0 }} />
+                    <img src={project.thumbnail_url} alt={project.name} style={{ width: 140, height: 90, objectFit: 'cover', borderRadius: 9, border: '1px solid #1b2a3b', flexShrink: 0 }} />
                   )}
                   <div style={{ flex: 1, minWidth: 220 }}>
                     <div style={{ fontSize: 17, fontWeight: 700, color: '#fff', marginBottom: 4 }}>{d.headline || project.name}</div>
-                    {d.description && <p style={{ fontSize: 13, color: '#71717a', lineHeight: 1.6, margin: 0 }}>{d.description}</p>}
+                    {d.description && <p style={{ fontSize: 13, color: '#8797ab', lineHeight: 1.6, margin: 0 }}>{d.description}</p>}
                   </div>
                   {liveUrl && (
                     <a href={liveUrl} target="_blank" rel="noreferrer" style={{ padding: '10px 20px', borderRadius: 9, background: client.brand_color, color: readableOn(client.brand_color), fontSize: 13, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap' }}>

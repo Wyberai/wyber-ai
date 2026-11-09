@@ -86,13 +86,13 @@ export function OnboardingTour({ isNewUser }: { isNewUser: boolean }) {
           ))}
         </div>
         <div style={{ fontSize: 15, fontWeight: 700, color: '#fafafa', marginBottom: 8 }}>{s.title}</div>
-        <div style={{ fontSize: 13, color: '#a1a1aa', lineHeight: 1.6, marginBottom: 20 }}>{s.desc}</div>
+        <div style={{ fontSize: 13, color: '#9aa8bb', lineHeight: 1.6, marginBottom: 20 }}>{s.desc}</div>
         <div style={{ display: 'flex', gap: 8 }}>
-          {step > 0 && <button onClick={prev} style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#71717a', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>Back</button>}
-          <button onClick={next} style={{ flex: 1, padding: '9px 16px', borderRadius: 8, border: 'none', background: '#0EA5E9', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+          {step > 0 && <button onClick={prev} style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#8797ab', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>Back</button>}
+          <button onClick={next} style={{ flex: 1, padding: '9px 16px', borderRadius: 8, border: 'none', background: '#0EA5E9', color: '#03111c', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
             {step === STEPS.length - 1 ? 'Start Building →' : 'Next →'}
           </button>
-          <button onClick={finish} style={{ padding: '8px 10px', borderRadius: 8, border: 'none', background: 'transparent', color: '#52525b', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>Skip</button>
+          <button onClick={finish} style={{ padding: '8px 10px', borderRadius: 8, border: 'none', background: 'transparent', color: '#8797ab', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>Skip</button>
         </div>
       </div>
     </>

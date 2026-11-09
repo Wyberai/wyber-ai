@@ -145,7 +145,7 @@ export function ImageAnnotator({ onSubmit, onClose }: Props) {
                   <div style={{ position: 'absolute', top: (pendingRect?.y || 0) + (pendingRect?.height || 0) + 4, left: pendingRect?.x || 0, background: 'var(--bg-surface)', border: '1px solid var(--sky)', borderRadius: 8, padding: 8, display: 'flex', gap: 6, zIndex: 10, minWidth: 220 }}>
                     <input autoFocus value={labelText} onChange={e => setLabelText(e.target.value)} onKeyDown={e => e.key === 'Enter' && confirmLabel()} placeholder={t('labelThisAreaPlaceholder')}
                       style={{ flex: 1, padding: '5px 8px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg-base)', color: 'var(--text-primary)', fontSize: 11, outline: 'none', fontFamily: 'inherit' }} />
-                    <button onClick={confirmLabel} style={{ padding: '5px 10px', borderRadius: 6, background: 'var(--sky)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: 11, fontWeight: 700, fontFamily: 'inherit' }}>{tc('add')}</button>
+                    <button onClick={confirmLabel} style={{ padding: '5px 10px', borderRadius: 6, background: 'var(--sky)', color: '#03111c', border: 'none', cursor: 'pointer', fontSize: 11, fontWeight: 700, fontFamily: 'inherit' }}>{tc('add')}</button>
                   </div>
                 )}
               </div>
@@ -163,7 +163,7 @@ export function ImageAnnotator({ onSubmit, onClose }: Props) {
                 style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-base)', color: 'var(--text-primary)', fontSize: 13, resize: 'none', fontFamily: 'inherit', outline: 'none' }} />
               <div style={{ display: 'flex', gap: 8 }}>
                 <button onClick={onClose} style={{ padding: '9px 16px', borderRadius: 9, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>{tc('cancel')}</button>
-                <button onClick={handleSubmit} disabled={!prompt.trim()} style={{ flex: 1, padding: '9px', borderRadius: 9, background: 'var(--sky)', color: '#fff', fontWeight: 700, fontSize: 13, border: 'none', cursor: !prompt.trim() ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: !prompt.trim() ? 0.5 : 1 }}>
+                <button onClick={handleSubmit} disabled={!prompt.trim()} style={{ flex: 1, padding: '9px', borderRadius: 9, background: 'var(--sky)', color: '#03111c', fontWeight: 700, fontSize: 13, border: 'none', cursor: !prompt.trim() ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: !prompt.trim() ? 0.5 : 1 }}>
                   {t('sendToAiWithAnnotations')}
                 </button>
               </div>

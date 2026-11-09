@@ -4,8 +4,8 @@ import { WyberLogo } from '@/components/shared/WyberLogo'
 import { getTemplateById } from '@/lib/gtm-sequence-templates'
 
 const s = {
-  bg: '#09090b', card: '#111113', border: 'rgba(255,255,255,0.07)',
-  text: '#fafafa', muted: '#71717a', dim: '#52525b',
+  bg: '#05080d', card: '#0d141e', border: 'rgba(255,255,255,0.07)',
+  text: '#fafafa', muted: '#8797ab', dim: '#8797ab',
   orange: '#f97316', green: '#10b981', yellow: '#f59e0b', sky: '#0EA5E9', violet: '#8b5cf6',
 }
 
@@ -43,7 +43,7 @@ export default async function SequenceDetailPage({ params }: { params: Promise<{
       <nav style={{ padding: '0 clamp(16px,4vw,48px)', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${s.border}`, background: 'rgba(9,9,11,0.92)', backdropFilter: 'blur(16px)', position: 'sticky', top: 0, zIndex: 100 }}>
         <Link href="/gtm" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none', color: 'inherit' }}><WyberLogo markSize={24} wordmarkSize={14} /></Link>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <Link href="/gtm/campaigns/new" style={{ padding: '7px 14px', borderRadius: 8, background: s.orange, color: '#fff', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>Use on canvas →</Link>
+          <Link href="/gtm/campaigns/new" style={{ padding: '7px 14px', borderRadius: 8, background: s.orange, color: '#03111c', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>Use on canvas →</Link>
           <Link href="/gtm/sequences" style={{ fontSize: 13, color: s.muted, textDecoration: 'none' }}>← Sequences</Link>
         </div>
       </nav>
@@ -129,7 +129,7 @@ export default async function SequenceDetailPage({ params }: { params: Promise<{
                     <span style={{ fontSize: 12, fontWeight: 700, color: cfg.color }}>{cfg.label}</span>
                     <span style={{ fontSize: 11, color: s.dim }}>Day {step.day}</span>
                     {cfg.pill && (
-                      <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 10, background: isNonNative ? 'rgba(249,115,22,0.1)' : 'rgba(16,185,129,0.1)', border: `1px solid ${isNonNative ? 'rgba(249,115,22,0.25)' : 'rgba(16,185,129,0.25)'}`, color: isNonNative ? s.orange : s.green, fontWeight: 700 }}>
+                      <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 10, background: isNonNative ? 'rgba(249,115,22,0.1)' : 'rgba(16,185,129,0.1)', border: `1px solid ${isNonNative ? 'rgba(249,115,22,0.25)' : 'rgba(16,185,129,0.25)'}`, color: isNonNative ? s.orange : s.green, fontWeight: 700 }}>
                         {isNonNative ? '🔧 ' : '✦ '}{cfg.pill}
                       </span>
                     )}
@@ -183,7 +183,7 @@ export default async function SequenceDetailPage({ params }: { params: Promise<{
           <div style={{ background: s.card, border: `1px solid rgba(249,115,22,0.2)`, borderRadius: 12, padding: '20px' }}>
             <div style={{ fontSize: 15, fontWeight: 800, marginBottom: 6 }}>Automate on canvas</div>
             <p style={{ fontSize: 12, color: s.muted, marginBottom: 14, lineHeight: 1.5 }}>Drag these steps onto the visual canvas and connect them to your outreach tools.</p>
-            <Link href="/gtm/campaigns/new" style={{ display: 'block', padding: '9px 16px', borderRadius: 8, background: s.orange, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none', textAlign: 'center' }}>
+            <Link href="/gtm/campaigns/new" style={{ display: 'block', padding: '9px 16px', borderRadius: 8, background: s.orange, color: '#03111c', fontSize: 13, fontWeight: 700, textDecoration: 'none', textAlign: 'center' }}>
               Open canvas →
             </Link>
           </div>

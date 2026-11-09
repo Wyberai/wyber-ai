@@ -28,7 +28,7 @@ export class ErrorBoundary extends Component<Props, State> {
         <div style={{
           padding: '40px 24px', textAlign: 'center',
           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
-          color: 'var(--ide-text3, #71717a)', fontFamily: 'var(--font-display)',
+          color: 'var(--ide-text3, #8797ab)', fontFamily: 'var(--font-display)',
         }}>
           <div style={{ fontSize: 32, marginBottom: 4 }}>⚠️</div>
           <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ide-text, #fafafa)' }}>
@@ -41,7 +41,7 @@ export class ErrorBoundary extends Component<Props, State> {
             onClick={this.handleRetry}
             style={{
               marginTop: 8, padding: '8px 20px', borderRadius: 8,
-              background: '#0EA5E9', color: '#fff', border: 'none',
+              background: '#0EA5E9', color: '#03111c', border: 'none',
               fontSize: 13, fontWeight: 600, cursor: 'pointer',
               fontFamily: 'inherit',
             }}
