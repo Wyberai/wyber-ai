@@ -69,7 +69,15 @@ describe('page titles', () => {
 describe('crawl paths', () => {
   it('robots.txt keeps crawlers out of the login-only areas (they redirect to /login and show as "Page with redirect")', () => {
     const robots = read('src/app/robots.ts')
-    for (const p of ['/gtm/', '/ai-employees/', '/employees/', '/dashboard', '/api-keys', '/admin/']) expect(robots).toContain(`'${p}'`)
+    for (const p of ['/gtm/', '/ai-employees/', '/employees/', '/templates/', '/dashboard', '/api-keys', '/admin/']) expect(robots).toContain(`'${p}'`)
+  })
+
+  it('template start URLs are an action, not a page: blocked and noindex (about 70 showed as "Page with redirect")', () => {
+    expect(read('src/app/templates/[id]/layout.tsx')).toMatch(/index:\s*false/)
+  })
+
+  it('use-case titles drop the brand suffix that the site template adds again', () => {
+    expect(read('src/app/use-cases/[slug]/page.tsx')).toContain("replace(/\\s*[—|-]\\s*WyberAi\\s*$/i, '')")
   })
 
   it('the footer links every page to the app-ideas hub and no longer links to a redirect', () => {

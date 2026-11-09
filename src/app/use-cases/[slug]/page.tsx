@@ -13,7 +13,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const uc = USE_CASES.find(u => u.slug === slug)
   if (!uc) return {}
   return {
-    title: uc.metaTitle,
+    // The site title template already appends " | WyberAi", so the brand suffix in the data is dropped for the <title>
+    // (it stays in openGraph and the JSON-LD name, which have no template).
+    title: uc.metaTitle.replace(/\s*[—|-]\s*WyberAi\s*$/i, ''),
     description: uc.metaDesc,
     alternates: { canonical: `https://wyberai.com/use-cases/${uc.slug}` },
     openGraph: { title: uc.metaTitle, description: uc.metaDesc, url: `https://wyberai.com/use-cases/${uc.slug}` },
