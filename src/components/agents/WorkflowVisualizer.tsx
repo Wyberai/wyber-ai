@@ -14,7 +14,7 @@ function inferWorkflow(name: string, tools: string, complexity: string): Workflo
   else if (n.includes('daily') || n.includes('morning') || n.includes('brief')) steps.push({ id:'t', type:'trigger', label:'Scheduled: Every day 7AM', tool:'Schedule', color:'#a5b4fc' })
   else steps.push({ id:'t', type:'trigger', label:'Webhook trigger', tool:'Webhook', color:'#a5b4fc' })
 
-  steps.push({ id:'ai', type:'ai', label:'Claude AI analyzes & decides', tool:'Claude AI', color:'#a78bfa' })
+  steps.push({ id:'ai', type:'ai', label:'WyberCode AI analyzes & decides', tool:'WyberCode AI', color:'#a78bfa' })
 
   if (t.includes('hubspot') || t.includes('salesforce')) steps.push({ id:'crm', type:'action', label:'Update CRM record', tool:'HubSpot', color:'#FF7A59' })
   if (t.includes('airtable')) steps.push({ id:'db', type:'action', label:'Log to Airtable', tool:'Airtable', color:'#18BFFF' })

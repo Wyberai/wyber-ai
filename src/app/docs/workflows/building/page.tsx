@@ -34,7 +34,7 @@ export default function Page() {
           </Step>
           <Step n={3} title="Add steps">
             <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
-              Click <strong>+</strong> on the canvas or drag from the left node palette to add steps. Step types include AI steps (prompt → Claude reasoning), data transforms, and action nodes (send email, post to Slack, create a record, call a webhook).
+              Click <strong>+</strong> on the canvas or drag from the left node palette to add steps. Step types include AI steps (prompt → WyberCode reasoning), data transforms, and action nodes (send email, post to Slack, create a record, call a webhook).
             </p>
             <ScreenshotPlaceholder label="Adding step nodes" />
           </Step>

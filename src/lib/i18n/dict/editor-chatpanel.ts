@@ -92,7 +92,7 @@ export const EDITOR_CHATPANEL_STRINGS: Record<Locale, Record<string, string>> = 
     defaultPlaceholder: 'Ask anything or describe what you want to build...',
     stopGeneratingTooltip: 'Stop generating',
     costEstimateTooltip: 'Estimated credit cost for this message, for the model currently selected.',
-    modelPickerTooltip: 'Choose which model runs this message — Sonnet is fast and cheap, Opus and Fable are more powerful (and cost more), GPT uses OpenAI instead of Claude.',
+    modelPickerTooltip: 'Choose which WyberCode 1.0 engine runs this message — standard is fast and cheap, Max and Ultra are more powerful (and cost more).',
 
     // Per-message actions
     editRegenerateTooltip: 'Edit and regenerate from here',

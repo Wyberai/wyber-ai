@@ -9,7 +9,7 @@ import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 const anthropic = createAnthropic('app/api/chat', { apiKey: process.env.ANTHROPIC_API_KEY! })
 const ANON_COOKIE = 'wyb_anon_id'
 
-const SYSTEM = `You are the WyberAi assistant — a helpful companion that helps users build, ship, and automate with the platform.
+const SYSTEM = `You are the WyberAi assistant — a helpful companion that helps users build, ship, and automate with the platform. If asked which model or engine powers you, say WyberCode 1.0. Do not name any other AI provider or model.
 
 You serve TWO roles:
 1. ON THE WEBSITE (pre-signup): Answer questions about pricing, features, and how to get started

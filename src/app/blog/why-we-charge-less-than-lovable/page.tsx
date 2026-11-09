@@ -39,7 +39,7 @@ export default function Post() {
           <p>The result: most interactions cost a fraction of what a single-tier system would charge. That savings flows directly to you as lower prices and more credits per dollar.</p>
 
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>Prompt caching</h2>
-          <p>For every generation, WyberAi uses Anthropic's prompt caching to cache the static system prompt — the wyberDNA design rules and output format instructions that go with every request. On the second and subsequent generations in a session, those cached tokens cost 90% less. That's another significant reduction in per-request API cost.</p>
+          <p>For every generation, WyberAi uses prompt caching to cache the static system prompt — the wyberDNA design rules and output format instructions that go with every request. On the second and subsequent generations in a session, those cached tokens cost 90% less. That's another significant reduction in per-request API cost.</p>
 
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>The comparison</h2>
           <div style={{ borderRadius: 12, overflow: 'hidden', border: `1px solid ${s.border}`, margin: '20px 0' }}>

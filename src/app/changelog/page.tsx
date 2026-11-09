@@ -3,6 +3,11 @@ import { Footer } from '@/components/shared/FooterClient';
 import type { Metadata } from 'next';
 export const metadata: Metadata = { title: 'Changelog', description: 'Every feature, fix, and improvement — logged as we ship.', alternates: { canonical: 'https://wyberai.com/changelog' } };
 const RELEASES = [
+  { date:'November 10, 2026', version:'v1.3', tag:'WyberCode 1.0', color:'#0EA5E9', items:[
+    { type:'new', text:'WyberCode 1.0 — our new coding engine now builds every app, with faster, more consistent output' },
+    { type:'improved', text:'3x the credits on every paid plan at the same price: Spark 150, Starter 450, Builder 1,500, Pro 4,500 a month' },
+    { type:'improved', text:'Top-up packs now give 120, 300 and 600 credits at the same prices' },
+  ] },
   { date:'July 17, 2026', version:'v1.2', tag:'Security-first', color:'#0EA5E9', items:[
     { type:'new', text:'Live RLS Trust Scan on every publish — probes your real database with the public anon key (an attacker\'s exact view); critical data leaks block publishing' },
     { type:'new', text:'Security dashboard — per-project security status, scan history, and publish badges' },

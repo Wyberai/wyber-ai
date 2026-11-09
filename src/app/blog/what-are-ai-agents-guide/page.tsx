@@ -64,7 +64,7 @@ export default function Post() {
 
           {[
             { label: 'Trigger', desc: 'What kicks the agent off. A cron schedule ("every day at 9 AM"), a webhook ("when a new form submission arrives"), or a manual run for testing.' },
-            { label: 'Reasoning', desc: 'The AI step. A Claude node that classifies, scores, summarizes, extracts, or decides. This is what separates an agent from a plain automation — it can handle ambiguous input.' },
+            { label: 'Reasoning', desc: 'The AI step. A WyberCode node that classifies, scores, summarizes, extracts, or decides. This is what separates an agent from a plain automation — it can handle ambiguous input.' },
             { label: 'Actions', desc: 'What happens next. Send a Slack message, create a HubSpot contact, add a row to Google Sheets, post a Linear ticket. WyberAi connects to 250+ apps via Composio.' },
           ].map(part => (
             <div key={part.label} style={{ background: s.card, borderRadius: 10, padding: '16px 20px', border: `1px solid ${s.border}`, marginBottom: 10 }}>
@@ -82,7 +82,7 @@ export default function Post() {
             Build an agent that runs every morning at 8 AM, checks my Gmail for emails from investors or enterprise prospects, summarizes each with key action items, and sends a Slack DM to me with the summaries.
           </div>
 
-          <p>That prompt generates a canvas with four nodes: Schedule Trigger → Gmail tool → Claude AI reasoning → Slack DM. Connect Gmail and Slack, activate, and you're done.</p>
+          <p>That prompt generates a canvas with four nodes: Schedule Trigger → Gmail tool → WyberCode AI reasoning → Slack DM. Connect Gmail and Slack, activate, and you're done.</p>
 
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>When not to use an agent</h2>
           <p>Agents are overkill if the task is purely deterministic (no AI needed), if it only needs to run once, or if a simple Zapier-style automation would do. The AI reasoning step is what justifies the complexity — if you don't need judgment, you just need a workflow.</p>

@@ -117,7 +117,7 @@ export default function AgentsClient({ initial }: { initial?: State } = {}) {
           {state.agents.map(a => (
             <div key={a.id} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: '14px 16px', display: 'grid', gap: 8 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-                <div><strong style={{ fontSize: 15 }}>{a.name}</strong> <span style={{ color: C.muted, fontSize: 12 }}>· {a.model === 'cheap' ? 'Haiku 5.5' : 'Sonnet 5.5'}</span></div>
+                <div><strong style={{ fontSize: 15 }}>{a.name}</strong> <span style={{ color: C.muted, fontSize: 12 }}>· {a.model === 'cheap' ? 'WyberCode 1.0 Lite' : 'WyberCode 1.0'}</span></div>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                   <label style={{ fontSize: 12.5, color: a.enabled ? C.green : C.muted, display: 'flex', gap: 6, alignItems: 'center', cursor: 'pointer' }}>
                     <input type="checkbox" checked={a.enabled} onChange={e => toggle(a.id, e.target.checked)} /> {a.enabled ? 'On' : 'Off'}

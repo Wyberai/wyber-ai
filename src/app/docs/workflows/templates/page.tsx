@@ -15,7 +15,7 @@ export default function Page() {
           Templates are organized by use case. Common examples include:
         </p>
         <ul style={{ paddingLeft: 20, fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 2 }}>
-          <li><strong>Daily email digest</strong> — summarizes inbox highlights with Claude every morning</li>
+          <li><strong>Daily email digest</strong> — summarizes inbox highlights with WyberCode every morning</li>
           <li><strong>Support ticket triage</strong> — classifies incoming support emails and routes urgent ones to Slack</li>
           <li><strong>Social media scheduler</strong> — generates and posts content to multiple channels on a schedule</li>
           <li><strong>CRM enrichment</strong> — enriches new leads with company data and notes in HubSpot</li>

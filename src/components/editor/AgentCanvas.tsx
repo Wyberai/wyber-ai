@@ -128,7 +128,7 @@ function ToolIcon({ toolId, logoUrl, size = 24 }: { toolId?: string; logoUrl?: s
 
 const NODE_META: Record<WyberNodeType, { color: string; bg: string; label: string; helpText: string; Icon: React.FC<{ size?: number; color?: string }> }> = {
   trigger:   { color: '#0EA5E9', bg: 'rgba(14,165,233,0.08)',  label: 'When this starts', helpText: 'How and when this agent begins running', Icon: IcoZap },
-  aiagent:   { color: '#a78bfa', bg: 'rgba(139,92,246,0.08)', label: 'AI Step',           helpText: 'Claude reads inputs and decides what to do', Icon: IcoBrain },
+  aiagent:   { color: '#a78bfa', bg: 'rgba(139,92,246,0.08)', label: 'AI Step',           helpText: 'WyberCode reads inputs and decides what to do', Icon: IcoBrain },
   tool:      { color: '#34d399', bg: 'rgba(16,185,129,0.08)', label: 'Use a tool',        helpText: 'Connect to an external app (Gmail, Slack, etc.)', Icon: IcoTool },
   condition: { color: '#f59e0b', bg: 'rgba(245,158,11,0.08)', label: 'Decision point',    helpText: 'Take different paths based on a condition', Icon: IcoDiamond },
   output:    { color: '#22c55e', bg: 'rgba(34,197,94,0.08)',  label: 'Final result',      helpText: 'What the agent produces or sends when done', Icon: IcoCheck },

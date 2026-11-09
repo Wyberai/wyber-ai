@@ -134,10 +134,10 @@ export const MODEL_META: Record<ModelTier, {
   // in all 5 locales), which are the clearest evidence of actual intent: the
   // Builder plan advertises "Priority build queue" (= premium's priority
   // queue), and the Pro plan advertises "Fable model access (most powerful)".
-  fast:    { label: 'Sonnet', tagline: 'Fast & smart — great for most apps',     minPlan: 'free',    provider: 'anthropic' },
-  default: { label: 'Opus',   tagline: 'Higher quality for complex apps',       minPlan: 'starter', provider: 'anthropic' },
-  premium: { label: 'Opus (priority)', tagline: 'Same power, priority queue',   minPlan: 'builder', provider: 'anthropic' },
-  fable:   { label: 'Fable', tagline: 'Most powerful — best for large apps',    minPlan: 'pro',     provider: 'anthropic' },
+  fast:    { label: 'WyberCode 1.0', tagline: 'Fast & smart — great for most apps',     minPlan: 'free',    provider: 'anthropic' },
+  default: { label: 'WyberCode 1.0 Max', tagline: 'Higher quality for complex apps',       minPlan: 'starter', provider: 'anthropic' },
+  premium: { label: 'WyberCode 1.0 Max (priority)', tagline: 'Same power, priority queue',   minPlan: 'builder', provider: 'anthropic' },
+  fable:   { label: 'WyberCode 1.0 Ultra', tagline: 'Most powerful — best for large apps',    minPlan: 'pro',     provider: 'anthropic' },
   // Visible to everyone (free+) — the point of adding a second provider is for
   // it to be a real, try-it-now choice, not another paywalled tier.
   gpt:     { label: 'GPT',     tagline: 'OpenAI — an alternative engine for the same build', minPlan: 'free', provider: 'openai' },
@@ -145,7 +145,7 @@ export const MODEL_META: Record<ModelTier, {
   // rollout (see wybercode.ts shouldAutoRouteToWyberCode), independent of
   // this manual dropdown entry. Kill-switched off by default in production
   // until the Phase 3 GKE/vLLM infra actually exists (WYBERCODE_ENABLED).
-  wybercode: { label: 'WyberCode', tagline: 'Our own coding engine — fast & free while in beta', minPlan: 'free', provider: 'wybercode' },
+  wybercode: { label: 'WyberCode Local (beta)', tagline: 'Self-hosted engine — fast & free while in beta', minPlan: 'free', provider: 'wybercode' },
 }
 
 /**

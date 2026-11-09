@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { track } from '@/lib/track'
+import { TOPUP_PACKS } from '@/lib/plans'
 
 type Currency = 'USD' | 'INR'
 
@@ -51,7 +52,7 @@ const PLANS_USD: PlanConfig[] = [
     annualKey: 'builder_annual',
     color: '#0ea5e9',
     highlight: true,
-    perks: ['~16 full builds/mo', 'Priority Opus model', 'Everything in Starter'],
+    perks: ['~16 full builds/mo', 'WyberCode 1.0 Max (priority)', 'Everything in Starter'],
   },
 ]
 
@@ -85,7 +86,7 @@ const PLANS_INR: PlanConfig[] = [
     annualKey: 'starter_annual',
     color: '#0ea5e9',
     highlight: true,
-    perks: ['~5 full builds/mo', 'Priority Opus model', 'Everything in Spark'],
+    perks: ['~5 full builds/mo', 'WyberCode 1.0 Max (priority)', 'Everything in Spark'],
   },
 ]
 
@@ -103,14 +104,14 @@ interface TopupConfig {
 // low-commitment option for the out-of-credits moment: someone mid-build who
 // just wants to finish, not sign up for a year.
 const TOPUPS_USD: TopupConfig[] = [
-  { key: 'topup_200', credits: 40, price: '$19', label: 'Boost', desc: '~1 web build' },
-  { key: 'topup_600', credits: 100, price: '$49', label: 'Power', desc: '~3 web builds' },
-  { key: 'topup_2000', credits: 200, price: '$99', label: 'Studio', desc: '~5 web builds', badge: true },
+  { key: 'topup_200', credits: TOPUP_PACKS[0].credits, price: '$19', label: 'Boost', desc: '~1 web build' },
+  { key: 'topup_600', credits: TOPUP_PACKS[1].credits, price: '$49', label: 'Power', desc: '~3 web builds' },
+  { key: 'topup_2000', credits: TOPUP_PACKS[2].credits, price: '$99', label: 'Studio', desc: '~5 web builds', badge: true },
 ]
 const TOPUPS_INR: TopupConfig[] = [
-  { key: 'topup_200', credits: 40, price: '₹399', label: 'Boost', desc: '~1 web build' },
-  { key: 'topup_600', credits: 100, price: '₹999', label: 'Power', desc: '~3 web builds' },
-  { key: 'topup_2000', credits: 200, price: '₹1,999', label: 'Studio', desc: '~5 web builds', badge: true },
+  { key: 'topup_200', credits: TOPUP_PACKS[0].credits, price: '₹399', label: 'Boost', desc: '~1 web build' },
+  { key: 'topup_600', credits: TOPUP_PACKS[1].credits, price: '₹999', label: 'Power', desc: '~3 web builds' },
+  { key: 'topup_2000', credits: TOPUP_PACKS[2].credits, price: '₹1,999', label: 'Studio', desc: '~5 web builds', badge: true },
 ]
 
 // Countdown resets every time the modal is first opened in a session.

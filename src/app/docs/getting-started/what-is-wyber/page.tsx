@@ -35,7 +35,7 @@ export default function Page() {
 
       <DocSection title="How it works (in one sentence)">
         <p style={{ fontSize: 14, color: '#9aa8bb', lineHeight: 1.7 }}>
-          You type a prompt → Wyber calls Claude to generate code → the code is built and previewed in real time → you iterate with follow-up prompts → you publish or export when done.
+          You type a prompt → Wyber calls WyberCode 1.0 to generate code → the code is built and previewed in real time → you iterate with follow-up prompts → you publish or export when done.
         </p>
       </DocSection>
 

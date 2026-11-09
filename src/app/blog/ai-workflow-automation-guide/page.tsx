@@ -37,7 +37,7 @@ export default function Post() {
           <p>WyberAi's workflow builder works differently. You describe the automation in plain English. It generates the full canvas — trigger, tool connections, AI reasoning nodes, and action steps — and then runs it.</p>
 
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>The difference that matters: AI is first-class</h2>
-          <p>In Zapier, AI is a special module you bolt on. In WyberAi, every workflow can include a <strong style={{ color: s.text }}>Claude reasoning node</strong> anywhere in the flow — classify this input, score this record, summarize this email, decide which branch to take. The AI step is a native node type, not an integration.</p>
+          <p>In Zapier, AI is a special module you bolt on. In WyberAi, every workflow can include a <strong style={{ color: s.text }}>WyberCode reasoning node</strong> anywhere in the flow — classify this input, score this record, summarize this email, decide which branch to take. The AI step is a native node type, not an integration.</p>
 
           <p>That means you can build automations that aren't purely deterministic. "If the email sounds urgent, route it to Slack. If it's a sales inquiry, add to HubSpot and draft a response." That branching logic requires judgment — and that's what the AI node provides.</p>
 
@@ -48,7 +48,7 @@ export default function Post() {
             When a new row is added to my Airtable "Job Applications" base: score the applicant 1-10 for role fit using AI, add them to HubSpot as a contact tagged with the score, and send a Slack message to #hiring with their name, role, and score.
           </div>
 
-          <p>The builder generates a canvas with four nodes: Airtable Trigger → Claude Scoring → HubSpot Create Contact → Slack Message. Connect your tools in Settings → Integrations (once, for all workflows), activate, and it runs automatically for every new Airtable row from that point on.</p>
+          <p>The builder generates a canvas with four nodes: Airtable Trigger → WyberCode Scoring → HubSpot Create Contact → Slack Message. Connect your tools in Settings → Integrations (once, for all workflows), activate, and it runs automatically for every new Airtable row from that point on.</p>
 
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>Triggers</h2>
           <ul style={{ paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
