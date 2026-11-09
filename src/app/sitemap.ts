@@ -29,12 +29,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     })),
   ]
 
+  // /gallery is noindex, and /premier-league and /employees canonicalise to the homepage. Listing a page the page itself says
+  // not to index is what Search Console reports as "pages in a sitemap can't be indexed", so they are NOT listed here.
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: base, lastModified: now, changeFrequency: 'weekly', priority: 1.0 },
     { url: `${base}/pricing`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
     { url: `${base}/websites`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
-    { url: `${base}/gallery`, lastModified: now, changeFrequency: 'daily', priority: 0.9 },
-    { url: `${base}/premier-league`, lastModified: now, changeFrequency: 'weekly', priority: 0.85 },
     { url: `${base}/vs/lovable`, lastModified: now, changeFrequency: 'monthly', priority: 0.85 },
     { url: `${base}/vs/bolt`, lastModified: now, changeFrequency: 'monthly', priority: 0.85 },
     { url: `${base}/vs/v0`, lastModified: now, changeFrequency: 'monthly', priority: 0.85 },
@@ -51,7 +51,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/use-cases/ai-workflow-automation`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${base}/use-cases/no-code-web-app-builder`, lastModified: now, changeFrequency: 'monthly', priority: 0.85 },
     { url: `${base}/use-cases/ai-app-builder`, lastModified: now, changeFrequency: 'monthly', priority: 0.85 },
-    { url: `${base}/employees`, lastModified: now, changeFrequency: 'weekly', priority: 0.85 },
     // NOTE: gated app pages (/gtm/*, /dashboard, /project) and thin auth pages
     // (/login, /signup) are intentionally excluded — they redirect crawlers to
     // login and get marked "not indexed", which drags down sitemap quality.
