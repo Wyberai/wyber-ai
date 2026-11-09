@@ -78,6 +78,19 @@ describe('no copy of the plan credits can drift', () => {
     expect(src).toContain(`perCredit: '${usd(199, 4500)}'`)
   })
 
+  it('the places that were found stale after the first pass stay fixed', () => {
+    const mcp = read('src/app/api/mcp/route.ts')
+    expect(mcp).not.toMatch(/(?<![\d,.])(150|500)cr\/mo/)
+    expect(mcp).toContain('PLAN_FACTS.starter.credits')
+    expect(read('src/lib/email/index.ts')).not.toContain('40 credits is')
+    for (const f of ['src/app/vs/lovable/page.tsx', 'src/app/vs/bolt/page.tsx', 'src/lib/i18n/dict/vs-content/lovable.ts', 'src/lib/i18n/dict/vs-content/bolt.ts']) {
+      expect(read(f)).not.toMatch(/Starter credits\/mo[^\n]{0,20}wyber: '150'/)
+      expect(read(f)).not.toContain('$29/month for 150 fixed credits')
+    }
+    // Free signup is 30 credits, not 50, on the public ad and demo pages.
+    for (const f of ['public/ads/index.html', 'public/demo-intro.html', 'public/demo-intro-mobile.html']) expect(read(f)).not.toMatch(/50 credits (on signup|·)|Start free — 50 credits|Try it free — 50 credits/)
+  })
+
   it('no source file still states the old plan allotments', () => {
     // (?<![\d,.]) keeps "1,500" and "4,500" from matching as "500". 150 is Spark's real number now, so only the
     // Starter-specific form is checked.

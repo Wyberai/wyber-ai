@@ -23,7 +23,7 @@ export const BOLT_CONTENT: Record<Locale, VsContent> = {
     pillarNote: 'Bolt.new builds web apps only.',
     rows: [
       { feature: 'Starter price', wyber: '$29/mo (Starter)', other: '$25/mo', winner: 'tie' },
-      { feature: 'Starter credits/mo', wyber: '150', other: '~250 tokens equiv', winner: 'other' },
+      { feature: 'Starter credits/mo', wyber: '450', other: '10M tokens (different unit)', winner: 'tie' },
       { feature: 'Free tier', wyber: '30 credits/month', other: '1M tokens/mo', winner: 'tie' },
       { feature: 'Usage model', wyber: 'Fixed credits', other: 'Tokens (per char)', winner: 'wyber' },
       { feature: 'Unused credits rollover', wyber: '✓ Always', other: '✓ Up to 2 months', winner: 'wyber' },
@@ -43,7 +43,7 @@ export const BOLT_CONTENT: Record<Locale, VsContent> = {
       { feature: 'India/APAC pricing', wyber: '✓ INR soon', other: 'USD only', winner: 'wyber' },
     ],
     faqs: [
-      { q: 'How does WyberAi pricing compare to Bolt.new?', a: 'WyberAi Starter is $29/month for 150 fixed credits — you always know the cost before generating. Bolt uses a token-based model ($25/month) where cost depends on prompt length, making it harder to predict spend. Wyber also builds mobile apps and includes self-healing builds.' },
+      { q: 'How does WyberAi pricing compare to Bolt.new?', a: 'WyberAi Starter is $29/month for 450 fixed credits — you always know the cost before generating. Bolt uses a token-based model ($25/month) where cost depends on prompt length, making it harder to predict spend. Wyber also builds mobile apps and includes self-healing builds.' },
       { q: 'Does Bolt.new have a mobile app builder?', a: 'No. Bolt.new generates React web apps only. WyberAi also generates full React Native + Expo mobile apps that run on iOS and Android — all from the same account.' },
       { q: 'Does WyberAi have self-healing builds?', a: 'Yes. When a build hits an error, WyberAi automatically detects and fixes it — no manual debugging. Bolt does not auto-fix build errors.' },
       { q: 'Is Bolt.new better for developers?', a: 'Bolt.new is more developer-oriented — it has a full in-browser IDE. If you\'re a developer comfortable with code, Bolt\'s flexibility may appeal. WyberAi is optimized for non-technical builders who want to describe and ship, not debug.' },
@@ -76,7 +76,7 @@ export const BOLT_CONTENT: Record<Locale, VsContent> = {
       { feature: 'भारत/APAC प्राइसिंग', wyber: '✓ जल्द INR', other: 'सिर्फ़ USD', winner: 'wyber' },
     ],
     faqs: [
-      { q: 'WyberAi की कीमत Bolt.new से कैसे अलग है?', a: 'WyberAi Starter में $29/माह में 150 फिक्स्ड क्रेडिट्स मिलते हैं — जनरेट करने से पहले ही आपको लागत पता होती है। Bolt एक टोकन-आधारित मॉडल ($25/माह) इस्तेमाल करता है जहां लागत प्रॉम्प्ट की लंबाई पर निर्भर करती है, जिससे खर्च का अनुमान लगाना मुश्किल हो जाता है। Wyber मोबाइल ऐप्स भी बनाता है और सेल्फ-हीलिंग बिल्ड्स शामिल करता है।' },
+      { q: 'WyberAi की कीमत Bolt.new से कैसे अलग है?', a: 'WyberAi Starter में $29/माह में 450 फिक्स्ड क्रेडिट्स मिलते हैं — जनरेट करने से पहले ही आपको लागत पता होती है। Bolt एक टोकन-आधारित मॉडल ($25/माह) इस्तेमाल करता है जहां लागत प्रॉम्प्ट की लंबाई पर निर्भर करती है, जिससे खर्च का अनुमान लगाना मुश्किल हो जाता है। Wyber मोबाइल ऐप्स भी बनाता है और सेल्फ-हीलिंग बिल्ड्स शामिल करता है।' },
       { q: 'क्या Bolt.new में मोबाइल ऐप बिल्डर है?', a: 'नहीं। Bolt.new सिर्फ़ React वेब ऐप्स जनरेट करता है। WyberAi पूरे React Native + Expo मोबाइल ऐप्स भी जनरेट करता है जो iOS और Android दोनों पर चलते हैं — वह भी एक ही अकाउंट से।' },
       { q: 'क्या WyberAi में सेल्फ-हीलिंग बिल्ड्स हैं?', a: 'हां। जब किसी बिल्ड में गलती आती है, तो WyberAi उसे अपने-आप पहचानकर ठीक कर देता है — कोई मैनुअल डिबगिंग नहीं। Bolt बिल्ड की गलतियों को अपने-आप ठीक नहीं करता।' },
       { q: 'क्या Bolt.new डेवलपर्स के लिए बेहतर है?', a: 'Bolt.new ज़्यादा डेवलपर-केंद्रित है — इसमें पूरा इन-ब्राउज़र IDE है। अगर आप कोड में सहज एक डेवलपर हैं, तो Bolt की लचीलापन आपको पसंद आ सकती है। WyberAi गैर-तकनीकी बिल्डर्स के लिए बनाया गया है जो सिर्फ़ बताना और शिप करना चाहते हैं, डिबग नहीं करना।' },
@@ -109,7 +109,7 @@ export const BOLT_CONTENT: Record<Locale, VsContent> = {
       { feature: 'ಭಾರತ/APAC ಬೆಲೆ', wyber: '✓ ಶೀಘ್ರದಲ್ಲೇ INR', other: 'USD ಮಾತ್ರ', winner: 'wyber' },
     ],
     faqs: [
-      { q: 'WyberAi ಬೆಲೆ Bolt.new ಗೆ ಹೋಲಿಸಿದರೆ ಹೇಗಿದೆ?', a: 'WyberAi Starter $29/ತಿಂಗಳಿಗೆ 150 ಸ್ಥಿರ ಕ್ರೆಡಿಟ್‌ಗಳನ್ನು ನೀಡುತ್ತದೆ — ರಚಿಸುವ ಮೊದಲೇ ನಿಮಗೆ ವೆಚ್ಚ ತಿಳಿಯುತ್ತದೆ. Bolt ಟೋಕನ್-ಆಧಾರಿತ ಮಾದರಿ ($25/ತಿಂಗಳು) ಬಳಸುತ್ತದೆ, ಇಲ್ಲಿ ವೆಚ್ಚವು ಪ್ರಾಂಪ್ಟ್‌ನ ಉದ್ದವನ್ನು ಅವಲಂಬಿಸಿರುತ್ತದೆ, ಇದರಿಂದ ಖರ್ಚನ್ನು ಊಹಿಸುವುದು ಕಷ್ಟವಾಗುತ್ತದೆ. Wyber ಮೊಬೈಲ್ ಆ್ಯಪ್‌ಗಳನ್ನೂ ನಿರ್ಮಿಸುತ್ತದೆ ಮತ್ತು ಸ್ವಯಂ-ಸರಿಪಡಿಸುವ ಬಿಲ್ಡ್‌ಗಳನ್ನೂ ಒಳಗೊಂಡಿದೆ.' },
+      { q: 'WyberAi ಬೆಲೆ Bolt.new ಗೆ ಹೋಲಿಸಿದರೆ ಹೇಗಿದೆ?', a: 'WyberAi Starter $29/ತಿಂಗಳಿಗೆ 450 ಸ್ಥಿರ ಕ್ರೆಡಿಟ್‌ಗಳನ್ನು ನೀಡುತ್ತದೆ — ರಚಿಸುವ ಮೊದಲೇ ನಿಮಗೆ ವೆಚ್ಚ ತಿಳಿಯುತ್ತದೆ. Bolt ಟೋಕನ್-ಆಧಾರಿತ ಮಾದರಿ ($25/ತಿಂಗಳು) ಬಳಸುತ್ತದೆ, ಇಲ್ಲಿ ವೆಚ್ಚವು ಪ್ರಾಂಪ್ಟ್‌ನ ಉದ್ದವನ್ನು ಅವಲಂಬಿಸಿರುತ್ತದೆ, ಇದರಿಂದ ಖರ್ಚನ್ನು ಊಹಿಸುವುದು ಕಷ್ಟವಾಗುತ್ತದೆ. Wyber ಮೊಬೈಲ್ ಆ್ಯಪ್‌ಗಳನ್ನೂ ನಿರ್ಮಿಸುತ್ತದೆ ಮತ್ತು ಸ್ವಯಂ-ಸರಿಪಡಿಸುವ ಬಿಲ್ಡ್‌ಗಳನ್ನೂ ಒಳಗೊಂಡಿದೆ.' },
       { q: 'Bolt.new ನಲ್ಲಿ ಮೊಬೈಲ್ ಆ್ಯಪ್ ಬಿಲ್ಡರ್ ಇದೆಯೇ?', a: 'ಇಲ್ಲ. Bolt.new ಕೇವಲ React ವೆಬ್ ಆ್ಯಪ್‌ಗಳನ್ನು ಮಾತ್ರ ರಚಿಸುತ್ತದೆ. WyberAi iOS ಮತ್ತು Android ನಲ್ಲಿ ಚಲಿಸುವ ಪೂರ್ಣ React Native + Expo ಮೊಬೈಲ್ ಆ್ಯಪ್‌ಗಳನ್ನೂ ರಚಿಸುತ್ತದೆ — ಅದೂ ಒಂದೇ ಖಾತೆಯಿಂದ.' },
       { q: 'WyberAi ನಲ್ಲಿ ಸ್ವಯಂ-ಸರಿಪಡಿಸುವ ಬಿಲ್ಡ್‌ಗಳಿವೆಯೇ?', a: 'ಹೌದು. ಬಿಲ್ಡ್‌ನಲ್ಲಿ ದೋಷ ಎದುರಾದಾಗ, WyberAi ಅದನ್ನು ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಪತ್ತೆಹಚ್ಚಿ ಸರಿಪಡಿಸುತ್ತದೆ — ಯಾವುದೇ ಮ್ಯಾನ್ಯುವಲ್ ಡೀಬಗ್ಗಿಂಗ್ ಇಲ್ಲ. Bolt ಬಿಲ್ಡ್ ದೋಷಗಳನ್ನು ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಸರಿಪಡಿಸುವುದಿಲ್ಲ.' },
       { q: 'Bolt.new ಡೆವಲಪರ್‌ಗಳಿಗೆ ಉತ್ತಮವೇ?', a: 'Bolt.new ಹೆಚ್ಚು ಡೆವಲಪರ್-ಕೇಂದ್ರಿತವಾಗಿದೆ — ಇದರಲ್ಲಿ ಪೂರ್ಣ ಇನ್-ಬ್ರೌಸರ್ IDE ಇದೆ. ನೀವು ಕೋಡ್‌ನೊಂದಿಗೆ ಆರಾಮದಾಯಕವಾಗಿರುವ ಡೆವಲಪರ್ ಆಗಿದ್ದರೆ, Bolt ನ ನಮ್ಯತೆ ನಿಮಗೆ ಇಷ್ಟವಾಗಬಹುದು. WyberAi ವಿವರಿಸಿ ಶಿಪ್ ಮಾಡಲು ಬಯಸುವ, ಡೀಬಗ್ ಮಾಡಲು ಇಷ್ಟಪಡದ ಟೆಕ್ನಿಕಲ್ ಅಲ್ಲದ ಬಿಲ್ಡರ್‌ಗಳಿಗಾಗಿ ಆಪ್ಟಿಮೈಸ್ ಮಾಡಲಾಗಿದೆ.' },
@@ -142,7 +142,7 @@ export const BOLT_CONTENT: Record<Locale, VsContent> = {
       { feature: 'భారత్/APAC ధర', wyber: '✓ త్వరలో INR', other: 'USD మాత్రమే', winner: 'wyber' },
     ],
     faqs: [
-      { q: 'WyberAi ధర Bolt.new తో పోలిస్తే ఎలా ఉంది?', a: 'WyberAi Starter నెలకు $29కి 150 స్థిర క్రెడిట్లు ఇస్తుంది — రూపొందించే ముందే మీకు ఖర్చు తెలుస్తుంది. Bolt టోకెన్-ఆధారిత మోడల్ ($25/నెల) ఉపయోగిస్తుంది, ఇందులో ఖర్చు ప్రాంప్ట్ పొడవుపై ఆధారపడి ఉంటుంది, దీనివల్ల ఖర్చును అంచనా వేయడం కష్టమవుతుంది. Wyber మొబైల్ యాప్‌లను కూడా నిర్మిస్తుంది మరియు స్వీయ-సరిదిద్దుకునే బిల్డ్‌లను కలిగి ఉంది.' },
+      { q: 'WyberAi ధర Bolt.new తో పోలిస్తే ఎలా ఉంది?', a: 'WyberAi Starter నెలకు $29కి 450 స్థిర క్రెడిట్లు ఇస్తుంది — రూపొందించే ముందే మీకు ఖర్చు తెలుస్తుంది. Bolt టోకెన్-ఆధారిత మోడల్ ($25/నెల) ఉపయోగిస్తుంది, ఇందులో ఖర్చు ప్రాంప్ట్ పొడవుపై ఆధారపడి ఉంటుంది, దీనివల్ల ఖర్చును అంచనా వేయడం కష్టమవుతుంది. Wyber మొబైల్ యాప్‌లను కూడా నిర్మిస్తుంది మరియు స్వీయ-సరిదిద్దుకునే బిల్డ్‌లను కలిగి ఉంది.' },
       { q: 'Bolt.new కు మొబైల్ యాప్ బిల్డర్ ఉందా?', a: 'లేదు. Bolt.new కేవలం React వెబ్ యాప్‌లను మాత్రమే రూపొందిస్తుంది. WyberAi iOS మరియు Androidలో నడిచే పూర్తి React Native + Expo మొబైల్ యాప్‌లను కూడా రూపొందిస్తుంది — అదీ ఒకే ఖాతా నుండి.' },
       { q: 'WyberAiలో స్వీయ-సరిదిద్దుకునే బిల్డ్‌లు ఉన్నాయా?', a: 'అవును. బిల్డ్‌లో ఎర్రర్ వచ్చినప్పుడు, WyberAi దాన్ని స్వయంచాలకంగా గుర్తించి సరిచేస్తుంది — మాన్యువల్ డీబగ్గింగ్ అవసరం లేదు. Bolt బిల్డ్ ఎర్రర్‌లను స్వయంచాలకంగా సరిచేయదు.' },
       { q: 'Bolt.new డెవలపర్‌లకు మెరుగ్గా ఉందా?', a: 'Bolt.new ఎక్కువ డెవలపర్-కేంద్రీకృతమైనది — దీనిలో పూర్తి ఇన్-బ్రౌజర్ IDE ఉంది. మీరు కోడ్‌తో సౌకర్యవంతంగా ఉండే డెవలపర్ అయితే, Bolt యొక్క వశ్యత మీకు నచ్చవచ్చు. WyberAi వివరించి షిప్ చేయాలనుకునే, డీబగ్ చేయాలనుకోని టెక్నికల్ కాని బిల్డర్‌ల కోసం ఆప్టిమైజ్ చేయబడింది.' },
@@ -175,7 +175,7 @@ export const BOLT_CONTENT: Record<Locale, VsContent> = {
       { feature: 'இந்தியா/APAC விலை', wyber: '✓ விரைவில் INR', other: 'USD மட்டும்', winner: 'wyber' },
     ],
     faqs: [
-      { q: 'WyberAi விலை Bolt.new உடன் எப்படி ஒப்பிடுகிறது?', a: 'WyberAi Starter மாதம் $29க்கு 150 நிலையான கிரெடிட்களை வழங்குகிறது — உருவாக்குவதற்கு முன்பே செலவு தெரியும். Bolt டோக்கன் அடிப்படையிலான மாதிரியை ($25/மாதம்) பயன்படுத்துகிறது, இதில் செலவு ப்ராம்ப்ட்டின் நீளத்தைப் பொறுத்து இருக்கும், இதனால் செலவை கணிப்பது கடினமாகிறது. Wyber மொபைல் ஆப்களையும் உருவாக்குகிறது மற்றும் சுயமாக சரிசெய்யும் பில்டுகளையும் கொண்டுள்ளது.' },
+      { q: 'WyberAi விலை Bolt.new உடன் எப்படி ஒப்பிடுகிறது?', a: 'WyberAi Starter மாதம் $29க்கு 450 நிலையான கிரெடிட்களை வழங்குகிறது — உருவாக்குவதற்கு முன்பே செலவு தெரியும். Bolt டோக்கன் அடிப்படையிலான மாதிரியை ($25/மாதம்) பயன்படுத்துகிறது, இதில் செலவு ப்ராம்ப்ட்டின் நீளத்தைப் பொறுத்து இருக்கும், இதனால் செலவை கணிப்பது கடினமாகிறது. Wyber மொபைல் ஆப்களையும் உருவாக்குகிறது மற்றும் சுயமாக சரிசெய்யும் பில்டுகளையும் கொண்டுள்ளது.' },
       { q: 'Bolt.new இல் மொபைல் ஆப் பில்டர் உள்ளதா?', a: 'இல்லை. Bolt.new React வெப் ஆப்களை மட்டுமே உருவாக்குகிறது. WyberAi iOS மற்றும் Android இல் இயங்கும் முழுமையான React Native + Expo மொபைல் ஆப்களையும் உருவாக்குகிறது — அதுவும் ஒரே கணக்கிலிருந்து.' },
       { q: 'WyberAi இல் சுயமாக சரிசெய்யும் பில்டுகள் உள்ளதா?', a: 'ஆம். ஒரு பில்டில் பிழை ஏற்படும்போது, WyberAi அதை தானாகவே கண்டறிந்து சரிசெய்கிறது — கைமுறை பிழைதிருத்தம் தேவையில்லை. Bolt பில்ட் பிழைகளை தானாகவே சரிசெய்யாது.' },
       { q: 'Bolt.new டெவலப்பர்களுக்கு சிறந்ததா?', a: 'Bolt.new அதிக டெவலப்பர்-மையப்படுத்தப்பட்டது — இதில் முழுமையான இன்-பிரவுசர் IDE உள்ளது. நீங்கள் கோட்டுடன் வசதியாக இருக்கும் டெவலப்பராக இருந்தால், Bolt இன் நெகிழ்வுத்தன்மை உங்களுக்கு பிடிக்கலாம். WyberAi விவரித்து ஷிப் செய்ய விரும்பும், பிழைதிருத்தம் செய்ய விரும்பாத தொழில்நுட்பம் அறியாத பில்டர்களுக்காக மேம்படுத்தப்பட்டுள்ளது.' },

@@ -1,4 +1,5 @@
 import { memeImg } from './memes'
+import { TOPUP_PACKS } from '@/lib/plans'
 import { readableOn } from '@/lib/color-contrast'
 import { formatPrice, type Currency } from '@/lib/currency'
 import { PLAN_VALUE, PLAN_VALUE_INR } from '@/lib/pricing-values'
@@ -846,7 +847,7 @@ export async function sendCreditsExhaustedEmail(to: string, sendNumber: number, 
     {
       subject: 'Your projects are waiting on WyberAi',
       heading: 'Still there. Still saved.',
-      body: `Everything you built is safe in your dashboard — it just needs credits to keep evolving. 40 credits is ${formatPrice(prices.topup_200, currency)} and they never expire.`,
+      body: `Everything you built is safe in your dashboard — it just needs credits to keep evolving. ${TOPUP_PACKS[0].credits} credits is ${formatPrice(prices.topup_200, currency)} and they never expire.`,
     },
     {
       subject: 'Your credits are still at zero and honestly... same 🚬',

@@ -52,16 +52,16 @@ async function getUserCurrency(userId: string): Promise<'USD' | 'INR'> {
 /** Build upsell message for insufficient credits */
 function insufficientCreditsMessage(needed: number, have: number, currency: 'USD' | 'INR' = 'USD'): string {
   const shortage = needed - have
-  const starterCredits = 150
-  const builderCredits = 500
+  const starterCredits = PLAN_FACTS.starter.credits
+  const builderCredits = PLAN_FACTS.builder.credits
 
   if (currency === 'INR') {
     return `You need ${needed} credits but have only ${have} (${shortage} short).
 
 **Upgrade to get more credits:**
-• **Spark** (₹499/mo): 50cr/mo — limited to small builds
-• **Starter** (₹1,499/mo): 150cr/mo — ~5 builds/month
-• **Builder** (₹3,999/mo): 500cr/mo — ~16 builds/month ← Recommended
+• **Spark** (₹499/mo): ${PLAN_FACTS.spark.credits}cr/mo — ~5 builds/month
+• **Starter** (₹1,499/mo): ${starterCredits}cr/mo — ~15 builds/month
+• **Builder** (₹3,999/mo): ${builderCredits.toLocaleString('en-US')}cr/mo — ~50 builds/month ← Recommended
 
 **Save 20% with annual billing!**
 Starter: ₹1,199/mo annual | Builder: ₹3,199/mo annual
@@ -74,8 +74,8 @@ Or top-up credits: https://wyberai.com/credits`
   return `You need ${needed} credits but have only ${have} (${shortage} short).
 
 **Upgrade to get more credits:**
-• **Starter** ($29/mo): 150cr/mo — ~5 builds/month
-• **Builder** ($79/mo): 500cr/mo — ~16 builds/month ← Recommended
+• **Starter** ($29/mo): ${starterCredits}cr/mo — ~15 builds/month
+• **Builder** ($79/mo): ${builderCredits.toLocaleString('en-US')}cr/mo — ~50 builds/month ← Recommended
 
 **Save 20% with annual billing!**
 Starter: $23/mo annual | Builder: $63/mo annual
