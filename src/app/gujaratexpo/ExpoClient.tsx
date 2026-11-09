@@ -25,6 +25,19 @@ export function ExpoClient({ initial }: { initial?: string }) {
   const cases = USE_CASES[audience]
   const current = AUDIENCES.find(a => a.id === audience)!
 
+  // Sticky 'Book' bar on phones: shown once the visitor has scrolled a little, hidden while the form is on screen.
+  const [stickyOn, setStickyOn] = useState(false)
+  useEffect(() => {
+    const form = document.getElementById('book')
+    let formVisible = false
+    const update = () => setStickyOn(window.scrollY > 400 && !formVisible)
+    const io = form ? new IntersectionObserver(([e]) => { formVisible = e.isIntersecting; update() }) : null
+    if (form && io) io.observe(form)
+    window.addEventListener('scroll', update, { passive: true })
+    update()
+    return () => { window.removeEventListener('scroll', update); io?.disconnect() }
+  }, [])
+
   const picker = (
     <div className={s.pills} role="tablist" aria-label="Who are you?">
       {AUDIENCES.map(a => (
@@ -162,6 +175,10 @@ export function ExpoClient({ initial }: { initial?: string }) {
         </section>
 
         <footer className={s.footer}><span>wyberai.com</span><span>Describe it. Ship it.</span></footer>
+      </div>
+
+      <div className={`${s.stickyBar} ${stickyOn ? s.stickyOn : ''}`}>
+        <a href="#book" className={s.btn}>Book 15 minutes at booth S23</a>
       </div>
     </div>
   )

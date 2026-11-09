@@ -19,6 +19,9 @@ describe('resolveLeadSource', () => {
   it('prefers the form utm values', () => {
     expect(resolveLeadSource('card / teg2026', cookie)).toEqual({ source: 'card / teg2026', utmSource: 'card', utmCampaign: 'teg2026' })
   })
+  it('keeps utm_content so the booking alert shows which ad worked', () => {
+    expect(resolveLeadSource('meta / expo_meetings / A1_reel', cookie)).toEqual({ source: 'meta / expo_meetings / A1_reel', utmSource: 'meta', utmCampaign: 'expo_meetings' })
+  })
   it('falls back to the first-touch cookie when the form had no utm', () => {
     expect(resolveLeadSource('direct', cookie)).toEqual({ source: 'linkedin / expo', utmSource: 'linkedin', utmCampaign: 'expo' })
     expect(resolveLeadSource('', cookie).utmSource).toBe('linkedin')

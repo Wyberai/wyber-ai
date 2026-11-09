@@ -106,3 +106,8 @@ Change `for=` to `software` for ad set B, and `utm_content` to the ad name (A1_f
 3. **Reply fast.** Everyone who books gets a WhatsApp from you within the hour. Slots go cold otherwise.
 4. **Meta review.** First review usually takes under a day. Upload a few days before the start date.
 5. **Policy.** The text on the images is short and nothing makes a claim about the viewer. If Meta flags an ad, soften the headline first.
+
+## Update (Nov 9)
+- The booking form now saves `utm_content` as part of the source ("meta / expo_meetings / A1_reel"), so the booking alert and CRM show which exact ad worked. Use the link format above for every ad.
+- Gujarati copy for ad set A is in `meta-ads-gujarati.md` (needs a native read). Creator brief: `influencer-brief.md`.
+- Page changes: booth promise and a "Book 15 minutes" button on the first screen, a sticky "Book" bar on phones, shorter form (pain point optional), WhatsApp consent line, add-to-calendar and share buttons after booking.

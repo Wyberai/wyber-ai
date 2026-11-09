@@ -285,3 +285,14 @@
 .type p { color: var(--dim); font-size: 15px; line-height: 1.55; margin: 12px 0 0; }
 @media (max-width: 900px) { .types { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 480px) { .types { grid-template-columns: 1fr; } }
+
+/* First-screen booth promise and booking button, plus a sticky "Book" bar on phones */
+.boothLine { margin: 14px 0 0; font-size: clamp(14px, 1.5vw, 17px); font-weight: 700; color: var(--text, #e6edf6); max-width: 460px; line-height: 1.45; }
+.heroCta { margin-top: 16px; }
+.stickyBar { display: none; }
+@media (max-width: 760px) {
+  .boothLine { max-width: 90vw; }
+  .stickyBar { display: block; position: fixed; left: 0; right: 0; bottom: 0; z-index: 55; padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); background: rgba(5, 6, 10, 0.94); border-top: 1px solid var(--border); transform: translateY(110%); transition: transform 0.25s; }
+  .stickyBar.stickyOn { transform: translateY(0); }
+  .stickyBar a { display: block; text-align: center; }
+}

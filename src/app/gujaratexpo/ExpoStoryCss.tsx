@@ -116,6 +116,8 @@ export function ExpoStoryCss({ audience, picker }: { audience: AudienceId; picke
           <div className={s.eyebrow}><span className={s.live}>●</span> TECH EXPO GUJARAT · BOOTH S23 · 27–29 NOV</div>
           <h1 className={s.storyH1}>{copy.head}</h1>
           <p className={s.storySub}>{copy.sub}</p>
+          <p className={s.boothLine}>Come to booth S23. Tell us what is broken. Watch it built in 15 minutes.</p>
+          <div className={s.heroCta}><a href="#book" className={s.btn}>Book 15 minutes at the booth</a></div>
           <div className={s.pickerWrap}>{picker}</div>
         </div>
 

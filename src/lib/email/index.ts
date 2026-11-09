@@ -217,7 +217,7 @@ export async function sendAdminExpoLeadAlert(lead: ExpoLeadAlert) {
       ['Describes them', e(lead.audience)],
       ['Preferred day', e(lead.day)],
       ['Source', e(lead.source)],
-      ['Pain point', e(lead.painPoint)],
+      ['Pain point', e(lead.painPoint || '(not given)')],
     ])}
   `, `Booth request: ${lead.name}`)
   return sendMail({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `📅 Booth request: ${lead.name.slice(0, 60)}`, html })
@@ -289,6 +289,7 @@ export function buildExpoSequenceEmail(
   const anyDay = !lead.day || lead.day === 'Any day'
   const dayLabel = anyDay ? 'any day of the expo (27–29 Nov)' : escHtml(lead.day as string)
   const unsub = unsubscribeUrl(to)
+  const hasPain = (lead.painPoint || '').trim().length > 0
   const signup = (campaign: string) => `${APP_URL}/signup?utm_source=expo-email&utm_campaign=${campaign}`
 
   if (kind === 'confirmation') {
@@ -304,8 +305,9 @@ export function buildExpoSequenceEmail(
           ['Your day', anyDay ? 'Any day' : dayLabel],
           ['Length', '15 minutes, free'],
         ])}
-        ${p('This is the pain point you gave us. It is what we&apos;ll bring with us:')}
-        ${expoQuote(lead.painPoint)}
+        ${hasPain
+          ? `${p('This is the pain point you gave us. It is what we&apos;ll bring with us:')}${expoQuote(lead.painPoint)}`
+          : p('Bring the one thing your current software cannot do. A spreadsheet, a screenshot or a WhatsApp thread is enough, and we&apos;ll build it with you.')}
         ${p('Need to change your day or add detail? Just reply to this email.')}
       `, 'Your slot request for booth S23 is in', unsub),
     }
@@ -320,7 +322,7 @@ export function buildExpoSequenceEmail(
           ? 'Tech Expo Gujarat starts tomorrow (27–29 Nov) and we are at booth S23. Come by whenever you are free.'
           : `You asked to meet on ${dayLabel}, which is tomorrow. We are at booth S23.`)}
         ${p('If you have one real example of the thing your software cannot do, bring it: a spreadsheet, a screenshot, a WhatsApp thread. It is the quickest way for us to show you something that fits.')}
-        ${expoQuote(lead.painPoint)}
+        ${hasPain ? expoQuote(lead.painPoint) : ''}
         ${p('Plans changed? Reply to this email and we will sort out another time.')}
       `, 'Tomorrow at booth S23', unsub),
     }
@@ -328,15 +330,18 @@ export function buildExpoSequenceEmail(
 
   if (kind === 'thanks') {
     return {
-      subject: 'Your pain point, and what happens next',
+      subject: hasPain ? 'Your pain point, and what happens next' : 'Thanks for stopping by, and what happens next',
       html: wrap(`
         ${h1(`Thanks, ${first}.`)}
-        ${p('Tech Expo Gujarat is over. Whether or not we met at the booth, the pain point you sent is still with us:')}
-        ${expoQuote(lead.painPoint)}
-        ${p('Reply with one more detail, such as the screens you would want or who would use it, and we will tell you what a first version would look like.')}
+        ${hasPain
+          ? `${p('Tech Expo Gujarat is over. Whether or not we met at the booth, the pain point you sent is still with us:')}${expoQuote(lead.painPoint)}`
+          : p('Tech Expo Gujarat is over. Whether or not we met at the booth, thank you for stopping by our page.')}
+        ${p(hasPain
+          ? 'Reply with one more detail, such as the screens you would want or who would use it, and we will tell you what a first version would look like.'
+          : 'Reply with the one thing your current software cannot do, and who would use the fix, and we will tell you what a first version would look like.')}
         <div style="text-align:center;margin:28px 0">${btn('Start building free →', signup('teg2026-thanks'))}</div>
         ${p('30 free credits when you sign up. No card needed.')}
-      `, 'The pain point you sent us', unsub),
+      `, hasPain ? 'The pain point you sent us' : 'Thanks for stopping by', unsub),
     }
   }
 
@@ -344,9 +349,9 @@ export function buildExpoSequenceEmail(
     subject: 'One last note from Tech Expo Gujarat',
     html: wrap(`
       ${h1(`Did you find a way around it, ${first}?`)}
-      ${p('When you asked for a slot with us, you told us:')}
-      ${expoQuote(lead.painPoint)}
-      ${p('If that is still a headache, reply and say so. If you have already solved it, ignore this. It is our last email about the expo.')}
+      ${hasPain
+        ? `${p('When you asked for a slot with us, you told us:')}${expoQuote(lead.painPoint)}${p('If that is still a headache, reply and say so. If you have already solved it, ignore this. It is our last email about the expo.')}`
+        : p('When you asked for a slot with us, we never got to hear what you wanted to fix. If something is still a headache, reply and say so. If you have already solved it, ignore this. It is our last email about the expo.')}
       <div style="text-align:center;margin:28px 0">${btn('Try it free →', signup('teg2026-followup'))}</div>
     `, 'Our last note about the expo', unsub),
   }

@@ -38,8 +38,9 @@ export async function POST(req: NextRequest) {
   const audience = AUDIENCES[clean(body.audience, 20)] ?? 'Not given'
   const { source, utmSource, utmCampaign } = resolveLeadSource(clean(body.source, 80), req.cookies.get('wyber_attr')?.value)
 
-  if (!name || painPoint.length < 5) {
-    return NextResponse.json({ ok: false, error: 'Please add your name and your pain point.' }, { status: 400 })
+  // The pain point is optional (a shorter form converts better); everything downstream copes with an empty one.
+  if (!name) {
+    return NextResponse.json({ ok: false, error: 'Please add your name.' }, { status: 400 })
   }
   if (whatsapp.replace(/\D/g, '').length < 10) {
     return NextResponse.json({ ok: false, error: 'Please enter a valid WhatsApp number.' }, { status: 400 })
