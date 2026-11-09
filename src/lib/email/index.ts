@@ -1,5 +1,5 @@
 import { memeImg } from './memes'
-import { TOPUP_PACKS } from '@/lib/plans'
+import { TOPUP_PACKS, PLAN_FACTS } from '@/lib/plans'
 import { readableOn } from '@/lib/color-contrast'
 import { formatPrice, type Currency } from '@/lib/currency'
 import { PLAN_VALUE, PLAN_VALUE_INR } from '@/lib/pricing-values'
@@ -356,6 +356,95 @@ export function buildExpoSequenceEmail(
       <div style="text-align:center;margin:28px 0">${btn('Try it free →', signup('teg2026-followup'))}</div>
     `, 'Our last note about the expo', unsub),
   }
+}
+
+// ── WyberCode 1.0 announcement (one-off product update) ────────────────────
+// Three audiences, one voice. All numbers come from the plan file so they cannot drift:
+//   'spark-subscriber': a paying Spark customer (India), told their plan is now 3x
+//   'builder':          has spent credits on a build; told what is new and that their projects are safe
+//   'newcomer':         signed up but never built; invited to make a first build
+// Marketing email: always carries the recipient's signed unsubscribe link. Returns a plain-text twin for the multipart body.
+export type WyberCodeAnnouncementKind = 'spark-subscriber' | 'builder' | 'newcomer'
+
+export function buildWyberCodeAnnouncement(
+  kind: WyberCodeAnnouncementKind,
+  to: string,
+  opts: { name?: string | null; extraCreditsAdded?: boolean } = {},
+): { subject: string; preheader: string; html: string; text: string } {
+  const first = (opts.name || '').trim().split(/\s+/)[0]
+  const hi = first ? `Hi ${escHtml(first)},` : 'Hi,'
+  const hiText = first ? `Hi ${first},` : 'Hi,'
+  const unsub = unsubscribeUrl(to)
+  const n = (v: number) => v.toLocaleString('en-US')
+  const packs = TOPUP_PACKS.map(t => n(t.credits)).join(', ').replace(/, ([^,]*)$/, ' and $1')
+  const open = `${APP_URL}/dashboard?utm_source=email&utm_medium=announcement&utm_campaign=wybercode-1-0`
+  const start = `${APP_URL}/create?utm_source=email&utm_medium=announcement&utm_campaign=wybercode-1-0`
+  const sign = `<p style="font-size:14px;line-height:1.7;color:#c8c8d4;margin:22px 0 0">Thank you,<br/>Sumeet<br/><span style="color:#8888a0">Founder, WyberAi</span></p>`
+  const signText = 'Thank you,\nSumeet\nFounder, WyberAi'
+  const engine = 'WyberCode 1.0 is our new coding engine. It now builds every app on WyberAi, with staged builds, automatic repair of build errors, and a security scan of your database before anything goes live.'
+
+  if (kind === 'spark-subscriber') {
+    const planLine = opts.extraCreditsAdded
+      ? `Your Spark plan now includes <strong style="color:#f0f0f4">${n(PLAN_FACTS.spark.credits)} credits a month</strong>, up from 50, at the same ₹499. I have also added the extra 100 credits to your balance today, so you do not have to wait for your next renewal.`
+      : `Your Spark plan now includes <strong style="color:#f0f0f4">${n(PLAN_FACTS.spark.credits)} credits a month</strong>, up from 50, at the same ₹499. It applies from your next renewal.`
+    const planText = opts.extraCreditsAdded
+      ? `Your Spark plan now includes ${n(PLAN_FACTS.spark.credits)} credits a month, up from 50, at the same ₹499. I have also added the extra 100 credits to your balance today, so you do not have to wait for your next renewal.`
+      : `Your Spark plan now includes ${n(PLAN_FACTS.spark.credits)} credits a month, up from 50, at the same ₹499. It applies from your next renewal.`
+    const subject = 'Your Spark plan just got 3× the credits'
+    const preheader = 'Same ₹499 a month. WyberCode 1.0 is live.'
+    const html = wrap(`
+      ${h1('Your Spark plan just got 3× the credits')}
+      ${p(hi)}
+      ${p('A short personal note, because you backed WyberAi with a paid plan early. Two things changed this week.')}
+      ${infoBox([
+        ['1. WyberCode 1.0', 'Our new coding engine now builds every app on WyberAi.'],
+        ['2. Your credits', `${n(PLAN_FACTS.spark.credits)} a month, up from 50. Same price.`],
+      ])}
+      ${p(planLine)}
+      ${p(`Top-up packs are 3× bigger as well: ${packs} credits at the same prices.`)}
+      <div style="text-align:center;margin:28px 0">${btn('Open your dashboard →', open)}</div>
+      ${p('If any build has not worked the way you expected, reply to this email and tell me. I read every reply.')}
+      ${sign}
+    `, preheader, unsub)
+    const text = [subject, '', hiText, '', 'A short personal note, because you backed WyberAi with a paid plan early. Two things changed this week.', '', `1. ${engine}`, `2. ${planText}`, '', `Top-up packs are 3× bigger as well: ${packs} credits at the same prices.`, '', `Open your dashboard: ${open}`, '', 'If any build has not worked the way you expected, reply to this email and tell me. I read every reply.', '', signText, '', `Unsubscribe: ${unsub}`].join('\n')
+    return { subject, preheader, html, text }
+  }
+
+  if (kind === 'builder') {
+    const subject = 'WyberCode 1.0 is live, and your projects are right where you left them'
+    const preheader = 'A new coding engine behind every build, and 3× credits on paid plans.'
+    const html = wrap(`
+      ${h1('WyberCode 1.0 is live')}
+      ${p(hi)}
+      ${p('You have built with WyberAi, so you should hear this first.')}
+      ${p(engine)}
+      ${p(`Paid plans now include <strong style="color:#f0f0f4">3× the credits at the same price</strong>: Starter ${n(PLAN_FACTS.starter.credits)} a month, Builder ${n(PLAN_FACTS.builder.credits)}, Pro ${n(PLAN_FACTS.pro.credits)}. Top-up packs are ${packs} credits. Your free credits are unchanged, and everything you have built is still in your dashboard.`)}
+      <div style="text-align:center;margin:28px 0">${btn('Open your projects →', open)}</div>
+      ${p('One favour: if a build ever missed what you asked for, reply with what you typed and what you got. That is the most useful thing anyone can send me.')}
+      ${sign}
+    `, preheader, unsub)
+    const text = [subject, '', hiText, '', 'You have built with WyberAi, so you should hear this first.', '', engine, '', `Paid plans now include 3× the credits at the same price: Starter ${n(PLAN_FACTS.starter.credits)} a month, Builder ${n(PLAN_FACTS.builder.credits)}, Pro ${n(PLAN_FACTS.pro.credits)}. Top-up packs are ${packs} credits. Your free credits are unchanged, and everything you have built is still in your dashboard.`, '', `Open your projects: ${open}`, '', 'One favour: if a build ever missed what you asked for, reply with what you typed and what you got. That is the most useful thing anyone can send me.', '', signText, '', `Unsubscribe: ${unsub}`].join('\n')
+    return { subject, preheader, html, text }
+  }
+
+  const subject = 'Your first build on WyberAi takes about two minutes'
+  const preheader = 'Describe one small thing and watch it get built. No card needed.'
+  const html = wrap(`
+    ${h1('Your first build takes about two minutes')}
+    ${p(hi)}
+    ${p('You signed up for WyberAi but have not built anything yet. That is normal. The easiest way to see what it does is to describe one small thing you actually need.')}
+    ${infoBox([
+      ['An invoice tracker', 'Who owes what, and what is overdue'],
+      ['A booking page', 'For your shop, clinic or studio'],
+      ['A simple website', 'With your menu, prices and a contact button'],
+    ])}
+    ${p(`Your ${n(PLAN_FACTS.free.credits)} free credits are still there, no card needed, and you see the cost before anything runs. WyberCode 1.0, our new coding engine, builds it, repairs its own errors and checks your database for leaks before you publish.`)}
+    <div style="text-align:center;margin:28px 0">${btn('Start your first build →', start)}</div>
+    ${p('If you tried it and it was not for you, reply and tell me why. That helps me more than a sale.')}
+    ${sign}
+  `, preheader, unsub)
+  const text = [subject, '', hiText, '', 'You signed up for WyberAi but have not built anything yet. That is normal. The easiest way to see what it does is to describe one small thing you actually need.', '', '- An invoice tracker: who owes what, and what is overdue', '- A booking page: for your shop, clinic or studio', '- A simple website: with your menu, prices and a contact button', '', `Your ${n(PLAN_FACTS.free.credits)} free credits are still there, no card needed, and you see the cost before anything runs. WyberCode 1.0, our new coding engine, builds it, repairs its own errors and checks your database for leaks before you publish.`, '', `Start your first build: ${start}`, '', 'If you tried it and it was not for you, reply and tell me why. That helps me more than a sale.', '', signText, '', `Unsubscribe: ${unsub}`].join('\n')
+  return { subject, preheader, html, text }
 }
 
 export async function sendExpoSequenceEmail(kind: 'confirmation' | 'reminder' | 'thanks' | 'followup', to: string, lead: ExpoSequenceLead) {
