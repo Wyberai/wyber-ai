@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { LaunchStrip } from '@/components/shared/LaunchStrip'
+import { LaunchStrip, ExpoStrip } from '@/components/shared/LaunchStrip'
 import { QuickPrompt } from './QuickPrompt'
 import { Theatre } from './Theatre'
 import { Tour } from './Tour'
@@ -9,6 +9,7 @@ import { Faq, FinalCta, Facts, Lanes, PricingBand, Section, TypeCards } from './
 export function SignalHome({ usd = false }: { usd?: boolean }) {
   return (
     <>
+      {!usd && <ExpoStrip />}
       <LaunchStrip />
       <div className="sg-wrap">
         <section className="sg-question" aria-labelledby="sg-q">
