@@ -30,6 +30,11 @@ describe('sitemap', () => {
     }
   })
 
+  it('uses real dates instead of "now" (an always-fresh lastmod teaches Google to ignore it)', () => {
+    expect(sitemap).not.toMatch(/lastModified:\s*now/)
+    expect(sitemap).toContain('PSEO_UPDATED')
+  })
+
   it('lists the core product pages and every docs page', () => {
     for (const p of ['/create', '/solve', '/agencies', '/mcp', '/marketplace']) expect(sitemap).toContain('${base}' + p + '`')
     expect(sitemap).toContain('DOC_NAV')
