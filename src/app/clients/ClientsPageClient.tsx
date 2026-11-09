@@ -103,7 +103,7 @@ export function ClientsPageClient({ initialClients, projects }: { initialClients
         <button onClick={() => setShowCreate(s => !s)} style={{ fontSize: 13, fontWeight: 600, color: '#03111c', padding: '7px 16px', borderRadius: 8, background: SKY, border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>+ New client</button>
       </nav>
 
-      <div style={{ maxWidth: 860, margin: '0 auto', padding: '40px 32px 80px' }}>
+      <div role="main" style={{ maxWidth: 860, margin: '0 auto', padding: '40px 32px 80px' }}>
         <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.04em', color: '#fff', margin: '0 0 6px' }}>Clients</h1>
         <p style={{ color: '#8797ab', fontSize: 14, margin: '0 0 32px' }}>A shareable delivery page per client — no more one-off HTML per engagement.</p>
 
@@ -116,7 +116,8 @@ export function ClientsPageClient({ initialClients, projects }: { initialClients
 
         {clients.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 0' }}>
-            <p style={{ color: '#8797ab', fontSize: 14, marginBottom: 20 }}>No clients yet.</p>
+            <p style={{ color: '#e8eef7', fontSize: 16, fontWeight: 600, marginBottom: 6 }}>No clients yet</p>
+            <p style={{ color: '#9aa8bb', fontSize: 14, margin: '0 auto 20px', maxWidth: 420, lineHeight: 1.6 }}>Add a client, attach the projects you built for them, and share one link. Only clients marked active can open their page.</p>
             <button onClick={() => setShowCreate(true)} style={{ padding: '10px 22px', borderRadius: 9, background: SKY, border: 'none', color: '#03111c', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Add your first client</button>
           </div>
         ) : (
@@ -131,13 +132,13 @@ export function ClientsPageClient({ initialClients, projects }: { initialClients
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                         <span style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>{client.name}</span>
-                        <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: `${STATUS_COLORS[client.status]}18`, color: STATUS_COLORS[client.status], textTransform: 'uppercase', letterSpacing: '0.05em' }}>{client.status}</span>
+                        <span style={{ fontSize: 12, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: `${STATUS_COLORS[client.status]}18`, color: STATUS_COLORS[client.status], textTransform: 'uppercase', letterSpacing: '0.05em' }}>{client.status}</span>
                       </div>
                       <div style={{ fontSize: 12, color: '#8797ab' }}>wyberai.com/client/{client.slug} · {client.client_deliverables.length} project{client.client_deliverables.length !== 1 ? 's' : ''}</div>
                     </div>
                     <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-                      <button onClick={() => copyLink(client.slug)} style={{ fontSize: 11, color: '#8797ab', background: 'none', border: '1px solid #1b2a3b', borderRadius: 7, padding: '6px 10px', cursor: 'pointer', fontFamily: 'inherit' }}>Copy link</button>
-                      <button onClick={() => setExpanded(isOpen ? null : client.id)} style={{ fontSize: 11, color: '#8797ab', background: 'none', border: '1px solid #1b2a3b', borderRadius: 7, padding: '6px 10px', cursor: 'pointer', fontFamily: 'inherit' }}>{isOpen ? 'Close' : 'Manage'}</button>
+                      <button onClick={() => copyLink(client.slug)} style={{ fontSize: 12, color: '#8797ab', background: 'none', border: '1px solid #1b2a3b', borderRadius: 7, padding: '6px 10px', cursor: 'pointer', fontFamily: 'inherit' }}>Copy link</button>
+                      <button onClick={() => setExpanded(isOpen ? null : client.id)} style={{ fontSize: 12, color: '#8797ab', background: 'none', border: '1px solid #1b2a3b', borderRadius: 7, padding: '6px 10px', cursor: 'pointer', fontFamily: 'inherit' }}>{isOpen ? 'Close' : 'Manage'}</button>
                     </div>
                   </div>
 
@@ -145,40 +146,40 @@ export function ClientsPageClient({ initialClients, projects }: { initialClients
                     <div style={{ marginTop: 18, paddingTop: 18, borderTop: '1px solid #14202e', display: 'flex', flexDirection: 'column', gap: 16 }}>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                         <div>
-                          <label style={labelStyle}>Status</label>
-                          <select value={client.status} onChange={e => updateClient(client.id, { status: e.target.value })} style={{ ...inputStyle, padding: '10px 12px' }}>
+                          <label style={labelStyle} htmlFor={`st-${client.id}`}>Status</label>
+                          <select id={`st-${client.id}`} value={client.status} onChange={e => updateClient(client.id, { status: e.target.value })} style={{ ...inputStyle, padding: '10px 12px' }}>
                             {['lead', 'active', 'paused', 'archived'].map(s => <option key={s} value={s}>{s}</option>)}
                           </select>
                         </div>
                         <div>
-                          <label style={labelStyle}>Brand color</label>
-                          <input type="color" value={client.brand_color} onChange={e => updateClient(client.id, { brandColor: e.target.value })} style={{ ...inputStyle, padding: 4, height: 40 }} />
+                          <label style={labelStyle} htmlFor={`bc-${client.id}`}>Brand color</label>
+                          <input id={`bc-${client.id}`} aria-label={`Brand colour for ${client.name}`} type="color" value={client.brand_color} onChange={e => updateClient(client.id, { brandColor: e.target.value })} style={{ ...inputStyle, padding: 4, height: 40 }} />
                         </div>
                         <div style={{ gridColumn: '1 / -1' }}>
-                          <label style={labelStyle}>Intro text (shown on their page)</label>
-                          <textarea defaultValue={client.intro_text ?? ''} onBlur={e => updateClient(client.id, { introText: e.target.value })} rows={2} placeholder="Here's what we've built for you so far…" style={{ ...inputStyle, resize: 'vertical' }} />
+                          <label style={labelStyle} htmlFor={`in-${client.id}`}>Intro text (shown on their page)</label>
+                          <textarea id={`in-${client.id}`} defaultValue={client.intro_text ?? ''} onBlur={e => updateClient(client.id, { introText: e.target.value })} rows={2} placeholder="Here's what we've built for you so far…" style={{ ...inputStyle, resize: 'vertical' }} />
                         </div>
                       </div>
 
                       <div>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: '#8797ab', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Deliverables</div>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: '#8797ab', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Deliverables</div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                           {client.client_deliverables.sort((a, b) => a.sort_order - b.sort_order).map(d => (
                             <div key={d.id} style={{ background: '#0a1018', border: '1px solid #14202e', borderRadius: 9, padding: 12, display: 'flex', gap: 10, alignItems: 'center' }}>
                               <div style={{ flex: 1, minWidth: 0 }}>
                                 <div style={{ fontSize: 13, fontWeight: 600, color: '#e8eef7' }}>{d.projects?.name ?? 'Unknown project'}</div>
-                                <input defaultValue={d.headline ?? ''} onBlur={e => updateDeliverable(client.id, d.id, { headline: e.target.value })} placeholder="Custom headline (optional)" style={{ ...inputStyle, marginTop: 6, padding: '6px 10px', fontSize: 12 }} />
+                                <input aria-label={`Custom headline for ${d.projects?.name ?? 'this project'}`} defaultValue={d.headline ?? ''} onBlur={e => updateDeliverable(client.id, d.id, { headline: e.target.value })} placeholder="Custom headline (optional)" style={{ ...inputStyle, marginTop: 6, padding: '6px 10px', fontSize: 12 }} />
                               </div>
-                              <label style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#8797ab', whiteSpace: 'nowrap' }}>
+                              <label style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: '#8797ab', whiteSpace: 'nowrap' }}>
                                 <input type="checkbox" checked={d.is_visible} onChange={e => updateDeliverable(client.id, d.id, { isVisible: e.target.checked })} /> Visible
                               </label>
-                              <button onClick={() => removeDeliverable(client.id, d.id)} style={{ fontSize: 11, color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>Remove</button>
+                              <button type="button" className="wy-tap" aria-label={`Remove ${d.projects?.name ?? 'project'}`} onClick={() => removeDeliverable(client.id, d.id)} style={{ fontSize: 12, color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>Remove</button>
                             </div>
                           ))}
                         </div>
                         {pickable.length > 0 && (
                           <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-                            <select value={pickProject[client.id] ?? ''} onChange={e => setPickProject(prev => ({ ...prev, [client.id]: e.target.value }))} style={{ ...inputStyle, flex: 1, padding: '8px 12px' }}>
+                            <select aria-label="Attach a project" value={pickProject[client.id] ?? ''} onChange={e => setPickProject(prev => ({ ...prev, [client.id]: e.target.value }))} style={{ ...inputStyle, flex: 1, padding: '8px 12px' }}>
                               <option value="">Attach a project…</option>
                               {pickable.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                             </select>
@@ -187,7 +188,7 @@ export function ClientsPageClient({ initialClients, projects }: { initialClients
                         )}
                       </div>
 
-                      <button onClick={() => deleteClient(client.id)} style={{ alignSelf: 'flex-start', fontSize: 11, color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>Delete client</button>
+                      <button type="button" className="wy-tap" onClick={() => deleteClient(client.id)} style={{ alignSelf: 'flex-start', fontSize: 12, color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>Delete client</button>
                     </div>
                   )}
                 </div>

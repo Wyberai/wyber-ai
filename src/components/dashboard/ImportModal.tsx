@@ -219,7 +219,7 @@ export function ImportModal({ open, onClose }: Props) {
           {/* Title row */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, position: 'relative' }}>
             <span style={{
-              fontSize: 9.5, fontWeight: 800, letterSpacing: '0.12em',
+              fontSize: 12, fontWeight: 800, letterSpacing: '0.12em',
               padding: '2px 7px', borderRadius: 4,
               background: 'rgba(99,102,241,0.22)', color: '#a5b4fc',
               textTransform: 'uppercase' as const, flexShrink: 0,
@@ -301,7 +301,7 @@ export function ImportModal({ open, onClose }: Props) {
         {/* ── Divider ── */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
           <div style={{ flex: 1, height: 1, background: BORDER }} />
-          <span style={{ fontSize: 10.5, color: DIM, whiteSpace: 'nowrap' as const, fontWeight: 700, letterSpacing: '0.08em' }}>
+          <span style={{ fontSize: 12, color: DIM, whiteSpace: 'nowrap' as const, fontWeight: 700, letterSpacing: '0.08em' }}>
             OR IMPORT EXISTING CODE
           </span>
           <div style={{ flex: 1, height: 1, background: BORDER }} />
@@ -321,7 +321,7 @@ export function ImportModal({ open, onClose }: Props) {
                 flex: 1, minWidth: 0,
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
                 padding: '7px 2px', borderRadius: 7, border: 'none', cursor: 'pointer',
-                fontSize: 11.5, fontWeight: 600, transition: 'all 0.15s',
+                fontSize: 12, fontWeight: 600, transition: 'all 0.15s',
                 background: tab === m.id ? `${m.color}18` : 'transparent',
                 color: tab === m.id ? m.color : MUTED,
                 outline: tab === m.id ? `1px solid ${m.color}40` : 'none',
@@ -358,7 +358,7 @@ export function ImportModal({ open, onClose }: Props) {
 
         {/* ── Project / workflow name ── */}
         <div style={{ marginBottom: 13 }}>
-          <label style={{ fontSize: 11.5, fontWeight: 600, color: MUTED, display: 'block', marginBottom: 5 }}>
+          <label style={{ fontSize: 12, fontWeight: 600, color: MUTED, display: 'block', marginBottom: 5 }}>
             {isWorkflow ? t('workflowNameOptional') : t('projectNameLabel')}
           </label>
           <input
@@ -376,7 +376,7 @@ export function ImportModal({ open, onClose }: Props) {
         {/* ── File drop / GitHub URL ── */}
         {(mode === 'zip' || mode === 'json') ? (
           <div style={{ marginBottom: 13 }}>
-            <label style={{ fontSize: 11.5, fontWeight: 600, color: MUTED, display: 'block', marginBottom: 5 }}>
+            <label style={{ fontSize: 12, fontWeight: 600, color: MUTED, display: 'block', marginBottom: 5 }}>
               {isWorkflow ? t('n8nWorkflowJsonLabel') : getZipLabel()}
             </label>
             <div
@@ -395,13 +395,13 @@ export function ImportModal({ open, onClose }: Props) {
                 <div>
                   <div style={{ fontSize: 20, marginBottom: 5 }}>✓</div>
                   <div style={{ fontSize: 13.5, color: activeColor, fontWeight: 600 }}>{file.name}</div>
-                  <div style={{ fontSize: 11.5, color: DIM, marginTop: 3 }}>{(file.size / 1024).toFixed(0)} KB — {t('clickToReplace')}</div>
+                  <div style={{ fontSize: 12, color: DIM, marginTop: 3 }}>{(file.size / 1024).toFixed(0)} KB — {t('clickToReplace')}</div>
                 </div>
               ) : (
                 <div>
                   <div style={{ fontSize: 26, marginBottom: 7 }}>{isWorkflow ? '📋' : '📦'}</div>
                   <div style={{ fontSize: 13.5, color: MUTED }}>{isWorkflow ? t('dropWorkflowLabel') : t('dropZipLabel')}</div>
-                  <div style={{ fontSize: 11.5, color: DIM, marginTop: 3 }}>{t('orClickToBrowse')}</div>
+                  <div style={{ fontSize: 12, color: DIM, marginTop: 3 }}>{t('orClickToBrowse')}</div>
                 </div>
               )}
             </div>
@@ -412,7 +412,7 @@ export function ImportModal({ open, onClose }: Props) {
           </div>
         ) : (
           <div style={{ marginBottom: 13 }}>
-            <label style={{ fontSize: 11.5, fontWeight: 600, color: MUTED, display: 'block', marginBottom: 5 }}>
+            <label style={{ fontSize: 12, fontWeight: 600, color: MUTED, display: 'block', marginBottom: 5 }}>
               {t('githubRepoUrlLabel')}
             </label>
             <input
@@ -437,7 +437,7 @@ export function ImportModal({ open, onClose }: Props) {
           <div style={{
             padding: '9px 13px', borderRadius: 8, marginBottom: 13,
             background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)',
-            fontSize: 11.5, color: '#d97706', lineHeight: 1.6,
+            fontSize: 12, color: '#d97706', lineHeight: 1.6,
           }}>
             {t('n8nExportNotePrefix')} <strong>File → Download</strong> {t('n8nExportNoteSuffix')}
           </div>

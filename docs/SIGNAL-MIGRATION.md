@@ -88,3 +88,13 @@ All 17 panels were swept in the `/dev/editor` harness (open each, count unnamed 
 - **Not done:** the 31 copy-pasted `@keyframes spin` definitions were left alone (they all behave the same, and removing them is churn with no visible gain); the dashboard still uses its skeleton shimmer; no page transitions or scroll animations were added on purpose.
 - **Caveat:** the review browser did not advance its animation clock, so I verified the animation by seeking it to specific times rather than watching it play. Please watch it once in a normal browser.
 - **Review page:** `/dev/loader` (same `NEXT_PUBLIC_DEV_SANDBOX=1` flag).
+
+## Logged-in screens pass
+
+Reviewed with `/dev/screens` (fake data, same `NEXT_PUBLIC_DEV_SANDBOX=1` flag): `?s=dashboard`, `dashboard-empty`, `clients`, `clients-empty`, `onboarding`. These had never been rendered before.
+
+- **Dashboard:** it already had landmarks and a heading. Fixed: the prompt box and the send button had no names; the send arrow was white on sky blue (about 2.8:1) and is now dark; Delete and Duplicate on project cards were 24px and are now 32px, named per project; 17 text items under 12px are now 12px or more; on phones the type pills (Web app, Mobile, Website, SaaS) wrap instead of scrolling sideways, and buttons are at least 40px.
+- **`/clients`:** it had no main landmark; three labels in the client form were not tied to their inputs (Status, Brand colour, Intro text); the colour picker, headline field and project select had no names; Delete and Remove were 18px text links; text was 10 to 11px. All fixed, and the empty state now explains what the page is for.
+- **Onboarding:** worked through all three steps with no problems found (targets all 40px or more, labels fine).
+- **Not covered:** the 2FA screen still cannot be rendered without a real signed-in session with a second factor; real project thumbnails and real security badges on the dashboard; the Delete-project dialog and Import modal were not opened.
+- **Known dev-only warning:** React logs "script tag while rendering" for the theme script inside the shared Signal frame on client-rendered pages. The script is in the server HTML, so users are not affected; I left it.

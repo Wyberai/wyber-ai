@@ -107,10 +107,10 @@ export function ProjectTypeChooser({ open, onClose, onPick }: ChooserProps) {
           >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span style={{ color: c.soon ? 'var(--ide-text3)' : c.color }}>{c.icon}</span>
-              {c.soon && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 4, background: 'rgba(139,92,246,0.15)', color: '#a78bfa' }}>{t('soonBadge')}</span>}
+              {c.soon && <span style={{ fontSize: 12, fontWeight: 700, padding: '2px 8px', borderRadius: 4, background: 'rgba(139,92,246,0.15)', color: '#a78bfa' }}>{t('soonBadge')}</span>}
             </div>
             <div style={{ fontSize: 14, fontWeight: 700, color: c.soon ? 'var(--ide-text3)' : 'var(--ide-text)' }}>{t(c.titleKey)}</div>
-            <div style={{ fontSize: 11.5, color: c.soon ? 'var(--ide-text3)' : 'var(--ide-text2)', lineHeight: 1.5 }}>{t(c.descKey)}</div>
+            <div style={{ fontSize: 12, color: c.soon ? 'var(--ide-text3)' : 'var(--ide-text2)', lineHeight: 1.5 }}>{t(c.descKey)}</div>
           </button>
         ))}
       </div>

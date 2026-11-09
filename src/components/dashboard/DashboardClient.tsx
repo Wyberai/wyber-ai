@@ -53,7 +53,7 @@ const IconSettings = () => <svg width="15" height="15" viewBox="0 0 24 24" fill=
 const IconBolt = () => <svg width="14" height="14" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#0EA5E9"/><path d="M20 7L11 16L20 25" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/><path d="M23 11L28 16L23 21" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.4"/></svg>;
 const IconPhone = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>;
 const IconZap = () => <svg width="15" height="15" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#0EA5E9"/><path d="M20 7L11 16L20 25" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/><path d="M23 11L28 16L23 21" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.4"/></svg>;
-const IconArrowUp = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5,12 12,5 19,12"/></svg>;
+const IconArrowUp = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#03111c" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5,12 12,5 19,12"/></svg>;
 // Workflow / flow-diagram icon (nodes + connectors) — matches the Workflows concept on the marketing site.
 const IconWorkflow = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="6" height="6" rx="1.5"/><rect x="15" y="9" width="6" height="6" rx="1.5"/><rect x="3" y="15" width="6" height="6" rx="1.5"/><path d="M9 6h3a3 3 0 0 1 3 3M9 18h3a3 3 0 0 0 3-3"/></svg>;
 const IconChevronDown = ({ rotated }: { rotated?: boolean }) => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#52525b" strokeWidth="2" style={{ transform: rotated ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}><path d="M6 9l6 6 6-6"/></svg>;
@@ -80,7 +80,7 @@ const TYPE_META: Record<string, { label: string; color: string }> = {
 function TypeBadge({ type }: { type?: string }) {
   const meta = TYPE_META[type ?? ''] ?? { label: 'Web', color: '#0EA5E9' };
   return (
-    <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: meta.color, background: `${meta.color}18`, border: `1px solid ${meta.color}35`, borderRadius: 4, padding: '2px 6px', lineHeight: 1.4 }}>
+    <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: meta.color, background: `${meta.color}18`, border: `1px solid ${meta.color}35`, borderRadius: 4, padding: '2px 6px', lineHeight: 1.4 }}>
       {meta.label}
     </span>
   );
@@ -476,12 +476,12 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
             { label: t('navHome'),    href: '/dashboard',   icon: <IconHome /> },
             { label: t('buildLabel'),   href: '/gallery',     icon: <IconTemplates /> },
           ].map(item => (
-            <Link key={item.label} href={item.href} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, color: MUTED, textDecoration: 'none', fontSize: 10, fontWeight: 600 }}>
+            <Link key={item.label} href={item.href} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, color: MUTED, textDecoration: 'none', fontSize: 12, fontWeight: 600 }}>
               {item.icon}
               {item.label}
             </Link>
           ))}
-          <button onClick={() => setSidebarOpen(v => !v)} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, background: 'none', border: 'none', color: MUTED, cursor: 'pointer', fontSize: 10, fontWeight: 600 }}>
+          <button onClick={() => setSidebarOpen(v => !v)} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, background: 'none', border: 'none', color: MUTED, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
             {t('moreLabel')}
           </button>
@@ -513,12 +513,12 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
         {/* User row */}
         <button onClick={() => setSidebarExpanded(v => !v)}
           style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '10px 14px', border: 'none', background: 'transparent', color: TEXT, cursor: 'pointer', width: '100%', textAlign: 'left', borderBottom: `1px solid ${BORDER}` }}>
-          <div style={{ width: 26, height: 26, borderRadius: 8, background: '#0EA5E9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#03111c', flexShrink: 0 }}>
+          <div style={{ width: 26, height: 26, borderRadius: 8, background: '#0EA5E9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: '#03111c', flexShrink: 0 }}>
             {name[0]?.toUpperCase()}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 12, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</div>
-            <div style={{ fontSize: 10, color: DIM, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{plan} {t('planSuffix')}</div>
+            <div style={{ fontSize: 12, color: DIM, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{plan} {t('planSuffix')}</div>
           </div>
           <IconChevronDown rotated={sidebarExpanded} />
         </button>
@@ -526,15 +526,15 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
         {/* Credits panel */}
         {sidebarExpanded && (
           <div style={{ padding: '10px 14px', borderBottom: `1px solid ${BORDER}`, background: 'rgba(255,255,255,0.02)' }}>
-            <div style={{ fontSize: 11, color: MUTED, marginBottom: 8 }}>{t('creditsLabel')}</div>
+            <div style={{ fontSize: 12, color: MUTED, marginBottom: 8 }}>{t('creditsLabel')}</div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
               <span style={{ fontSize: 13, fontWeight: 700 }}>{credits} {t('creditsLeftShort')}</span>
-              <Link href="/settings?tab=billing" style={{ fontSize: 11, color: BRAND, textDecoration: 'none', fontWeight: 600 }}>{t('addCredits')}</Link>
+              <Link href="/settings?tab=billing" style={{ fontSize: 12, color: BRAND, textDecoration: 'none', fontWeight: 600 }}>{t('addCredits')}</Link>
             </div>
             <div style={{ height: 4, borderRadius: 9999, background: BORDER }}>
               <div style={{ height: '100%', borderRadius: 9999, background: creditPct < 20 ? '#ef4444' : BRAND, width: creditPct + '%', transition: 'width 0.5s ease' }} />
             </div>
-            {credits < 10 && <div style={{ fontSize: 10, color: '#ef4444', marginTop: 6, fontWeight: 600 }}>{t('lowCreditsWarning')}</div>}
+            {credits < 10 && <div style={{ fontSize: 12, color: '#ef4444', marginTop: 6, fontWeight: 600 }}>{t('lowCreditsWarning')}</div>}
           </div>
         )}
 
@@ -556,14 +556,14 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
               <Link key={n.label} href={n.soon ? '/coming-soon?product=' + encodeURIComponent(n.label) : n.href}
                 className="dash-nav-row" data-active={isActive} style={rowStyle}>
                 {n.icon}{n.label}
-                {n.soon && <span style={{ fontSize: 9, fontWeight: 700, padding: '1px 6px', borderRadius: 4, background: 'rgba(139,92,246,0.15)', color: '#a78bfa', marginLeft: 'auto' }}>{t('soonBadge')}</span>}
+                {n.soon && <span style={{ fontSize: 12, fontWeight: 700, padding: '1px 6px', borderRadius: 4, background: 'rgba(139,92,246,0.15)', color: '#a78bfa', marginLeft: 'auto' }}>{t('soonBadge')}</span>}
               </Link>
             );
           })}
 
           {COMING_SOON.length > 0 && (
             <div style={{ marginTop: 8, paddingTop: 8, borderTop: `1px solid ${BORDER}` }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '4px 10px 5px' }}>{tc('comingSoon')}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '4px 10px 5px' }}>{tc('comingSoon')}</div>
               {COMING_SOON.map((n: any) => (
                 <Link key={n.label} href={'/coming-soon?product=' + encodeURIComponent(n.label)}
                   style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '6px 10px', borderRadius: 8, color: DIM, fontSize: 12, fontWeight: 400, textDecoration: 'none', marginBottom: 1, opacity: 0.6 }}>
@@ -574,7 +574,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
           )}
 
           {projects.length > 0 && <>
-            <div style={{ fontSize: 10, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '12px 10px 5px' }}>{t('recentLabel')}</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '12px 10px 5px' }}>{t('recentLabel')}</div>
             {projects.slice(0, 4).map(p => (
               <Link key={p.id} href={`/project/${p.id}`} className="dash-recent-link"
                 style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', borderRadius: 7, color: DIM, fontSize: 12, textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 1 }}>
@@ -596,9 +596,9 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
               style={{ display: 'block', padding: '11px 13px', borderRadius: 10, background: 'linear-gradient(135deg,rgba(14,165,233,0.14),rgba(124,58,237,0.1))', border: '1px solid rgba(14,165,233,0.3)', textDecoration: 'none' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
                 <div style={{ fontSize: 12, fontWeight: 800, color: '#fafafa' }}>Go Annual — Save 20%</div>
-                <span style={{ fontSize: 9, fontWeight: 800, padding: '2px 7px', borderRadius: 20, background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.25)', color: '#22c55e', whiteSpace: 'nowrap' }}>BEST VALUE</span>
+                <span style={{ fontSize: 12, fontWeight: 800, padding: '2px 7px', borderRadius: 20, background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.25)', color: '#22c55e', whiteSpace: 'nowrap' }}>BEST VALUE</span>
               </div>
-              <div style={{ fontSize: 10, color: '#71717a' }}>150 credits/mo · 2 months free</div>
+              <div style={{ fontSize: 12, color: '#71717a' }}>150 credits/mo · 2 months free</div>
             </Link>
           </div>
         )}
@@ -655,7 +655,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
 
           <div data-tour="build" style={{ width: '100%', maxWidth: 640, zIndex: 1, position: 'relative' }}>
             <div style={{ background: 'rgba(16,18,26,0.9)', backdropFilter: 'blur(20px)', border: `1px solid ${BORDER}`, borderRadius: 14, overflow: 'hidden', boxShadow: '0 8px 40px rgba(0,0,0,0.5)' }}>
-              <textarea ref={textareaRef} value={promptInput} onChange={e => setPromptInput(e.target.value)} onKeyDown={handleKeyDown}
+              <textarea ref={textareaRef} value={promptInput} aria-label={t('promptPlaceholder')} onChange={e => setPromptInput(e.target.value)} onKeyDown={handleKeyDown}
                 placeholder={t('promptPlaceholder')} rows={3}
                 style={{ width: '100%', padding: '16px 18px 12px', border: 'none', background: 'transparent', color: TEXT, fontSize: 15, fontFamily: 'inherit', resize: 'none', outline: 'none', lineHeight: 1.55 }} />
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flexWrap: isMobile ? 'wrap' : 'nowrap', padding: '10px 14px 14px', gap: 10, borderTop: `1px solid ${BORDER}` }}>
@@ -665,7 +665,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
                     left, IT was the thing getting clipped off, taking Web App and
                     Mobile with it and leaving no way to scroll back to them. Full
                     width + its own scroll box on mobile keeps every option reachable. */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 2, padding: '3px 4px', borderRadius: 8, background: 'rgba(255,255,255,0.05)', border: `1px solid ${BORDER}`, marginRight: isMobile ? undefined : 'auto', width: isMobile ? '100%' : undefined, overflowX: isMobile ? 'auto' : undefined }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 2, padding: '3px 4px', borderRadius: 8, background: 'rgba(255,255,255,0.05)', border: `1px solid ${BORDER}`, marginRight: isMobile ? undefined : 'auto', width: isMobile ? '100%' : undefined, flexWrap: isMobile ? 'wrap' : undefined }}>
                   {([
                     { mode: 'app' as const, label: t('webAppLabel'), color: '#0EA5E9', icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg> },
                     { mode: 'mobile' as const, label: t('mobileAppLabel'), color: '#f97316', icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg> },
@@ -679,11 +679,11 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
                     </button>
                   ))}
                 </div>
-                <span style={{ fontSize: 11, color: credits <= 10 ? '#ef4444' : '#3f3f46', fontWeight: credits <= 10 ? 600 : 400 }}>{credits} {t('creditsWord')}</span>
-                <span style={{ fontSize: 11, color: '#3f3f46' }}>{t('enterToBuild')}</span>
+                <span style={{ fontSize: 12, color: credits <= 10 ? '#ef4444' : '#3f3f46', fontWeight: credits <= 10 ? 600 : 400 }}>{credits} {t('creditsWord')}</span>
+                <span style={{ fontSize: 12, color: '#3f3f46' }}>{t('enterToBuild')}</span>
                 <VoiceButton size={26} disabled={creating} lang={LOCALE_SPEECH_CODE[locale]}
                   onTranscript={txt => { setPromptInput(prev => (prev ? prev + ' ' + txt : txt)); textareaRef.current?.focus(); track('dashboard_voice_used', { length: txt.length }); }} />
-                <button onClick={submitPrompt} disabled={creating}
+                <button type="button" aria-label="Start building" onClick={submitPrompt} disabled={creating}
                   style={{ width: 34, height: 34, borderRadius: 9, border: 'none', background: creating ? '#27272a' : BRAND, color: '#03111c', cursor: creating ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}>
                   {creating
                     ? <div style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
@@ -700,7 +700,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
               ).map(c => (
                 <button key={c.key} className="dash-chip" onClick={() => { setPromptInput(c.prompt); textareaRef.current?.focus() }}
                   title={c.prompt}
-                  style={{ padding: isMobile ? '8px 14px' : '4px 12px', borderRadius: 20, border: `1px solid ${BORDER}`, background: 'rgba(255,255,255,0.03)', color: DIM, fontSize: 11, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  style={{ padding: isMobile ? '8px 14px' : '4px 12px', borderRadius: 20, border: `1px solid ${BORDER}`, background: 'rgba(255,255,255,0.03)', color: DIM, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {suggestions ? <>✦ {c.label}</> : c.label}
                 </button>
               ))}
@@ -743,12 +743,12 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
 
                       {/* Action buttons */}
                       {p.id && <>
-                        <button onClick={e => requestDelete(e, p.id!, p.name)} disabled={deletingId === p.id} title={tc('delete')}
-                          style={{ position: 'absolute', top: 7, right: 7, zIndex: 10, width: 24, height: 24, borderRadius: 6, border: `1px solid ${BORDER}`, background: 'rgba(16,18,26,0.85)', color: MUTED, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
+                        <button type="button" className="wy-tap" aria-label={`${tc('delete')} ${p.name || ''}`.trim()} onClick={e => requestDelete(e, p.id!, p.name)} disabled={deletingId === p.id} title={tc('delete')}
+                          style={{ position: 'absolute', top: 7, right: 7, zIndex: 10, width: 32, height: 32, borderRadius: 6, border: `1px solid ${BORDER}`, background: 'rgba(16,18,26,0.85)', color: MUTED, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
                           {deletingId === p.id ? <div style={{ width: 10, height: 10, border: '1.5px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} /> : <IconTrash />}
                         </button>
-                        <button onClick={e => handleDuplicate(e, p.id!)} disabled={duplicatingId === p.id} title={tc('duplicate')}
-                          style={{ position: 'absolute', top: 7, right: 36, zIndex: 10, width: 24, height: 24, borderRadius: 6, border: `1px solid ${BORDER}`, background: 'rgba(16,18,26,0.85)', color: MUTED, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
+                        <button type="button" className="wy-tap" aria-label={`${tc('duplicate')} ${p.name || ''}`.trim()} onClick={e => handleDuplicate(e, p.id!)} disabled={duplicatingId === p.id} title={tc('duplicate')}
+                          style={{ position: 'absolute', top: 7, right: 52, zIndex: 10, width: 32, height: 32, borderRadius: 6, border: `1px solid ${BORDER}`, background: 'rgba(16,18,26,0.85)', color: MUTED, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
                           {duplicatingId === p.id ? <div style={{ width: 10, height: 10, border: '1.5px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} /> : <IconCopy />}
                         </button>
                       </>}
@@ -774,7 +774,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
                           <TypeBadge type={(p as any).project_type} />
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <span style={{ fontSize: 10, color: DIM, flex: 1 }}>{p.framework || 'react'} · {fmtDate(p.updated_at)}</span>
+                          <span style={{ fontSize: 12, color: DIM, flex: 1 }}>{p.framework || 'react'} · {fmtDate(p.updated_at)}</span>
                           {p.id && <ProjectSecurityBadge info={securityByProject[p.id]} />}
                         </div>
                       </div>

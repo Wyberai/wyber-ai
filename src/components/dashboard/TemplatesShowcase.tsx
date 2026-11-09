@@ -138,7 +138,7 @@ export function TemplatesShowcase({ userId }: { userId?: string }) {
               {/* Card body */}
               <div style={{ padding: '10px 12px' }}>
                 <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ide-text, #fafafa)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.name}</div>
-                {t.category && <div style={{ fontSize: 11, color: 'var(--ide-text3, #71717a)', marginTop: 2 }}>{t.category}</div>}
+                {t.category && <div style={{ fontSize: 12, color: 'var(--ide-text3, #71717a)', marginTop: 2 }}>{t.category}</div>}
               </div>
             </button>
           );
