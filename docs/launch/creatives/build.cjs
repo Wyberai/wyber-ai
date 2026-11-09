@@ -52,6 +52,22 @@ ${plans.map(([n, p, o, c]) => `
 </div>
 <div class="mono" style="position:absolute;bottom:0;left:0;font-size:20px">Credits per month · free plan stays at 30</div>`
 
+// OPTIONAL extra slide. Lovable Pro = $25/month for 100 credits (docs.lovable.dev/introduction/subscription-plans, checked 2026-11-09).
+slides['slide-2b-compare'] = `
+<div class="top">${logo}<div class="mono" style="font-size:20px">Optional slide</div></div>
+<h2 style="font-size:112px;margin-top:80px">Same price range.<br><span class="hot">4.5× the credits.</span></h2>
+<div style="margin-top:64px;display:flex;flex-direction:column;gap:22px">
+  <div style="background:linear-gradient(135deg,rgba(14,165,233,.22),rgba(14,165,233,.06));border:2px solid var(--brand);border-radius:28px;padding:44px 48px;display:flex;justify-content:space-between;align-items:center">
+    <div><div style="font-size:46px;font-weight:700">WyberAi Starter</div><div class="mono" style="font-size:22px;margin-top:8px">$29 / month</div></div>
+    <div style="text-align:right"><div style="font-size:112px;font-weight:700;color:var(--hot);line-height:1">450</div><div class="mono" style="font-size:20px">credits / month</div></div>
+  </div>
+  <div style="background:var(--card);border:1.5px solid var(--line);border-radius:28px;padding:44px 48px;display:flex;justify-content:space-between;align-items:center">
+    <div><div style="font-size:46px;font-weight:700;color:var(--ink2)">Lovable Pro</div><div class="mono" style="font-size:22px;margin-top:8px">$25 / month</div></div>
+    <div style="text-align:right"><div style="font-size:112px;font-weight:700;color:var(--ink3);line-height:1">100</div><div class="mono" style="font-size:20px">credits / month</div></div>
+  </div>
+</div>
+<div style="position:absolute;bottom:0;left:0;right:0;font-size:20px;color:var(--ink3);line-height:1.45">Lovable Pro per its public plans page, Nov 2026. Credit sizes differ between products, so compare real builds too. Try both free.</div>`
+
 slides['slide-3'] = `
 <div class="top">${logo}${dots(3)}</div>
 <h1 style="font-size:148px;margin-top:200px">Build your<br>next app<br><span class="hot">today.</span></h1>
