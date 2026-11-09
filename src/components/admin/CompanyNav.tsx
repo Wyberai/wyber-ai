@@ -12,6 +12,7 @@ export const COMPANY_LINKS = [
   { href: '/admin/quotes', label: 'Quotes' },
   { href: '/admin/agents', label: 'Agents' },
   { href: '/admin/booth', label: 'Booth' },
+  { href: '/admin/announce', label: 'Announce' },
   { href: '/admin', label: 'Admin home' },
 ] as const
 
