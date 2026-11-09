@@ -56,7 +56,7 @@ export const BOLT_CONTENT: Record<Locale, VsContent> = {
     pillarNote: 'Bolt.new सिर्फ़ वेब ऐप्स बनाता है।',
     rows: [
       { feature: 'शुरुआती कीमत', wyber: '$29/माह (Starter)', other: '$25/माह', winner: 'tie' },
-      { feature: 'शुरुआती क्रेडिट्स/माह', wyber: '150', other: '~250 टोकन के बराबर', winner: 'other' },
+      { feature: 'शुरुआती क्रेडिट्स/माह', wyber: '450', other: '10M tokens (different unit)', winner: 'tie' },
       { feature: 'फ्री टियर', wyber: '50 क्रेडिट्स/माह', other: '1M टोकन/माह', winner: 'tie' },
       { feature: 'उपयोग मॉडल', wyber: 'फिक्स्ड क्रेडिट्स', other: 'टोकन (प्रति कैरेक्टर)', winner: 'wyber' },
       { feature: 'अनुपयोगी क्रेडिट रोलओवर', wyber: '✓ हमेशा', other: '✓ 2 महीने तक', winner: 'wyber' },
@@ -89,7 +89,7 @@ export const BOLT_CONTENT: Record<Locale, VsContent> = {
     pillarNote: 'Bolt.new ವೆಬ್ ಆ್ಯಪ್‌ಗಳನ್ನು ಮಾತ್ರ ನಿರ್ಮಿಸುತ್ತದೆ.',
     rows: [
       { feature: 'ಆರಂಭಿಕ ಬೆಲೆ', wyber: '$29/ತಿಂಗಳು (Starter)', other: '$25/ತಿಂಗಳು', winner: 'tie' },
-      { feature: 'ಆರಂಭಿಕ ಕ್ರೆಡಿಟ್‌ಗಳು/ತಿಂಗಳು', wyber: '150', other: '~250 ಟೋಕನ್‌ಗೆ ಸಮಾನ', winner: 'other' },
+      { feature: 'ಆರಂಭಿಕ ಕ್ರೆಡಿಟ್‌ಗಳು/ತಿಂಗಳು', wyber: '450', other: '10M tokens (different unit)', winner: 'tie' },
       { feature: 'ಫ್ರೀ ಟಯರ್', wyber: '50 ಕ್ರೆಡಿಟ್‌ಗಳು/ತಿಂಗಳು', other: '1M ಟೋಕನ್‌ಗಳು/ತಿಂಗಳು', winner: 'tie' },
       { feature: 'ಬಳಕೆ ಮಾದರಿ', wyber: 'ಸ್ಥಿರ ಕ್ರೆಡಿಟ್‌ಗಳು', other: 'ಟೋಕನ್‌ಗಳು (ಪ್ರತಿ ಅಕ್ಷರಕ್ಕೆ)', winner: 'wyber' },
       { feature: 'ಬಳಕೆಯಾಗದ ಕ್ರೆಡಿಟ್ ರೋಲ್‌ಓವರ್', wyber: '✓ ಯಾವಾಗಲೂ', other: '✓ 2 ತಿಂಗಳವರೆಗೆ', winner: 'wyber' },
@@ -122,7 +122,7 @@ export const BOLT_CONTENT: Record<Locale, VsContent> = {
     pillarNote: 'Bolt.new వెబ్ యాప్‌లను మాత్రమే నిర్మిస్తుంది.',
     rows: [
       { feature: 'ప్రారంభ ధర', wyber: '$29/నెల (Starter)', other: '$25/నెల', winner: 'tie' },
-      { feature: 'ప్రారంభ క్రెడిట్లు/నెల', wyber: '150', other: '~250 టోకెన్‌లకు సమానం', winner: 'other' },
+      { feature: 'ప్రారంభ క్రెడిట్లు/నెల', wyber: '450', other: '10M tokens (different unit)', winner: 'tie' },
       { feature: 'ఫ్రీ టైర్', wyber: '50 క్రెడిట్లు/నెల', other: '1M టోకెన్‌లు/నెల', winner: 'tie' },
       { feature: 'వినియోగ మోడల్', wyber: 'స్థిర క్రెడిట్లు', other: 'టోకెన్‌లు (అక్షరానికి)', winner: 'wyber' },
       { feature: 'వాడని క్రెడిట్ రోల్‌ఓవర్', wyber: '✓ ఎప్పుడూ', other: '✓ 2 నెలల వరకు', winner: 'wyber' },
@@ -155,7 +155,7 @@ export const BOLT_CONTENT: Record<Locale, VsContent> = {
     pillarNote: 'Bolt.new வெப் ஆப்களை மட்டுமே உருவாக்குகிறது.',
     rows: [
       { feature: 'தொடக்க விலை', wyber: '$29/மாதம் (Starter)', other: '$25/மாதம்', winner: 'tie' },
-      { feature: 'தொடக்க கிரெடிட்கள்/மாதம்', wyber: '150', other: '~250 டோக்கன் சமமானது', winner: 'other' },
+      { feature: 'தொடக்க கிரெடிட்கள்/மாதம்', wyber: '450', other: '10M tokens (different unit)', winner: 'tie' },
       { feature: 'ஃப்ரீ டையர்', wyber: '50 கிரெடிட்கள்/மாதம்', other: '1M டோக்கன்கள்/மாதம்', winner: 'tie' },
       { feature: 'பயன்பாட்டு மாதிரி', wyber: 'நிலையான கிரெடிட்கள்', other: 'டோக்கன்கள் (எழுத்துக்கு)', winner: 'wyber' },
       { feature: 'பயன்படுத்தாத கிரெடிட் ரோல்ஓவர்', wyber: '✓ எப்போதும்', other: '✓ 2 மாதங்கள் வரை', winner: 'wyber' },

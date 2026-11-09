@@ -40,7 +40,7 @@ export const LOVABLE_CONTENT: Record<Locale, VsContent> = {
       { feature: 'India/APAC pricing', wyber: '✓ INR soon', other: 'USD only', winner: 'wyber' },
     ],
     faqs: [
-      { q: 'How does WyberAi pricing compare to Lovable?', a: 'WyberAi Starter is $29/month for 450 credits vs Lovable\'s $25/month for ~250 credits. WyberAi includes mobile apps, 27 integrations, and fresh code generation that Lovable doesn\'t offer. Top-ups on Wyber never expire.' },
+      { q: 'How does WyberAi pricing compare to Lovable?', a: 'WyberAi Starter is $29/month for 450 credits vs Lovable\'s $25/month for 100 credits (plus 5 a day). WyberAi includes mobile apps, 27 integrations, and fresh code generation that Lovable doesn\'t offer. Top-ups on Wyber never expire.' },
       { q: 'Can WyberAi build mobile apps? Lovable can\'t.', a: 'Correct. Lovable generates React web apps only. WyberAi also generates full React Native + Expo mobile apps that run on iOS and Android. You can scan a QR code to preview on your phone instantly.' },
       { q: 'Does WyberAi build mobile apps? Lovable doesn\'t.', a: 'WyberAi builds both web and mobile apps (React Native + Expo) from the same workspace. Lovable only builds web apps. WyberAi also includes self-healing builds that auto-fix errors, so your app ships clean every time.' },
       { q: 'Which is better for non-technical founders?', a: 'Both tools are designed for non-technical users. WyberAi adds upfront credit estimates so you always know the cost before generating, and guided prompts help you describe what you want.' },
@@ -72,7 +72,7 @@ export const LOVABLE_CONTENT: Record<Locale, VsContent> = {
       { feature: 'भारत/APAC प्राइसिंग', wyber: '✓ जल्द INR', other: 'सिर्फ़ USD', winner: 'wyber' },
     ],
     faqs: [
-      { q: 'WyberAi की कीमत Lovable से कैसे अलग है?', a: 'WyberAi Starter में $29/माह में 450 क्रेडिट्स मिलते हैं, जबकि Lovable में $25/माह में ~250 क्रेडिट्स। WyberAi में मोबाइल ऐप्स, 27 इंटीग्रेशन और हमेशा नया कोड जनरेशन शामिल है, जो Lovable नहीं देता। Wyber पर टॉप-अप कभी एक्सपायर नहीं होते।' },
+      { q: 'WyberAi की कीमत Lovable से कैसे अलग है?', a: 'WyberAi Starter में $29/माह में 450 क्रेडिट्स मिलते हैं, जबकि Lovable में $25/माह में 100 (+5/day) क्रेडिट्स। WyberAi में मोबाइल ऐप्स, 27 इंटीग्रेशन और हमेशा नया कोड जनरेशन शामिल है, जो Lovable नहीं देता। Wyber पर टॉप-अप कभी एक्सपायर नहीं होते।' },
       { q: 'क्या WyberAi मोबाइल ऐप बना सकता है? Lovable नहीं बना सकता।', a: 'सही है। Lovable सिर्फ़ React वेब ऐप्स बनाता है। WyberAi पूरे React Native + Expo मोबाइल ऐप्स भी बनाता है जो iOS और Android दोनों पर चलते हैं। आप QR कोड स्कैन करके अपने फ़ोन पर तुरंत प्रीव्यू देख सकते हैं।' },
       { q: 'क्या WyberAi मोबाइल ऐप बनाता है? Lovable नहीं बनाता।', a: 'WyberAi एक ही वर्कस्पेस से वेब और मोबाइल दोनों ऐप्स (React Native + Expo) बनाता है। Lovable सिर्फ़ वेब ऐप्स बनाता है। WyberAi में सेल्फ-हीलिंग बिल्ड्स भी हैं जो अपने-आप गलतियां ठीक कर देते हैं, ताकि आपका ऐप हर बार क्लीन शिप हो।' },
       { q: 'गैर-तकनीकी फ़ाउंडर्स के लिए कौन बेहतर है?', a: 'दोनों टूल्स गैर-तकनीकी यूज़र्स के लिए बनाए गए हैं। WyberAi पहले से क्रेडिट अनुमान देता है ताकि आपको जनरेट करने से पहले ही लागत पता हो, और गाइडेड प्रॉम्प्ट्स आपकी ज़रूरत बताने में मदद करते हैं।' },
@@ -104,7 +104,7 @@ export const LOVABLE_CONTENT: Record<Locale, VsContent> = {
       { feature: 'ಭಾರತ/APAC ಬೆಲೆ', wyber: '✓ ಶೀಘ್ರದಲ್ಲೇ INR', other: 'USD ಮಾತ್ರ', winner: 'wyber' },
     ],
     faqs: [
-      { q: 'WyberAi ಬೆಲೆ Lovable ಗೆ ಹೋಲಿಸಿದರೆ ಹೇಗಿದೆ?', a: 'WyberAi Starter $29/ತಿಂಗಳಿಗೆ 450 ಕ್ರೆಡಿಟ್‌ಗಳನ್ನು ನೀಡುತ್ತದೆ, Lovable ಬಳಿ $25/ತಿಂಗಳಿಗೆ ~250 ಕ್ರೆಡಿಟ್‌ಗಳಿವೆ. WyberAi ಮೊಬೈಲ್ ಆ್ಯಪ್‌ಗಳು, 27 ಇಂಟಿಗ್ರೇಶನ್‌ಗಳು ಮತ್ತು Lovable ಬಳಿ ಇಲ್ಲದ ಹೊಸ ಕೋಡ್ ರಚನೆಯನ್ನು ಒಳಗೊಂಡಿದೆ. Wyber ನಲ್ಲಿ ಟಾಪ್-ಅಪ್‌ಗಳು ಎಂದಿಗೂ ಅವಧಿ ಮುಗಿಯುವುದಿಲ್ಲ.' },
+      { q: 'WyberAi ಬೆಲೆ Lovable ಗೆ ಹೋಲಿಸಿದರೆ ಹೇಗಿದೆ?', a: 'WyberAi Starter $29/ತಿಂಗಳಿಗೆ 450 ಕ್ರೆಡಿಟ್‌ಗಳನ್ನು ನೀಡುತ್ತದೆ, Lovable ಬಳಿ $25/ತಿಂಗಳಿಗೆ 100 (+5/day) ಕ್ರೆಡಿಟ್‌ಗಳಿವೆ. WyberAi ಮೊಬೈಲ್ ಆ್ಯಪ್‌ಗಳು, 27 ಇಂಟಿಗ್ರೇಶನ್‌ಗಳು ಮತ್ತು Lovable ಬಳಿ ಇಲ್ಲದ ಹೊಸ ಕೋಡ್ ರಚನೆಯನ್ನು ಒಳಗೊಂಡಿದೆ. Wyber ನಲ್ಲಿ ಟಾಪ್-ಅಪ್‌ಗಳು ಎಂದಿಗೂ ಅವಧಿ ಮುಗಿಯುವುದಿಲ್ಲ.' },
       { q: 'WyberAi ಮೊಬೈಲ್ ಆ್ಯಪ್‌ಗಳನ್ನು ನಿರ್ಮಿಸಬಹುದೇ? Lovable ಗೆ ಸಾಧ್ಯವಿಲ್ಲ.', a: 'ಸರಿಯಾಗಿದೆ. Lovable ಕೇವಲ React ವೆಬ್ ಆ್ಯಪ್‌ಗಳನ್ನು ಮಾತ್ರ ರಚಿಸುತ್ತದೆ. WyberAi iOS ಮತ್ತು Android ನಲ್ಲಿ ಚಲಿಸುವ ಪೂರ್ಣ React Native + Expo ಮೊಬೈಲ್ ಆ್ಯಪ್‌ಗಳನ್ನೂ ರಚಿಸುತ್ತದೆ. ನೀವು QR ಕೋಡ್ ಸ್ಕ್ಯಾನ್ ಮಾಡಿ ನಿಮ್ಮ ಫೋನ್‌ನಲ್ಲಿ ತಕ್ಷಣ ಪ್ರಿವ್ಯೂ ನೋಡಬಹುದು.' },
       { q: 'WyberAi ಮೊಬೈಲ್ ಆ್ಯಪ್‌ಗಳನ್ನು ರಚಿಸುತ್ತದೆಯೇ? Lovable ಮಾಡುವುದಿಲ್ಲ.', a: 'WyberAi ಒಂದೇ ವರ್ಕ್‌ಸ್ಪೇಸ್‌ನಿಂದ ವೆಬ್ ಮತ್ತು ಮೊಬೈಲ್ ಆ್ಯಪ್‌ಗಳೆರಡನ್ನೂ (React Native + Expo) ರಚಿಸುತ್ತದೆ. Lovable ವೆಬ್ ಆ್ಯಪ್‌ಗಳನ್ನು ಮಾತ್ರ ರಚಿಸುತ್ತದೆ. WyberAi ಸ್ವಯಂ-ಸರಿಪಡಿಸುವ ಬಿಲ್ಡ್‌ಗಳನ್ನೂ ಒಳಗೊಂಡಿದೆ, ಇದು ದೋಷಗಳನ್ನು ತಾನಾಗಿಯೇ ಸರಿಪಡಿಸುತ್ತದೆ, ಆದ್ದರಿಂದ ನಿಮ್ಮ ಆ್ಯಪ್ ಪ್ರತಿ ಬಾರಿಯೂ ಸ್ವಚ್ಛವಾಗಿ ಸಿದ್ಧವಾಗುತ್ತದೆ.' },
       { q: 'ಟೆಕ್ನಿಕಲ್ ಅಲ್ಲದ ಫೌಂಡರ್‌ಗಳಿಗೆ ಯಾವುದು ಉತ್ತಮ?', a: 'ಎರಡೂ ಟೂಲ್‌ಗಳು ಟೆಕ್ನಿಕಲ್ ಅಲ್ಲದ ಬಳಕೆದಾರರಿಗಾಗಿ ವಿನ್ಯಾಸಗೊಳಿಸಲಾಗಿದೆ. WyberAi ಮುಂಚಿತ ಕ್ರೆಡಿಟ್ ಅಂದಾಜುಗಳನ್ನು ನೀಡುತ್ತದೆ, ಆದ್ದರಿಂದ ರಚಿಸುವ ಮೊದಲೇ ವೆಚ್ಚ ತಿಳಿಯುತ್ತದೆ, ಮತ್ತು ಮಾರ್ಗದರ್ಶಿತ ಪ್ರಾಂಪ್ಟ್‌ಗಳು ನಿಮಗೆ ಬೇಕಾದುದನ್ನು ವಿವರಿಸಲು ಸಹಾಯ ಮಾಡುತ್ತವೆ.' },
@@ -136,7 +136,7 @@ export const LOVABLE_CONTENT: Record<Locale, VsContent> = {
       { feature: 'భారత్/APAC ధర', wyber: '✓ త్వరలో INR', other: 'USD మాత్రమే', winner: 'wyber' },
     ],
     faqs: [
-      { q: 'WyberAi ధర Lovable తో పోలిస్తే ఎలా ఉంది?', a: 'WyberAi Starter నెలకు $29కి 450 క్రెడిట్లు ఇస్తుంది, Lovable నెలకు $25కి ~250 క్రెడిట్లు ఇస్తుంది. WyberAi మొబైల్ యాప్‌లు, 27 ఇంటిగ్రేషన్‌లు మరియు Lovable అందించని తాజా కోడ్ జనరేషన్‌ను కలిగి ఉంది. Wyberలో టాప్-అప్‌లు ఎప్పటికీ గడువు ముగియవు.' },
+      { q: 'WyberAi ధర Lovable తో పోలిస్తే ఎలా ఉంది?', a: 'WyberAi Starter నెలకు $29కి 450 క్రెడిట్లు ఇస్తుంది, Lovable నెలకు $25కి 100 (+5/day) క్రెడిట్లు ఇస్తుంది. WyberAi మొబైల్ యాప్‌లు, 27 ఇంటిగ్రేషన్‌లు మరియు Lovable అందించని తాజా కోడ్ జనరేషన్‌ను కలిగి ఉంది. Wyberలో టాప్-అప్‌లు ఎప్పటికీ గడువు ముగియవు.' },
       { q: 'WyberAi మొబైల్ యాప్‌లను నిర్మించగలదా? Lovable నిర్మించలేదు.', a: 'సరైనది. Lovable కేవలం React వెబ్ యాప్‌లను మాత్రమే రూపొందిస్తుంది. WyberAi iOS మరియు Androidలో నడిచే పూర్తి React Native + Expo మొబైల్ యాప్‌లను కూడా రూపొందిస్తుంది. మీరు QR కోడ్‌ను స్కాన్ చేసి మీ ఫోన్‌లో వెంటనే ప్రివ్యూ చూడవచ్చు.' },
       { q: 'WyberAi మొబైల్ యాప్‌లను నిర్మిస్తుందా? Lovable నిర్మించదు.', a: 'WyberAi ఒకే వర్క్‌స్పేస్ నుండి వెబ్ మరియు మొబైల్ యాప్‌లు (React Native + Expo) రెండింటినీ నిర్మిస్తుంది. Lovable వెబ్ యాప్‌లను మాత్రమే నిర్మిస్తుంది. WyberAi స్వీయ-సరిదిద్దుకునే బిల్డ్‌లను కూడా కలిగి ఉంది, ఇవి లోపాలను స్వయంచాలకంగా సరిచేస్తాయి, కాబట్టి మీ యాప్ ప్రతిసారీ శుభ్రంగా సిద్ధమవుతుంది.' },
       { q: 'టెక్నికల్ కాని ఫౌండర్‌లకు ఏది మంచిది?', a: 'రెండు టూల్స్ టెక్నికల్ కాని వినియోగదారుల కోసం రూపొందించబడ్డాయి. WyberAi ముందస్తు క్రెడిట్ అంచనాలను జోడిస్తుంది కాబట్టి రూపొందించే ముందే ఖర్చు తెలుస్తుంది, మరియు గైడెడ్ ప్రాంప్ట్‌లు మీకు కావలసినది వివరించడంలో సహాయపడతాయి.' },
@@ -168,7 +168,7 @@ export const LOVABLE_CONTENT: Record<Locale, VsContent> = {
       { feature: 'இந்தியா/APAC விலை', wyber: '✓ விரைவில் INR', other: 'USD மட்டும்', winner: 'wyber' },
     ],
     faqs: [
-      { q: 'WyberAi விலை Lovable உடன் எப்படி ஒப்பிடுகிறது?', a: 'WyberAi Starter மாதம் $29க்கு 450 கிரெடிட்களை வழங்குகிறது, Lovable மாதம் $25க்கு ~250 கிரெடிட்களை வழங்குகிறது. WyberAi இல் மொபைல் ஆப்கள், 27 இன்டகிரேஷன்கள் மற்றும் Lovable வழங்காத புதிய கோட் உருவாக்கம் ஆகியவை அடங்கும். Wyber இல் டாப்-அப்கள் ஒருபோதும் காலாவதியாகாது.' },
+      { q: 'WyberAi விலை Lovable உடன் எப்படி ஒப்பிடுகிறது?', a: 'WyberAi Starter மாதம் $29க்கு 450 கிரெடிட்களை வழங்குகிறது, Lovable மாதம் $25க்கு 100 (+5/day) கிரெடிட்களை வழங்குகிறது. WyberAi இல் மொபைல் ஆப்கள், 27 இன்டகிரேஷன்கள் மற்றும் Lovable வழங்காத புதிய கோட் உருவாக்கம் ஆகியவை அடங்கும். Wyber இல் டாப்-அப்கள் ஒருபோதும் காலாவதியாகாது.' },
       { q: 'WyberAi மொபைல் ஆப்களை உருவாக்க முடியுமா? Lovable ஆல் முடியாது.', a: 'சரி. Lovable React வெப் ஆப்களை மட்டுமே உருவாக்குகிறது. WyberAi iOS மற்றும் Android இல் இயங்கும் முழுமையான React Native + Expo மொபைல் ஆப்களையும் உருவாக்குகிறது. நீங்கள் QR குறியீட்டை ஸ்கேன் செய்து உங்கள் மொபைலில் உடனடியாக முன்னோட்டமிடலாம்.' },
       { q: 'WyberAi மொபைல் ஆப்களை உருவாக்குகிறதா? Lovable செய்யாது.', a: 'WyberAi ஒரே பணியிடத்திலிருந்து வெப் மற்றும் மொபைல் ஆப்கள் (React Native + Expo) இரண்டையும் உருவாக்குகிறது. Lovable வெப் ஆப்களை மட்டுமே உருவாக்குகிறது. WyberAi சுயமாக சரிசெய்யும் பில்டுகளையும் கொண்டுள்ளது, இவை பிழைகளை தானாகவே சரிசெய்கின்றன, எனவே உங்கள் ஆப் ஒவ்வொரு முறையும் சுத்தமாக தயாராகிறது.' },
       { q: 'தொழில்நுட்பம் அறியாத நிறுவனர்களுக்கு எது சிறந்தது?', a: 'இரண்டு கருவிகளும் தொழில்நுட்பம் அறியாத பயனர்களுக்காக வடிவமைக்கப்பட்டுள்ளன. WyberAi முன்கூட்டிய கிரெடிட் மதிப்பீடுகளைச் சேர்க்கிறது, எனவே உருவாக்குவதற்கு முன்பே செலவு தெரியும், மற்றும் வழிகாட்டப்பட்ட ப்ராம்ப்ட்கள் நீங்கள் விரும்புவதை விவரிக்க உதவுகின்றன.' },

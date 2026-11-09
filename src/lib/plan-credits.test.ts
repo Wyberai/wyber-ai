@@ -86,6 +86,8 @@ describe('no copy of the plan credits can drift', () => {
     for (const f of ['src/app/vs/lovable/page.tsx', 'src/app/vs/bolt/page.tsx', 'src/lib/i18n/dict/vs-content/lovable.ts', 'src/lib/i18n/dict/vs-content/bolt.ts']) {
       expect(read(f)).not.toMatch(/Starter credits\/mo[^\n]{0,20}wyber: '150'/)
       expect(read(f)).not.toContain('$29/month for 150 fixed credits')
+      expect(read(f)).not.toContain('~250') // the unsourced Lovable figure; Lovable Pro is 100 credits plus 5 a day
+      expect(read(f)).not.toMatch(/wyber: '150'/)
     }
     // Free signup is 30 credits, not 50, on the public ad and demo pages.
     for (const f of ['public/ads/index.html', 'public/demo-intro.html', 'public/demo-intro-mobile.html']) expect(read(f)).not.toMatch(/50 credits (on signup|·)|Start free — 50 credits|Try it free — 50 credits/)

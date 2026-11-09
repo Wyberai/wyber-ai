@@ -33,7 +33,7 @@ const ROWS = [
 const FAQS = [
   {
     q: 'How does WyberAi pricing compare to Lovable?',
-    a: 'WyberAi Starter is $29/month for 450 credits vs Lovable\'s $25/month for ~250 credits. WyberAi includes mobile apps, 27 integrations, and fresh code generation that Lovable doesn\'t offer. Top-ups on Wyber never expire.',
+    a: 'WyberAi Starter is $29/month for 450 credits vs Lovable\'s $25/month for 100 credits (plus 5 a day). WyberAi includes mobile apps, 27 integrations, and fresh code generation that Lovable doesn\'t offer. Top-ups on Wyber never expire.',
   },
   {
     q: 'Can WyberAi build mobile apps? Lovable can\'t.',

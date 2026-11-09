@@ -35,7 +35,7 @@ export const VS_INDEX_CONTENT: Record<Locale, VsIndexContent> = {
       { label: 'Premier League', sub: '$1,800 in monthly prizes' },
     ],
     comparisons: {
-      lovable: { summary: 'WyberAi Starter includes 450 credits a month for $29 against Lovable\'s ~250 for $25, plus mobile apps, agents, and workflows Lovable doesn\'t have.', wyberWins: ['450 credits/month on Starter ($29)', 'Top-ups never expire', 'Mobile + agents + workflows + AI employees + GTM', '6 products vs Lovable\'s 1'] },
+      lovable: { summary: 'WyberAi Starter includes 450 credits a month for $29 against Lovable\'s 100 (plus 5 a day) for $25, plus mobile apps, agents, and workflows Lovable doesn\'t have.', wyberWins: ['450 credits/month on Starter ($29)', 'Top-ups never expire', 'Mobile + agents + workflows + AI employees + GTM', '6 products vs Lovable\'s 1'] },
       bolt: { summary: 'WyberAi uses fixed-credit pricing (no token surprises) and adds mobile apps, agents, and workflows Bolt doesn\'t offer.', wyberWins: ['Predictable fixed credits', 'Daily bonus credits', 'Guided for non-technical users', 'Mobile + agents + workflows'] },
       v0: { summary: 'v0 generates UI components. WyberAi generates complete full-stack apps — plus mobile, agents, and workflows.', wyberWins: ['Complete app in one generation', 'Database + auth included', 'No assembly required', 'Mobile + agents + workflows'] },
       replit: { summary: 'Replit is an IDE for developers. WyberAi is a no-code builder for founders — faster, cheaper, and more predictable.', wyberWins: ['No coding knowledge needed', 'Predictable fixed credits', '< 60 second app generation', 'Mobile + agents + workflows'] },
