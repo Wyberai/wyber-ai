@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
       // Canvas format: { id, type, position, data: { label, subtitle, config, status } }
       const toolkitMap: Record<string, string> = {
         'Gmail': 'GMAIL', 'Slack': 'SLACK', 'HubSpot': 'HUBSPOT', 'Notion': 'NOTION',
-        'GitHub': 'GITHUB', 'Linear': 'LINEAR', 'Stripe': 'STRIPE', 'Claude AI': '',
+        'GitHub': 'GITHUB', 'Linear': 'LINEAR', 'Stripe': 'STRIPE', 'Claude AI': '', 'WyberCode AI': '',
         'Webhook': '', 'Logic': '', 'End': '', 'Form': '', 'Schedule': '', 'HTTP': '',
         'Google Sheets': 'GOOGLESHEETS', 'Airtable': 'AIRTABLE', 'LinkedIn': 'LINKEDIN',
         'Twitter': 'TWITTER', 'Calendly': 'CALENDLY',

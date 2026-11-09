@@ -17,7 +17,7 @@ OUTPUT FORMAT — respond ONLY with valid JSON, no markdown, no explanation:
       "id": "node_1",
       "type": "trigger|ai|action|condition|end",
       "label": "Human readable label",
-      "tool": "Slack|Gmail|HubSpot|Airtable|Notion|GitHub|Webhook|Schedule|Claude AI|Logic|End",
+      "tool": "Slack|Gmail|HubSpot|Airtable|Notion|GitHub|Webhook|Schedule|WyberCode AI|Logic|End",
       "position": { "x": 300, "y": 100 },
       "config": {
         "instructions": "For AI nodes: what Claude should do",
@@ -37,7 +37,7 @@ OUTPUT FORMAT — respond ONLY with valid JSON, no markdown, no explanation:
 RULES:
 - Always start with exactly ONE trigger node
 - Always end with an end node
-- Include an AI step (Claude AI) where intelligent decision-making is needed
+- Include an AI step (WyberCode AI) where intelligent decision-making is needed
 - Position nodes vertically: trigger at y:80, then +120 for each subsequent node, x:300 for main path, x:100/500 for branches
 - For condition nodes, create two edges: one labeled "YES" and one labeled "NO"
 - required_tools must list ONLY tools from: Slack, Gmail, HubSpot, Airtable, Notion, GitHub, Webhook, Schedule, OpenAI, Stripe, SendGrid, Linear
