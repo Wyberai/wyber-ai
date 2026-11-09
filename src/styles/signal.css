@@ -27,6 +27,17 @@
   --sg-hot: #0369a1; --sg-soft: rgba(14, 165, 233, .12); --sg-ok: #047857; --sg-warn: #a16207; --sg-bad: #b91c1c;
   color-scheme: light;
 }
+/* A dark island inside a page that can be light. For content that was designed dark-only and uses fixed light text
+   (the pricing page): inside it the Signal tokens are the dark ones, so nothing becomes unreadable when the visitor
+   switches the page to light. Not a .sg element on purpose: the theme switch sets data-sg-theme on every .sg. */
+.sg-island-dark {
+  --sg-bg: #05080d; --sg-bg2: #0a1018; --sg-card: #0d141e; --sg-card2: #111b28;
+  --sg-ink: #e8eef7; --sg-ink2: #9aa8bb; --sg-ink3: #8797ab;
+  --sg-line: rgba(150, 190, 235, .16);
+  --sg-hot: #38bdf8; --sg-soft: rgba(14, 165, 233, .14);
+  --sg-ok: #34d399; --sg-warn: #fbbf24; --sg-bad: #f87171;
+  background: var(--sg-bg); color: var(--sg-ink); color-scheme: dark;
+}
 .sg *, .sg *::before, .sg *::after { box-sizing: border-box; }
 .sg h1, .sg h2, .sg h3, .sg h4 { font-family: var(--font-display, 'General Sans', system-ui, sans-serif); font-weight: 700; letter-spacing: -.02em; line-height: 1.06; margin: 0; text-wrap: balance; color: var(--sg-ink); }
 .sg p, .sg li { text-wrap: pretty; }

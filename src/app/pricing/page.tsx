@@ -18,7 +18,7 @@ export default async function PricingPage() {
   const owner = await isOwnerPreview()
   return (
     <>
-      <SignalFrame><PricingClient initialCurrency={currency} /></SignalFrame>
+      <SignalFrame><div className="sg-island-dark"><PricingClient initialCurrency={currency} /></div></SignalFrame>
       {owner && <OwnerRegionSwitcher current={currency} />}
     </>
   )
