@@ -35,11 +35,17 @@ const RENTED_VS_OWNED: [string, string, string][] = [
   ['Who decides who sees you', 'The algorithm', 'Anyone who searches'],
   ['Found on Google and ChatGPT', 'Barely — most of it is behind a login', 'Yes — built to be read'],
   ['If it’s hacked or banned', 'Your customers go with it', 'Your site stays yours'],
-  ['Taking orders', 'DMs and “price pls?”', 'Menu, prices, WhatsApp button, enquiry form'],
+  ['Taking orders', 'DMs and “price pls?”', 'Menu, prices, WhatsApp button, enquiry form'], // the US wording is swapped in at render time
   ['Your address online', '@yourname on someone else’s app', 'Your own name — and your own domain'],
 ]
 
 export function WebsitesClient({ currency, estimate }: { currency: 'INR' | 'USD'; estimate: Estimate }) {
+  const us = currency !== 'INR'
+  const rentedVsOwned = RENTED_VS_OWNED.map(([k, rent, own]) => [k, rent, us ? own.replace('WhatsApp button', 'order button') : own] as [string, string, string])
+  // Sample business shown in the before/after mock-ups: a sweet shop for India, a bakery elsewhere.
+  const sample = us
+    ? { handle: 'maple.and.rye', initials: 'MR', bio: 'Fresh sourdough daily 🥖 Austin', dm: 'DM to order · Link in bio 👇', domain: 'mapleandrye.com', name: 'Maple & Rye Bakery', place: 'Austin', headline: 'Fresh sourdough, baked daily in Austin.', hours: 'Open 7am–6pm', item: 'Sourdough loaf · $9', cta: '● Order online', google: 'Maple & Rye Bakery — Austin · Open till 6pm', chatgpt: '“Try Maple & Rye Bakery on Congress Ave — open till 6pm.”', term: '# Maple & Rye Bakery — Austin, TX\nOpen 7am–6pm · Phone (512) …\nSourdough loaf $9 · Cinnamon rolls …\nQ: Do you deliver? A: Yes, within 5 miles' }
+    : { handle: 'sharma.sweets', initials: 'SS', bio: 'Fresh mithai daily 🍬 Jayanagar', dm: 'DM to order · Link in bio 👇', domain: 'sharmasweets.in', name: 'Sharma Sweets', place: 'Jayanagar', headline: 'Fresh mithai, made daily in Jayanagar.', hours: 'Open 8am–10pm', item: 'Kaju katli · ₹1,200/kg', cta: '● Order on WhatsApp', google: 'Sharma Sweets — Jayanagar · Open till 10pm', chatgpt: '“Try Sharma Sweets in 4th Block — open till 10pm.”', term: '# Sharma Sweets — Jayanagar, Bengaluru\nOpen 8am–10pm · WhatsApp +91 …\nKaju katli ₹1,200/kg · Rasmalai …\nQ: Do you deliver? A: Yes, within 5 km' }
   const [tab, setTab] = useState<'social' | 'url'>('social')
   const [url, setUrl] = useState('')
   const [form, setForm] = useState({ name: '', about: '', city: '', whatsapp: '' })
@@ -112,9 +118,9 @@ export function WebsitesClient({ currency, estimate }: { currency: 'INR' | 'USD'
             <h1 className="mk-display ws-h1">Your Instagram page isn’t your business. <span className="mk-serif">Your website is.</span></h1>
             <p className="mk-lead">
               Followers belong to the app. Reach belongs to the algorithm. One hack or one report and it’s gone.
-              Own a website on your name — found on Google and ChatGPT, taking orders on WhatsApp.
+              Own a website on your name — found on Google and ChatGPT, {us ? 'taking orders online.' : 'taking orders on WhatsApp.'}
             </p>
-            <p className="ws-hindi" lang="hi">Instagram किराए का घर है। वेबसाइट अपना है।</p>
+            {!us && <p className="ws-hindi" lang="hi">Instagram किराए का घर है। वेबसाइट अपना है।</p>}
 
             <form onSubmit={submit} className="mk-frame ws-tool">
               <div className="ws-tabs" role="tablist">
@@ -126,7 +132,7 @@ export function WebsitesClient({ currency, estimate }: { currency: 'INR' | 'USD'
                   <input className="ws-input" placeholder="Business name" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required aria-label="Business name" />
                   <input className="ws-input" placeholder="City / area" value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))} aria-label="City" />
                   <textarea className="ws-input ws-span" rows={3} placeholder="Paste your Instagram bio and a few captions — or just say what you sell, your timings and prices" value={form.about} onChange={e => setForm(f => ({ ...f, about: e.target.value }))} required aria-label="Your Instagram bio or a description of your business" />
-                  <input className="ws-input" inputMode="tel" placeholder="WhatsApp number (optional)" value={form.whatsapp} onChange={e => setForm(f => ({ ...f, whatsapp: e.target.value }))} aria-label="WhatsApp number" />
+                  <input className="ws-input" inputMode="tel" placeholder={us ? 'Phone number (optional)' : 'WhatsApp number (optional)'} value={form.whatsapp} onChange={e => setForm(f => ({ ...f, whatsapp: e.target.value }))} aria-label={us ? 'Phone number' : 'WhatsApp number'} />
                   <button className="mk-btn ws-submit" disabled={loading}>{loading ? 'Planning…' : 'Plan my website'}</button>
                 </div>
               ) : (
@@ -145,24 +151,24 @@ export function WebsitesClient({ currency, estimate }: { currency: 'INR' | 'USD'
             <div className="ws-phone">
               <div className="ws-phone-notch" />
               <div className="ws-prof">
-                <div className="ws-avatar">SS</div>
+                <div className="ws-avatar">{sample.initials}</div>
                 <div className="ws-stats"><b>312</b><span>posts</span><b>1,204</b><span>followers</span></div>
               </div>
-              <div className="ws-prof-name">sharma.sweets</div>
-              <div className="ws-prof-bio">Fresh mithai daily 🍬 Jayanagar<br />DM to order · Link in bio 👇</div>
+              <div className="ws-prof-name">{sample.handle}</div>
+              <div className="ws-prof-bio">{sample.bio}<br />{sample.dm}</div>
               <div className="ws-tiles">{Array.from({ length: 9 }, (_, i) => <i key={i} />)}</div>
               <div className="mk-mono ws-tag ws-tag-rent">RENTED · REACH SET BY THE ALGORITHM</div>
             </div>
             <div className="ws-arrow">→</div>
             <div className="mk-frame ws-site">
-              <div className="ws-chrome"><i /><i /><i /><span className="mk-mono">sharmasweets.in</span></div>
-              <div className="ws-site-nav"><b>Sharma Sweets</b><span>Menu · Order · Visit</span></div>
-              <div className="ws-site-h">Fresh mithai, made daily in Jayanagar.</div>
-              <div className="ws-chips"><span>Open 8am–10pm</span><span>Kaju katli · ₹1,200/kg</span></div>
-              <div className="ws-wa">● Order on WhatsApp</div>
+              <div className="ws-chrome"><i /><i /><i /><span className="mk-mono">{sample.domain}</span></div>
+              <div className="ws-site-nav"><b>{sample.name}</b><span>Menu · Order · Visit</span></div>
+              <div className="ws-site-h">{sample.headline}</div>
+              <div className="ws-chips"><span>{sample.hours}</span><span>{sample.item}</span></div>
+              <div className="ws-wa">{sample.cta}</div>
               <div className="ws-found">
-                <div><span className="mk-mono">GOOGLE</span>Sharma Sweets — Jayanagar · Open till 10pm</div>
-                <div><span className="mk-mono">CHATGPT</span>“Try Sharma Sweets in 4th Block — open till 10pm.”</div>
+                <div><span className="mk-mono">GOOGLE</span>{sample.google}</div>
+                <div><span className="mk-mono">CHATGPT</span>{sample.chatgpt}</div>
               </div>
               <div className="mk-mono ws-tag ws-tag-own">OWNED · FOUND BY ANYONE WHO SEARCHES</div>
             </div>
@@ -227,7 +233,7 @@ export function WebsitesClient({ currency, estimate }: { currency: 'INR' | 'USD'
             <span role="columnheader" className="mk-mono">SOCIAL PROFILE</span>
             <span role="columnheader" className="mk-mono ws-own">YOUR WEBSITE</span>
           </div>
-          {RENTED_VS_OWNED.map(([k, rent, own]) => (
+          {rentedVsOwned.map(([k, rent, own]) => (
             <div key={k} className="ws-rvo-row" role="row">
               <b role="rowheader">{k}</b>
               <span role="cell" className="ws-rent">{rent}</span>
@@ -245,7 +251,7 @@ export function WebsitesClient({ currency, estimate }: { currency: 'INR' | 'USD'
         <div className="ws-steps">
           {[
             ['01', 'Paste your bio — or your old site', 'We pull out what you sell, your timings, prices and contact. Free, no sign-up. Nothing invented.'],
-            ['02', 'We build a site you own', 'Multi-page, mobile-first, with your menu or services, WhatsApp ordering, a map and an enquiry form.'],
+            ['02', 'We build a site you own', us ? 'Multi-page, mobile-first, with your menu or services, online ordering, a map and an enquiry form.' : 'Multi-page, mobile-first, with your menu or services, WhatsApp ordering, a map and an enquiry form.'],
             ['03', 'Put it in your bio', 'Your link, a share card and a QR code for the counter. Every post now sends people somewhere you own.'],
           ].map(([n, t, d]) => (
             <div key={n} className="ws-step"><span className="mk-mono">{n}</span><b>{t}</b><p>{d}</p></div>
@@ -272,10 +278,7 @@ from sharma.sweets
           </div>
           <div className="mk-frame ws-term ws-term-ok">
             <div className="ws-chrome"><i /><i /><i /><span className="mk-mono">what it reads · your WyberAi site</span></div>
-            <pre>{`# Sharma Sweets — Jayanagar, Bengaluru
-Open 8am–10pm · WhatsApp +91 …
-Kaju katli ₹1,200/kg · Rasmalai …
-Q: Do you deliver? A: Yes, within 5 km
+            <pre>{`${sample.term}
 
 + business & FAQ data · llms.txt`}</pre>
           </div>
@@ -291,7 +294,7 @@ Q: Do you deliver? A: Yes, within 5 km
             ['Readable by AI assistants', 'A crawler-ready copy of every page, plus an llms.txt summary.'],
             ['Details search engines trust', 'Business and FAQ structured data, proper titles and descriptions.'],
             ['Answers to real questions', 'An FAQ from your details — the questions people ask ChatGPT.'],
-            ['WhatsApp, map, enquiry form', 'Customers message, find you and enquire in one tap.'],
+            [us ? 'Order button, map, enquiry form' : 'WhatsApp, map, enquiry form', 'Customers message, find you and enquire in one tap.'],
             ['Multiple pages, mobile-first', 'Home, menu or services, gallery, about, contact — fast on any phone.'],
             ['Share card and QR code', 'A proper preview when your link is shared, and a QR for your counter.'],
           ].map(([t, d]) => <div key={t} className="mk-card ws-inc"><b>{t}</b><span>{d}</span></div>)}
