@@ -24,8 +24,8 @@ const COMPARISONS = [
     name: 'Lovable',
     url: 'lovable.dev',
     tag: 'AI web app builder',
-    summary: 'WyberAi offers ~56% more credits at a lower price, plus mobile apps, agents, and workflows Lovable doesn\'t have.',
-    wyberWins: ['300 credits/month on Builder ($99)', 'Top-ups never expire', 'Mobile + agents + workflows + AI employees + GTM', '6 products vs Lovable\'s 1'],
+    summary: 'WyberAi Starter includes 450 credits a month for $29 against Lovable\'s ~250 for $25, plus mobile apps, agents, and workflows Lovable doesn\'t have.',
+    wyberWins: ['450 credits/month on Starter ($29)', 'Top-ups never expire', 'Mobile + agents + workflows + AI employees + GTM', '6 products vs Lovable\'s 1'],
   },
   {
     slug: 'bolt',

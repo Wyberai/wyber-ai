@@ -25,6 +25,7 @@ import { DASHBOARD_STRINGS } from '@/lib/i18n/dict/dashboard';
 import { isLocale, LOCALE_SPEECH_CODE } from '@/lib/i18n/locales';
 import { WebsiteCreditGate } from '@/components/websites/WebsiteCreditGate';
 import { websiteLaunchEstimate } from '@/lib/credits';
+import { PLAN_FACTS, LARGE_PLAN_CREDITS } from '@/lib/plans';
 
 // Deterministic, timezone/locale-independent date label. toLocaleDateString()
 // renders differently on the server vs the client (different TZ/locale), which
@@ -357,7 +358,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
   const dismissBanner = () => { setBannerDismissed(true); localStorage.setItem(BANNER_KEY, '1'); };
   const showLowCreditsBanner = plan === 'free' && credits <= 20 && projects.length >= 2 && !bannerDismissed;
   const planStr = plan as string;
-  const totalCredits = planStr === 'scale' ? 10000 : planStr === 'growth' ? 4000 : planStr === 'pro' ? 1500 : planStr === 'builder' ? 500 : planStr === 'starter' ? 150 : 50;
+  const totalCredits = planStr === 'scale' ? LARGE_PLAN_CREDITS.scale : planStr === 'growth' ? LARGE_PLAN_CREDITS.growth : planStr === 'pro' ? PLAN_FACTS.pro.credits : planStr === 'builder' ? PLAN_FACTS.builder.credits : planStr === 'starter' ? PLAN_FACTS.starter.credits : planStr === 'spark' ? PLAN_FACTS.spark.credits : 50;
   const creditPct = Math.min(100, (credits / totalCredits) * 100);
 
   const MOBILE_KEYWORDS = /\b(mobile app|ios app|android app|react native|phone app|iphone|smartphone app|expo)\b/i;
@@ -598,7 +599,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
                 <div style={{ fontSize: 12, fontWeight: 800, color: '#fafafa' }}>Go Annual — Save 20%</div>
                 <span style={{ fontSize: 12, fontWeight: 800, padding: '2px 7px', borderRadius: 20, background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.25)', color: '#22c55e', whiteSpace: 'nowrap' }}>BEST VALUE</span>
               </div>
-              <div style={{ fontSize: 12, color: '#8797ab' }}>150 credits/mo · 2 months free</div>
+              <div style={{ fontSize: 12, color: '#8797ab' }}>{PLAN_FACTS.starter.credits} credits/mo · 2 months free</div>
             </Link>
           </div>
         )}
@@ -613,7 +614,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
               <span style={{ fontSize: 16 }}>⚡</span>
               <div>
                 <span style={{ fontSize: 13, fontWeight: 700, color: '#fafafa' }}>You&apos;re almost out of credits. </span>
-                <span style={{ fontSize: 13, color: '#9aa8bb' }}>You have {credits} credits left. Annual plan = 150/mo + 2 months free — pays for itself in one build.</span>
+                <span style={{ fontSize: 13, color: '#9aa8bb' }}>You have {credits} credits left. Annual plan = {PLAN_FACTS.starter.credits}/mo + 2 months free — pays for itself in one build.</span>
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>

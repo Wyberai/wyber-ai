@@ -9,6 +9,7 @@ import { PRICING_STRINGS } from '@/lib/i18n/dict/pricing'
 import { LanguageToggle } from '@/components/shared/LanguageToggle'
 import { creditCost, estimateFeatureCost, PREVIEW_ACCESS_GAME_COST, IMAGE_GEN_COST } from '@/lib/credits'
 import { track } from '@/lib/track'
+import { PLAN_FACTS, TOPUP_PACKS } from '@/lib/plans'
 
 const BRAND = '#0EA5E9'
 
@@ -30,9 +31,9 @@ const PLANS = [
     highlight: false,
     badgeKey: 'badgeSpark',
     taglineKey: 'taglineSpark',
-    credits: 50,
-    perCredit: '₹10',
-    perCreditINR: '₹10',
+    credits: PLAN_FACTS.spark.credits,
+    perCredit: '₹3.3',
+    perCreditINR: '₹3.3',
     featureKeys: ['featureSpark1', 'featureSpark2', 'featureSpark3', 'featureSpark4', 'featureSpark5', 'featureSpark6'],
   },
   {
@@ -47,9 +48,9 @@ const PLANS = [
     highlight: false,
     badgeKey: null,
     taglineKey: 'taglineStarter',
-    credits: 150,
-    perCredit: '$0.19',
-    perCreditINR: '₹10',
+    credits: PLAN_FACTS.starter.credits,
+    perCredit: '$0.06',
+    perCreditINR: '₹3.3',
     featureKeys: ['featureStarter1', 'featureStarter2', 'featureStarter3', 'featureStarter4', 'featureStarter5', 'featureStarter6', 'featureStarter7'],
   },
   {
@@ -64,9 +65,9 @@ const PLANS = [
     highlight: true,
     badgeKey: 'badgeBuilder',
     taglineKey: 'taglineBuilder',
-    credits: 500,
-    perCredit: '$0.16',
-    perCreditINR: '₹8',
+    credits: PLAN_FACTS.builder.credits,
+    perCredit: '$0.05',
+    perCreditINR: '₹2.7',
     featureKeys: ['featureBuilder1', 'featureBuilder2', 'featureBuilder3', 'featureBuilder4', 'featureBuilder5', 'featureBuilder6', 'featureBuilder7'],
   },
   {
@@ -81,9 +82,9 @@ const PLANS = [
     highlight: false,
     badgeKey: 'badgePro',
     taglineKey: 'taglinePro',
-    credits: 1500,
-    perCredit: '$0.13',
-    perCreditINR: '₹6.7',
+    credits: PLAN_FACTS.pro.credits,
+    perCredit: '$0.04',
+    perCreditINR: '₹2.2',
     // featurePro6 ("Fable model access") retired with the two-model policy.
     featureKeys: ['featurePro1', 'featurePro2', 'featurePro3', 'featurePro4', 'featurePro5', 'featurePro7'],
   },
@@ -107,9 +108,9 @@ const PLANS = [
 ]
 
 const TOPUPS = [
-  { credits: 40,  price: 19,  priceINR: 399,  key: 'topup_200',  label: 'Boost',  descKey: 'topupDescBoost' },
-  { credits: 100, price: 49,  priceINR: 999,  key: 'topup_600',  label: 'Power',  descKey: 'topupDescPower' },
-  { credits: 200, price: 99,  priceINR: 1999, key: 'topup_2000', label: 'Studio', descKey: 'topupDescStudio', hasBadge: true },
+  { credits: TOPUP_PACKS[0].credits, price: 19,  priceINR: 399,  key: 'topup_200',  label: 'Boost',  descKey: 'topupDescBoost' },
+  { credits: TOPUP_PACKS[1].credits, price: 49,  priceINR: 999,  key: 'topup_600',  label: 'Power',  descKey: 'topupDescPower' },
+  { credits: TOPUP_PACKS[2].credits, price: 99,  priceINR: 1999, key: 'topup_2000', label: 'Studio', descKey: 'topupDescStudio', hasBadge: true },
 ]
 
 // Costs are computed from src/lib/credits.ts (the actual charging logic), not

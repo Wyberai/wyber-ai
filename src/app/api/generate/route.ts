@@ -165,11 +165,11 @@ DEPLOYMENT & EXPORT:
 - Free hosting: every published app is live at wyberai.com/app/your-app (custom domains supported)
 
 CREDITS & PLANS:
-- Starter ($29/mo): 150 credits/month — all features unlocked
-- Builder ($79/mo): 500 credits/month — all features unlocked
-- Pro ($199/mo): 1,500 credits/month — all features unlocked
-- Growth ($399/mo): 4,000 credits/month — all features unlocked
-- Scale ($799/mo): 10,000 credits/month — all features unlocked
+- Starter ($29/mo): 450 credits/month — all features unlocked
+- Builder ($79/mo): 1,500 credits/month — all features unlocked
+- Pro ($199/mo): 4,500 credits/month — all features unlocked
+- Growth ($399/mo): 12,000 credits/month — all features unlocked
+- Scale ($799/mo): 30,000 credits/month — all features unlocked
 - No employee caps, no agent limits, no feature gates — every plan unlocks ALL features
 - Prebuilt templates: 0 credits always
 - Web/mobile app build: 15–130 credits depending on size (exact cost always shown before generation) | App edit: 2 credits | Build plan: 5 credits

@@ -109,7 +109,7 @@ export const USE_CASES: UseCase[] = [
       { q: 'Can I add payments (Stripe)?', a: 'You can ask WyberAi to add a Stripe checkout flow in chat. It generates the frontend components. For backend webhook handling, you\'d need to add a few lines of server code or use Supabase Edge Functions.' },
       { q: 'Who owns the code?', a: 'You do. Export the full source code anytime. It\'s standard React + Vite — take it to any developer, any hosting provider, or your own GitHub repo.' },
       { q: 'How do I handle my own domain?', a: 'Connect a custom domain in Settings → Domains. Or use your free wyberai.com/app/yourapp link while you\'re in development.' },
-      { q: 'What does it cost to build a SaaS with WyberAi?', a: 'Plans start at $29/month (Starter: 150 credits/month). Web and mobile builds cost 30 credits; edits cost 2 credits. Done-for-you builds start at $199.' },
+      { q: 'What does it cost to build a SaaS with WyberAi?', a: 'Plans start at $29/month (Starter: 450 credits/month). Web and mobile builds cost 30 credits; edits cost 2 credits. Done-for-you builds start at $199.' },
     ],
   },
   {
@@ -205,7 +205,7 @@ export const USE_CASES: UseCase[] = [
       { q: 'How is WyberAi different from other AI app builders?', a: 'Most tools build web apps only. WyberAi builds both web and mobile apps, generates fresh code (no templates), auto-fixes build errors, includes 27 integrations, and gives you full GitHub ownership.' },
       { q: 'Do I need technical knowledge?', a: 'No. WyberAi is designed for non-technical founders, operators, and makers. You describe what you want; we generate it.' },
       { q: 'How fast does it generate?', a: 'Most apps generate in minutes. You see the code streaming in real time so you\'re never waiting on a blank screen.' },
-      { q: 'What does it cost?', a: 'Plans start at $29/month (Starter: 150 credits). Builder is $79/month (500 credits). Pro is $199/month (1,500 credits). Every plan unlocks all features — credits are the only currency.' },
+      { q: 'What does it cost?', a: 'Plans start at $29/month (Starter: 450 credits). Builder is $79/month (1,500 credits). Pro is $199/month (4,500 credits). Every plan unlocks all features — credits are the only currency.' },
     ],
   },
   {

@@ -16,9 +16,9 @@ You help users with:
 - Feature questions and best practices
 
 Pricing (all features unlocked on every plan — no feature gates):
-- Starter: $29/month ($23/mo annual) — 150 credits/month
-- Builder: $79/month ($63/mo annual) — 500 credits/month
-- Pro: $199/month ($159/mo annual) — 1,500 credits/month
+- Starter: $29/month ($23/mo annual) — 450 credits/month
+- Builder: $79/month ($63/mo annual) — 1,500 credits/month
+- Pro: $199/month ($159/mo annual) — 4,500 credits/month
 - Enterprise: custom pricing (SSO, audit logs, org roles)
 - Top-ups: 40cr/$19 · 100cr/$49 · 200cr/$99 — credits never expire
 

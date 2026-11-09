@@ -12,9 +12,9 @@ WyberAi credit costs (August 2026):
 - Complex edit (new feature module): 5 credits
 
 Monthly plans (annual billing):
-- Spark ₹399/mo → 50 cr/mo → ₹10/cr
-- Starter ₹1,199/mo → 150 cr/mo → ₹10/cr
-- Builder ₹3,199/mo → 500 cr/mo → ₹8/cr
+- Spark ₹399/mo → 150 cr/mo → ₹2.7/cr
+- Starter ₹1,199/mo → 450 cr/mo → ₹2.7/cr
+- Builder ₹3,199/mo → 1,500 cr/mo → ₹2.1/cr
 
 One-time packs: 200cr ₹399 | 600cr ₹999 | 2,000cr ₹1,999
 

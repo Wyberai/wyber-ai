@@ -43,11 +43,11 @@ export default function CreditsPage() {
         <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 20, letterSpacing: '-0.02em' }}>Plans</h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
           {[
-            { plan: 'Starter',  price: '$29',  credits: 150,   color: '#22c55e' },
-            { plan: 'Builder',  price: '$79',  credits: 500,   color: '#0EA5E9' },
-            { plan: 'Pro',      price: '$199', credits: 1500,  color: '#a78bfa' },
-            { plan: 'Growth',   price: '$399', credits: 4000,  color: '#f59e0b' },
-            { plan: 'Scale',    price: '$799', credits: 10000, color: '#f97316' },
+            { plan: 'Starter',  price: '$29',  credits: 450,   color: '#22c55e' },
+            { plan: 'Builder',  price: '$79',  credits: 1500,  color: '#0EA5E9' },
+            { plan: 'Pro',      price: '$199', credits: 4500,  color: '#a78bfa' },
+            { plan: 'Growth',   price: '$399', credits: 12000, color: '#f59e0b' },
+            { plan: 'Scale',    price: '$799', credits: 30000, color: '#f97316' },
           ].map(({ plan, price, credits, color }) => (
             <div key={plan} style={{ padding: 20, borderRadius: 12, background: '#0d141e', border: `1px solid ${color}30` }}>
               <div style={{ fontSize: 11, fontWeight: 700, color, textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: 8 }}>{plan}</div>
@@ -61,7 +61,7 @@ export default function CreditsPage() {
 
       <section style={{ padding: 20, borderRadius: 12, background: 'rgba(14,165,233,0.05)', border: '1px solid rgba(14,165,233,0.2)' }}>
         <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 12, color: '#0EA5E9' }}>How we compare</h3>
-        <p style={{ fontSize: 13, color: '#9aa8bb', lineHeight: 1.8 }}>WyberAi Starter gives you <strong style={{ color: '#0EA5E9' }}>150 credits for $29/month</strong> — all features unlocked on every plan, no employee caps or feature gates. Credits work across every product.</p>
+        <p style={{ fontSize: 13, color: '#9aa8bb', lineHeight: 1.8 }}>WyberAi Starter gives you <strong style={{ color: '#0EA5E9' }}>450 credits for $29/month</strong> — all features unlocked on every plan, no employee caps or feature gates. Credits work across every product.</p>
         <p style={{ fontSize: 11, color: '#8797ab', marginTop: 12 }}>Monthly credits roll over. Top-up credits never expire. Credits are non-refundable once used.</p>
       </section>
     </div>

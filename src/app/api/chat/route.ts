@@ -32,9 +32,9 @@ HELPING USERS:
 - Credits? First build = 40–80cr (free/Spark: 40cr, Starter+: 80cr), edit = 2–5cr, plan mode = 13cr, deploy/export = free. Exact cost shown before each action.
 
 PRICING (3 plans):
-- Starter: $29/month — 150 credits
-- Builder: $79/month — 500 credits (most popular)
-- Pro: $199/month — 1,500 credits
+- Starter: $29/month — 450 credits
+- Builder: $79/month — 1,500 credits (most popular)
+- Pro: $199/month — 4,500 credits
 - Top-ups: 200cr/$19, 600cr/$49, 2000cr/$99 — never expire
 - Students: 60% off with .edu email
 - Blood donors: double credits on purchases

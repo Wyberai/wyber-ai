@@ -48,7 +48,7 @@ export default function Post() {
             </div>
             {[
               ['Price', '$29/month (Starter)', '$25/month'],
-              ['Credits', '150/month', '~250/month'],
+              ['Credits', '450/month', '~250/month'],
               ['Products included', '6 (web, mobile, agents, workflows, employees, GTM)', '1 (web only)'],
               ['Templates', 'Always fresh AI code', 'Limited'],
               ['Top-up expiry', 'Never', 'Monthly'],

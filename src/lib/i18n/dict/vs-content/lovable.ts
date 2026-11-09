@@ -40,7 +40,7 @@ export const LOVABLE_CONTENT: Record<Locale, VsContent> = {
       { feature: 'India/APAC pricing', wyber: '✓ INR soon', other: 'USD only', winner: 'wyber' },
     ],
     faqs: [
-      { q: 'How does WyberAi pricing compare to Lovable?', a: 'WyberAi Starter is $29/month for 150 credits vs Lovable\'s $25/month for ~250 credits. WyberAi includes mobile apps, 27 integrations, and fresh code generation that Lovable doesn\'t offer. Top-ups on Wyber never expire.' },
+      { q: 'How does WyberAi pricing compare to Lovable?', a: 'WyberAi Starter is $29/month for 450 credits vs Lovable\'s $25/month for ~250 credits. WyberAi includes mobile apps, 27 integrations, and fresh code generation that Lovable doesn\'t offer. Top-ups on Wyber never expire.' },
       { q: 'Can WyberAi build mobile apps? Lovable can\'t.', a: 'Correct. Lovable generates React web apps only. WyberAi also generates full React Native + Expo mobile apps that run on iOS and Android. You can scan a QR code to preview on your phone instantly.' },
       { q: 'Does WyberAi build mobile apps? Lovable doesn\'t.', a: 'WyberAi builds both web and mobile apps (React Native + Expo) from the same workspace. Lovable only builds web apps. WyberAi also includes self-healing builds that auto-fix errors, so your app ships clean every time.' },
       { q: 'Which is better for non-technical founders?', a: 'Both tools are designed for non-technical users. WyberAi adds upfront credit estimates so you always know the cost before generating, and guided prompts help you describe what you want.' },

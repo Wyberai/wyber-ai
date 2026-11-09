@@ -67,9 +67,9 @@ function btn(label: string, url: string, color = '#0EA5E9'): string {
 // which collapsed the card spacing). Currency-aware: pass 'INR' to show rupee
 // price points to Indian users; defaults to USD so existing callers are unchanged.
 const TOPUPS: [label: string, key: string][] = [
-  ['40 credits', 'topup_200'],
-  ['100 credits', 'topup_600'],
-  ['200 credits', 'topup_2000'],
+  ['120 credits', 'topup_200'],
+  ['300 credits', 'topup_600'],
+  ['600 credits', 'topup_2000'],
 ]
 function topUpBlock(currency: Currency = 'USD'): string {
   const prices = currency === 'INR' ? PLAN_VALUE_INR : PLAN_VALUE
@@ -817,7 +817,7 @@ export async function sendCreditLowEmail(to: string, remaining: number, currency
     ${p(`Everything is fine. Totally fine. You have <strong style="color:#f0a429">${remaining} credits</strong> left, which is roughly ${remaining >= 30 ? 'one build' : 'a few edits'} before the room is fully on fire.`)}
     ${p('Top up before the flames reach the desk — top-up credits never expire and are yours forever.')}
     ${topUpBlock(currency)}
-    ${p('Or upgrade to the <a href="' + APP_URL + '/pricing" style="color:#0EA5E9">Builder plan</a> — 500 credits/month at ' + formatPrice(prices.builder_monthly, currency) + '.')}
+    ${p('Or upgrade to the <a href="' + APP_URL + '/pricing" style="color:#0EA5E9">Builder plan</a> — 1,500 credits/month at ' + formatPrice(prices.builder_monthly, currency) + '.')}
   `, `${remaining} credits remaining`)
 
   return sendMail({ from: FROM_NOTIF, to, subject: `This is fine — ${remaining} credits remaining 🔥`, html })
@@ -1422,7 +1422,7 @@ export async function sendPaywallHitEmail(to: string, tier: string, currency: Cu
     <div style="text-align:center;margin:28px 0">
       ${btn('See what unlocks it →', `${APP_URL}/pricing`, '#f0a429')}
     </div>
-    ${p(`Builder plan starts at ${formatPrice(prices.builder_monthly, currency)}/mo and comes with 500 credits a month.`)}
+    ${p(`Builder plan starts at ${formatPrice(prices.builder_monthly, currency)}/mo and comes with 1,500 credits a month.`)}
   `, `${tier} needs a higher plan`)
   return sendMail({ from: FROM_NOTIF, to, subject: `That model needs a higher plan`, html })
 }
@@ -1463,8 +1463,8 @@ export async function sendWinBackEmail(to: string, name: string, remaining: numb
 export async function sendUnusedCreditsEmail(to: string, name: string, credits: number, unsubUrl: string, currency: Currency = 'USD') {
   const annualFrom = currency === 'INR' ? '₹399/mo' : '$23/mo'
   const annualDesc = currency === 'INR'
-    ? '50–150 credits/mo — 2 months free'
-    : '150 credits/mo — 2 months free'
+    ? '150–450 credits/mo — 2 months free'
+    : '450 credits/mo — 2 months free'
   const html = wrap(`
     ${h1('You have credits just sitting there.')}
     ${p(`${name} — you have <strong style="color:#f0f0f4">${credits} free credits</strong> in your account and haven't used a single one. That's a full working app you haven't built yet.`)}

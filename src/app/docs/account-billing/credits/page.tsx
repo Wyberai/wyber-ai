@@ -59,11 +59,11 @@ export default function Page() {
           <tbody>
             {[
               ['Free', '30 on signup', '5/day', 'Refills up to 30'],
-              ['Starter ($29/mo)', '150', '—', '150'],
-              ['Builder ($79/mo)', '500', '—', '500'],
-              ['Pro ($199/mo)', '1,500', '—', '1,500'],
-              ['Growth ($399/mo)', '4,000', '—', '4,000'],
-              ['Scale ($799/mo)', '10,000', '—', '10,000'],
+              ['Starter ($29/mo)', '450', '—', '450'],
+              ['Builder ($79/mo)', '1,500', '—', '1,500'],
+              ['Pro ($199/mo)', '4,500', '—', '4,500'],
+              ['Growth ($399/mo)', '12,000', '—', '12,000'],
+              ['Scale ($799/mo)', '30,000', '—', '30,000'],
             ].map(([plan, base, daily, max], i) => (
               <tr key={plan} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', background: i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent' }}>
                 <td style={{ padding: '10px 12px', color: 'rgba(255,255,255,0.85)', fontWeight: 500 }}>{plan}</td>
@@ -85,9 +85,9 @@ export default function Page() {
         </p>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
           {[
-            { credits: '50 credits', price: '$9.99' },
-            { credits: '150 credits', price: '$24.99' },
-            { credits: '500 credits', price: '$69.99' },
+            { credits: '120 credits', price: '$19' },
+            { credits: '300 credits', price: '$49' },
+            { credits: '600 credits', price: '$99' },
           ].map(p => (
             <div key={p.credits} style={{ background: 'rgba(14,165,233,0.06)', border: '1px solid rgba(14,165,233,0.2)', borderRadius: 10, padding: '14px 18px', minWidth: 140 }}>
               <div style={{ fontSize: 18, fontWeight: 700, color: '#0EA5E9', marginBottom: 4 }}>{p.credits}</div>

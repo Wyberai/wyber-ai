@@ -3985,7 +3985,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
                         <div>
                           <div style={{ fontSize:12, fontWeight:700, color:'#38bdf8', marginBottom:4 }}>Build more, faster.</div>
                           <div style={{ fontSize:12, color:'var(--ide-text2)', lineHeight:1.5 }}>
-                            You're on free — {credits} credit{credits === 1 ? '' : 's'} left. Go annual from {creditsCurrency === 'INR' ? '₹399/mo' : '$23/mo'} and <span style={{ color:'#22c55e', fontWeight:700 }}>save 20%</span> — 150 credits/mo.
+                            You're on free — {credits} credit{credits === 1 ? '' : 's'} left. Go annual from {creditsCurrency === 'INR' ? '₹399/mo' : '$23/mo'} and <span style={{ color:'#22c55e', fontWeight:700 }}>save 20%</span> — {PLAN_FACTS.starter.credits} credits/mo.
                           </div>
                         </div>
                         <button onClick={() => setBuildNudgeDismissed(true)} style={{ background:'none', border:'none', color:'var(--ide-text3)', cursor:'pointer', fontSize:16, lineHeight:1, padding:2, flexShrink:0 }}>×</button>
