@@ -1,6 +1,9 @@
 import { MetadataRoute } from 'next'
 
-const DISALLOW = ['/dashboard', '/settings', '/api/', '/project/']
+// Areas that need a login. Without these rules Google follows links into them, gets redirected to /login, and reports
+// the URLs as "Page with redirect" (72 of them in Search Console on 2026-11-09), which wastes the crawl on pages that
+// can never be indexed.
+const DISALLOW = ['/dashboard', '/settings', '/api/', '/project/', '/gtm/', '/ai-employees/', '/employees/', '/clients', '/api-keys', '/affiliate/', '/admin/']
 // /api/og/ serves share-card images; LinkedInBot and other preview crawlers
 // honour robots.txt, so it must stay reachable despite the /api/ block
 // (the longer, more specific Allow wins).

@@ -5,9 +5,9 @@ import { DEFAULT_LOCALE, type Locale } from '@/lib/i18n/locales'
 
 const COLS: { heading: string; links: [string, string][] }[] = [
   { heading: 'Product', links: [['Pricing', '/pricing'], ['Replace your SaaS', '/byos'], ['Agencies', '/agencies'], ['The Journey', '/space-journey'], ['Web Apps', '/use-cases/no-code-web-app-builder'], ['MCP Server', '/mcp'], ['Connectors', '/connectors'], ['Changelog', '/changelog'], ['Status', '/status']] },
-  { heading: 'Resources', links: [['Learning Paths', '/learn'], ['Documentation', '/docs'], ['Use Cases', '/use-cases'], ['Blog', '/blog'], ['Free scan', '/tools'], ['Marketplace', '/marketplace']] },
-  { heading: 'Compare', links: [['vs Lovable', '/vs/lovable'], ['vs Bolt', '/vs/bolt'], ['vs v0', '/vs/v0'], ['vs Replit', '/vs/replit'], ['vs Cursor', '/vs/cursor']] },
-  { heading: 'Company', links: [['Founders', '/founders'], ['Press', '/press'], ['Affiliates', '/affiliates'], ['Community', '/community'], ['Privacy', '/privacy'], ['Terms', '/terms']] },
+  { heading: 'Resources', links: [['Learning Paths', '/learn'], ['Documentation', '/docs'], ['Use Cases', '/use-cases'], ['Blog', '/blog'], ['App ideas', '/build'], ['Free scan', '/tools'], ['Marketplace', '/marketplace']] },
+  { heading: 'Compare', links: [['vs Lovable', '/vs/lovable'], ['vs Bolt', '/vs/bolt'], ['vs v0', '/vs/v0'], ['vs Replit', '/vs/replit'], ['vs Cursor', '/vs/cursor'], ['Lovable alternatives', '/lovable-alternatives']] },
+  { heading: 'Company', links: [['Founders', '/founders'], ['Press', '/press'], ['Affiliates', '/affiliates'], ['Community', '/community-programs'], ['Privacy', '/privacy'], ['Terms', '/terms']] },
 ]
 
 export function SignalFooter({ locale = DEFAULT_LOCALE }: { locale?: Locale } = {}) {

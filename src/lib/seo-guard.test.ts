@@ -61,6 +61,20 @@ describe('page titles', () => {
   })
 })
 
+describe('crawl paths', () => {
+  it('robots.txt keeps crawlers out of the login-only areas (they redirect to /login and show as "Page with redirect")', () => {
+    const robots = read('src/app/robots.ts')
+    for (const p of ['/gtm/', '/ai-employees/', '/employees/', '/dashboard', '/api-keys', '/admin/']) expect(robots).toContain(`'${p}'`)
+  })
+
+  it('the footer links every page to the app-ideas hub and no longer links to a redirect', () => {
+    const footer = read('src/components/signal/SignalFooter.tsx')
+    expect(footer).toContain("'/build'")
+    expect(footer).toContain("'/lovable-alternatives'")
+    expect(footer).not.toContain("'/community'") // /community redirects to /gallery
+  })
+})
+
 describe('structured data and llms.txt', () => {
   it('the pricing page carries FAQPage markup built from the visible questions', () => {
     const layout = read('src/app/pricing/layout.tsx')
