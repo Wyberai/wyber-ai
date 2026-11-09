@@ -4,7 +4,7 @@ import { WyberLogo } from '@/components/shared/WyberLogo'
 import { USE_CASES } from './[slug]/data'
 
 export const metadata: Metadata = {
-  title: 'Use Cases — Build Web Apps & Mobile Apps | WyberAi',
+  title: 'Use Cases: Build Web Apps & Mobile Apps',
   description: 'Explore how WyberAi helps you build web apps and mobile apps from plain English — no code required.',
   alternates: { canonical: 'https://wyberai.com/use-cases' },
   openGraph: { title: 'Use Cases — WyberAi', description: 'Build web apps and mobile apps from plain English. No code required.' },

@@ -1,4 +1,5 @@
 import { MetadataRoute } from 'next'
+import { DOC_NAV } from '@/app/docs/_nav'
 import { BUILD_PAGES } from './build/data'
 import { LIBRARY_TOOLS } from '@/lib/byos/slug'
 
@@ -35,6 +36,20 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: base, lastModified: now, changeFrequency: 'weekly', priority: 1.0 },
     { url: `${base}/pricing`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
     { url: `${base}/websites`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
+    { url: `${base}/create`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
+    { url: `${base}/solve`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
+    { url: `${base}/agencies`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${base}/marketplace`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${base}/mcp`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${base}/ecommerce`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${base}/learn`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${base}/connectors`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${base}/founders`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${base}/designers`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${base}/marketers`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${base}/tools`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${base}/complexity-guide`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${base}/setup-call`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${base}/vs/lovable`, lastModified: now, changeFrequency: 'monthly', priority: 0.85 },
     { url: `${base}/vs/bolt`, lastModified: now, changeFrequency: 'monthly', priority: 0.85 },
     { url: `${base}/vs/v0`, lastModified: now, changeFrequency: 'monthly', priority: 0.85 },
@@ -67,6 +82,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/blog/how-to-deploy-ai-generated-app`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${base}/blog/build-internal-tools-with-ai`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${base}/docs`, lastModified: now, changeFrequency: 'weekly', priority: 0.7 },
+    ...DOC_NAV.flatMap(section => section.links).map(link => ({ url: `${base}${link.href}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.6 })),
     { url: `${base}/privacy`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
     { url: `${base}/terms`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
     { url: `${base}/about`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },

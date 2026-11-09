@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import ToolsClient from './ToolsClient'
 
 export const metadata: Metadata = {
-  title: 'Free App Security + SEO Scanner — WyberAi',
+  title: 'Free App Security + SEO Scanner',
   description:
     'Is your app leaking user data, and can Google find it? Run a free security scan (attacker’s-eye database probe) and SEO audit in seconds. No signup.',
   openGraph: {

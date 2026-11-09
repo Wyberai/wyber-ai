@@ -8,7 +8,7 @@ import { CHALLENGE_GALLERY_ENABLED } from '@/lib/challenge'
 
 
 export const metadata: Metadata = {
-  title: 'Wyber Premier League — Win $1,000 Every Month | WyberAi',
+  title: 'Wyber Premier League: Win $1,000 Every Month',
   description: 'Build a real web app, website, or SaaS on WyberAi and enter Wyber Premier League. Free to enter, unlimited entries. $1,000 / $500 / $300 up for grabs every single month.',
   openGraph: {
     title: 'Wyber Premier League — Win $1,000 Every Month',

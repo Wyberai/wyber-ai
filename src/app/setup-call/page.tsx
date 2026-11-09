@@ -1,6 +1,12 @@
+import type { Metadata } from 'next'
 import { headers } from 'next/headers'
 import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
+
+export const metadata: Metadata = {
+  title: 'Done-for-you app builds: a free 15-minute scoping call',
+  description: 'Tell us what you need. We scope it, give you a firm quote, and build it for you. Start with a free 15-minute consultation.',
+}
 
 const CAL_LINK = 'https://cal.com/wyberai/wyber-ai-build-consultation'
 

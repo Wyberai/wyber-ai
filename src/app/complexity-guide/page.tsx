@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 
 export const metadata: Metadata = {
-  title: 'Simple vs Medium vs Complex Apps — WyberAi Build Guide',
+  title: 'Simple vs Medium vs Complex Apps: the Build Guide',
   description: 'Understand what counts as a simple, medium, or complex app before booking a done-for-you build session with WyberAi.',
 }
 

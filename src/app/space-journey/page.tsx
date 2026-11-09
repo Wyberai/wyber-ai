@@ -1,6 +1,13 @@
+import type { Metadata } from 'next'
 import { resolveRegion, isOwnerPreview } from "@/lib/region";
 import { OwnerRegionSwitcher } from "@/components/shared/OwnerRegionSwitcher";
 import { JourneyClient } from "./JourneyClient";
+
+export const metadata: Metadata = {
+  title: 'Space journey (interactive demo)',
+  description: 'An interactive scroll demo from WyberAi.',
+  robots: { index: false, follow: true },
+}
 
 // Same regional contract as /pricing: rendered per request from the visitor's
 // IP country — never cached, so an India-rendered page can NEVER be served to

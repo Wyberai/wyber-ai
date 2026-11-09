@@ -51,7 +51,7 @@ export const metadata: Metadata = {
     images: ['/api/og?title=Build%20any%20digital%20product&sub=Web%20Apps%20%C2%B7%20Mobile%20%C2%B7%20Websites%20%C2%B7%20SaaS%20%C2%B7%20AI-powered'],
   },
   robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
-  alternates: { canonical: 'https://wyberai.com' },
+  alternates: { canonical: './' },
 }
 
 export const viewport = { themeColor: '#0EA5E9' };

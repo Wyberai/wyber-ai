@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Status - WyberAi System Status',
+  title: 'System status',
   description: 'Live status for WyberAi services.',
 };
 

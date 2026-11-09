@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 
 export const metadata: Metadata = {
-  title: 'Free Founder Call — WyberAi',
+  title: 'Free Founder Call',
   description: 'Have an app idea but don\'t know where to start? Book a free 30-min call with our Founder. We\'ll scope it, quote it, and give you a clear path. No commitment.',
   openGraph: {
     title: 'Free Founder Call — WyberAi',

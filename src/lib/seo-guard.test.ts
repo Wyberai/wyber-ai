@@ -1,0 +1,62 @@
+import { describe, it, expect } from 'vitest'
+import fs from 'node:fs'
+import path from 'node:path'
+
+/**
+ * Search Console (2026-11-09) showed 38 of about 254 known pages indexed. Part of the cause was in our own metadata:
+ * the root layout set one absolute canonical (the homepage) that every page without its own canonical inherited, and the
+ * docs layout set another (/docs) for every documentation page, so Google was told each of them was a duplicate.
+ * These tests keep that from coming back.
+ */
+const read = (p: string) => fs.readFileSync(path.join(process.cwd(), p), 'utf8')
+
+describe('canonicals', () => {
+  it('the root layout gives each page a canonical that points at itself', () => {
+    expect(read('src/app/layout.tsx')).toMatch(/alternates:\s*\{\s*canonical:\s*'\.\/'\s*\}/)
+  })
+
+  it('the docs layout does not force one canonical on every documentation page', () => {
+    expect(read('src/app/docs/layout.tsx')).not.toMatch(/canonical/)
+  })
+})
+
+describe('sitemap', () => {
+  const sitemap = read('src/app/sitemap.ts')
+
+  it('does not list pages that say they should not be indexed', () => {
+    // /gallery is noindex; /premier-league and /employees (a redirect) are not content pages.
+    for (const p of ['/gallery', '/premier-league', '/employees', '/templates', '/login', '/signup']) {
+      expect(sitemap).not.toContain('${base}' + p + '`')
+    }
+  })
+
+  it('lists the core product pages and every docs page', () => {
+    for (const p of ['/create', '/solve', '/agencies', '/mcp', '/marketplace']) expect(sitemap).toContain('${base}' + p + '`')
+    expect(sitemap).toContain('DOC_NAV')
+  })
+})
+
+describe('page titles', () => {
+  // The site title template appends " | WyberAi", so a page title must not repeat the brand at the end.
+  const files = ['build', 'complexity-guide', 'connectors', 'credits', 'security', 'tools', 'use-cases', 'premier-league', 'status', 'consult']
+  for (const f of files) {
+    it(`/${f} does not repeat the brand in its title`, () => {
+      const src = read(`src/app/${f}/page.tsx`)
+      const first = src.match(/title:\s*'([^']*)'/)
+      expect(first).not.toBeNull()
+      expect(first![1]).not.toMatch(/(\||—|-)\s*WyberAi\b/i)
+    })
+  }
+
+  it('login and the thin client-drawn pages are kept out of the index', () => {
+    expect(read('src/app/login/layout.tsx')).toMatch(/index:\s*false/)
+    expect(read('src/app/templates/page.tsx')).toMatch(/index:\s*false/)
+    expect(read('src/app/space-journey/page.tsx')).toMatch(/index:\s*false/)
+  })
+
+  it('pages that used to show the homepage title have their own', () => {
+    expect(read('src/app/learn/layout.tsx')).toContain('title:')
+    expect(read('src/app/community-programs/layout.tsx')).toContain('title:')
+    expect(read('src/app/setup-call/page.tsx')).toContain('title:')
+  })
+})

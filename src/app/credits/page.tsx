@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { creditCost, IMAGE_GEN_COST } from '@/lib/credits'
-export const metadata: Metadata = { title: 'Credits & Pricing — WyberAi', description: 'Understand how WyberAi credits work and what each generation costs.' }
+export const metadata: Metadata = { title: 'Credits & Pricing', description: 'Understand how WyberAi credits work and what each generation costs.' }
 
 export default function CreditsPage() {
   return (

@@ -3,7 +3,7 @@ import { Footer } from '@/components/shared/FooterClient';
 import { ConnectorLogo } from '@/components/shared/ConnectorLogo';
 import Link from 'next/link';
 import type { Metadata } from 'next';
-export const metadata: Metadata = { title: 'Connectors — WyberAi', description: 'Connect your app to 68 services with real OAuth — Salesforce, SAP, ServiceNow, Workday, Slack, Teams, and more — via Composio.' };
+export const metadata: Metadata = { title: 'Connectors: link your app to 68 services', description: 'Connect your app to 68 services with real OAuth — Salesforce, SAP, ServiceNow, Workday, Slack, Teams, and more — via Composio.' };
 // `soon: true` entries have no Composio toolkit (verified against the live
 // catalog) and have no real auth path yet — shown but not clickable, not
 // counted in the "connectors" total below.

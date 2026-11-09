@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 export const metadata: Metadata = {
-  title: 'Status — WyberAi System Status',
+  title: 'System status',
   description: 'Live status for WyberAi services: AI generation, live preview, authentication, database, deployment, and email.',
 };
 // Real checks, re-run at most once a minute. Every row below is either a
