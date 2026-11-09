@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { createAnthropic } from '@/lib/ai-usage'
 import { createClient } from '@/lib/supabase/server'
 import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+const anthropic = createAnthropic('app/api/generate-canvas', { apiKey: process.env.ANTHROPIC_API_KEY! })
 
 const SYSTEM = `You are a no-code agent builder. Given a plain English description, generate a visual automation agent as JSON nodes and edges.
 

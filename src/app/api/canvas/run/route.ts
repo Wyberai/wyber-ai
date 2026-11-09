@@ -2,13 +2,14 @@
 import { createClient, createServiceClient, createAdminClient } from '@/lib/supabase/server'
 import { getDecryptedSecret } from '@/lib/get-decrypted-secret'
 import Anthropic from '@anthropic-ai/sdk'
+import { createAnthropic } from '@/lib/ai-usage'
 import { creditCost } from '@/lib/credits'
 import { Composio } from '@composio/core'
 import { sendWorkflowCompletedEmail, sendWorkflowFailedEmail } from '@/lib/email'
 import { withCacheBreakpoint } from '@/lib/anthropic-cache'
 import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+const anthropic = createAnthropic('app/api/canvas/run', { apiKey: process.env.ANTHROPIC_API_KEY! })
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

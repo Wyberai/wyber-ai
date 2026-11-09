@@ -1,7 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { createAnthropic } from '@/lib/ai-usage'
 import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 
-const anthropic = new Anthropic()
+const anthropic = createAnthropic('lib/consultation-brief')
 
 const PRICING = `
 WyberAi credit costs (August 2026):

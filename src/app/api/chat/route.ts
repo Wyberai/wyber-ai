@@ -1,11 +1,12 @@
 import { randomUUID } from 'crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { createAnthropic } from '@/lib/ai-usage'
 import { createClient } from '@/lib/supabase/server'
 import { rateLimit } from '@/lib/rate-limit'
 import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+const anthropic = createAnthropic('app/api/chat', { apiKey: process.env.ANTHROPIC_API_KEY! })
 const ANON_COOKIE = 'wyb_anon_id'
 
 const SYSTEM = `You are the WyberAi assistant — a helpful companion that helps users build, ship, and automate with the platform.

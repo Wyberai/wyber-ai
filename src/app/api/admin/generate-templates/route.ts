@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
+import { createAnthropic } from '@/lib/ai-usage'
 import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 
 export const maxDuration = 300
@@ -13,7 +14,7 @@ function getAdmin() {
   )
 }
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+const anthropic = createAnthropic('app/api/admin/generate-templates', { apiKey: process.env.ANTHROPIC_API_KEY })
 
 const SYSTEM = `You generate complete, self-contained React apps. Output ONLY <file> blocks — no prose.
 

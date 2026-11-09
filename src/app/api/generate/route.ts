@@ -4734,9 +4734,9 @@ ${code}
       if (usageLogged) return
       if (!(totalOutputTokens > 0 || totalInputTokens > 0)) return
       usageLogged = true
-      // $/MTok, checked against Anthropic's published pricing 2026-08-01
-      // (Sonnet's intro rate runs through 2026-08-31, then reverts to
-      // $3/$15 — recalibrate this table then too). gpt/wybercode don't
+      // $/MTok, checked against Anthropic's published pricing 2026-11-09
+      // (Sonnet 5's $2/$10 introductory price became the standard price; the
+      // planned rise to $3/$15 on 2026-09-01 did not happen). gpt/wybercode don't
       // bill through Anthropic; left at 0 rather than guessed.
       //
       // cacheWrite/cacheRead were MISSING entirely until now — this route
@@ -4753,7 +4753,7 @@ ${code}
       // $65.27 true). Every "real cost" number this table has ever produced
       // was wrong by roughly that multiplier.
       const RATE_PER_MTOK: Record<string, { input: number; output: number; cacheWrite: number; cacheRead: number }> = {
-        fast: { input: 2, output: 10, cacheWrite: 2.5, cacheRead: 0.2 },
+        fast: { input: 2, output: 10, cacheWrite: 2.5, cacheRead: 0.1 }, // Sonnet 5.5; cache hits are 0.05x input per Anthropic's pricing page, checked 2026-11-09
         default: { input: 5, output: 25, cacheWrite: 6.25, cacheRead: 0.5 },
         premium: { input: 5, output: 25, cacheWrite: 6.25, cacheRead: 0.5 },
         fable: { input: 10, output: 50, cacheWrite: 12.5, cacheRead: 1 },

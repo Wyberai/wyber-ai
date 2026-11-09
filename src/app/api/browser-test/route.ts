@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { runSmokeTest } from '@/lib/smoke-test';
 import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models';
+import { loggedFetch } from '@/lib/ai-usage'
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
@@ -11,7 +12,7 @@ export async function POST(req: NextRequest) {
   const { url } = await req.json();
   if (!url) return NextResponse.json({ error: 'URL required' }, { status: 400 });
 
-  const analyzeRes = await fetch('https://api.anthropic.com/v1/messages', {
+  const analyzeRes = await loggedFetch('app/api/browser-test', 'https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY!, 'anthropic-version': '2023-06-01' },
     body: JSON.stringify({

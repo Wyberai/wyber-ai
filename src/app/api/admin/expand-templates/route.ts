@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
+import { createAnthropic } from '@/lib/ai-usage'
 import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 
 export const maxDuration = 300
@@ -13,7 +14,7 @@ function getAdmin() {
   )
 }
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+const anthropic = createAnthropic('app/api/admin/expand-templates', { apiKey: process.env.ANTHROPIC_API_KEY! })
 
 // Categories and subcategories for massive template expansion
 const WEB_CATEGORIES: Record<string, string[]> = {

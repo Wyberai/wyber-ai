@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
+import { createAnthropic } from '@/lib/ai-usage'
 import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { sendSecurityAlertEmail } from '@/lib/email';
 import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models';
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY ?? 'placeholder' });
+const client = createAnthropic('app/api/safety', { apiKey: process.env.ANTHROPIC_API_KEY ?? 'placeholder' });
 
 interface SafetyResult {
   safe: boolean;

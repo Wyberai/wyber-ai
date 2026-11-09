@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { createAnthropic } from '@/lib/ai-usage'
 import { rateLimit } from '@/lib/rate-limit'
 import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 import { fetchPublicPage, isBlockedTarget } from '@/lib/websites/safe-fetch'
@@ -12,7 +13,7 @@ import { fetchPublicPage, isBlockedTarget } from '@/lib/websites/safe-fetch'
 // stashes for after signup. One CHEAP_MODEL call, no credits. The paid build
 // happens later from the dashboard (and needs WEBSITE_LAUNCH credits upfront).
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY ?? 'placeholder' })
+const client = createAnthropic('app/api/websites/plan', { apiKey: process.env.ANTHROPIC_API_KEY ?? 'placeholder' })
 
 const SCHEMA = {
   type: 'object',

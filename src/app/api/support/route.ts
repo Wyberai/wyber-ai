@@ -1,9 +1,10 @@
 import { NextRequest } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { createAnthropic } from '@/lib/ai-usage'
 import { rateLimit } from '@/lib/rate-limit'
 import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+const client = createAnthropic('app/api/support', { apiKey: process.env.ANTHROPIC_API_KEY })
 
 const SYSTEM = `You are Wyber, the friendly AI support assistant for WyberAi (wyberai.com) — an AI platform that turns plain English into production-ready web apps, mobile apps, websites, and SaaS products.
 

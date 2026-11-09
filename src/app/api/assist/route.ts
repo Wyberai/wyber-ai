@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { createAnthropic } from '@/lib/ai-usage'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 
@@ -7,7 +8,7 @@ import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 // can brush past 60s — getting killed mid-stream reads as another truncation.
 export const maxDuration = 120
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+const client = createAnthropic('app/api/assist', { apiKey: process.env.ANTHROPIC_API_KEY! })
 
 // Haiku stays for the one-token classification (it's a coin-flip task).
 // Replies use Sonnet: Haiku kept hallucinating state ("Done with photo

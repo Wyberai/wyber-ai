@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { createAnthropic } from '@/lib/ai-usage'
 import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+const anthropic = createAnthropic('app/api/gtm/intent', { apiKey: process.env.ANTHROPIC_API_KEY! })
 
 // Intent signal detection via job postings (public signal for buying intent)
 // Uses Jina.ai reader to fetch job pages, then AI to extract signals

@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { createAnthropic } from '@/lib/ai-usage'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+const anthropic = createAnthropic('app/api/generate-flow', { apiKey: process.env.ANTHROPIC_API_KEY! })
 
 const SYSTEM = `You are WyberAi's automation builder. Your job is to generate a complete workflow flow from a plain English description.
 

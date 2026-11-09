@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { createAnthropic } from '@/lib/ai-usage'
 import { CHEAP_MODEL, CHEAP_THINKING, CODE_MODEL } from '@/lib/models'
 
 // The one place company agents call a model. Only the two approved models:
@@ -18,7 +19,7 @@ const MAX_CONTINUATIONS = 2
 export function anthropicCaller(apiKey: string | undefined = process.env.ANTHROPIC_API_KEY): CallModel {
   return async ({ system, user, tier, maxTokens, webSearch }) => {
     if (!apiKey) throw new Error('ANTHROPIC_API_KEY is not set')
-    const client = new Anthropic({ apiKey })
+    const client = createAnthropic('lib/ops/agents/llm', { apiKey })
     const model = tier === 'cheap' ? CHEAP_MODEL : CODE_MODEL
     const messages: Anthropic.MessageParam[] = [{ role: 'user', content: user }]
     let text = '', inputTokens = 0, outputTokens = 0

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { createAnthropic } from '@/lib/ai-usage'
 import { buildFixFileList } from '@/lib/auto-fix-context'
 import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 
@@ -12,7 +13,7 @@ import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 // budget while covering a realistic large-project repair pass.
 export const maxDuration = 300
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+const anthropic = createAnthropic('app/api/auto-fix', { apiKey: process.env.ANTHROPIC_API_KEY! })
 
 // Auto-fix endpoint: takes an error + the files that caused it, returns patched files
 // Costs 0 credits — error fixes are always free

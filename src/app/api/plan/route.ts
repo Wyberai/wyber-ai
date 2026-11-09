@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
+import { createAnthropic } from '@/lib/ai-usage'
 import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { MODEL_IDS, creditCost } from '@/lib/credits';
 import { detectDeps } from '@/lib/detect-deps';
 import { rateLimit } from '@/lib/rate-limit';
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY ?? 'placeholder' });
+const client = createAnthropic('app/api/plan', { apiKey: process.env.ANTHROPIC_API_KEY ?? 'placeholder' });
 
 // Shared icon vocabulary for both features and flow screens — a fixed enum
 // (not freeform emoji from the model) keeps every plan visually consistent.

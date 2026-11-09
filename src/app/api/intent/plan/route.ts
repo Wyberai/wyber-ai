@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse, after } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { createAnthropic } from '@/lib/ai-usage'
 import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 import { createAdminClient } from '@/lib/supabase/server'
 import { rateLimit } from '@/lib/rate-limit'
@@ -8,7 +9,7 @@ import { sanitizeVisitorText, isClassifiable } from '@/lib/intent/classify'
 import { detectScriptLang, isIntentLang } from '@/lib/intent/lang'
 import { PLAN_SYSTEM_PROMPT, buildPlanMessage, parsePlan } from '@/lib/intent/plan'
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY ?? 'placeholder' })
+const client = createAnthropic('app/api/intent/plan', { apiKey: process.env.ANTHROPIC_API_KEY ?? 'placeholder' })
 
 // "What we'd build first": a short sketch of the visitor's own app, shown after
 // their words have been understood. Flag-gated and India-only (404 elsewhere).

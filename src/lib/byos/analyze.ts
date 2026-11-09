@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { createAnthropic } from '@/lib/ai-usage'
 import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 import { cacheKey, resolvesPublicly } from './domain'
 import { isPlatformDomain } from './platforms'
@@ -264,7 +265,7 @@ async function run(domain: string, emit: Emit): Promise<AnalyzeResult> {
   emit({ stage: 'extracting', pages: pages.length })
   const body = pages.map(p => `<page path="${p.path}">\n${p.text.slice(0, PAGE_CHARS)}\n</page>`).join('\n')
   try {
-    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+    const client = createAnthropic('lib/byos/analyze', { apiKey: process.env.ANTHROPIC_API_KEY })
     const res = await client.messages.create({
       model: CHEAP_MODEL,
       max_tokens: 6000,
