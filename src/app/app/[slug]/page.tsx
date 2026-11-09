@@ -106,7 +106,8 @@ async function loadHtmlInner(slug: string): Promise<{ id: string; name: string; 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
   const loaded = await loadHtml(slug)
-  if (!loaded) return { title: 'App — WyberAi', description: 'Built with WyberAi' }
+  // A slug that is not a published app: keep it out of the index (it answers 200, so it would otherwise look like a real page).
+  if (!loaded) return { title: 'App not found', description: 'This app is not available.', robots: { index: false, follow: false } }
 
   const seo = extractSeo(loaded.html)
   const title = seo.title || `${loaded.name} — Built with WyberAi`

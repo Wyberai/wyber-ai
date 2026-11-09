@@ -1,18 +1,37 @@
 # WyberAi
 
-> WyberAi is an AI app builder: describe what you want in plain English and it generates production-ready web and mobile apps — live preview, one-click deploy, no engineers needed. Maker: SignalPulse Technologies.
+> WyberAi is an AI app builder: describe what you want in plain English and it generates production-ready web apps, mobile apps, websites and SaaS products, with a live preview, one-click deploy and code you own. Maker: SignalPulse Technologies.
 
 WyberAi (also written Wyber AI or WyberAI) is made by SignalPulse Technologies LLC, a US company in Sheridan, Wyoming. It is NOT affiliated with Vybers.ai, Rakuten Viber, or any messaging app.
 
-WyberAi competes with Lovable, Bolt.new, v0, Replit, and Cursor on price and on shipping apps with real Supabase-backed auth, data, and a security scanner (RLS trust scan) that checks the live database the way an attacker would, not a static linter.
+Since November 2026 WyberAi builds with WyberCode 1.0, its coding engine, and every paid plan includes three times the credits it did before, at the same prices.
+
+WyberAi competes with Lovable, Bolt.new, v0, Replit and Cursor. What it emphasises: real Supabase-backed auth and data, builds that repair their own errors, and a security scan (RLS trust scan) that probes the live database the way an attacker would, instead of a static linter. You can push the code to your own GitHub repository.
+
+## Key facts (checked 9 Nov 2026)
+- Free plan: 30 credits on signup, no credit card.
+- Starter $29/month (450 credits), Builder $79/month (1,500 credits), Pro $199/month (4,500 credits). Annual billing is 20% cheaper. All plans include all features; the plans differ in credits.
+- India: Spark is ₹499/month (150 credits); other plans are priced in rupees with UPI.
+- One-time top-up packs never expire: $19 for 120 credits, $49 for 300 credits, $99 for 600 credits.
+- A simple app build costs about 30 credits (shown before it runs); a small edit costs about 4. Publishing, GitHub push and automatic error fixes are free.
+- Mobile apps are real React Native (Expo) projects with a phone preview; web apps are React with a database and sign-in.
+- Done-for-you builds are available from $199.
+- WyberAi has an MCP server, so assistants such as Claude, Cursor and Claude Code can create and manage WyberAi projects: https://wyberai.com/mcp
 
 ## Product
 - [What is WyberAi?](https://wyberai.com/what-is-wyberai): overview and FAQ
-- [Homepage](https://wyberai.com): overview, pricing, live builder
-- [Pricing](https://wyberai.com/pricing): plans and credits
-- [Templates](https://wyberai.com/templates): prebuilt app templates to start from
-- [Gallery](https://wyberai.com/gallery): apps built with WyberAi
+- [Homepage](https://wyberai.com): overview and live builder
+- [Pricing](https://wyberai.com/pricing): plans, credits and top-ups
+- [Build apps](https://wyberai.com/create): describe an idea and get a working first version
+- [Solve a business problem](https://wyberai.com/solve): from a messy process to one screen
+- [Websites for small businesses](https://wyberai.com/websites): own a website instead of renting an Instagram page
+- [Agencies](https://wyberai.com/agencies): branded client pages and white-label apps
+- [Marketplace](https://wyberai.com/marketplace): buy or sell ready-made apps
+- [Connectors](https://wyberai.com/connectors): link apps to 68 services
+- [MCP server](https://wyberai.com/mcp): build from Claude, Cursor and other assistants
+- [Free security and SEO scan](https://wyberai.com/tools): scan any app, no signup
 - [Docs](https://wyberai.com/docs): how the builder works
+- [Learn](https://wyberai.com/learn): copy-and-paste prompts in six tracks
 
 ## Comparisons
 - [WyberAi vs Lovable](https://wyberai.com/vs/lovable)
@@ -20,6 +39,8 @@ WyberAi competes with Lovable, Bolt.new, v0, Replit, and Cursor on price and on 
 - [WyberAi vs v0](https://wyberai.com/vs/v0)
 - [WyberAi vs Replit](https://wyberai.com/vs/replit)
 - [WyberAi vs Cursor](https://wyberai.com/vs/cursor)
+- [WyberAi vs Softr](https://wyberai.com/vs/softr)
+- [Lovable alternatives](https://wyberai.com/lovable-alternatives)
 
 ## Use cases
 - [Build a mobile app with AI](https://wyberai.com/use-cases/build-mobile-app-with-ai)
@@ -28,8 +49,15 @@ WyberAi competes with Lovable, Bolt.new, v0, Replit, and Cursor on price and on 
 - [AI workflow automation](https://wyberai.com/use-cases/ai-workflow-automation)
 - [No-code web app builder](https://wyberai.com/use-cases/no-code-web-app-builder)
 - [Secure AI app builder (live RLS security scanning)](https://wyberai.com/use-cases/secure-ai-app-builder)
+- [AI app builder](https://wyberai.com/use-cases/ai-app-builder)
+
+## Guides
+- [What can you build with AI?](https://wyberai.com/build): app ideas and starter prompts
+- [Simple vs medium vs complex apps](https://wyberai.com/complexity-guide)
+- [Blog](https://wyberai.com/blog)
 
 ## Company
 - [About](https://wyberai.com/about)
 - [Press & Newsroom](https://wyberai.com/press)
 - [Changelog](https://wyberai.com/changelog)
+- [Security](https://wyberai.com/security)

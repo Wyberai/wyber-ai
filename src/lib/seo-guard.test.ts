@@ -60,3 +60,28 @@ describe('page titles', () => {
     expect(read('src/app/setup-call/page.tsx')).toContain('title:')
   })
 })
+
+describe('structured data and llms.txt', () => {
+  it('the pricing page carries FAQPage markup built from the visible questions', () => {
+    const layout = read('src/app/pricing/layout.tsx')
+    expect(layout).toContain("'@type': 'FAQPage'")
+    expect(layout).toContain('PRICING_STRINGS')
+  })
+
+  it('every blog post has Article markup from its route layout', () => {
+    const dir = path.join(process.cwd(), 'src/app/blog')
+    const posts = fs.readdirSync(dir).filter(d => fs.existsSync(path.join(dir, d, 'page.tsx')))
+    expect(posts.length).toBeGreaterThan(10)
+    for (const p of posts) expect(fs.existsSync(path.join(dir, p, 'layout.tsx')), p).toBe(true)
+  })
+
+  it('llms.txt quotes the same plan credits and prices as the plan file (assistants repeat this text)', async () => {
+    const { PLAN_FACTS, TOPUP_PACKS } = await import('./plans')
+    const llms = read('public/llms.txt')
+    const n = (v: number) => v.toLocaleString('en-US')
+    expect(llms).toContain(`Starter $${PLAN_FACTS.starter.monthlyPrice}/month (${n(PLAN_FACTS.starter.credits)} credits)`)
+    expect(llms).toContain(`Builder $${PLAN_FACTS.builder.monthlyPrice}/month (${n(PLAN_FACTS.builder.credits)} credits)`)
+    expect(llms).toContain(`Pro $${PLAN_FACTS.pro.monthlyPrice}/month (${n(PLAN_FACTS.pro.credits)} credits)`)
+    for (const t of TOPUP_PACKS) expect(llms).toContain(`$${t.price} for ${t.credits} credits`)
+  })
+})
