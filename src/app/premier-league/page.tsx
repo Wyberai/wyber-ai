@@ -5,12 +5,13 @@ import { EntrySubmit } from '@/components/challenge/ChallengeSection'
 import { OwnerRegionSwitcher } from '@/components/shared/OwnerRegionSwitcher'
 import { resolveRegion, isOwnerPreview } from '@/lib/region'
 import { CHALLENGE_GALLERY_ENABLED } from '@/lib/challenge'
+import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
 
 export const metadata: Metadata = {
   title: 'Wyber Premier League: Win $1,000 Every Month',
   description: 'Build a real web app, website, or SaaS on WyberAi and enter Wyber Premier League. Free to enter, unlimited entries. $1,000 / $500 / $300 up for grabs every single month.',
-  openGraph: {
+  openGraph: { images: DEFAULT_OG_IMAGES,
     title: 'Wyber Premier League — Win $1,000 Every Month',
     description: 'Build your best web app, website, or SaaS on WyberAi, submit it, and win real cash. Free to enter, unlimited entries, new winners on the 1st of every month. Your idea is never shown publicly.',
     url: 'https://wyberai.com/premier-league',

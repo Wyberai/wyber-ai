@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 import { USE_CASES } from './data'
+import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
 export function generateStaticParams() {
   return USE_CASES.map(uc => ({ slug: uc.slug }))
@@ -18,7 +19,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     title: uc.metaTitle.replace(/\s*[—|-]\s*WyberAi\s*$/i, ''),
     description: uc.metaDesc,
     alternates: { canonical: `https://wyberai.com/use-cases/${uc.slug}` },
-    openGraph: { title: uc.metaTitle, description: uc.metaDesc, url: `https://wyberai.com/use-cases/${uc.slug}` },
+    openGraph: { images: DEFAULT_OG_IMAGES, title: uc.metaTitle, description: uc.metaDesc, url: `https://wyberai.com/use-cases/${uc.slug}` },
   }
 }
 

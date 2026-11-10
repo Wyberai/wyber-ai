@@ -1,12 +1,13 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
+import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
 export const metadata: Metadata = {
   title: 'How to deploy an AI-generated app to production',
   description: 'Step-by-step guide to taking an AI-generated app from preview to production. Covers custom domains, Supabase database setup, environment variables, and Vercel deployment.',
   alternates: { canonical: 'https://wyberai.com/blog/how-to-deploy-ai-generated-app' },
-  openGraph: { title: 'How to deploy an AI-generated app to production', url: 'https://wyberai.com/blog/how-to-deploy-ai-generated-app', type: 'article' },
+  openGraph: { images: DEFAULT_OG_IMAGES, title: 'How to deploy an AI-generated app to production', url: 'https://wyberai.com/blog/how-to-deploy-ai-generated-app', type: 'article' },
 }
 
 const s = { bg: '#05080d', card: '#0d141e', border: 'rgba(255,255,255,0.07)', text: '#fafafa', muted: '#8797ab', dim: '#8797ab', sky: '#0EA5E9', green: '#10b981' }

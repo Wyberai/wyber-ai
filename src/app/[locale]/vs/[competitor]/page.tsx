@@ -10,6 +10,7 @@ import { CURSOR_CONTENT } from '@/lib/i18n/dict/vs-content/cursor'
 import { REPLIT_CONTENT } from '@/lib/i18n/dict/vs-content/replit'
 import { SOFTR_CONTENT } from '@/lib/i18n/dict/vs-content/softr'
 import { V0_CONTENT } from '@/lib/i18n/dict/vs-content/v0'
+import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
 // Locale-prefixed sibling of app/vs/[competitor]/page.tsx — see that file's
 // English version for the canonical (unprefixed) route. Only 'hi'|'kn'|'te'|'ta'
@@ -55,7 +56,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
       canonical: `https://wyberai.com/${locale}/vs/${competitor}`,
       languages: localeAlternates(`/vs/${competitor}`),
     },
-    openGraph: {
+    openGraph: { images: DEFAULT_OG_IMAGES,
       title: `WyberAi vs ${comp.name} (2026)`,
       description: m.descTemplate.replace('{name}', comp.name),
       url: `https://wyberai.com/${locale}/vs/${competitor}`,

@@ -1,12 +1,13 @@
 import type { Metadata } from 'next'
 import { VsPageTemplate } from '@/components/seo/VsPageTemplate'
 import { localeAlternates } from '@/lib/i18n/hreflang'
+import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
 export const metadata: Metadata = {
   title: 'WyberAi vs v0 by Vercel (2026) — Full-App Builder vs UI Generator',
   description: 'v0 generates UI components. WyberAi generates full-stack web + mobile apps with self-healing builds and 27 integrations. Honest comparison last reviewed June 2026.',
   alternates: { canonical: 'https://wyberai.com/vs/v0', languages: localeAlternates('/vs/v0') },
-  openGraph: { title: 'WyberAi vs v0 by Vercel (2026)', description: 'Full-stack app builder vs UI component generator. Last reviewed June 2026.', url: 'https://wyberai.com/vs/v0' },
+  openGraph: { images: DEFAULT_OG_IMAGES, title: 'WyberAi vs v0 by Vercel (2026)', description: 'Full-stack app builder vs UI component generator. Last reviewed June 2026.', url: 'https://wyberai.com/vs/v0' },
 }
 
 const ROWS = [

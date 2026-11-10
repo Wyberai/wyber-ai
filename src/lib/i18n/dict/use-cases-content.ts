@@ -77,7 +77,7 @@ export const USE_CASES_CONTENT: Record<Locale, Record<string, TranslatedUseCase>
         { q: 'What tools can agents connect to?', a: 'WyberAi uses Composio for integrations — covering Gmail, Outlook, Slack, HubSpot, Salesforce, Airtable, GitHub, Linear, Stripe, Notion, Google Calendar, and 240+ more.' },
         { q: 'How do I trigger an agent?', a: 'Click Run from the dashboard for a one-off run, or set a schedule (daily, hourly, weekly, or custom cron) on the agent\'s configuration page. The scheduler checks your credit balance before every run and emails you if a run is skipped.' },
         { q: 'Can agents make decisions with AI?', a: 'Yes. You can add an AI reasoning node that uses WyberCode to classify, score, summarize, or decide — and then route different outputs to different actions.' },
-        { q: 'How much does running an agent cost?', a: 'Agent runs cost credits — typically 1 credit per AI node execution. Check the credit estimate before running.' },
+        { q: 'How much does running an agent cost?', a: 'Each agent run costs credits (about 5 per run at standard pricing). Check the credit estimate before running.' },
       ],
     },
     'build-saas-without-code': {

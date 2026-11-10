@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 import { BUILD_PAGES, CATEGORY_LABELS, getBuildPage } from '../data'
 import { StartBuildButton } from '../StartBuildButton'
+import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
 export function generateStaticParams() {
   return BUILD_PAGES.map(p => ({ slug: p.slug }))
@@ -17,7 +18,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     title: page.metaTitle,
     description: page.metaDesc,
     alternates: { canonical: `https://wyberai.com/build/${page.slug}` },
-    openGraph: { title: page.metaTitle, description: page.metaDesc, url: `https://wyberai.com/build/${page.slug}` },
+    openGraph: { images: DEFAULT_OG_IMAGES, title: page.metaTitle, description: page.metaDesc, url: `https://wyberai.com/build/${page.slug}` },
   }
 }
 

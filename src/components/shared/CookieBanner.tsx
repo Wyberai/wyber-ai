@@ -1,22 +1,22 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { readConsent, writeConsent } from '@/lib/cookie-consent';
 import Link from 'next/link';
 
 export function CookieBanner() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const consent = localStorage.getItem('wyber-cookie-consent');
-    if (!consent) setVisible(true);
+    if (readConsent() === 'unknown') setVisible(true);
   }, []);
 
   const accept = () => {
-    localStorage.setItem('wyber-cookie-consent', 'accepted');
+    writeConsent('accepted');
     setVisible(false);
   };
 
   const decline = () => {
-    localStorage.setItem('wyber-cookie-consent', 'declined');
+    writeConsent('declined');
     setVisible(false);
   };
 
@@ -34,7 +34,7 @@ export function CookieBanner() {
     }}>
       <div style={{ flex: 1, minWidth: 280 }}>
         <p style={{ fontSize: 13, color: 'var(--text2)', margin: 0, lineHeight: 1.6 }}>
-          We use essential cookies to keep you signed in and remember your preferences.{' '}
+          We use essential cookies to keep you signed in. With your OK we also use analytics and advertising cookies (Google, Meta, Reddit) to understand what works.{' '}
           <Link href="/cookies" style={{ color: 'var(--sky)', fontWeight: 500 }}>Cookie Policy</Link>
           {' · '}
           <Link href="/privacy" style={{ color: 'var(--sky)', fontWeight: 500 }}>Privacy Policy</Link>

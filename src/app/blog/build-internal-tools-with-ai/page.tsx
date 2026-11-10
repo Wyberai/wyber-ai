@@ -1,12 +1,13 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
+import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
 export const metadata: Metadata = {
   title: 'Build internal tools in minutes — not months',
   description: 'Stop wasting engineering sprints on admin panels and dashboards. AI app builders generate production-ready internal tools from a single prompt.',
   alternates: { canonical: 'https://wyberai.com/blog/build-internal-tools-with-ai' },
-  openGraph: { title: 'Build internal tools in minutes — not months', url: 'https://wyberai.com/blog/build-internal-tools-with-ai', type: 'article' },
+  openGraph: { images: DEFAULT_OG_IMAGES, title: 'Build internal tools in minutes — not months', url: 'https://wyberai.com/blog/build-internal-tools-with-ai', type: 'article' },
 }
 
 const s = { bg: '#05080d', card: '#0d141e', border: 'rgba(255,255,255,0.07)', text: '#fafafa', muted: '#8797ab', dim: '#8797ab', sky: '#0EA5E9', green: '#10b981' }

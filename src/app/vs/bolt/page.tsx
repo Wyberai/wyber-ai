@@ -1,12 +1,13 @@
 import type { Metadata } from 'next'
 import { VsPageTemplate } from '@/components/seo/VsPageTemplate'
 import { localeAlternates } from '@/lib/i18n/hreflang'
+import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
 export const metadata: Metadata = {
   title: 'WyberAi vs Bolt.new (2026) — Honest Comparison',
   description: 'WyberAi vs Bolt.new: fixed-credit pricing vs Bolt\'s token model, plus mobile apps, self-healing builds, and 27 integrations. Last reviewed June 2026.',
   alternates: { canonical: 'https://wyberai.com/vs/bolt', languages: localeAlternates('/vs/bolt') },
-  openGraph: { title: 'WyberAi vs Bolt.new (2026)', description: 'Fixed credits, web + mobile, self-healing builds. Last reviewed June 2026.', url: 'https://wyberai.com/vs/bolt' },
+  openGraph: { images: DEFAULT_OG_IMAGES, title: 'WyberAi vs Bolt.new (2026)', description: 'Fixed credits, web + mobile, self-healing builds. Last reviewed June 2026.', url: 'https://wyberai.com/vs/bolt' },
 }
 
 const ROWS = [

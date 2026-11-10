@@ -1,12 +1,13 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
+import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
 export const metadata: Metadata = {
   title: 'How to build a mobile app with AI in 2026',
   description: 'React Native + Expo from a plain-English prompt. Preview on your phone in minutes. No Xcode, no Android Studio, no code.',
   alternates: { canonical: 'https://wyberai.com/blog/build-mobile-app-with-ai-2026' },
-  openGraph: { title: 'How to build a mobile app with AI in 2026', url: 'https://wyberai.com/blog/build-mobile-app-with-ai-2026', type: 'article' },
+  openGraph: { images: DEFAULT_OG_IMAGES, title: 'How to build a mobile app with AI in 2026', url: 'https://wyberai.com/blog/build-mobile-app-with-ai-2026', type: 'article' },
   robots: { index: false, follow: false },
 }
 

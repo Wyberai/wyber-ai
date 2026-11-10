@@ -2,11 +2,12 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 import { EntryForm } from '@/components/vibe-cup/EntryForm'
+import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
 export const metadata: Metadata = {
   title: "Wybe Cup — World's First Vibe Coding Competition | WyberAi",
   description: "Build an app on WyberAi, submit it, and win $2,000. World's first vibe coding championship. Get paid for following your passion.",
-  openGraph: {
+  openGraph: { images: DEFAULT_OG_IMAGES,
     title: "Wybe Cup — World's First Vibe Coding Competition",
     description: 'Build any app with AI. Win $2,000. Submissions close October 31, 2026.',
     url: 'https://wyberai.com/vibe-cup',

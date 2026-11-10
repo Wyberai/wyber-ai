@@ -1,11 +1,12 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
 export const metadata: Metadata = {
   title: '7 Best Lovable Alternatives in 2026 (Honest Comparison)',
   description: 'Looking for a Lovable alternative? Honest 2026 comparison of WyberAi, Bolt, v0, Replit, Rork, Softr and Base44 — pricing, code ownership, mobile output, and security.',
   alternates: { canonical: 'https://wyberai.com/lovable-alternatives' },
-  openGraph: {
+  openGraph: { images: DEFAULT_OG_IMAGES,
     title: '7 Best Lovable Alternatives in 2026',
     description: 'Honest comparison: pricing, code ownership, mobile output, and security. Updated July 2026.',
     url: 'https://wyberai.com/lovable-alternatives',

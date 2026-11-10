@@ -2,12 +2,13 @@ import { NavbarClient as Navbar } from '@/components/shared/NavbarClient';
 import { Footer } from '@/components/shared/FooterClient';
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
 export const metadata: Metadata = {
   title: 'WyberAi vs Lovable',
   description: 'Both tools build full-stack apps from plain English. An honest comparison for developers and founders.',
   alternates: { canonical: 'https://wyberai.com/blog/wyber-vs-lovable' },
-  openGraph: { title: 'WyberAi vs Lovable', url: 'https://wyberai.com/blog/wyber-vs-lovable', type: 'article' },
+  openGraph: { images: DEFAULT_OG_IMAGES, title: 'WyberAi vs Lovable', url: 'https://wyberai.com/blog/wyber-vs-lovable', type: 'article' },
 };
 
 const COMPARISON = [

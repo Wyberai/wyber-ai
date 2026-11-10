@@ -1,12 +1,13 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
+import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
 export const metadata: Metadata = {
   title: 'AI workflow automation without code',
   description: 'Connect your apps, apply AI reasoning, and run automations on a schedule — all from plain English. No Zapier, no Make, no code.',
   alternates: { canonical: 'https://wyberai.com/blog/ai-workflow-automation-guide' },
-  openGraph: { title: 'AI workflow automation without code', url: 'https://wyberai.com/blog/ai-workflow-automation-guide', type: 'article' },
+  openGraph: { images: DEFAULT_OG_IMAGES, title: 'AI workflow automation without code', url: 'https://wyberai.com/blog/ai-workflow-automation-guide', type: 'article' },
 }
 
 const s = { bg: '#05080d', card: '#0d141e', border: 'rgba(255,255,255,0.07)', text: '#fafafa', muted: '#8797ab', dim: '#8797ab', sky: '#0EA5E9', amber: '#f59e0b' }

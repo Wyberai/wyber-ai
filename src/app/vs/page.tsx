@@ -2,12 +2,13 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 import { localeAlternates } from '@/lib/i18n/hreflang'
+import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
 export const metadata: Metadata = {
   title: 'WyberAi vs Competitors (2026) — Honest Comparisons',
   description: 'Compare WyberAi to Lovable, Bolt.new, v0, Replit, and Cursor. See how pricing, credits, and the six-product difference (web + mobile + agents + workflows + AI employees) stack up.',
   alternates: { canonical: 'https://wyberai.com/vs', languages: localeAlternates('/vs') },
-  openGraph: { title: 'WyberAi vs Competitors (2026)', description: 'Compare WyberAi to every major AI builder.', url: 'https://wyberai.com/vs' },
+  openGraph: { images: DEFAULT_OG_IMAGES, title: 'WyberAi vs Competitors (2026)', description: 'Compare WyberAi to every major AI builder.', url: 'https://wyberai.com/vs' },
 }
 
 const jsonLd = {

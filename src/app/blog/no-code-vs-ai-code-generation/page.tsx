@@ -1,12 +1,13 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
+import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
 export const metadata: Metadata = {
   title: 'No-code vs AI code generation — which one should you use in 2026?',
   description: 'A practical comparison of no-code platforms (Bubble, Glide, Webflow) and AI code generators (WyberAi, Lovable, Bolt). Trade-offs on vendor lock-in, performance, and customization.',
   alternates: { canonical: 'https://wyberai.com/blog/no-code-vs-ai-code-generation' },
-  openGraph: { title: 'No-code vs AI code generation — which one should you use in 2026?', url: 'https://wyberai.com/blog/no-code-vs-ai-code-generation', type: 'article' },
+  openGraph: { images: DEFAULT_OG_IMAGES, title: 'No-code vs AI code generation — which one should you use in 2026?', url: 'https://wyberai.com/blog/no-code-vs-ai-code-generation', type: 'article' },
 }
 
 const s = { bg: '#05080d', card: '#0d141e', border: 'rgba(255,255,255,0.07)', text: '#fafafa', muted: '#8797ab', dim: '#8797ab', sky: '#0EA5E9', green: '#10b981' }

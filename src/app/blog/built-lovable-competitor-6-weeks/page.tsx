@@ -1,12 +1,13 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
+import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
 export const metadata: Metadata = {
   title: 'I built a Lovable competitor in 6 weeks as a solo founder',
   description: 'How I shipped an AI app builder from zero to live in 6 weeks, and the decisions that made it possible.',
   alternates: { canonical: 'https://wyberai.com/blog/built-lovable-competitor-6-weeks' },
-  openGraph: { title: 'I built a Lovable competitor in 6 weeks as a solo founder', url: 'https://wyberai.com/blog/built-lovable-competitor-6-weeks', type: 'article' },
+  openGraph: { images: DEFAULT_OG_IMAGES, title: 'I built a Lovable competitor in 6 weeks as a solo founder', url: 'https://wyberai.com/blog/built-lovable-competitor-6-weeks', type: 'article' },
   robots: { index: false, follow: false },
 }
 

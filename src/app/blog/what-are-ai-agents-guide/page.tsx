@@ -1,12 +1,13 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
+import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
 export const metadata: Metadata = {
   title: 'What are AI agents? A practical guide for non-technical founders',
   description: 'Agents watch data, make decisions, and take action automatically. Here\'s what they actually are, what they\'re good for, and how to build one without code.',
   alternates: { canonical: 'https://wyberai.com/blog/what-are-ai-agents-guide' },
-  openGraph: {
+  openGraph: { images: DEFAULT_OG_IMAGES,
     title: 'What are AI agents? A practical guide for non-technical founders',
     description: 'Agents watch data, make decisions, and take action automatically. Here\'s what they actually are, what they\'re good for, and how to build one without code.',
     url: 'https://wyberai.com/blog/what-are-ai-agents-guide',

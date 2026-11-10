@@ -2,12 +2,13 @@ import type { Metadata } from 'next'
 import { VsPageTemplate } from '@/components/seo/VsPageTemplate'
 import { getScanStats } from '@/lib/security-stats'
 import { localeAlternates } from '@/lib/i18n/hreflang'
+import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
 export const metadata: Metadata = {
   title: 'WyberAi vs Lovable (2026) — Honest Comparison',
   description: 'WyberAi vs Lovable: fresh code every build, web + mobile apps, self-healing builds, 27 integrations, and GitHub ownership. Last reviewed June 2026.',
   alternates: { canonical: 'https://wyberai.com/vs/lovable', languages: localeAlternates('/vs/lovable') },
-  openGraph: { title: 'WyberAi vs Lovable (2026)', description: 'Fresh code, web + mobile, self-healing builds. Last reviewed June 2026.', url: 'https://wyberai.com/vs/lovable' },
+  openGraph: { images: DEFAULT_OG_IMAGES, title: 'WyberAi vs Lovable (2026)', description: 'Fresh code, web + mobile, self-healing builds. Last reviewed June 2026.', url: 'https://wyberai.com/vs/lovable' },
 }
 
 const ROWS = [

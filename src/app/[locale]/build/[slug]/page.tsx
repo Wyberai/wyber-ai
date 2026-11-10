@@ -9,6 +9,7 @@ import { localeAlternates, localePath } from '@/lib/i18n/hreflang'
 import { getT } from '@/lib/i18n/getT'
 import { BUILD_TEMPLATE_STRINGS } from '@/lib/i18n/dict/build-template'
 import { getTranslatedBuildPage, hasBuildTranslation } from '@/lib/i18n/dict/build-content'
+import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
 // Locale-prefixed sibling of app/build/[slug]/page.tsx — see that file's
 // English version for the canonical (unprefixed) route. Only 'hi'|'kn'|'te'|'ta'
@@ -36,7 +37,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
       canonical: `https://wyberai.com/${locale}/build/${slug}`,
       languages: localeAlternates(`/build/${slug}`),
     },
-    openGraph: { title: content.metaTitle, description: content.metaDesc, url: `https://wyberai.com/${locale}/build/${slug}` },
+    openGraph: { images: DEFAULT_OG_IMAGES, title: content.metaTitle, description: content.metaDesc, url: `https://wyberai.com/${locale}/build/${slug}` },
   }
 }
 

@@ -2,12 +2,13 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 import { USE_CASES } from './[slug]/data'
+import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
 export const metadata: Metadata = {
   title: 'Use Cases: Build Web Apps & Mobile Apps',
   description: 'Explore how WyberAi helps you build web apps and mobile apps from plain English — no code required.',
   alternates: { canonical: 'https://wyberai.com/use-cases' },
-  openGraph: { title: 'Use Cases — WyberAi', description: 'Build web apps and mobile apps from plain English. No code required.' },
+  openGraph: { images: DEFAULT_OG_IMAGES, title: 'Use Cases — WyberAi', description: 'Build web apps and mobile apps from plain English. No code required.' },
 }
 
 /* Space-journey brand surfaces (see globals.css --brand-*) */

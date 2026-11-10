@@ -53,7 +53,7 @@ export default function CreditsPage() {
               <div style={{ fontSize: 11, fontWeight: 700, color, textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: 8 }}>{plan}</div>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 4 }}>{price}<span style={{ fontSize: 13, fontWeight: 400, color: '#8797ab' }}>/mo</span></div>
               <div style={{ fontSize: 14, fontWeight: 700, color }}>{credits >= 99999 ? 'Unlimited' : credits.toLocaleString()} credits</div>
-              <div style={{ fontSize: 11, color: '#8797ab', marginTop: 4 }}>{credits >= 99999 ? 'Never runs out' : `~${credits} generations`}</div>
+              <div style={{ fontSize: 11, color: '#8797ab', marginTop: 4 }}>{credits >= 99999 ? 'Never runs out' : `~${Math.floor(credits / creditCost('saas-build', 'fast', 'small'))} small builds`}</div>
             </div>
           ))}
         </div>

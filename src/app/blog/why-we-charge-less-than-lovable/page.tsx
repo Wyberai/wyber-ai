@@ -1,12 +1,13 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
+import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
 export const metadata: Metadata = {
   title: 'How WyberAi keeps pricing transparent',
   description: 'Smart model routing, prompt caching, and self-healing builds. Here\'s how WyberAi keeps prices lower than Lovable.',
   alternates: { canonical: 'https://wyberai.com/blog/why-we-charge-less-than-lovable' },
-  openGraph: { title: 'How WyberAi keeps pricing transparent', url: 'https://wyberai.com/blog/why-we-charge-less-than-lovable', type: 'article' },
+  openGraph: { images: DEFAULT_OG_IMAGES, title: 'How WyberAi keeps pricing transparent', url: 'https://wyberai.com/blog/why-we-charge-less-than-lovable', type: 'article' },
   robots: { index: true, follow: true },
 }
 
