@@ -18,7 +18,7 @@ export interface VsContent {
 export const LOVABLE_CONTENT: Record<Locale, VsContent> = {
   en: {
     tagline: 'Lovable is the leading AI web app builder. WyberAi generates fresh code (no templates), builds mobile apps, and includes 27 integrations that Lovable doesn\'t have.',
-    blurb: 'Honest comparison of WyberAi vs Lovable: pricing, credits, features, and what each builder can actually ship. Verified June 2026.',
+    blurb: 'Honest comparison of WyberAi vs Lovable: pricing, credits, features, and what each builder can actually ship. Last reviewed June 2026.',
     pillarNote: 'Lovable builds web apps only.',
     rows: [
       { feature: 'Starter price', wyber: '$29/mo (Starter)', other: '$25/mo', winner: 'tie' },

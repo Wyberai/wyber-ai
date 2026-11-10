@@ -14,7 +14,7 @@ const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'WebPage',
   name: 'WyberAi vs Competitors',
-  description: 'Compare WyberAi to Lovable, Bolt.new, v0, Replit, and Cursor. Verified June 2026.',
+  description: 'Compare WyberAi to Lovable, Bolt.new, v0, Replit, and Cursor. Last reviewed June 2026.',
   url: 'https://wyberai.com/vs',
 }
 
@@ -86,7 +86,7 @@ export default function VsIndex() {
 
       <div style={{ maxWidth: 960, margin: '0 auto', padding: 'clamp(40px,6vw,72px) clamp(16px,4vw,48px)' }}>
         <header style={{ textAlign: 'center', marginBottom: 56 }}>
-          <div className="mk-eyebrow" style={{ marginBottom: 12 }}>VERIFIED JUNE 2026</div>
+          <div className="mk-eyebrow" style={{ marginBottom: 12 }}>LAST REVIEWED JUNE 2026</div>
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(26px,4vw,44px)', fontWeight: 800, letterSpacing: '-0.04em', margin: '0 0 16px' }}>
             WyberAi vs Every Alternative
           </h1>
@@ -140,7 +140,7 @@ export default function VsIndex() {
 
         {/* CTA */}
         <div style={{ textAlign: 'center', padding: 'clamp(24px,4vw,40px)', background: s.card, borderRadius: 14, border: `1px solid ${s.border}` }}>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, margin: '0 0 8px' }}>Try WyberAi free — 30 credits/month</h2>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, margin: '0 0 8px' }}>Try WyberAi free — 30 free credits on signup</h2>
           <p style={{ fontSize: 14, color: s.muted, margin: '0 0 20px' }}>Web app, mobile app, AI agent, or workflow. No credit card required.</p>
           <Link href="/signup" style={{ display: 'inline-block', padding: '12px 28px', borderRadius: 10, background: s.sky, color: '#03111c', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
             Start building free →

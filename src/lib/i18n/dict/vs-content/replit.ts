@@ -19,13 +19,13 @@ export interface VsContent {
 export const REPLIT_CONTENT: Record<Locale, VsContent> = {
   en: {
     tagline: 'Replit is a powerful cloud IDE for developers. WyberAi is a no-code app builder for founders — with predictable pricing and web + mobile app building Replit doesn\'t cover.',
-    blurb: 'Honest comparison of WyberAi vs Replit: AI app builder vs cloud IDE, pricing, and the six-product difference. Verified June 2026.',
+    blurb: 'Honest comparison of WyberAi vs Replit: AI app builder vs cloud IDE, pricing, and the six-product difference. Last reviewed June 2026.',
     pillarNote: 'Replit is an IDE — it doesn\'t have dedicated mobile, agent, or workflow builders.',
     rows: [
       { feature: 'Primary use case', wyber: 'AI app builder', other: 'Cloud IDE + AI agent', winner: 'tie' },
       { feature: 'Starter price', wyber: '$29/mo (Starter)', other: '$20/mo (Core)', winner: 'tie' },
       { feature: 'Cost predictability', wyber: 'Fixed credits', other: 'Usage-based overages', winner: 'wyber' },
-      { feature: 'Free tier', wyber: '30 credits/month', other: 'Free (limited)', winner: 'tie' },
+      { feature: 'Free tier', wyber: '30 free credits on signup', other: 'Free (limited)', winner: 'tie' },
       { feature: 'Mobile app builder', wyber: '✓ React Native', other: '✗', winner: 'wyber' },
       { feature: 'AI agent builder', wyber: '✓ Built-in', other: 'Replit Agent (IDE-based)', winner: 'wyber' },
       { feature: 'Workflow automation', wyber: '✓ Built-in', other: '✗', winner: 'wyber' },

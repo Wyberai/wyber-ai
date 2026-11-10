@@ -19,7 +19,7 @@ export interface VsContent {
 export const CURSOR_CONTENT: Record<Locale, VsContent> = {
   en: {
     tagline: 'Cursor is the AI code editor developers love. WyberAi is the no-code app builder non-technical founders need — complete web + mobile apps in minutes with self-healing builds.',
-    blurb: 'Honest comparison of WyberAi vs Cursor: no-code app generation vs AI-assisted coding. Who each tool is built for. Verified June 2026.',
+    blurb: 'Honest comparison of WyberAi vs Cursor: no-code app generation vs AI-assisted coding. Who each tool is built for. Last reviewed June 2026.',
     pillarNote: 'Cursor is a code editor — it has no app generation or mobile builder.',
     rows: [
       { feature: 'Primary use case', wyber: 'No-code app builder', other: 'AI-assisted code editor', winner: 'tie' },
@@ -36,7 +36,7 @@ export const CURSOR_CONTENT: Record<Locale, VsContent> = {
       { feature: 'Any language/framework', wyber: 'React/React Native', other: '✓ All languages', winner: 'other' },
       { feature: 'Codebase refactoring', wyber: 'Limited', other: '✓ Excellent', winner: 'other' },
       { feature: 'Multi-file edits', wyber: 'AI-managed', other: '✓ Composer agent', winner: 'other' },
-      { feature: 'Free tier', wyber: '30 credits/month', other: '2-week trial', winner: 'wyber' },
+      { feature: 'Free tier', wyber: '30 free credits on signup', other: '2-week trial', winner: 'wyber' },
       { feature: 'Supabase integration', wyber: '✓ Auto', other: 'Manual setup', winner: 'wyber' },
       { feature: 'GitHub sync', wyber: '✓', other: '✓', winner: 'tie' },
       { feature: 'Live database security scan', wyber: '✓ Probes RLS with anon key', other: '✗', winner: 'wyber' },

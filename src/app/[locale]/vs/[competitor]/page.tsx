@@ -30,7 +30,7 @@ const COMPETITORS: Record<string, { name: string; url: string; content: typeof L
 }
 
 const META: Record<Locale, { titleSuffix: string; descTemplate: string }> = {
-  en: { titleSuffix: 'Honest Comparison', descTemplate: 'WyberAi vs {name}: fresh code every build, web + mobile apps, self-healing builds, 27 integrations, and GitHub ownership. Verified June 2026.' },
+  en: { titleSuffix: 'Honest Comparison', descTemplate: 'WyberAi vs {name}: fresh code every build, web + mobile apps, self-healing builds, 27 integrations, and GitHub ownership. Last reviewed June 2026.' },
   hi: { titleSuffix: 'ईमानदार तुलना', descTemplate: 'WyberAi बनाम {name}: हर बिल्ड में नया कोड, वेब + मोबाइल ऐप्स, सेल्फ-हीलिंग बिल्ड्स, 27 इंटीग्रेशन, और GitHub ओनरशिप। जून 2026 में सत्यापित।' },
   kn: { titleSuffix: 'ಪ್ರಾಮಾಣಿಕ ಹೋಲಿಕೆ', descTemplate: 'WyberAi vs {name}: ಪ್ರತಿ ಬಿಲ್ಡ್‌ನಲ್ಲೂ ಹೊಸ ಕೋಡ್, ವೆಬ್ + ಮೊಬೈಲ್ ಆ್ಯಪ್‌ಗಳು, ಸ್ವಯಂ-ಸರಿಪಡಿಸುವ ಬಿಲ್ಡ್‌ಗಳು, 27 ಇಂಟಿಗ್ರೇಶನ್‌ಗಳು, ಮತ್ತು GitHub ಮಾಲೀಕತ್ವ. ಜೂನ್ 2026 ರಲ್ಲಿ ಪರಿಶೀಲಿಸಲಾಗಿದೆ.' },
   te: { titleSuffix: 'నిజాయితీ పోలిక', descTemplate: 'WyberAi vs {name}: ప్రతి బిల్డ్‌లో కొత్త కోడ్, వెబ్ + మొబైల్ యాప్‌లు, స్వీయ-సరిదిద్దుకునే బిల్డ్‌లు, 27 ఇంటిగ్రేషన్‌లు, మరియు GitHub యాజమాన్యం. జూన్ 2026లో ధృవీకరించబడింది.' },

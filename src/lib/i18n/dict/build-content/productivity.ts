@@ -40,7 +40,7 @@ export const PRODUCTIVITY_BUILD_CONTENT: Record<Locale, Record<string, Translate
         { q: 'Can the streak logic handle skipped days or rest days?', a: 'Yes — describe the rule you want ("weekends don\'t break streaks" or "one skip per week is allowed") and the generated logic follows it. You can change the rule later in chat.' },
         { q: 'Does it work on both iPhone and Android?', a: 'The app is generated as React Native + Expo, which runs on both platforms from one codebase. You preview it instantly on your own phone via Expo.' },
         { q: 'Can I add reminders later?', a: 'You can add a reminders screen and schedule structure now, and wire push notifications when you export or publish — the schema is ready for it.' },
-        { q: 'What does it cost to build?', a: 'Your first build is covered by the 30 free monthly credits — a full app build costs 30 credits, and small edits cost 2. No card required to start.' },
+        { q: 'What does it cost to build?', a: 'Your first build is covered by the 30 free signup credits — a small app build costs 30 credits (larger ones cost more), and small edits start at 4. No card required to start.' },
       ],
     },
     'freelance-time-tracker': {
@@ -63,7 +63,7 @@ export const PRODUCTIVITY_BUILD_CONTENT: Record<Locale, Record<string, Translate
         { q: 'Can it calculate what I should invoice?', a: 'Yes — give each client an hourly rate and the reports page multiplies billable hours by rate for any date range you pick.' },
         { q: 'Where is my time data stored?', a: 'In your app\'s own Postgres database (Supabase), with row-level security scanned live before you publish — your hours are yours, on your infrastructure.' },
         { q: 'Can I import history from Toggl or a spreadsheet?', a: 'Add a CSV import page by asking for it in chat — describe your export\'s columns and the app maps them into your entries table.' },
-        { q: 'Is this really cheaper than a time-tracker subscription?', a: 'You build it once with free monthly credits and it runs as your own app — there\'s no per-month tracker fee, and edits cost 2 credits when you want changes.' },
+        { q: 'Is this really cheaper than a time-tracker subscription?', a: 'You build it once with free signup credits and it runs as your own app — there\'s no per-month tracker fee, and edits start at 4 credits when you want changes.' },
       ],
     },
     'team-task-manager': {

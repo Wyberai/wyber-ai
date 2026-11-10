@@ -17,7 +17,7 @@ export default function CreditsPage() {
             ['Build plan (Plan Mode)', `${creditCost('plan', 'default')} credits`, 'Feature/flow plan you can edit before building'],
             ['Image generation', `${IMAGE_GEN_COST} credit`, 'AI-generated image during a build or from the Images panel'],
             ['HD image regenerate', `${creditCost('hero-image-gen')} credits`, 'High-quality hero image'],
-            ['Security or SEO scan', `${creditCost('seo-scan')} credits`, 'Full checklist run against your project files'],
+            ['Security or SEO scan', `${creditCost('seo-scan')} credits`, 'Full checklist run on your project files inside the editor. The public scan at /tools is free.'],
             ['Voiceover', `${creditCost('audio-gen')} credits`, 'Narration generation'],
             ['Mobile preview', `${creditCost('preview-access')} credits`, 'Per viewer, per project, per day'],
             ['Template load', '0 credits', 'Instant template loading — always free'],
@@ -61,7 +61,7 @@ export default function CreditsPage() {
 
       <section style={{ padding: 20, borderRadius: 12, background: 'rgba(14,165,233,0.05)', border: '1px solid rgba(14,165,233,0.2)' }}>
         <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 12, color: '#0EA5E9' }}>How we compare</h3>
-        <p style={{ fontSize: 13, color: '#9aa8bb', lineHeight: 1.8 }}>WyberAi Starter gives you <strong style={{ color: '#0EA5E9' }}>450 credits for $29/month</strong> — all features unlocked on every plan, no employee caps or feature gates. Credits work across every product.</p>
+        <p style={{ fontSize: 13, color: '#9aa8bb', lineHeight: 1.8 }}>WyberAi Starter gives you <strong style={{ color: '#0EA5E9' }}>450 credits for $29/month</strong> — every plan includes web and mobile apps, deploy and GitHub export; Builder and above add Supabase, custom domains and badge-free publishing. Credits work across every product.</p>
         <p style={{ fontSize: 11, color: '#8797ab', marginTop: 12 }}>Monthly credits roll over. Top-up credits never expire. Credits are non-refundable once used.</p>
       </section>
     </div>

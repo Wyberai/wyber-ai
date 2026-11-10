@@ -19,12 +19,12 @@ export interface VsContent {
 export const BOLT_CONTENT: Record<Locale, VsContent> = {
   en: {
     tagline: 'Bolt.new is a powerful web app builder for developers. WyberAi offers predictable fixed-credit pricing, a friendlier interface, mobile apps, self-healing builds, and 27 integrations Bolt doesn\'t have.',
-    blurb: 'Honest comparison of WyberAi vs Bolt.new: pricing model, credits, and features. Verified June 2026.',
+    blurb: 'Honest comparison of WyberAi vs Bolt.new: pricing model, credits, and features. Last reviewed June 2026.',
     pillarNote: 'Bolt.new builds web apps only.',
     rows: [
       { feature: 'Starter price', wyber: '$29/mo (Starter)', other: '$25/mo', winner: 'tie' },
       { feature: 'Starter credits/mo', wyber: '450', other: '10M tokens (different unit)', winner: 'tie' },
-      { feature: 'Free tier', wyber: '30 credits/month', other: '1M tokens/mo', winner: 'tie' },
+      { feature: 'Free tier', wyber: '30 free credits on signup', other: '1M tokens/mo', winner: 'tie' },
       { feature: 'Usage model', wyber: 'Fixed credits', other: 'Tokens (per char)', winner: 'wyber' },
       { feature: 'Unused credits rollover', wyber: '✓ Always', other: '✓ Up to 2 months', winner: 'wyber' },
       { feature: 'Daily bonus', wyber: '8 credits/day', other: 'None', winner: 'wyber' },

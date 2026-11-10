@@ -19,7 +19,7 @@ export interface VsContent {
 export const V0_CONTENT: Record<Locale, VsContent> = {
   en: {
     tagline: 'v0 by Vercel generates polished UI components. WyberAi generates complete full-stack web + mobile applications with self-healing builds and 27 integrations.',
-    blurb: 'Honest comparison of WyberAi vs v0 by Vercel: full-stack app builder vs UI generator. Verified June 2026.',
+    blurb: 'Honest comparison of WyberAi vs v0 by Vercel: full-stack app builder vs UI generator. Last reviewed June 2026.',
     pillarNote: 'v0 generates frontend UI components only — no backend, no mobile apps.',
     rows: [
       { feature: 'Primary output', wyber: 'Full-stack web app', other: 'UI components / pages', winner: 'wyber' },
@@ -36,7 +36,7 @@ export const V0_CONTENT: Record<Locale, VsContent> = {
       { feature: 'Figma import', wyber: '✓ Built-in', other: '✓', winner: 'other' },
       { feature: 'Code generation', wyber: 'Always fresh AI code', other: 'Component library', winner: 'wyber' },
       { feature: 'Non-technical users', wyber: '✓ Guided', other: 'Developer-focused', winner: 'wyber' },
-      { feature: 'Free tier', wyber: '30 credits/month', other: 'Limited free', winner: 'tie' },
+      { feature: 'Free tier', wyber: '30 free credits on signup', other: 'Limited free', winner: 'tie' },
       { feature: 'Live database security scan', wyber: '✓ Probes RLS with anon key', other: '✗', winner: 'wyber' },
       { feature: 'India/APAC pricing', wyber: '✓ INR soon', other: 'USD only', winner: 'wyber' },
     ],

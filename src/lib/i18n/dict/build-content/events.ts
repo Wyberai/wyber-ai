@@ -39,7 +39,7 @@ export const EVENTS_BUILD_CONTENT: Record<Locale, Record<string, TranslatedBuild
         { q: 'Can guests RSVP for their whole family at once?', a: 'Yes — model invites as households in your prompt and one submission can confirm every name on the invitation.' },
         { q: 'Can we match the site to our invitation suite?', a: 'Describe your palette and mood ("dusty rose and cream, serif, candlelit") and the design is generated to match — then refine in chat.' },
         { q: 'What about a custom domain like ournames.com?', a: 'Publish the site and connect a custom domain from the editor — guests never see a builder URL.' },
-        { q: 'Is there a per-guest or premium-feature fee?', a: 'No — RSVP, dashboard, and guest list are just parts of your app. Building uses free monthly credits; the site is yours.' },
+        { q: 'Is there a per-guest or premium-feature fee?', a: 'No — RSVP, dashboard, and guest list are just parts of your app. Building uses free signup credits; the site is yours.' },
       ],
     },
     'event-registration-app': {

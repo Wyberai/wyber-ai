@@ -172,7 +172,7 @@ export const USE_CASES: UseCase[] = [
       { q: 'What makes WyberAi different from Webflow or Bubble?', a: 'Webflow and Bubble have visual editors you build in manually. WyberAi generates the complete app from plain English in seconds. There\'s nothing to drag and drop — you describe it and it\'s built.' },
       { q: 'Is the output real code I can export?', a: 'Yes. WyberAi outputs clean React + Vite code. Export it anytime and take it to GitHub, a developer, or your own hosting.' },
       { q: 'Can it build apps with a real database?', a: 'Yes. Connect your Supabase project in Settings → Connectors and WyberAi rewrites the app to use real Postgres with auth and Row Level Security.' },
-      { q: 'How many apps can I build on the free plan?', a: 'The free plan gives you 30 credits/month. Each generation costs 1 credit, so you can build and iterate 30 times per month for free.' },
+      { q: 'How many apps can I build on the free plan?', a: 'The free plan starts you with 30 credits. A small app build costs 30 credits and small edits start at 4, so the free credits cover one small first build; after that you top up or upgrade.' },
       { q: 'Can I use WyberAi to build an app for a client?', a: 'Yes. Many Wyber users build apps for clients, then export the code and hand it over. You can also deploy directly to the client\'s Vercel account.' },
     ],
   },
@@ -205,7 +205,7 @@ export const USE_CASES: UseCase[] = [
       { q: 'How is WyberAi different from other AI app builders?', a: 'Most tools build web apps only. WyberAi builds both web and mobile apps, generates fresh code (no templates), auto-fixes build errors, includes 27 integrations, and gives you full GitHub ownership.' },
       { q: 'Do I need technical knowledge?', a: 'No. WyberAi is designed for non-technical founders, operators, and makers. You describe what you want; we generate it.' },
       { q: 'How fast does it generate?', a: 'Most apps generate in minutes. You see the code streaming in real time so you\'re never waiting on a blank screen.' },
-      { q: 'What does it cost?', a: 'Plans start at $29/month (Starter: 450 credits). Builder is $79/month (1,500 credits). Pro is $199/month (4,500 credits). Every plan unlocks all features — credits are the only currency.' },
+      { q: 'What does it cost?', a: 'Plans start at $29/month (Starter: 450 credits). Builder is $79/month (1,500 credits). Pro is $199/month (4,500 credits). Every plan includes web and mobile apps, deploy and GitHub export; Builder and above add Supabase, custom domains and badge-free publishing.' },
     ],
   },
   {

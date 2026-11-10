@@ -35,7 +35,7 @@ const FAQS = [
   { q: 'What file formats can I upload?', a: '.csv, .xlsx, and .xls — export your orders from Amazon Seller Central, Shopify, Etsy, or any spreadsheet and drop it in.' },
   { q: 'Is my sales data safe?', a: 'The upload preview is parsed entirely in your browser using client-side JavaScript — the file is never sent to a server or stored anywhere.' },
   { q: 'Does the real dashboard connect live to Amazon or Shopify?', a: 'Not out of the box — it\'s built around your export files or manual entry, which avoids depending on marketplace APIs that can change or get revoked. A bulk-import screen can always be added once you\'re building.' },
-  { q: 'What does it cost to build?', a: 'The 30 free monthly credits cover your first build (30 credits); small edits after that are 2 credits each. No card required to start.' },
+  { q: 'What does it cost to build?', a: 'The 30 free signup credits cover a small first build (30 credits; larger apps cost more); small edits after that start at 4 credits. No card required to start.' },
 ]
 
 export default function EcommerceDashboardLanding() {
@@ -133,7 +133,7 @@ export default function EcommerceDashboardLanding() {
 
         {/* Footer CTA */}
         <div style={{ textAlign: 'center', padding: 'clamp(24px,4vw,40px)', background: s.card, borderRadius: 14, border: `1px solid ${s.border}` }}>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, margin: '0 0 8px' }}>Start building for free — 30 credits/month</h2>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, margin: '0 0 8px' }}>Start building for free — 30 free credits on signup</h2>
           <p style={{ fontSize: 14, color: s.muted, margin: '0 0 20px' }}>No credit card required. Live in minutes.</p>
           <StartBuildButton prompt={DEFAULT_PROMPT} target="web" slug="ecommerce-footer" label="Build my dashboard →" color={color} variant="compact" projectLabel="Ecommerce Dashboard" />
         </div>

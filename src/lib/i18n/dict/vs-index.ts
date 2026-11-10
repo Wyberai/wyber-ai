@@ -23,7 +23,7 @@ export const VS_INDEX_CONTENT: Record<Locale, VsIndexContent> = {
   en: {
     metaTitle: 'WyberAi vs Competitors (2026) — Honest Comparisons',
     metaDescription: 'Compare WyberAi to Lovable, Bolt.new, v0, Replit, and Cursor. See how pricing, credits, and the six-product difference (web + mobile + agents + workflows + AI employees) stack up.',
-    eyebrow: 'VERIFIED JUNE 2026',
+    eyebrow: 'LAST REVIEWED JUNE 2026',
     heroTitle: 'WyberAi vs Every Alternative',
     heroBody: 'Honest, up-to-date comparisons. WyberAi ships full-stack web apps and native mobile apps from one workspace — with deploy, integrations, and GitHub code ownership built in.',
     productLabels: [
@@ -43,7 +43,7 @@ export const VS_INDEX_CONTENT: Record<Locale, VsIndexContent> = {
       softr: { summary: 'Softr hosts your app on their platform from $269/mo for Business. WyberAi generates real React code you own — web + mobile — from $29/mo.', wyberWins: ['Real code, GitHub export, zero lock-in', 'Native mobile apps (React Native)', 'Live database security scan', 'A tenth of the price for solo founders'] },
     },
     seeComparison: 'See comparison →',
-    ctaHeading: 'Try WyberAi free — 30 credits/month',
+    ctaHeading: 'Try WyberAi free — 30 free credits on signup',
     ctaBody: 'Web app, mobile app, AI agent, or workflow. No credit card required.',
     ctaButton: 'Start building free →',
   },

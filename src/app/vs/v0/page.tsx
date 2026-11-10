@@ -4,9 +4,9 @@ import { localeAlternates } from '@/lib/i18n/hreflang'
 
 export const metadata: Metadata = {
   title: 'WyberAi vs v0 by Vercel (2026) — Full-App Builder vs UI Generator',
-  description: 'v0 generates UI components. WyberAi generates full-stack web + mobile apps with self-healing builds and 27 integrations. Honest comparison verified June 2026.',
+  description: 'v0 generates UI components. WyberAi generates full-stack web + mobile apps with self-healing builds and 27 integrations. Honest comparison last reviewed June 2026.',
   alternates: { canonical: 'https://wyberai.com/vs/v0', languages: localeAlternates('/vs/v0') },
-  openGraph: { title: 'WyberAi vs v0 by Vercel (2026)', description: 'Full-stack app builder vs UI component generator. Verified June 2026.', url: 'https://wyberai.com/vs/v0' },
+  openGraph: { title: 'WyberAi vs v0 by Vercel (2026)', description: 'Full-stack app builder vs UI component generator. Last reviewed June 2026.', url: 'https://wyberai.com/vs/v0' },
 }
 
 const ROWS = [
@@ -24,7 +24,7 @@ const ROWS = [
   { feature: 'Figma import',             wyber: '✓ Built-in',            other: '✓',                     winner: 'other' as const },
   { feature: 'Code generation',     wyber: 'Always fresh AI code',         other: 'Component library',     winner: 'wyber' as const },
   { feature: 'Non-technical users',      wyber: '✓ Guided',               other: 'Developer-focused',     winner: 'wyber' as const },
-  { feature: 'Free tier',                wyber: '30 credits/month',       other: 'Limited free',          winner: 'tie'   as const },
+  { feature: 'Free tier',                wyber: '30 free credits on signup',       other: 'Limited free',          winner: 'tie'   as const },
   { feature: 'Live database security scan', wyber: '✓ Probes RLS with anon key', other: '✗', winner: 'wyber' as const },
   { feature: 'India/APAC pricing',       wyber: '✓ INR soon',             other: 'USD only',              winner: 'wyber' as const },
 ]
@@ -59,7 +59,7 @@ export default function VsV0() {
       competitorName="v0 by Vercel"
       competitorUrl="https://v0.dev"
       tagline="v0 by Vercel generates polished UI components. WyberAi generates complete full-stack web + mobile applications with self-healing builds and 27 integrations."
-      blurb="Honest comparison of WyberAi vs v0 by Vercel: full-stack app builder vs UI generator. Verified June 2026."
+      blurb="Honest comparison of WyberAi vs v0 by Vercel: full-stack app builder vs UI generator. Last reviewed June 2026."
       rows={ROWS}
       faqs={FAQS}
       pillarNote="v0 generates frontend UI components only — no backend, no mobile apps."

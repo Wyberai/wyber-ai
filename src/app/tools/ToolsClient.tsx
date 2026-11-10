@@ -31,7 +31,7 @@ export default function ToolsClient() {
         <div style={{ maxWidth: 720, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 32 }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '5px 14px', borderRadius: 20, background: 'rgba(14,165,233,0.1)', border: '1px solid rgba(14,165,233,0.2)', fontSize: 12, fontWeight: 700, color: SKY, letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 20 }}>
-              Free · No signup
+              Free public check · No signup
             </div>
             <h1 style={{ fontSize: 'clamp(30px,6vw,46px)', fontWeight: 800, lineHeight: 1.1, margin: 0, letterSpacing: '-0.03em' }}>
               Is your app safe<br />and findable?

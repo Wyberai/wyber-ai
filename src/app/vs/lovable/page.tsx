@@ -5,9 +5,9 @@ import { localeAlternates } from '@/lib/i18n/hreflang'
 
 export const metadata: Metadata = {
   title: 'WyberAi vs Lovable (2026) — Honest Comparison',
-  description: 'WyberAi vs Lovable: fresh code every build, web + mobile apps, self-healing builds, 27 integrations, and GitHub ownership. Verified June 2026.',
+  description: 'WyberAi vs Lovable: fresh code every build, web + mobile apps, self-healing builds, 27 integrations, and GitHub ownership. Last reviewed June 2026.',
   alternates: { canonical: 'https://wyberai.com/vs/lovable', languages: localeAlternates('/vs/lovable') },
-  openGraph: { title: 'WyberAi vs Lovable (2026)', description: 'Fresh code, web + mobile, self-healing builds. Verified June 2026.', url: 'https://wyberai.com/vs/lovable' },
+  openGraph: { title: 'WyberAi vs Lovable (2026)', description: 'Fresh code, web + mobile, self-healing builds. Last reviewed June 2026.', url: 'https://wyberai.com/vs/lovable' },
 }
 
 const ROWS = [
@@ -65,7 +65,7 @@ export default async function VsLovable() {
       competitorName="Lovable"
       competitorUrl="https://lovable.dev"
       tagline="Lovable is the leading AI web app builder. WyberAi generates fresh code (no templates), builds mobile apps, and includes 27 integrations that Lovable doesn't have."
-      blurb="Honest comparison of WyberAi vs Lovable: pricing, credits, features, and what each builder can actually ship. Verified June 2026."
+      blurb="Honest comparison of WyberAi vs Lovable: pricing, credits, features, and what each builder can actually ship. Last reviewed June 2026."
       rows={ROWS}
       faqs={FAQS}
       pillarNote="Lovable builds web apps only."
