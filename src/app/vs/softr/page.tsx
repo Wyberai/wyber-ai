@@ -5,7 +5,7 @@ import { localeAlternates } from '@/lib/i18n/hreflang'
 import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
 export const metadata: Metadata = {
-  title: 'WyberAi vs Softr (2026) — Real Code vs No-Code Platform',
+  title: 'WyberAi vs Softr (2026): real code vs no-code',
   description: 'WyberAi vs Softr: real React code you own vs a hosted no-code platform. Web + mobile apps, live database security scans, from $29/mo vs $269/mo. Verified July 2026.',
   alternates: { canonical: 'https://wyberai.com/vs/softr', languages: localeAlternates('/vs/softr') },
   openGraph: { images: DEFAULT_OG_IMAGES, title: 'WyberAi vs Softr (2026)', description: 'Real code you own vs a hosted no-code platform. Verified July 2026.', url: 'https://wyberai.com/vs/softr' },

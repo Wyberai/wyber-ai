@@ -4,7 +4,7 @@ import { localeAlternates } from '@/lib/i18n/hreflang'
 import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
 export const metadata: Metadata = {
-  title: 'WyberAi vs Replit (2026) — AI App Builder vs Cloud IDE',
+  title: 'WyberAi vs Replit (2026): app builder vs IDE',
   description: 'WyberAi vs Replit: predictable credit pricing vs usage-based billing, non-technical vs developer focus, and web + mobile app building Replit doesn\'t offer. Last reviewed June 2026.',
   alternates: { canonical: 'https://wyberai.com/vs/replit', languages: localeAlternates('/vs/replit') },
   openGraph: { images: DEFAULT_OG_IMAGES, title: 'WyberAi vs Replit (2026)', description: 'AI app builder vs cloud IDE. Last reviewed June 2026.', url: 'https://wyberai.com/vs/replit' },

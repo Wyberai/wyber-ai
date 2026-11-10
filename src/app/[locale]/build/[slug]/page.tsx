@@ -20,6 +20,8 @@ import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 // getTranslatedBuildPage(); template chrome (nav/section headings/CTAs) comes
 // from dict/build-template via BUILD_TEMPLATE_STRINGS.
 
+// Unknown slugs must answer a real 404 (the root loading.tsx streams a 200 before notFound() runs otherwise).
+export const dynamicParams = false
 export function generateStaticParams() {
   return NON_ENGLISH_LOCALES.flatMap(locale => BUILD_PAGES.filter(p => hasBuildTranslation(p.slug, locale)).map(p => ({ locale, slug: p.slug })))
 }

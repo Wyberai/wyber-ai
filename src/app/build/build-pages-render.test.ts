@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { createElement } from 'react'
 import BuildPage, { generateMetadata } from './[slug]/page'
 import { BUILD_PAGES } from './data'
+import { fitTitle } from '@/lib/seo-title'
 
 // React's static-markup renderer HTML-escapes text content (', ", &, <, >),
 // so raw copy containing an apostrophe never literally appears in the output
@@ -44,7 +45,7 @@ describe('build page render integrity', () => {
       expect(faqPage?.mainEntity.length).toBe(p.faqs.length)
 
       const meta = await generateMetadata({ params: Promise.resolve({ slug: p.slug }) })
-      expect(meta.title).toBe(p.metaTitle)
+      expect(meta.title).toEqual(fitTitle(p.metaTitle))
       expect(meta.description).toBe(p.metaDesc)
       expect((meta.alternates as { canonical?: string })?.canonical).toBe(`https://wyberai.com/build/${p.slug}`)
     })

@@ -5,7 +5,7 @@ import type { Metadata } from 'next';
 import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
 export const metadata: Metadata = {
-  title: 'How to build a SaaS app without writing code in 2026',
+  title: 'How to build a SaaS without writing code in 2026',
   description: 'AI app builders have changed what is possible for solo founders. Go from idea to live product in a single afternoon.',
   alternates: { canonical: 'https://wyberai.com/blog/build-saas-without-code' },
   openGraph: { images: DEFAULT_OG_IMAGES, title: 'How to build a SaaS app without writing code in 2026', url: 'https://wyberai.com/blog/build-saas-without-code', type: 'article' },

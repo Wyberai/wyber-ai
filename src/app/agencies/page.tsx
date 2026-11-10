@@ -5,7 +5,7 @@ import { Faq, FinalCta, Section } from '@/components/signal/sections'
 import { QuickPrompt } from '@/components/signal/QuickPrompt'
 
 export const metadata: Metadata = {
-  title: 'Agency mode: deliver apps to clients on a branded page',
+  title: 'Agency mode: deliver apps on a branded page',
   description: 'Give each client a page in their colours that shows what you built for them. Switch it off when the engagement ends.',
   alternates: { canonical: '/agencies' },
 }

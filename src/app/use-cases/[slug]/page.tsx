@@ -5,6 +5,8 @@ import { WyberLogo } from '@/components/shared/WyberLogo'
 import { USE_CASES } from './data'
 import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
+// Unknown slugs must answer a real 404 (the root loading.tsx streams a 200 before notFound() runs otherwise).
+export const dynamicParams = false
 export function generateStaticParams() {
   return USE_CASES.map(uc => ({ slug: uc.slug }))
 }

@@ -7,7 +7,7 @@ import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
-  title: 'Your Instagram page isn’t your business — own your website',
+  title: 'Own your website, not just an Instagram page',
   description: 'Move from a rented social profile to a website you own — found on Google and ChatGPT, taking orders on WhatsApp. Paste your Instagram bio or old site and see your plan free.',
   alternates: { canonical: 'https://wyberai.com/websites' },
   openGraph: { images: DEFAULT_OG_IMAGES,

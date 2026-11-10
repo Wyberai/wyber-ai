@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 
 export const metadata: Metadata = {
-  title: 'Blog',
+  title: 'WyberAi blog: guides on building apps with AI',
   description: 'Build logs, product guides, and deep dives on AI app building — web apps, mobile apps, AI agents, and workflow automation.',
   alternates: { canonical: 'https://wyberai.com/blog' },
 }

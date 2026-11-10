@@ -66,6 +66,25 @@ const nextConfig = {
           // own mic; still denied to all embedded third-party frames.
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(self), geolocation=(), interest-cohort=()' },
           { key: 'X-Permitted-Cross-Domain-Policies', value: 'none' },
+          // REPORT-ONLY: nothing is blocked. It logs what a real Content-Security-Policy would have blocked (to
+          // /api/csp-report) so the policy can be tightened from real traffic before it is enforced.
+          {
+            key: 'Content-Security-Policy-Report-Only',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://connect.facebook.net https://www.redditstatic.com https://esm.sh https://cdn.jsdelivr.net https://*.sentry.io https://va.vercel-scripts.com",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+              "font-src 'self' data: https://fonts.gstatic.com",
+              "img-src 'self' data: blob: https:",
+              "connect-src 'self' https: wss:",
+              "frame-src 'self' https:",
+              "frame-ancestors 'self'",
+              "base-uri 'self'",
+              "object-src 'none'",
+              "form-action 'self' https:",
+              'report-uri /api/csp-report',
+            ].join('; '),
+          },
         ],
       },
     ]

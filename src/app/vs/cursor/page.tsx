@@ -4,7 +4,7 @@ import { localeAlternates } from '@/lib/i18n/hreflang'
 import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
 export const metadata: Metadata = {
-  title: 'WyberAi vs Cursor (2026) — No-Code Builder vs AI Code Editor',
+  title: 'WyberAi vs Cursor (2026): builder vs code editor',
   description: 'WyberAi vs Cursor: no-code app generation vs AI-assisted coding. Wyber builds complete apps from plain English; Cursor makes writing code faster for developers. Last reviewed June 2026.',
   alternates: { canonical: 'https://wyberai.com/vs/cursor', languages: localeAlternates('/vs/cursor') },
   openGraph: { images: DEFAULT_OG_IMAGES, title: 'WyberAi vs Cursor (2026)', description: 'No-code app builder vs AI code editor. Last reviewed June 2026.', url: 'https://wyberai.com/vs/cursor' },

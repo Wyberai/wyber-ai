@@ -23,6 +23,8 @@ function getTranslatedUseCase(slug: string, locale: Locale): TranslatedUseCase |
   return USE_CASES_CONTENT[locale]?.[slug] ?? USE_CASES_CONTENT.en[slug]
 }
 
+// Unknown slugs must answer a real 404 (the root loading.tsx streams a 200 before notFound() runs otherwise).
+export const dynamicParams = false
 export function generateStaticParams() {
   return NON_ENGLISH_LOCALES.flatMap(locale => USE_CASES.map(uc => ({ locale, slug: uc.slug })))
 }

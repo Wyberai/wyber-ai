@@ -5,7 +5,7 @@ import type { Metadata } from 'next';
 import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
 export const metadata: Metadata = {
-  title: 'Build a production Next.js app in under an hour with AI',
+  title: 'Build a production Next.js app in an hour with AI',
   description: 'Next.js is the default framework in WyberAi. SSR, SEO, and performance out of the box. A step-by-step walkthrough.',
   alternates: { canonical: 'https://wyberai.com/blog/nextjs-app-in-one-hour' },
   openGraph: { images: DEFAULT_OG_IMAGES, title: 'Build a production Next.js app in under an hour with AI', url: 'https://wyberai.com/blog/nextjs-app-in-one-hour', type: 'article' },

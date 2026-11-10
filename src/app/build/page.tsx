@@ -4,7 +4,7 @@ import { WyberLogo } from '@/components/shared/WyberLogo'
 import { CATEGORY_LABELS, pagesByCategory } from './data'
 
 export const metadata: Metadata = {
-  title: 'What Can You Build with AI? App Ideas & Starter Prompts',
+  title: 'What can you build with AI? Ideas and prompts',
   description:
     'Browse apps you can build with AI in minutes — booking systems, trackers, CRMs, course platforms — each with a ready-to-paste starter prompt. No code needed.',
   alternates: { canonical: 'https://wyberai.com/build' },

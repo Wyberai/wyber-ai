@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { NON_ENGLISH_LOCALES } from '@/lib/i18n/locales'
 import { OWNER_COOKIE, isOwnerToken } from '@/lib/owner-preview'
+import { isProtectedPath } from '@/lib/route-gate'
 
 export async function proxy(request: NextRequest) {
   const rawPath = request.nextUrl.pathname
@@ -179,6 +180,10 @@ export async function proxy(request: NextRequest) {
   ) {
     return NextResponse.next()
   }
+
+  // Not a known sign-in-only area: let Next.js answer (a real public page, or a proper 404) instead of bouncing the
+  // visitor to /login. See src/lib/route-gate.ts.
+  if (!isProtectedPath(path)) return NextResponse.next()
 
   // Protected routes: /dashboard, /project/*, /onboarding, /settings
   try {

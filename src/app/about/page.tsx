@@ -4,7 +4,7 @@ import type { Metadata } from 'next';
 import { localeAlternates } from '@/lib/i18n/hreflang';
 
 export const metadata: Metadata = {
-  title: 'About',
+  title: 'About WyberAi: who builds it and why',
   description: 'WyberAi is built by SignalPulse Technologies. We build tools that help founders ship faster.',
   alternates: { canonical: 'https://wyberai.com/about', languages: localeAlternates('/about') },
 };
