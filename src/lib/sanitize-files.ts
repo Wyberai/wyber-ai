@@ -6,6 +6,7 @@
 
 import { collectMissingStubs } from './stub-missing-imports'
 import { TAILWIND_CONFIG_FILE, DEFAULT_TOKENS_CSS, GOOGLE_FONTS_LINKS } from './design-system'
+import { extraFontLinks } from './direction-fonts'
 import { WYBER_UI_KIT_FILES } from './wyber-ui-kit'
 import { WYBER_STORE_FILES } from './wyber-store'
 import { CONNECTOR_INFRA_FILES } from './connector-infra'
@@ -398,6 +399,17 @@ ReactDOM.createRoot(document.getElementById('root')${tsBang}).render(
       nextIdx = nextIdx.includes('<head>')
         ? nextIdx.replace('<head>', `<head>\n    ${APP_ID_TAG}`)
         : `${APP_ID_TAG}\n${nextIdx}`
+    }
+    // Design-direction fonts (direction-fonts.ts): load ONLY the families this build's index.css actually
+    // names. extraFontLinks returns '' for every build without a direction, so this is a strict no-op there.
+    {
+      const cssKey = Object.keys(out).find(k => /(^|\/)index\.css$/.test(k))
+      const dirFonts = cssKey ? extraFontLinks(fileContent(out[cssKey])) : ''
+      if (dirFonts && !nextIdx.includes(dirFonts)) {
+        nextIdx = nextIdx.includes('</head>')
+          ? nextIdx.replace('</head>', `    ${dirFonts}\n  </head>`)
+          : `${dirFonts}\n${nextIdx}`
+      }
     }
     // Security badge — opt-in per project (opts.securityBadge is only ever
     // passed by the publish route when the owner enabled it AND the latest

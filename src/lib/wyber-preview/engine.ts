@@ -20,6 +20,7 @@
  */
 
 import { GOOGLE_FONTS_LINKS, PREVIEW_TAILWIND_CONFIG, TOKEN_VARS_CSS } from '@/lib/design-system'
+import { extraFontLinks } from '@/lib/direction-fonts'
 import { resolveDirectivesForPreview } from '@/lib/image-directives'
 import { WYBER_UI_KIT_FILES } from '@/lib/wyber-ui-kit'
 import { WYBER_STORE_FILES } from '@/lib/wyber-store'
@@ -395,6 +396,7 @@ ${js}
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Wyber Preview</title>
   ${GOOGLE_FONTS_LINKS}
+  ${extraFontLinks(css)}
   <!-- Tailwind Play CDN + the SHARED semantic-token config. Apps are styled with
        semantic classes (bg-primary, text-foreground, border-border, …) whose values
        come from per-app HSL tokens in src/index.css — so each app looks bespoke.

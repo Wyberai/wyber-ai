@@ -4,8 +4,10 @@
 // passes paletteId to /api/generate (and, in Plan Mode, appends the design
 // brief to the approved spec). Skipping is always allowed — the server falls
 // back to its own prompt-matched pick.
-import { useMemo, useState } from 'react';
-import { pickPaletteOptions, type Palette } from '@/lib/design-palettes';
+import { useEffect, useMemo, useState } from 'react';
+import { type Palette } from '@/lib/design-palettes';
+import { directionsEnabled } from '@/lib/direction-flag';
+import { pickerOptions, pickerFontsUrl } from '@/lib/direction-picker';
 import { MicroLabel } from './ui';
 import { useT } from '@/lib/i18n/useT';
 import { EDITOR_CANVAS_STRINGS } from '@/lib/i18n/dict/editor-canvas';
@@ -16,22 +18,37 @@ const sw = (pal: Palette, token: string): string =>
 // Editor chrome only loads the brand faces; the palette's display font gets a
 // generic-family fallback so the card still telegraphs serif vs sans.
 const displayStack = (pal: Palette): string =>
-  `'${pal.fontDisplay}', ${/serif|fraunces|playfair|lora/i.test(pal.fontDisplay) ? 'serif' : 'sans-serif'}`;
+  `'${pal.fontDisplay}', ${/serif|fraunces|playfair|lora|newsreader|cormorant|gloock/i.test(pal.fontDisplay) ? 'serif' : 'sans-serif'}`;
 
 interface Props {
   prompt: string;
   selectedId: string | null;
   onPick: (paletteId: string | null) => void;
   count?: number;
+  /** web-side project type, so webapp/saas are offered app-capable directions only */
+  projectType?: string;
 }
 
-export function DirectionCards({ prompt, selectedId, onPick, count = 3 }: Props) {
+export function DirectionCards({ prompt, selectedId, onPick, count = 3, projectType }: Props) {
   const t = useT(EDITOR_CANVAS_STRINGS);
   // Stable per mount — pickPaletteOptions is intentionally randomized for
   // diversity, so memoize or the cards reshuffle on every keystroke/render.
-  const [options] = useState<Palette[]>(() => {
-    try { return pickPaletteOptions(prompt, count); } catch { return []; }
+  // With NEXT_PUBLIC_DESIGN_DIRECTIONS on, the cards are dealt researched DIRECTIONS (ids = direction ids);
+  // otherwise exactly the old palette options.
+  const [picked] = useState(() => {
+    try { return pickerOptions(prompt, count, { enabled: directionsEnabled(), projectType }); }
+    catch { return { options: [] as Palette[], directions: false }; }
   });
+  const options = picked.options;
+  // The editor chrome only loads brand faces: load the dealt directions' fonts so each card shows its real type.
+  useEffect(() => {
+    if (!picked.directions) return;
+    const href = pickerFontsUrl(options);
+    if (!href || document.querySelector(`link[data-direction-fonts="1"][href="${href}"]`)) return;
+    const l = document.createElement('link');
+    l.rel = 'stylesheet'; l.href = href; l.setAttribute('data-direction-fonts', '1');
+    document.head.appendChild(l);
+  }, [picked.directions, options]);
   const gridCols = useMemo(() => `repeat(${Math.max(1, options.length)}, 1fr)`, [options.length]);
   if (options.length === 0) return null;
 

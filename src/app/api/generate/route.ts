@@ -483,6 +483,16 @@ SOCIAL PROOF / RATINGS SCREENS: if the app shows a review count, star rating, or
 COPY — AVOID AI-TELLS (MANDATORY): banned words — leverage, seamless, foster, empower, delve, streamline, robust, cutting-edge, paradigm shift, game-changer, elevate, supercharge, harness, unlock, revolutionize. Banned patterns — binary contrasts ("It's not X, it's Y"), colon-reveal drama ("The best part: it just works"), weasel attribution ("studies show"). These apply to onboarding/marketing copy, not to realistic in-app mock data.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIRST-BUILD COMPLETENESS — MOBILE (MANDATORY)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FOUR STATES ON EVERY DATA SCREEN: loading (skeleton rows, not a bare spinner), empty (invitation + action, see COPY QUALITY), error (what went wrong in plain words + a "Try again" button that really re-runs the load), populated. Keep the state in real useState so each one is reachable (e.g. pull-to-refresh flips loading → populated; Try again flips error → loading).
+DESTRUCTIVE ACTIONS: delete, cancel and sign-out use Alert.alert naming the specific consequence ("Delete 'Q3 pipeline'? This removes its 14 deals.") — never a bare "Are you sure?". Reversible removals use a toast with Undo instead.
+BRAND MOMENT: the first screen (splash or onboarding) shows the app's own logo mark — built from Views in the theme palette, from its initials or a domain icon, never a default placeholder — plus the value promise. Reuse the same mark in the Home header and on Profile.
+APP IDENTITY: when you write app.json (or the comment block for it), set name, slug, icon, splash and adaptive-icon paths and a primaryColor from the theme. An app without an identity block cannot be submitted.
+SETTINGS + ACCOUNT: Profile includes Settings with notification toggles, an About row (version) and, when the app has accounts, a "Delete my account" action behind a confirmation — the app stores require in-app account deletion.
+ACCESSIBILITY: every Pressable has accessibilityRole and accessibilityLabel; touch targets are at least 44x44; text containers have no fixed heights so larger system text never clips.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 IN-APP PREVIEW — CRITICAL RULES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 WyberAi has a built-in React Native Web preview — no Expo Go, no queue, instant render.
@@ -1334,6 +1344,13 @@ Alongside or below the hero: a small band of trust signals. Choose 2-3 that fit:
 FEATURE COMPLETENESS — ZERO TOLERANCE:
 Every section/page the user explicitly named in their prompt MUST be built and linked. "I need a pricing page, about page, and contact form" → all three must exist. Never skip a user-requested section.
 
+FIRST-BUILD COMPLETENESS — WEBSITE (MANDATORY):
+BRAND MARK: design ONE wordmark or logomark from the brand name (CSS/SVG in the palette — never an emoji, never a stock icon) and reuse it in the Navbar and the Footer. Build the favicon from the same SVG as a data URI: <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,..."> in index.html.
+FOOTER BASICS: every commercial site's footer links to Privacy and Terms (plus Cookies when analytics or tracking is mentioned). Build them as real pages in multi-page mode, or as clearly labelled anchored sections otherwise, with short plain-language starter text and one line telling the owner to have it reviewed. Never copy a real company's policy and never claim legal compliance.
+FORMS (contact, newsletter, quote, booking): visible labels, inline validation messages in plain words, a disabled-while-sending state, a success state and an error state with a working retry. With no backend, follow the CONTACT PAGE rule — never claim a message was sent.
+UNKNOWN ROUTES: in multi-page mode an unknown hash route renders a friendly not-found page with a link home — never a blank screen.
+EMPTY CONTENT: a blog, gallery or listings section with no items shows an invitation state with a next step, never an empty grid.
+
 PROGRESS: [progress: Planning [Site Name]], [progress: Design pass: archetype + structure + palette], [progress: Building [filename]], [progress: Done]
 
 OUTPUT FORMAT:
@@ -2092,6 +2109,14 @@ In the sidebar (usually near the bottom, above user avatar), add a "What's new" 
 UPGRADE PROMPTS (mandatory for free-tier features):
 When a free user hits a limit (e.g. "Only Pro users can export more than 10 rows"), show a specific UpgradeModal: current limit, what Pro unlocks, pricing (placeholder numbers: "Pro: $29/mo"), a primary CTA. Never show a vague "upgrade to access" — always name the specific cap and the specific unlock.
 
+FIRST-BUILD COMPLETENESS — SAAS (MANDATORY):
+FOUR STATES ON EVERY DATA SCREEN: skeleton loading, empty (specific invitation + action), error (plain-words cause + a Retry that really re-runs the load), populated. Make the error state reachable at least once in the product (e.g. a failed integration connect or API-key create) so it is real behaviour, not a dead code path.
+NOT-FOUND + ERROR BOUNDARY: useHashRoute falls back to a NotFound page (link back to Dashboard) for unknown routes. Shell wraps the page area in a small class-component ErrorBoundary that shows a recoverable error card instead of a white screen. It is a class, NOT a context — CONTEXT DISCIPLINE still holds.
+DESTRUCTIVE ACTIONS: delete workspace, remove member and revoke API key use ConfirmDialog naming the exact object and consequence; deleting a workspace also requires typing its name. Reversible removals (a row, a filter) use a toast with Undo instead of a dialog.
+ROLE-AWARE UI: drive every write control from useOrg() — viewers see disabled controls with a tooltip saying why; only owners and admins see the danger zone and billing.
+BRAND MARK: ONE logo mark component built from the product name, reused in Sidebar, every auth screen and the favicon (<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,..."> in index.html). Never the skeleton's placeholder icon.
+LEGAL LINKS: the auth screens' footer links to Terms and Privacy; each exists as a simple page with short starter text and a note that the owner must have it reviewed. Never claim compliance.
+
 FEATURE COMPLETENESS — ZERO TOLERANCE:
 Every feature the user explicitly named in their prompt MUST be built as a complete, working implementation. Never ship a placeholder page for a user-requested feature. If the user asked for "team invites" → the invite flow must exist. If they asked for "analytics" → the analytics page must show real charts.
 
@@ -2811,7 +2836,7 @@ You must NOT generate: the six generic infrastructure files above.
 
 ━━━ RULE #1 — COMPLETENESS ━━━
 Every import must have a corresponding file. Every file in [plan:] must be generated.
-For non-critical components that would exceed the output budget, output a minimal stub — never skip:
+Only for genuinely secondary components that would exceed the output budget, output a minimal stub — never skip. A stub is NEVER acceptable for a feature the user named in their prompt or for any section in the sidebar:
 <file path="src/components/Settings.tsx">
 import React from 'react'
 export default function Settings() {
@@ -2836,6 +2861,12 @@ ALL useState in App.tsx. Pass data as props, handlers as callbacks. Max 2 levels
 App.tsx contains: state declarations + the main component tree ONLY.
 Utility functions, constants, helpers (formatters, calculators, color maps, lookup tables) → src/lib/utils.ts.
 An App.tsx that accumulates utility exports grows past the platform's context window; the platform truncates it on the next edit turn, the model rewrites from a partial view, drops the utilities, and every screen that imported them breaks with "No matching export". Keep App.tsx under 200 lines.
+
+━━━ RULE #4b — EVERY SCREEN HAS FOUR STATES ━━━
+Every screen that shows a list, table, chart or fetched data renders all four: loading (skeleton, not a bare spinner), empty (kit <EmptyState> with a specific invitation + primary action), error (plain-words cause + a Retry that really re-runs the load), populated. Keep the state in App.tsx with useState so each one is reachable (e.g. Retry flips error → loading → populated). An unknown or stale section id in the state-based router renders a friendly "page not found" with a button back to the first section — never a blank screen.
+
+━━━ RULE #4c — FORMS AND DESTRUCTIVE ACTIONS ━━━
+Forms: visible labels, inline validation in plain words, submit disabled while invalid or saving, a success toast naming exactly what was saved. Destructive actions (delete, clear, reset): a confirm dialog naming the exact item and the consequence, or a toast with Undo when the action is reversible. Never a bare "Are you sure?".
 
 ━━━ RULE #5 — DATA VISUALIZATION SYSTEM ━━━
 
@@ -5146,8 +5177,30 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
       const { pickPalette, getPaletteById, renderDesignBrief } = await import('@/lib/design-palettes')
       // An explicit paletteId (user picked a direction in Plan Mode / theme UI)
       // wins; unknown or absent ids fall back to the prompt-matched random pick.
-      const palette = (typeof paletteId === 'string' ? getPaletteById(paletteId) : undefined) ?? pickPalette(prompt)
-      perRequestParts.push(renderDesignBrief(palette))
+      // DESIGN DIRECTIONS (flag, default OFF): deal a researched direction (docs/web-design-direction-research.md)
+      // instead of keyword-picking a palette. The direction brief carries its own tokens, fonts, hero medium,
+      // motion and hard rules, so the generic layout seed below (which hard-codes aurora/glow/spotlight heroes)
+      // is skipped when one applies. An explicit paletteId that is a direction id (Plan Mode) wins.
+      let directionApplied = false
+      if ((await import('@/lib/direction-flag')).directionsEnabled()) {
+        try {
+          const { renderDirectionBrief } = await import('@/lib/direction-brief')
+          const { pickDirectionSmart } = await import('@/lib/direction-classifier')
+          // An explicit id (Plan Mode) wins; otherwise a Haiku 5.5 classifier picks from the direction catalog
+          // (92% accepted on unseen prompts vs 73% for keywords); any failure/timeout falls back to the keyword deal.
+          const { direction, source } = await pickDirectionSmart(prompt, { id: typeof paletteId === 'string' ? paletteId : null, projectType })
+          perRequestParts.push(renderDirectionBrief(direction))
+          directionApplied = true
+          console.log(`[design-direction] ${direction.id} via ${source} projectType=${projectType ?? 'unknown'}`)
+        } catch (err) {
+          // Never let the optional layer break a build: fall back to the existing palette brief.
+          console.warn('[design-direction] failed, using palette brief:', err)
+        }
+      }
+      if (!directionApplied) {
+        const palette = (typeof paletteId === 'string' ? getPaletteById(paletteId) : undefined) ?? pickPalette(prompt)
+        perRequestParts.push(renderDesignBrief(palette))
+      }
 
       // LAYOUT & MOTION SEED — the palette brief handles color freshness; this
       // handles STRUCTURAL freshness so two builds with similar palettes still
@@ -5171,8 +5224,10 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
         'Website: asymmetric editorial grid — 12-col grid used unevenly (7/5, 8/4 splits), BentoGrid with one 2x2 MediaFrame cell, pull-quote TestimonialCard offset from center, footnote-style MonoLabels. Dashboard: mixed-density bento widgets. Motion: staggered grid entrances, nothing else.',
         'Website: brutalist statement — zero radius, thick borders, oversized ALL-CAPS display hero, accent-block sections, Marquee ticker between sections, raw DataRow lists. Dashboard: spreadsheet-honest tables, visible grid. Motion: instant hovers, one Marquee, NO scroll fades.',
       ]
-      const layoutSeed = LAYOUT_SEEDS[Math.floor(Math.random() * LAYOUT_SEEDS.length)]
-      perRequestParts.push(`\n\n━━━ LAYOUT & MOTION SEED (fresh build — structural freshness) ━━━\nUnless the user asked for a specific layout, take THIS as your structural starting point: ${layoutSeed}`)
+      if (!directionApplied) {
+        const layoutSeed = LAYOUT_SEEDS[Math.floor(Math.random() * LAYOUT_SEEDS.length)]
+        perRequestParts.push(`\n\n━━━ LAYOUT & MOTION SEED (fresh build — structural freshness) ━━━\nUnless the user asked for a specific layout, take THIS as your structural starting point: ${layoutSeed}`)
+      }
     }
 
     if (stage === 'plan') {

@@ -3563,6 +3563,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
             framework={framework}
             fileContext={Object.entries(files).slice(0,10).map(([p,f]) => `<file path="${p}">\n${(f as any).content.slice(0,1500)}\n</file>`).join('\n\n')}
             projectId={projectId}
+            projectType={projectType}
             onApprove={(planSpec, paletteId) => {
               const { image, prompt: originalPrompt } = pendingPlan;
               setPendingPlan(null);
@@ -3592,7 +3593,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
             </div>
           </div>
           {/* Free design-direction pick — applies to both buttons' builds */}
-          <DirectionCards prompt={pendingPlanOffer.prompt} selectedId={offerPaletteId} onPick={setOfferPaletteId} />
+          <DirectionCards prompt={pendingPlanOffer.prompt} selectedId={offerPaletteId} onPick={setOfferPaletteId} projectType={projectType} />
           <div style={{ display:'flex', gap:7 }}>
             <button
               onClick={() => {

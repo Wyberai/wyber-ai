@@ -1076,7 +1076,9 @@ export function GradientText({ children, as = 'span', speed = 6, className }: {
     <Tag
       className={cn('inline-block bg-clip-text text-transparent', !reduced && 'animate-gradient-move', className)}
       style={{
-        backgroundImage: 'linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)), hsl(var(--primary)))',
+        // primary → foreground → primary: text fill must stay legible on the page background at every
+        // point of the sweep. (--accent is a pale surface tint in most palettes — it made letters vanish.)
+        backgroundImage: 'linear-gradient(90deg, hsl(var(--primary)), hsl(var(--foreground)), hsl(var(--primary)))',
         backgroundSize: '200% 100%',
         animationDuration: speed + 's',
       }}
@@ -2379,7 +2381,9 @@ export function PillTabNav({ tabs, active, onChange, className }: {
   className?: string
 }) {
   return (
-    <div className={cn('inline-flex items-center gap-1 rounded-full border border-border bg-muted p-1', className)}>
+    // isolate: the -z-10 active pill must sit ABOVE this container's own bg-muted, not behind it
+    // (without a stacking context here it rendered underneath and the active label was invisible).
+    <div className={cn('relative isolate inline-flex items-center gap-1 rounded-full border border-border bg-muted p-1', className)}>
       {tabs.map(tab => {
         const isActive = tab.id === active
         return (
@@ -2514,13 +2518,13 @@ export function CondensingNavbar({ brand, links = [], cta, condensedAt = 80, cla
 
   return (
     <motion.nav
-      animate={{
-        height: scrolled ? 56 : 96,
-        backgroundColor: scrolled ? 'hsl(var(--background) / 0.85)' : 'hsl(var(--background) / 0)',
-      }}
+      animate={{ height: scrolled ? 56 : 96 }}
       transition={springFast}
+      // framer-motion cannot tween a color that contains a CSS variable (it throws an
+      // unhandled rejection), so the background fades with a plain CSS transition.
+      style={{ backgroundColor: scrolled ? 'hsl(var(--background) / 0.85)' : 'hsl(var(--background) / 0)' }}
       className={cn(
-        'fixed inset-x-0 top-0 z-50 backdrop-blur-xl',
+        'fixed inset-x-0 top-0 z-50 backdrop-blur-xl transition-[background-color] duration-300',
         scrolled ? 'border-b border-border shadow-sm' : 'border-b border-transparent',
         className,
       )}
@@ -3224,7 +3228,7 @@ export function GradientUnderline({ children, href, className }: {
       <span
         aria-hidden="true"
         className="absolute inset-x-0 bottom-[-0.14em] h-[2px] origin-left scale-x-0 rounded-full transition-transform duration-300 ease-out group-hover:scale-x-100"
-        style={{ backgroundImage: 'linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)))' }}
+        style={{ backgroundImage: 'linear-gradient(90deg, hsl(var(--primary)), hsl(var(--foreground) / 0.7))' }}
       />
     </span>
   )
@@ -7144,6 +7148,7 @@ AI / AGENT INTERFACES:
 
 RULES:
 - PREFER kit components over hand-rolled ones for: nav, footer, pricing, testimonials, FAQ, stats, feature grids, CTAs, modals, tabs.
-- Landing pages: hero gets <AuroraBackground/> or <BackgroundGrid/> behind it; every section wrapped in <Reveal> or <Stagger>; use <BentoGrid> for feature showcases.
+- If the build has a DESIGN DIRECTION block, it wins: follow its hero medium, motion and hard rules, and ignore every effect default in this list (no aurora/glow/orb/mesh/spotlight, no Reveal on every section).
+- Otherwise: a landing-page hero may use <BackgroundGrid/> (or <AuroraBackground/> sparingly, once); use <Reveal>/<Stagger> where they serve the content, not on every section; use <BentoGrid> for feature showcases.
 - You may still write custom components for app-specific UI (tables, kanban, calendars) — style them with the same tokens.
 - Do NOT create src/wyber-ui.tsx yourself, do NOT re-export from it, do NOT import it in index.css.`
