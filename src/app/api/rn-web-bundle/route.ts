@@ -3,6 +3,7 @@ export const maxDuration = 30
 
 import { NextRequest, NextResponse } from 'next/server'
 import { buildPreviewHtml, REACT_VERSION, RNW_VERSION } from '@/lib/rnw-preview/shell'
+import { fixRelativeImports } from '@/lib/fix-relative-imports'
 
 // In-app mobile preview runtime (react-native-web). Bundles a generated RN app
 // and returns the raw ESM bundle (`js`) — the client wraps it with per-device
@@ -562,6 +563,8 @@ export type BundleResult =
 export async function bundleRnApp(files: Record<string, unknown> | null | undefined): Promise<BundleResult> {
   if (!files || Object.keys(files).length === 0) return { ok: false, error: 'No files', kind: 'empty' }
   try {
+    // A wrong relative path (e.g. ../theme from a root file) otherwise blanks the whole preview.
+    files = fixRelativeImports(files as Record<string, { content?: string } | string>)
     const fileMap: Record<string, string> = {}
     for (const [path, file] of Object.entries(files)) {
       const np = normalise(path)
