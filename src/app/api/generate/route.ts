@@ -5136,7 +5136,21 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
     // BUILD must not reuse one house style. For new web builds, nudge the model
     // toward a distinct aesthetic direction (palette + type + layout). It is a
     // STARTING POINT only and yields to any explicit user style/brand/colors.
-    if (!hasExisting && projectType === 'mobile' && stage !== 'plan') {
+    // MOBILE DESIGN DIRECTIONS (same flag as web, default OFF): a direction dealt by fit (src/lib/mobile-directions.ts)
+    // replaces the random DESIGN SEED and LAYOUT SEED below, because it carries exact theme.ts values and structure.
+    let mobileDirectionApplied = false
+    if (!hasExisting && projectType === 'mobile' && stage !== 'plan' && (await import('@/lib/direction-flag')).directionsEnabled()) {
+      try {
+        const { renderMobileBrief, pickMobileDirectionSmart } = await import('@/lib/mobile-directions')
+        const { direction, source } = await pickMobileDirectionSmart(prompt, { id: typeof paletteId === 'string' ? paletteId : null })
+        perRequestParts.push(renderMobileBrief(direction))
+        mobileDirectionApplied = true
+        console.log(`[design-direction] ${direction.id} via ${source} projectType=mobile`)
+      } catch (err) {
+        console.warn('[design-direction] mobile failed, using random seeds:', err)
+      }
+    }
+    if (!hasExisting && projectType === 'mobile' && stage !== 'plan' && !mobileDirectionApplied) {
       const MOBILE_DIRECTIONS = [
         "Cash App-bold: near-black base, ONE vivid accent (lime/green or electric blue), huge numbers, minimal chrome.",
         "Headspace-calm: warm light base (cream/off-white), soft rounded cards, a gentle accent (coral/peach or teal), lots of breathing room.",
