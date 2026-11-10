@@ -3035,6 +3035,10 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
     // "everything else" (client round-trips, retries, credit checks, wiring).
     console.log(`[build timing] buildId=${buildId} projectType=${projectType} path=staged fileCount=${staged.files.length} fillBatches=${batchesToRun.length} plan_ms=${planDoneTime - buildStartTime} scaffold_ms=${scaffoldDoneTime - planDoneTime} fill_ms=${fillDoneTime - scaffoldDoneTime} wire_ms=${Date.now() - fillDoneTime} total_ms=${Date.now() - buildStartTime}`);
     finishChain(summary, liveScreens.map(f => f.path));
+    // First-build verification (flag-gated inside PreviewPanel; a no-op when
+    // NEXT_PUBLIC_BUILD_PROBE is off). Fire-and-forget so it can never delay
+    // or fail the build itself.
+    try { window.dispatchEvent(new CustomEvent('wyber-probe-request', { detail: { projectType } })) } catch { /* advisory */ }
 
     } catch (e: any) {
       // Any unhandled exception in the build chain (network error, 402 mid-fill,

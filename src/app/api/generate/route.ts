@@ -1317,7 +1317,7 @@ QUALITY CHECKLIST (run before "Done")
 □ Responsive at 375px?
 □ Hover + focus-visible on every interactive element?
 □ Loading="lazy" on below-fold images?
-□ Single page only — no react-router-dom, no per-page routing (multi-page mode is disabled; extra requested "pages" are anchor-scrolled sections instead)?
+□ Page structure matches the request — single page by default; if the user asked for distinct pages (About, Contact, blog), every one is built via MULTI-PAGE MODE (useHashRoute, "#/..." links, no react-router-dom, document.title per page)?
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 MULTI-MILLION DOLLAR WEBSITE MANDATES

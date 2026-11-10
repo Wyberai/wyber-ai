@@ -17,6 +17,8 @@ import { DEVICES, DEFAULT_DEVICE_ID, getDevice } from '@/lib/devices'
 import { bundleFiles, generateHTML } from '@/lib/wyber-preview/engine'
 import { WYBER_GAME_SRC } from '@/lib/build-game'
 import { EDITOR_PREVIEW_SANDBOX, sandboxPreviewHtml, usePreviewStorageBridge } from '@/lib/preview-sandbox'
+import { evaluateSnapshot, buildProbeFixPrompt, getProbeSpec } from '@/lib/verification/probe'
+import { requestProbe, BUILD_PROBE_ENABLED } from '@/lib/verification/run-probe'
 
 // Keys only — hooks (useT) can't run at module scope, so the actual translated
 // text is resolved inside the component (see `messages` below), the same
@@ -307,6 +309,41 @@ export function PreviewPanel() {
   // When the current preview finished loading — runtime errors are only
   // treated as build-breaking within a grace window after this (see handler).
   const loadedAt = useRef(0)
+
+  // First-build verification probe (flag-gated, off by default). ChatPanel
+  // fires 'wyber-probe-request' once a first build finishes; we wait for the
+  // rebuilt preview to settle, ask the bridge to walk the nav, and hand any
+  // findings to the existing wyber-autofix lane — whose own repair caps
+  // (MAX_AUTOFIX / MAX_TOTAL_REPAIR_PASSES) bound the cost. Runs at most once
+  // per request and never throws into the editor.
+  const probeBusy = useRef(false)
+  useEffect(() => {
+    if (!BUILD_PROBE_ENABLED) return
+    const onProbe = async (e: Event) => {
+      const spec = getProbeSpec((e as CustomEvent).detail?.projectType)
+      if (!spec || probeBusy.current) return
+      probeBusy.current = true
+      try {
+        for (let waited = 0; waited < 12000 && Date.now() - loadedAt.current < 2500; waited += 500) {
+          await new Promise(r => setTimeout(r, 500))
+        }
+        const snapshot = await requestProbe(iframeRef.current)
+        const issues = evaluateSnapshot(snapshot, spec)
+        console.log('[probe] views=%d issues=%d', snapshot?.views.length ?? 0, issues.length, issues)
+        if (issues.length > 0) {
+          window.dispatchEvent(new CustomEvent('wyber-autofix', {
+            detail: { continuation: true, prompt: buildProbeFixPrompt(issues) },
+          }))
+        }
+      } catch (err) {
+        console.warn('[probe] skipped:', err)
+      } finally {
+        probeBusy.current = false
+      }
+    }
+    window.addEventListener('wyber-probe-request', onProbe)
+    return () => window.removeEventListener('wyber-probe-request', onProbe)
+  }, [])
 
   useEffect(() => {
     if (iframeRef.current && html) {
