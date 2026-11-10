@@ -18,9 +18,9 @@ const hex = (v: string) => {
 const seeded = (seed: number) => () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646 }
 
 describe('direction library integrity', () => {
-  it('has 26 uniquely identified directions', () => {
-    expect(DIRECTIONS.length).toBe(26)
-    expect(new Set(DIRECTION_IDS).size).toBe(26)
+  it('has 30 uniquely identified directions', () => {
+    expect(DIRECTIONS.length).toBe(30)
+    expect(new Set(DIRECTION_IDS).size).toBe(30)
   })
 
   it.each(DIRECTIONS.map(d => [d.id, d] as const))('%s is complete, anchored and well-formed', (_id, d) => {

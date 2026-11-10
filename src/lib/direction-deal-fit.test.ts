@@ -53,12 +53,12 @@ const CASES: Case[] = [
   { p: 'Expense and spend management for finance teams', ok: ['b2b-acid-mono', 'lt-luxe-fintech'], type: 'saas' },
   { p: 'Habit tracker', ok: ['app-owned-tool', 'mn-signal', 'ed-brand-world'], type: 'webapp' },
   { p: 'Inventory management for a steel shop', ok: ['b2b-acid-mono', 'dk-instrument', 'mn-signal', 'lt-luxe-fintech'], type: 'webapp' },
-  { p: 'Clinic appointment and patient records software', ok: ['mn-signal', 'ed-brand-world', 'b2b-acid-mono', 'lt-luxe-fintech'], type: 'saas' },
+  { p: 'Clinic appointment and patient records software', ok: ['app-calm-ledger', 'mn-signal', 'ed-brand-world', 'b2b-acid-mono', 'lt-luxe-fintech'], type: 'saas' },
   { p: 'Note taking app', ok: ['app-owned-tool', 'mn-signal', 'ed-brand-world'], type: 'webapp' },
   { p: 'Farm produce marketplace for local farmers', ok: ['mk-photo-grid', 'ag-earth'], type: 'webapp' },
-  { p: 'CRM for real estate agents', ok: ['b2b-acid-mono', 'lt-luxe-fintech', 'dk-instrument'], type: 'saas' },
-  { p: 'Billing app for kirana shops with GST invoices', ok: ['b2b-acid-mono', 'lt-luxe-fintech', 'mn-signal'], type: 'webapp' },
-  { p: 'School management ERP', ok: ['b2b-acid-mono', 'lt-luxe-fintech', 'mn-signal'], type: 'saas' },
+  { p: 'CRM for real estate agents', ok: ['app-sales-desk', 'b2b-acid-mono', 'lt-luxe-fintech', 'dk-instrument'], type: 'saas' },
+  { p: 'Billing app for kirana shops with GST invoices', ok: ['app-warm-counter', 'b2b-acid-mono', 'lt-luxe-fintech', 'mn-signal'], type: 'webapp' },
+  { p: 'School management ERP', ok: ['app-calm-ledger', 'b2b-acid-mono', 'lt-luxe-fintech', 'mn-signal'], type: 'saas' },
 ]
 
 const seeded = (seed: number) => () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646 }
