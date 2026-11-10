@@ -120,7 +120,7 @@ export const PRICING_STRINGS: Record<Locale, Record<string, string>> = {
     faq3Q: 'Do credits roll over?',
     faq3A: 'Yes. Unused credits carry forward every billing cycle indefinitely as long as your subscription is active.',
     faq4Q: 'Can I use my own domain?',
-    faq4A: 'Yes — on any paid plan. A domain you buy through WyberAi works on any plan. Until then, your site is live at wyberai.com/app/your-name.',
+    faq4A: 'Yes — on Builder and above. A domain you buy through WyberAi works on any plan. Until then, your site is live at wyberai.com/app/your-name.',
     faq5Q: 'Will Google and ChatGPT find my website?',
     faq5A: 'Published websites include an AI-readable copy of every page and an llms.txt summary, and the SEO + AI-search pass adds structured data, a sitemap and more. Nobody can guarantee a ranking, but your site will be easy for search engines and AI assistants to read.',
     faq6Q: 'What happens if I cancel?',
