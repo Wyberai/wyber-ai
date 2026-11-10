@@ -23,6 +23,7 @@ Read the business or product description and pick the ONE direction whose catego
 Rules:
 - Judge the REAL business (what it sells, who it serves), not stray words. "booking form" does not make a law firm a marketplace.
 - A direction's "not for" list is a hard exclusion.
+- DARK directions (dk-studio, dk-instrument, mono-dev, tn-cultural) need a real reason: developers or technical buyers, a creative studio or portfolio, a cinema, venue or museum, or a brief that asks for dark. Ordinary business software and sites (schools, clinics, shops, agents, finance or operations staff, CRM, inventory, billing) must get a LIGHT direction.
 - If nothing fits well, choose a general-purpose direction: ${candidatesFor(surface).filter(d => (surface === 'app' ? d.appDefault : d.generalist)).map(d => d.id).join(', ')}.
 Reply with ONLY compact JSON: {"id":"<direction id>"}
 

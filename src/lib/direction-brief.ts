@@ -173,6 +173,7 @@ HARD RULES FOR THIS DIRECTION (these override the generic kit rules):
 - ${dir.rules.tintedInk ? 'Ink is the tinted foreground token. Never #000, text-black or bg-black.' : 'Use the foreground token for text; no literal colours.'}
 - ONE signal colour (--primary) on interactive elements and one small detail per section. Do not introduce other saturated hues.
 - Do NOT wrap every section in Reveal/Stagger. Use the motion described above, nothing more.
+- INVENTED FACTS ARE PLACEHOLDERS: names, credentials, years in practice, prices, statistics, awards, testimonials, case studies and before/after results that the user did not supply must be clearly marked for the owner to replace (a visible "sample" label or a // PLACEHOLDER comment). Generated photos are illustrations, never real patients, customers, projects or results: do not call them "real cases", "verified" or "certified" and do not present a generated face as a named real person.
 - No emoji as icons, no purple/indigo/violet anywhere unless it is this direction's primary, no stock grey-card grids.
 NOT FOR: ${dir.notFor}
 WATCH OUT: ${dir.pitfall}`

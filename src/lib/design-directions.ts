@@ -231,7 +231,7 @@ export const DIRECTIONS: Direction[] = [
     motion: 'Subtle: 200–300ms fades, hover border brightening. No ambient animation.',
     imageBrief: 'Real product screenshots (use the app\'s own UI components), never abstract 3D art, never glowing orbs.',
     rules: { glow: false, gradientBudget: 3, heroMedia: 'product-ui', displayRatio: 3.5, tintedInk: false },
-    notFor: 'Consumer, food, wellness, local services.',
+    notFor: 'Consumer, food, wellness, local services, schools, clinics, shops and any software for non-technical staff (CRM, inventory, billing, school or clinic management).',
     pitfall: 'This look is the origin of generic "dark + neon glow". The restraint IS the design — no hues, no glow, no gradient meshes.',
   }),
   dir({
@@ -464,7 +464,7 @@ export const DIRECTIONS: Direction[] = [
     imageBrief: 'Soft illustrations and real-people portraits; no clinical stock, no stethoscopes.',
     rules: { glow: false, gradientBudget: 0, heroMedia: 'illustration', displayRatio: 4, tintedInk: true },
     notFor: 'Enterprise medical devices.',
-    pitfall: 'Playful tone must not undermine trust — keep medical claims sober.',
+    pitfall: 'Playful tone must not undermine trust — keep medical claims sober. Generated smiles or portraits are illustrations: never label them real patients or real results, and never invent credentials for a doctor.',
   }),
   dir({
     id: 'il-joyful', name: 'Joyful illustration', group: 'human',

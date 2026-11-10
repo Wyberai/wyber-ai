@@ -131,6 +131,9 @@ describe('renderDirectionBrief', () => {
     expect(b).toContain('Do NOT wrap every section in Reveal/Stagger')
     // found by a real build: the model interpolated a directive (src={`{{wyber-image: ${p.prompt}…}}`}), which cannot resolve
     expect(b).toContain('IMAGE DIRECTIVES MUST BE LITERAL')
+    // found in a real dental build: generated "patients" shown as "real cases" and an invented credential
+    expect(b).toContain('INVENTED FACTS ARE PLACEHOLDERS')
+    expect(b).toContain('never real patients')
     expect(b).toContain('NEVER build a directive with a template literal')
     for (const t of ['background', 'primary', 'muted-foreground', 'ring']) expect(b).toContain(`--${t}:`)
     expect(b).toContain(d.palette.mode === 'dark' ? 'DARK direction' : 'src/index.css')
