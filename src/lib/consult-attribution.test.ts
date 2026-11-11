@@ -45,3 +45,16 @@ describe('the consulting page promises only what the process does', () => {
     for (const f of ['src/app/us-consulting/page.tsx', 'src/app/india-consult/page.tsx']) expect(fs.readFileSync(f, 'utf8')).toContain("from '../consult/page'")
   })
 })
+
+describe('the consulting page shows real capability, not only the call', () => {
+  const src = fs.readFileSync('src/app/consult/page.tsx', 'utf8')
+  it('every example plan it names exists in the builder, so the page cannot describe a plan that is gone', async () => {
+    const { TOPICS } = await import('./signal/guide')
+    const titles = [...src.matchAll(/EXAMPLE_TITLES = \[([^\]]+)\]/g)][0][1].split(',').map(s => s.trim().replace(/^'|'$/g, ''))
+    expect(titles).toHaveLength(4)
+    for (const t of titles) expect(TOPICS.some(x => x.title === t), t).toBe(true)
+  })
+  it('keeps the proof sections: what we build, what every project includes, the build demo, and a privacy link for ads', () => {
+    for (const needle of ['<TypeCards />', 'Every project includes', '<Theatre', 'href="/privacy"', 'href="/terms"']) expect(src).toContain(needle)
+  })
+})
