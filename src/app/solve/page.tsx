@@ -1,3 +1,4 @@
+import { DoorView } from '@/components/signal/DoorView'
 import type { Metadata } from 'next'
 import { SignalFrame } from '@/components/signal/SignalFrame'
 import { resolveRegion } from '@/lib/region'
@@ -15,6 +16,7 @@ export default async function SolvePage() {
   const usd = (await resolveRegion()) !== 'INR'
   return (
     <SignalFrame>
+      <DoorView door="solve" />
       <div className="sg-wrap">
         <AnswerHero door="problem" eyebrow="Solve a problem" title={<>Tell us what is slowing you <span className="sg-em">down.</span></>} lede="Orders, stock, follow-ups, paperwork, a tool you pay for and barely use. Say it in your own words and we sketch the app that fixes it." placeholder="Example: I get 40 invoices a week on paper and have no idea who has paid." video="/signal/solve.mp4" poster="/signal/solve.jpg" alt="Loose paper and tools lining up into one tidy dashboard" />
       </div>

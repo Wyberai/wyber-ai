@@ -57,6 +57,17 @@ export function clearCtx(s: Store | null = store()): void {
   try { s?.removeItem(CTX_KEY) } catch { /* storage blocked */ }
 }
 
+/**
+ * A saved build is forgotten after a week, like the plan it came from. Before this, the plan expired but the trigger that
+ * starts the build did not, so a brief typed months ago could start a build the day someone finally signed in. A pending
+ * build with no timestamp (written by older entry points) is treated as fresh, so nothing that works today stops.
+ */
+export function pendingIsStale(at: string | null | undefined, now = Date.now()): boolean {
+  if (!at) return false
+  const t = Number(at)
+  return Number.isFinite(t) && now - t > MAX_AGE_MS
+}
+
 /** A saved brief only belongs to a sign-in that is headed to the builder (the dashboard), never to one headed elsewhere, like the client desk. */
 export function briefBelongsTo(next: string | null | undefined): boolean {
   return !next || next === '/dashboard' || next.startsWith('/dashboard?') || next.startsWith('/dashboard/')
@@ -68,6 +79,7 @@ export function clearPending(s: Store | null = store()): void {
     s?.removeItem('wyber-pending-prompt')
     s?.removeItem('wyber-pending-type')
     s?.removeItem('wyber-pending-project-label')
+    s?.removeItem('wyber-pending-at')
   } catch { /* storage blocked */ }
 }
 
@@ -92,6 +104,7 @@ export function composeGuidePrompt(idea: string, sketch: Pick<Sketch, 'title' | 
 /** The dashboard contract (src/components/dashboard/DashboardClient.tsx): a pending prompt starts a build after sign-in. */
 export function stashPending(prompt: string, type: ProjectType, label: string, s: Store | null = store()): void {
   try {
+    s?.setItem('wyber-pending-at', String(Date.now()))
     s?.setItem('wyber-pending-prompt', prompt.slice(0, PROMPT_LIMIT))
     s?.setItem('wyber-pending-type', type)
     s?.setItem('wyber-pending-project-label', label.slice(0, 80))

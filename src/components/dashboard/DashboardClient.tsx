@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createClient } from '@/lib/supabase/client';
+import { pendingIsStale } from '@/lib/signal/handoff';
 import { Profile, Project } from '@/lib/supabase/types';
 import { track } from '@/lib/track';
 import Link from 'next/link';
@@ -261,6 +262,10 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
       if (pendingSource) localStorage.removeItem('wyber-pending-source');
       if (pendingName) localStorage.removeItem('wyber-pending-project-name');
       pending = localStorage.getItem('wyber-pending-prompt');
+      // A brief saved more than a week ago is dropped instead of silently starting a build (see pendingIsStale).
+      const pendingAt = localStorage.getItem('wyber-pending-at');
+      if (pendingAt) localStorage.removeItem('wyber-pending-at');
+      if (pending && pendingIsStale(pendingAt)) pending = null;
       pendingType = localStorage.getItem('wyber-pending-type');
       pendingLabel = localStorage.getItem('wyber-pending-project-label');
       if (pending) localStorage.removeItem('wyber-pending-prompt');

@@ -1,4 +1,6 @@
-import Link from 'next/link'
+import { DoorLink } from './DoorLink'
+import { DoorVideo } from './DoorVideo'
+import { DoorView } from './DoorView'
 import { LaunchStrip, ExpoStrip } from '@/components/shared/LaunchStrip'
 import { QuickPrompt } from './QuickPrompt'
 import { Theatre } from './Theatre'
@@ -9,6 +11,7 @@ import { Faq, FinalCta, Facts, Lanes, PricingBand, Section, TypeCards } from './
 export function SignalHome({ usd = false }: { usd?: boolean }) {
   return (
     <>
+      <DoorView door="home" />
       {!usd && <ExpoStrip />}
       <LaunchStrip />
       <div className="sg-wrap">
@@ -17,34 +20,34 @@ export function SignalHome({ usd = false }: { usd?: boolean }) {
           <h1 id="sg-q">What are you looking <span className="sg-em">to do?</span></h1>
           <p className="sg-lede">Pick one and we will show you the way.</p>
           <div className="sg-doors" role="group" aria-label="What are you looking to do?">
-            <Link className="sg-door" href="/solve">
-              <video src="/signal/solve.mp4" poster="/signal/solve.jpg" muted loop playsInline autoPlay preload="metadata" aria-hidden="true" />
+            <DoorLink className="sg-door" href="/solve" step="door_solve">
+              <DoorVideo src="/signal/solve.mp4" poster="/signal/solve.jpg" />
               <span className="sg-go" aria-hidden="true">→</span>
               <span className="sg-meta">Chaos to calm</span>
               <h2>Solve a problem</h2>
               <p>Something in your business is slowing you down: orders, stock, follow-ups, paperwork, or a tool you pay for and barely use.</p>
-            </Link>
-            <Link className="sg-door" href="/create">
-              <video src="/signal/build.mp4" poster="/signal/build.jpg" muted loop playsInline autoPlay preload="metadata" aria-hidden="true" />
+            </DoorLink>
+            <DoorLink className="sg-door" href="/create" step="door_create">
+              <DoorVideo src="/signal/build.mp4" poster="/signal/build.jpg" />
               <span className="sg-go" aria-hidden="true">→</span>
               <span className="sg-meta">Built from nothing</span>
               <h2>Build apps</h2>
               <p>Got an idea? Describe it and see a working first version.</p>
-            </Link>
-            <Link className="sg-door" href="/agencies">
-              <video src="/signal/agencies.mp4" poster="/signal/agencies-poster.jpg" muted loop playsInline autoPlay preload="metadata" aria-hidden="true" />
+            </DoorLink>
+            <DoorLink className="sg-door" href="/agencies" step="door_agencies">
+              <DoorVideo src="/signal/agencies.mp4" poster="/signal/agencies-poster.jpg" />
               <span className="sg-go" aria-hidden="true">→</span>
               <span className="sg-meta">Agency mode</span>
               <h2>Work for clients</h2>
               <p>Build for clients, get their approval, go live on their domain, and send the quote.</p>
-            </Link>
-            <a className="sg-door" href="#watch">
-              <video src="/signal/explore.mp4" poster="/signal/explore.jpg" muted loop playsInline autoPlay preload="metadata" aria-hidden="true" />
+            </DoorLink>
+            <DoorLink className="sg-door" href="#watch" step="door_scroll">
+              <DoorVideo src="/signal/explore.mp4" poster="/signal/explore.jpg" />
               <span className="sg-go" aria-hidden="true">↓</span>
               <span className="sg-meta">Everything it can do</span>
               <h2>Just scrolling</h2>
               <p>Look around first. See everything it can do. Nothing to fill in.</p>
-            </a>
+            </DoorLink>
           </div>
           <QuickPrompt />
           <ul className="sg-proof" aria-label="What you get">

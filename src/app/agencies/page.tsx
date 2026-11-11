@@ -1,3 +1,4 @@
+import { DoorView } from '@/components/signal/DoorView'
 import type { Metadata } from 'next'
 import { SignalFrame } from '@/components/signal/SignalFrame'
 import { AgencyDesk } from '@/components/signal/AgencyDesk'
@@ -33,6 +34,7 @@ const PROMISES: Array<[string, string]> = [
 export default function AgenciesPage() {
   return (
     <SignalFrame>
+      <DoorView door="agencies" />
       <div className="sg-wrap">
         <section className="sg-question" aria-labelledby="sg-ag">
           <span className="sg-mono sg-eyebrow">Agency mode</span>

@@ -1,3 +1,4 @@
+import { DoorView } from '@/components/signal/DoorView'
 import type { Metadata } from 'next'
 import { SignalFrame } from '@/components/signal/SignalFrame'
 import { resolveRegion } from '@/lib/region'
@@ -16,6 +17,7 @@ export default async function CreatePage() {
   const usd = (await resolveRegion()) !== 'INR'
   return (
     <SignalFrame>
+      <DoorView door="create" />
       <div className="sg-wrap">
         <AnswerHero door="idea" eyebrow="Build apps" title={<>Describe it. See a working <span className="sg-em">first version.</span></>} lede="A web app, a mobile app, a website or a SaaS. Say what it is and who it is for." placeholder="Example: A booking app for my salon with reminders by WhatsApp." video="/signal/build.mp4" poster="/signal/build.jpg" alt="An app taking shape from nothing" />
       </div>

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { TOPICS, sketchFor, pickIdeaKind, kindForType } from './guide'
-import { saveCtx, readCtx, clearCtx, clearPending, briefBelongsTo, projectTypeFor, composeGuidePrompt, stashPending, CTX_KEY, PROMPT_LIMIT } from './handoff'
+import { saveCtx, readCtx, clearCtx, clearPending, briefBelongsTo, pendingIsStale, projectTypeFor, composeGuidePrompt, stashPending, CTX_KEY, PROMPT_LIMIT } from './handoff'
 import { BANNED_COPY } from '@/lib/customer-copy-rules'
 
 function fakeStore() {
@@ -166,5 +166,23 @@ describe('a brief from one door never follows someone through another', () => {
     expect(s.getItem('wyber-pending-type')).toBeNull()
     expect(s.getItem('wyber-pending-project-label')).toBeNull()
     expect(readCtx(s)).toBeNull()
+  })
+})
+
+describe('a saved build expires with the plan it came from', () => {
+  const DAY = 24 * 60 * 60 * 1000
+  it('is stale after a week, fresh inside it, and untimed ones are left alone', () => {
+    const now = Date.now()
+    expect(pendingIsStale(String(now - 6 * DAY), now)).toBe(false)
+    expect(pendingIsStale(String(now - 8 * DAY), now)).toBe(true)
+    expect(pendingIsStale(null, now)).toBe(false)
+    expect(pendingIsStale('not a number', now)).toBe(false)
+  })
+  it('stashPending stamps the time, and clearPending removes it', () => {
+    const s = fakeStore()
+    stashPending('build a booking app', 'app', 'Booking', s)
+    expect(Number(s.getItem('wyber-pending-at'))).toBeGreaterThan(Date.now() - 5000)
+    clearPending(s)
+    expect(s.getItem('wyber-pending-at')).toBeNull()
   })
 })

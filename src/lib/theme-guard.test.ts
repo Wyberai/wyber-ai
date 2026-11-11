@@ -11,7 +11,7 @@ const read = (p: string) => fs.readFileSync(path.join(process.cwd(), p), 'utf8')
 
 describe('light mode', () => {
   it('the announcement banners use Signal theme tokens, not the dark-only --brand-text', () => {
-    const src = read('src/components/shared/LaunchStrip.tsx')
+    const src = read('src/components/shared/LaunchStrip.tsx') + read('src/components/signal/StripClient.tsx')
     expect(src).toContain('var(--sg-hot')
     expect(src).toContain('var(--sg-soft')
     expect(src).not.toMatch(/color:\s*'var\(--brand-text/)
