@@ -11,7 +11,8 @@ const clean = (v: string) => v.replace(/[^\w.\-~ +]/g, '').slice(0, 100)
  */
 export function buildCalSrc(base: string, search: string, path: string): string {
   const incoming = new URLSearchParams(search)
-  const out = new URLSearchParams({ embed: 'true', theme: 'dark' })
+  // duration=30: the event offers 15 and 30 minutes, and the page promises 30.
+  const out = new URLSearchParams({ embed: 'true', theme: 'dark', duration: '30' })
   for (const k of UTM) { const v = incoming.get(k); if (v && clean(v)) out.set(k, clean(v)) }
   for (const k of EXTRA) { const v = incoming.get(k); if (v && clean(v)) out.set(`metadata[${k}]`, clean(v)) }
   if (/^\/[a-z-]{1,40}$/.test(path)) out.set('metadata[landing]', path)

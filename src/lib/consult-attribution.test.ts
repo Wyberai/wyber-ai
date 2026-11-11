@@ -37,24 +37,32 @@ describe('the consulting page promises only what the process does', () => {
   it('does not claim a track record or availability it cannot show', () => {
     expect(src).not.toMatch(/hundreds|thousands of|24\/7|same day|guarantee/i)
   })
-  it('takes the free-credit number from the shared constant', () => {
-    expect(src).toContain('${FREE_CREDITS}')
-    expect(src).not.toMatch(/\b30 free credits\b/)
-  })
   it('both campaign URLs still serve this page', () => {
     for (const f of ['src/app/us-consulting/page.tsx', 'src/app/india-consult/page.tsx']) expect(fs.readFileSync(f, 'utf8')).toContain("from '../consult/page'")
   })
+  it('asks for a 30 minute booking, the length the page promises', () => {
+    expect(parse(buildCalSrc(BASE, '', '/consult')).get('duration')).toBe('30')
+  })
 })
 
-describe('the consulting page shows real capability, not only the call', () => {
+describe('the consulting page leads with what we build for people, not self-serve', () => {
   const src = fs.readFileSync('src/app/consult/page.tsx', 'utf8')
-  it('every example plan it names exists in the builder, so the page cannot describe a plan that is gone', async () => {
-    const { TOPICS } = await import('./signal/guide')
-    const titles = [...src.matchAll(/EXAMPLE_TITLES = \[([^\]]+)\]/g)][0][1].split(',').map(s => s.trim().replace(/^'|'$/g, ''))
-    expect(titles).toHaveLength(4)
-    for (const t of titles) expect(TOPICS.some(x => x.title === t), t).toBe(true)
+  it('shows one big build for each of the four project kinds', () => {
+    const kinds = [...src.matchAll(/kind: '([^']+)', title:/g)].map(m => m[1])
+    expect(kinds).toEqual(['SaaS', 'Web app', 'Mobile app', 'Website'])
   })
-  it('keeps the proof sections: what we build, what every project includes, the build demo, and a privacy link for ads', () => {
-    for (const needle of ['<TypeCards />', 'Every project includes', '<Theatre', 'href="/privacy"', 'href="/terms"']) expect(src).toContain(needle)
+  it('does not send visitors away to build it themselves', () => {
+    expect(src).not.toMatch(/href="\/(signup|create)"/)
+    expect(src).not.toMatch(/build it yourself|sketch it yourself/i)
+  })
+  it('its done-for-you prices and delivery times match the pricing page', () => {
+    const pricing = fs.readFileSync('src/app/pricing/PricingClient.tsx', 'utf8')
+    for (const [price, when] of [['$199', '24 hours'], ['$399', '3 working days'], ['$799', '1 week']]) {
+      expect(src, price).toContain(`price: '${price}', when: '${when}'`)
+      expect(pricing, price).toContain(`price: '${price}', delivery: '${when}'`)
+    }
+  })
+  it('keeps the proof sections and a privacy link for ads', () => {
+    for (const needle of ['Every project includes', '<Theatre', 'href="/privacy"', 'href="/terms"']) expect(src).toContain(needle)
   })
 })
