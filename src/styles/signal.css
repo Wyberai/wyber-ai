@@ -344,3 +344,12 @@
   .sg-dash button, .sg-dash a[href] { min-height: 40px; min-width: 40px; }
   .sg-dash .dash-project-card button.wy-tap { min-width: 40px; min-height: 40px; }
 }
+
+/* ---- in-page section bar (homepage) ---- */
+.sg .sg-secnav { position: sticky; z-index: 40; background: var(--sg-bg); border-bottom: 1px solid var(--sg-line); }
+.sg .sg-secnav ul { list-style: none; margin: 0; padding: 8px 0; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+.sg .sg-secnav ul::-webkit-scrollbar { display: none; }
+.sg .sg-secnav a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; border-radius: 999px; font-size: 14px; white-space: nowrap; color: var(--sg-ink2); text-decoration: none; border: 1px solid transparent; }
+.sg .sg-secnav a:hover { color: var(--sg-ink); }
+.sg .sg-secnav a[aria-current="true"] { color: var(--sg-hot); background: var(--sg-soft); border-color: var(--sg-hot); }
+.sg section[id] { scroll-margin-top: 120px; }

@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { LIBRARY_TOOLS } from '@/lib/byos/slug'
 import { HOME_STRINGS } from '@/lib/i18n/home-translations'
 
 /** Sections shared by the Signal pages. Server components: they ship no JavaScript of their own. */
@@ -43,7 +44,7 @@ export function Lanes() {
   return (
     <>
       <div className="sg-lanes">
-        <Link className="sg-lane" href="/byos"><em>44 tools analysed</em><h3>Replace your SaaS</h3><p>Pick the features of a tool you rent. We show what we build, what you must bring, and what we will not pretend to do. Then what you have been paying for features you never touch.</p><span className="sg-go2">Try it with Calendly, Mailchimp or HubSpot →</span></Link>
+        <Link className="sg-lane" href="/byos"><em>{LIBRARY_TOOLS.length} tools analysed</em><h3>Replace your SaaS</h3><p>Pick the features of a tool you rent. We show what we build, what you must bring, and what we will not pretend to do. Then what you have been paying for features you never touch.</p><span className="sg-go2">Try it with Calendly, Mailchimp or HubSpot →</span></Link>
         <Link className="sg-lane" href="/agencies"><em>Agency mode</em><h3>The whole client job in one place</h3><p>Take a brief, build, share a private preview, get approval, connect their domain and send a quote. Your name and logo on their page.</p><span className="sg-go2">See how it works →</span></Link>
         <Link className="sg-lane" href="/tools"><em>No signup</em><h3>Free security and SEO scan</h3><p>A public check: probe a live database like an attacker would and audit any URL. The full in-editor scan costs credits.</p><span className="sg-go2">Scan an app →</span></Link>
         <Link className="sg-lane" href="/marketplace"><em>Marketplace</em><h3>Buy or sell ready-made apps</h3><p>Real apps built on WyberAi, priced by the seller. Every purchase drops a fully editable copy into your account.</p><span className="sg-go2">Browse the marketplace →</span></Link>
@@ -55,10 +56,10 @@ export function Lanes() {
 
 export function Facts({ items }: { items?: [string, string][] }) {
   const list = items ?? [
-    ['Fresh code every time', 'No stale templates. Every project is generated from your description.'],
+    ['Fresh code every time', 'Every project is written from your description, not picked off a shelf.'],
     ['Self-healing builds', 'When a build hits an error, WyberAi tries to fix it before you see it.'],
     ['A security scan on publish', 'The moment you publish, the app’s database is probed like an attacker would, and anything exposed is flagged.'],
-    ['You own the code', 'You can push it to your own GitHub repository. Zero lock-in.'],
+    ['You own the code', 'Push it to your own GitHub repository and take it anywhere.'],
   ]
   return <div className="sg-facts">{list.map(([h, p]) => <div className="sg-card" key={h}><h3>{h}</h3><p>{p}</p></div>)}</div>
 }
@@ -74,7 +75,7 @@ export function PricingBand() {
 export function Faq({ items }: { items?: Array<[string, string]> } = {}) {
   const faqs = items ?? HOME_STRINGS.en.homeFaqs
   return (
-    <Section label="Questions" title="Questions, answered">
+    <Section id="faq" label="Questions" title="Questions, answered">
       <div style={{ marginTop: 28 }}>
         {faqs.map(([q, a], i) => <details key={q} open={i === 0}><summary>{q}</summary><p>{a}</p></details>)}
       </div>

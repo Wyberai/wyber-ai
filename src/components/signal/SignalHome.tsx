@@ -1,3 +1,4 @@
+import { SectionNav } from './SectionNav'
 import { DoorLink } from './DoorLink'
 import { DoorVideo } from './DoorVideo'
 import { DoorView } from './DoorView'
@@ -12,6 +13,7 @@ export function SignalHome({ usd = false }: { usd?: boolean }) {
   return (
     <>
       <DoorView door="home" />
+      <SectionNav />
       {!usd && <ExpoStrip />}
       <LaunchStrip />
       <div className="sg-wrap">
@@ -62,10 +64,10 @@ export function SignalHome({ usd = false }: { usd?: boolean }) {
       <Section id="watch" label="Watch it work" title={<>Describe it. Watch it. <span className="sg-em">Own it.</span></>} sub="Pick a problem and watch a build happen. The cost, the repair and the security check are all on screen, because nothing is hidden.">
         <Theatre usd={usd} />
       </Section>
-      <Section label="More than a builder" title="The parts nobody else has"><Lanes /></Section>
-      <Section label="What you can build" title="Four kinds of project, one place" sub="Describe it in plain English. WyberAi writes the code, sets up the database and logins, and gets it ready to publish."><TypeCards /></Section>
-      <Section label="Inside the editor" title="Keeps going after the first build"><p className="sg-sub" style={{ marginTop: 0 }}>Tap a tool to see it.</p><Tour usd={usd} /></Section>
-      <Section label="Built to be trusted" title="Why people stay with it"><Facts /></Section>
+      <Section id="parts" label="More than a builder" title="The parts nobody else has"><Lanes /></Section>
+      <Section id="kinds" label="What you can build" title="Four kinds of project, one place" sub="Describe it in plain English. WyberAi writes the code, sets up the database and logins, and gets it ready to publish."><TypeCards /></Section>
+      <Section id="editor" label="Inside the editor" title="Keeps going after the first build"><p className="sg-sub" style={{ marginTop: 0 }}>Tap a tool to see it.</p><Tour usd={usd} /></Section>
+      <Section id="trust" label="Built to be trusted" title="Why people stay with it"><Facts /></Section>
       <PricingBand />
       <Faq />
       <FinalCta />
