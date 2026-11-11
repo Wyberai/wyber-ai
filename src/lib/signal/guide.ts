@@ -151,3 +151,8 @@ export function sketchFor(door: Door, text: string, chosen?: string | null): Ske
   // A plain web app: the topic's own wording, or the generic line when there is no topic.
   return { ...base, kind, why: base.why || 'A web app is the quickest way to get a working first version you can click through.' }
 }
+
+/** True when one of the fixed plans fits these words. When none does, the page asks for a plan written for them. */
+export function matchesFixedPlan(door: Door, text: string): boolean {
+  return door === 'problem' ? TOPICS.some(t => t.match.test(text)) : ideaTopic(text) !== null
+}
