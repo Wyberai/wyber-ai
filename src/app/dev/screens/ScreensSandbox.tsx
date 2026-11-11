@@ -20,11 +20,14 @@ const clients = [
   { id: 'c2', name: 'Harbor Foods', slug: 'harbor-foods', company_name: null, contact_email: null, contact_name: null, logo_url: null, brand_color: '#f97316', intro_text: null, status: 'paused' as const, notes: null, client_deliverables: [] },
 ]
 
-// The agency dashboard's newer fields (review state, views, updates), added on top of the fake clients above.
-const agencyClients = clients.map((c, i) => ({ ...c, org_id: i === 0 ? 'w1' : null, owner_id: 'me', has_passcode: i === 0, view_count: i === 0 ? 4 : 0, last_viewed_at: i === 0 ? iso(0) : null, _role: 'owner', _canEdit: true, _canDelete: true,
-  client_feedback: i === 0 ? [{ id: 'f1', deliverable_id: 'd1', kind: 'changes_requested', author_name: 'Asha', body: 'Can the booking button be larger on phones?', created_at: iso(0) }] : [],
-  client_updates: i === 0 ? [{ id: 'u1', body: 'Booking flow is live on staging. Have a look and tell us what you think.', created_at: iso(1) }] : [],
-  client_deliverables: c.client_deliverables.map(d => ({ ...d, review_status: d.id === 'd1' ? 'changes_requested' : 'pending', reviewed_at: null })) }))
+// The agency dashboard's newer fields (stage, review state, quotes, brief, handover), added on top of the fake clients above.
+const agencyClients = clients.map((c, i) => ({ ...c, org_id: null, owner_id: 'me', created_at: iso(10 - i), has_passcode: i === 0, view_count: i === 0 ? 4 : 0, last_viewed_at: i === 0 ? iso(0) : null, credits_used: i === 0 ? 142 : 0,
+  brief_token: i === 0 ? 'b_demo' : null, brief: i === 0 ? { kind: 'Website', business: 'Northwind Interiors', about: 'We design homes for young families.', goal: 'Get enquiries' } : null, brief_submitted_at: i === 0 ? iso(9) : null,
+  _role: 'owner', _canEdit: true, _canDelete: true,
+  client_feedback: i === 0 ? [{ id: 'f1', deliverable_id: 'd1', kind: 'changes_requested', author_name: 'Asha', body: 'Can the booking button be larger on phones?', resolved: false, created_at: iso(0) }] : [],
+  client_updates: i === 0 ? [{ id: 'u1', body: 'Booking flow is live on staging. Have a look and tell us what you think.', created_at: iso(1), emailed_at: iso(1) }] : [],
+  client_quotes: i === 0 ? [{ id: 'q1', number: 'Q-001', title: 'Website build', currency: 'INR', items: [{ description: 'Design and build', qty: 1, unit: 45000 }], total: 45000, note: null, payment_instructions: 'UPI: asha@upi', payment_url: null, status: 'accepted', sent_at: iso(8), responded_at: iso(7), responded_by: 'Asha Rao', decline_reason: null, paid_at: null, created_at: iso(8) }] : [],
+  client_deliverables: c.client_deliverables.map(d => ({ ...d, review_status: d.id === 'd1' ? 'changes_requested' : 'pending', reviewed_at: null, delivered_at: null, handover_note: null })) }))
 
 /** Fake data only. ?s=dashboard (default) | clients | clients-empty | dashboard-empty | onboarding */
 export function ScreensSandbox() {
@@ -33,7 +36,7 @@ export function ScreensSandbox() {
   if (!s) return null
   return (
     <Suspense fallback={null}>
-      {s === 'clients' && <ClientsPageClient initialClients={agencyClients as never} projects={projects.map(p => ({ id: p.id, name: p.name, thumbnail_url: null }))} workspaces={[{ id: 'w1', name: 'Northwind Studio', slug: 'northwind', role: 'owner' }]} />}
+      {s === 'clients' && <ClientsPageClient initialClients={agencyClients as never} projects={projects.map(p => ({ id: p.id, name: p.name, thumbnail_url: null }))} workspaces={[]} pins={[{ id: 'pin1', project_id: 'p1', page_path: '/contact', body: 'Typo in the header', author_name: 'Raj', resolved: false, created_at: iso(0) }] as never} feedbackModes={{ p1: true }} />}
       {s === 'clients-empty' && <ClientsPageClient initialClients={[]} projects={[]} workspaces={[]} />}
       {s === 'onboarding' && <OnboardingPage />}
       {s === 'dashboard-empty' && <DashboardClient profile={profile} projects={[]} />}

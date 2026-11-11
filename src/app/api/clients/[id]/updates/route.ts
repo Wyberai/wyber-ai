@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { clientAccess } from '@/lib/agency/access'
+import { emailClient } from '@/lib/agency/notify'
 
 const MAX_UPDATE = 1000
 
@@ -23,5 +24,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   const { data, error } = await admin.from('client_updates').insert({ client_id: clientId, author_id: user.id, body: text }).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ update: data }, { status: 201 })
+
+  // Optionally email it to the client too (their saved address only, from the freelancer's name, replies to the freelancer).
+  let mail: Awaited<ReturnType<typeof emailClient>> | null = null
+  if (body.emailClient) {
+    mail = await emailClient(admin, access.client as never, { kind: 'update', message: text })
+    if (mail.sent) await admin.from('client_updates').update({ emailed_at: new Date().toISOString() }).eq('id', data.id)
+  }
+  return NextResponse.json({ update: data, email: mail }, { status: 201 })
 }

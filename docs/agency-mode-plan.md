@@ -1,31 +1,38 @@
-# Agency mode: plan
+# Agency mode: plan (v3, built for the solo freelancer)
 
-## What exists today (Nov 11 audit)
-- A client record per account (`clients`) with a public delivery page `/client/[slug]` listing attached projects.
-- Isolation per account is correct (tests added in `clients-isolation.test.ts`).
-- Gaps: `clients.org_id` and the org RLS exist but no code uses them (no teamwork); the link is the only protection and
-  cannot be rotated; clients cannot respond; agencies cannot tell whether a client opened the page.
+## Who it is for
+A single freelancer or tiny studio who builds apps and websites for paying clients and has to run the whole job:
+get the brief, build, show, take feedback, fix, hand over, get paid, and keep the client. Teams are a nice extra, not the point.
+(v2 led with workspaces and roles; that was the wrong emphasis. They stay in the backend but the interface no longer leads with them.)
 
-## What an agency actually needs
-1. **Team workspace.** Several people at one agency see and manage the same clients. Roles reuse the org roles
-   (owner and admin manage, member edits, viewer reads).
-2. **A link that can be locked down.** Optional passcode, and "new link" that kills the old one.
-3. **Client review.** On each deliverable the client can Approve, Request changes (with a note) or comment, with no account.
-4. **Updates.** The agency posts short updates that show on the client page, newest first.
-5. **Signal.** The agency sees views and last opened, which deliverables are approved, and who is waiting on whom.
-   An email goes to the agency when a client approves or asks for changes.
+## The job, and what WyberAi does at each step
 
-## Out of scope on purpose
-- Plan limits or pricing for agency mode (credit and pricing policy is frozen).
-- Client accounts and logins (a passcode is enough for v1 and keeps the client friction-free).
-- Per-client custom domains (needs DNS and TLS work; separate task).
+| Step | Feature | Notes |
+|---|---|---|
+| Brief | **Intake link.** The client answers 10 short questions on a public page; the freelancer gets a structured brief and a ready-made build prompt. | `/brief/[token]`, separate from the portal link so it can be sent first. |
+| Build | **Build from brief.** One click creates the project from the brief and attaches it to the client. | Reuses the dashboard project creation. |
+| Show | The client portal: updates, projects, quote, delivery. | Done in v2, extended. |
+| Feedback | Client change requests, plus pinned comments on the live preview (already in the product), in one inbox per client. | Pinned comments are opt-in per project; the dashboard can switch them on. |
+| Fix | **Fix with AI.** One button turns open feedback (one item or all of it) into a prompt in the builder, prefilled, not auto-sent (so no surprise credit spend). Then "Mark done" and "Ask for review again". | The client sees which items are done. |
+| Deliver | **Handover.** Per project: Delivered state, a handover note (repo, domain, logins, how to edit), live URL, code download link for the freelancer. | In-place project transfer is deliberately NOT built, see below. |
+| Bill | **Quotes.** Line items, currency, notes. The client accepts or declines on the portal with a name and a timestamp. The freelancer's own payment instructions or link appear after acceptance; the freelancer marks it paid. | WyberAi never touches the money. |
+| Know | **Credits per client** (credits spent on their projects) next to the quote total; stage per client; approval log as CSV. | |
+| Keep | Client emails (updates, quote sent, delivered) with the freelancer as reply-to; changes after delivery stay open on the portal. | |
 
-## Build
-- Migration `20261111000000_agency_mode.sql`: passcode hash, view count, last viewed; review status on deliverables;
-  `client_feedback`; `client_updates`; RLS for owner and org members.
-- `src/lib/agency/access.ts`: one place that answers "can this user see or edit this client".
-- `src/lib/agency/passcode.ts`: scrypt hash, signed unlock cookie that stops working when the passcode changes.
-- Public API: `/api/portal/[slug]/{unlock,review,view}`; owner API: clients (org-aware), `rotate`, `updates`.
-- Client page: passcode gate, updates, review controls, view beacon (not counted for the agency's own visits).
-- Dashboard `/clients`: workspace picker, invites, status badges, feedback thread, link and passcode controls, updates composer.
-- Tests: access rules, passcode, review flow, isolation across accounts and orgs.
+## Decisions
+- **No in-place transfer of a project to the client's account.** A project is tied to secrets, connectors, a cloud
+  database, snapshots and domain purchases that are all keyed to the freelancer's user id. Swapping the owner would
+  either break the client's app or hand over the freelancer's keys. Handover is therefore: code export, the live URL,
+  the domain steps, and a written note, which is how freelancers deliver anyway.
+- **No payment processing.** Taking money for someone else is a regulated activity; the portal shows the freelancer's
+  own payment instructions or link and records acceptance and "paid" as the freelancer's own bookkeeping.
+- **Fix with AI prefills, never auto-sends.** Builds cost credits; the freelancer reviews the prompt first.
+- **No plan limits or pricing changes** (policy is frozen).
+- Client accounts, per-client custom domains and a client-side code download are later work.
+
+## Build order
+1. Migration `20261112000000_agency_freelancer_flow.sql`.
+2. Pure libraries with tests: stage, feedback prompt, brief, quote, CSV.
+3. Owner APIs: feedback resolve, brief link, quotes, delivered/handover, approvals CSV, emailed updates.
+4. Public: `/brief/[token]` and the quote response on the portal.
+5. Portal and dashboard rebuild; teams collapsed; builder draft prefill.

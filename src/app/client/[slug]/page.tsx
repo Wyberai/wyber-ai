@@ -4,7 +4,7 @@ import { cookies } from 'next/headers'
 import { createServiceClient } from '@/lib/supabase/server'
 import { readableOn } from '@/lib/color-contrast'
 import { isUnlocked, unlockCookieName } from '@/lib/agency/passcode'
-import { PasscodeGate, ReviewControls, ViewBeacon, type FeedbackItem } from './PortalClient'
+import { PasscodeGate, ReviewControls, ViewBeacon, QuoteCard, type FeedbackItem, type QuoteView } from './PortalClient'
 
 interface DeliverableRow {
   id: string
@@ -13,6 +13,8 @@ interface DeliverableRow {
   sort_order: number
   is_visible: boolean
   review_status: string | null
+  delivered_at: string | null
+  handover_note: string | null
   projects: {
     id: string
     name: string
@@ -50,7 +52,7 @@ export default async function ClientDeliveryPage({ params }: { params: Promise<{
 
   const { data: client } = await db
     .from('clients')
-    .select('id, name, logo_url, brand_color, intro_text, status, portal_passcode_hash, client_deliverables(id, headline, description, sort_order, is_visible, review_status, projects(id, name, thumbnail_url, deployed_url, published_url, custom_domain))')
+    .select('id, name, logo_url, brand_color, intro_text, status, portal_passcode_hash, client_deliverables(id, headline, description, sort_order, is_visible, review_status, delivered_at, handover_note, projects(id, name, thumbnail_url, deployed_url, published_url, custom_domain))')
     .eq('slug', slug)
     .maybeSingle()
 
@@ -88,16 +90,18 @@ export default async function ClientDeliveryPage({ params }: { params: Promise<{
     .sort((a, b) => a.sort_order - b.sort_order)
 
   const ids = deliverables.map(d => d.id)
-  const [{ data: updates }, { data: feedback }] = await Promise.all([
+  const [{ data: updates }, { data: feedback }, { data: quotes }] = await Promise.all([
     db.from('client_updates').select('id, body, created_at').eq('client_id', client.id).order('created_at', { ascending: false }).limit(20),
     ids.length
-      ? db.from('client_feedback').select('id, deliverable_id, kind, author_name, body, created_at').eq('client_id', client.id).in('deliverable_id', ids).order('created_at', { ascending: true })
+      ? db.from('client_feedback').select('id, deliverable_id, kind, author_name, body, created_at, resolved').eq('client_id', client.id).in('deliverable_id', ids).order('created_at', { ascending: true })
       : Promise.resolve({ data: [] as Array<{ id: string; deliverable_id: string } & FeedbackItem> }),
+    // Drafts are never shown. Payment details only travel once the client has accepted.
+    db.from('client_quotes').select('id, number, title, currency, items, total, note, status, responded_by, payment_instructions, payment_url').eq('client_id', client.id).in('status', ['sent', 'accepted', 'paid', 'declined']).order('created_at', { ascending: false }),
   ])
   const byDeliverable = new Map<string, FeedbackItem[]>()
   for (const f of (feedback ?? []) as Array<{ deliverable_id: string } & FeedbackItem>) {
     const list = byDeliverable.get(f.deliverable_id) ?? []
-    list.push({ id: f.id, kind: f.kind, author_name: f.author_name, body: f.body, created_at: f.created_at })
+    list.push({ id: f.id, kind: f.kind, author_name: f.author_name, body: f.body, created_at: f.created_at, resolved: f.resolved })
     byDeliverable.set(f.deliverable_id, list)
   }
   const approved = deliverables.filter(d => d.review_status === 'approved').length
@@ -132,6 +136,17 @@ export default async function ClientDeliveryPage({ params }: { params: Promise<{
           </section>
         )}
 
+        {(quotes ?? []).length > 0 && (
+          <section aria-labelledby="portal-quotes" style={{ margin: '0 0 40px' }}>
+            <h2 id="portal-quotes" style={{ fontSize: 12, fontWeight: 700, color: '#8797ab', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 14px' }}>{(quotes ?? []).length > 1 ? 'Quotes' : 'Quote'}</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {(quotes as unknown as QuoteView[]).map(q => (
+                <QuoteCard key={q.id} slug={slug} quote={{ ...q, total: Number(q.total), payment_instructions: q.status === 'sent' || q.status === 'declined' ? null : q.payment_instructions, payment_url: q.status === 'sent' || q.status === 'declined' ? null : q.payment_url }} brand={brand} ink={ink} />
+              ))}
+            </div>
+          </section>
+        )}
+
         {deliverables.length === 0 ? (
           <p style={{ color: '#8797ab', fontSize: 14 }}>Nothing shared yet — check back soon.</p>
         ) : (
@@ -145,8 +160,17 @@ export default async function ClientDeliveryPage({ params }: { params: Promise<{
                     <img src={project.thumbnail_url} alt="" style={{ width: 140, height: 90, objectFit: 'cover', borderRadius: 9, border: '1px solid #1b2a3b', flexShrink: 0 }} />
                   )}
                   <div style={{ flex: 1, minWidth: 220 }}>
-                    <div style={{ fontSize: 17, fontWeight: 700, color: '#fff', marginBottom: 4 }}>{d.headline || project.name}</div>
+                    <div style={{ fontSize: 17, fontWeight: 700, color: '#fff', marginBottom: 4 }}>
+                      {d.headline || project.name}
+                      {d.delivered_at && <span style={{ marginLeft: 10, fontSize: 12, fontWeight: 700, color: '#22c55e' }}>Delivered {day(d.delivered_at)}</span>}
+                    </div>
                     {d.description && <p style={{ fontSize: 13, color: '#8797ab', lineHeight: 1.6, margin: 0 }}>{d.description}</p>}
+                    {d.delivered_at && d.handover_note && (
+                      <div style={{ marginTop: 12, padding: '12px 14px', background: '#0a1018', border: '1px solid #14202e', borderRadius: 9 }}>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: '#8797ab', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Handover notes</div>
+                        <div style={{ fontSize: 14, color: '#c7d1de', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{d.handover_note}</div>
+                      </div>
+                    )}
                   </div>
                   {liveUrl && (
                     <a href={liveUrl} target="_blank" rel="noreferrer" style={{ padding: '10px 20px', borderRadius: 9, background: brand, color: ink, fontSize: 13, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap' }}>

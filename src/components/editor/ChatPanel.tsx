@@ -435,6 +435,16 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
   // A message typed while a build/edit is running; sent once it finishes.
   const [queuedMsg, setQueuedMsg] = useState<string | null>(null);
   const autoSendQueuedRef = useRef<string | null>(null);
+  // Agency mode "Fix with AI": the Clients page leaves a drafted prompt for this project. It fills the box so you can
+  // read and edit it, and is never sent for you (every build and edit costs credits).
+  useEffect(() => {
+    if (!resolvedProjectId || !hydrated) return;
+    try {
+      const key = `wyber_draft_${resolvedProjectId}`;
+      const draft = sessionStorage.getItem(key);
+      if (draft) { sessionStorage.removeItem(key); setInput(draft); }
+    } catch { /* storage blocked: nothing to prefill */ }
+  }, [resolvedProjectId, hydrated]);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   // Locally-dismissed design-quality suggestion chips — component-local only,
   // no store/DB change (the suggestion itself is already non-persisted).

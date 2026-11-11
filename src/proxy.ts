@@ -124,6 +124,8 @@ export async function proxy(request: NextRequest) {
     // A client's private quote link (/quote/<unguessable token>): clients are not
     // signed in. The page itself 404s for anything that is not a real, sent quote.
     path.startsWith('/quote/') ||
+    // A freelancer's client fills in an intake brief at /brief/<unguessable token> before they have any account.
+    path.startsWith('/brief/') ||
     // Inventory intelligence demo — live under /app/inventory, public for customer demos.
     path.startsWith('/app/inventory') ||
     path.startsWith('/complexity-guide') ||

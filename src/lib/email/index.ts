@@ -256,6 +256,38 @@ export async function sendClientFeedbackAlert(a: { to: string; clientName: strin
   return sendMail({ from: FROM_NOTIF, to: a.to, subject, html })
 }
 
+// Agency mode: the freelancer's client gets an email about their project. It is sent in the freelancer's name
+// ("Asha via WyberAi"), replies go to the freelancer, and it carries one button to the client's page.
+const cleanName = (s: string) => s.replace(/[<>"\r\n]/g, '').trim().slice(0, 60) || 'Your developer'
+export async function sendClientPortalEmail(a: { to: string; fromName: string; replyTo?: string | null; clientName: string; kind: 'update' | 'quote' | 'delivered'; message?: string | null; link: string; quoteTitle?: string; quoteTotal?: string }) {
+  const who = cleanName(a.fromName)
+  const heading = a.kind === 'update' ? `An update on your project` : a.kind === 'quote' ? `A quote is ready for you` : `Your project has been delivered`
+  const body = a.kind === 'update'
+    ? p(escHtml((a.message ?? '').slice(0, 1000)).replace(/\n/g, '<br/>'))
+    : a.kind === 'quote'
+      ? `${p(`<strong style="color:#f0f0f4">${escHtml(who)}</strong> sent you a quote. You can read it and accept it on your project page.`)}${infoBox([['Quote', escHtml(a.quoteTitle ?? '')], ['Total', escHtml(a.quoteTotal ?? '')]])}`
+      : `${p(`<strong style="color:#f0f0f4">${escHtml(who)}</strong> has marked your project as delivered.`)}${a.message ? p(escHtml(a.message.slice(0, 1000)).replace(/\n/g, '<br/>')) : ''}`
+  const html = wrap(`
+    ${h1(heading)}
+    ${body}
+    <div style="text-align:center;margin:24px 0">${btn('Open your project page →', a.link)}</div>
+  `, `${who}: ${heading.toLowerCase()}`)
+  const subject = a.kind === 'update' ? `Update on your project from ${who}` : a.kind === 'quote' ? `Quote from ${who}` : `Your project is delivered`
+  return sendEmail({ from: `${who} via WyberAi <hello@wyberai.com>`, to: a.to, subject, html, ...(a.replyTo ? { replyTo: a.replyTo } : {}) })
+}
+
+// Agency mode: tell the freelancer a client sent their intake brief, or answered a quote.
+export async function sendClientEventAlert(a: { to: string; clientName: string; event: 'brief' | 'quote_accepted' | 'quote_declined'; detail?: string | null }) {
+  const heading = a.event === 'brief' ? 'A client sent their brief' : a.event === 'quote_accepted' ? 'A client accepted your quote' : 'A client declined your quote'
+  const html = wrap(`
+    ${h1(heading)}
+    ${p(`<strong style="color:#f0f0f4">${escHtml(a.clientName)}</strong>${a.event === 'brief' ? ' filled in the intake form. You can build from it with one click.' : a.event === 'quote_accepted' ? ' accepted your quote.' : ' declined your quote.'}`)}
+    ${a.detail ? infoBox([['Details', escHtml(a.detail.slice(0, 500))]]) : ''}
+    <div style="text-align:center;margin:24px 0">${btn('Open the client →', `${APP_URL}/clients`)}</div>
+  `, `${a.clientName}: ${heading.toLowerCase()}`)
+  return sendMail({ from: FROM_NOTIF, to: a.to, subject: `${heading}: ${a.clientName.slice(0, 40)}`, html })
+}
+
 // Daily internal revenue brief for the founder (see lib/crm/brief.ts, /api/cron/crm-brief).
 export async function sendCrmDailyBrief(opts: { subject: string; text: string }) {
   const paras = opts.text.split('\n').map(l => (l.trim() ? p(escHtml(l)) : '')).join('')
