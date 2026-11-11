@@ -2,7 +2,7 @@ import { NavbarClient as Navbar } from '@/components/shared/NavbarClient';
 import { Footer } from '@/components/shared/FooterClient';
 import Link from 'next/link';
 import type { Metadata } from 'next';
-export const metadata: Metadata = { title: 'WyberAi for Founders', description: 'Ship before you pitch. Build your MVP without a technical co-founder.' };
+export const metadata: Metadata = { title: 'WyberAi for Founders', description: 'Ship before you pitch. Build your MVP without a technical co-founder: describe the idea in plain English, get a working app, and put it live.' };
 const FEATURES = [
   { icon: '⚡', title: 'MVP in hours, not months', desc: 'Describe your product in plain English. Get a working full-stack app with auth, database, and live preview today.' },
   { icon: '💰', title: 'No technical co-founder needed', desc: 'Build the first version yourself. Keep 100% of your equity. Bring in developers when you have real traction and a clear spec.' },

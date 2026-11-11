@@ -5,7 +5,7 @@ import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
 export const metadata: Metadata = {
   title: 'No-code vs AI code generation in 2026',
-  description: 'A practical comparison of no-code platforms (Bubble, Glide, Webflow) and AI code generators (WyberAi, Lovable, Bolt). Trade-offs on vendor lock-in, performance, and customization.',
+  description: 'Compare no-code platforms (Bubble, Glide, Webflow) with AI code generators (WyberAi, Lovable, Bolt): lock-in, performance and customization.',
   alternates: { canonical: 'https://wyberai.com/blog/no-code-vs-ai-code-generation' },
   openGraph: { images: DEFAULT_OG_IMAGES, title: 'No-code vs AI code generation — which one should you use in 2026?', url: 'https://wyberai.com/blog/no-code-vs-ai-code-generation', type: 'article' },
 }

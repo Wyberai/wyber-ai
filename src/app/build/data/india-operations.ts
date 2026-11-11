@@ -95,7 +95,7 @@ export const INDIA_OPERATIONS_PAGES: BuildPage[] = [
     noun: 'expiry and batch tracker',
     h1: 'Build an Expiry and Batch Tracker App with AI',
     metaTitle: 'Build a Batch and Expiry Date Tracker App with AI',
-    metaDesc: 'Track stock by batch and expiry so near-dated items move first and nothing expires on the shelf. For stockists and shops. Built from plain English, free to start.',
+    metaDesc: 'Track stock by batch and expiry so near-dated items move first and nothing expires on the shelf. Built from plain English, free to start.',
     target: 'web',
     category: 'business',
     tagline: 'Know which batches are near expiry before they are a loss, and sell the oldest stock first.',

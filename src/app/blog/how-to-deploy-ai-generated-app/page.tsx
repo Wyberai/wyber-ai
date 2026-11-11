@@ -5,7 +5,7 @@ import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
 export const metadata: Metadata = {
   title: 'How to deploy an AI-generated app to production',
-  description: 'Step-by-step guide to taking an AI-generated app from preview to production. Covers custom domains, Supabase database setup, environment variables, and Vercel deployment.',
+  description: 'Step-by-step guide to taking an AI-generated app from preview to production: custom domains, Supabase setup, env variables and deployment.',
   alternates: { canonical: 'https://wyberai.com/blog/how-to-deploy-ai-generated-app' },
   openGraph: { images: DEFAULT_OG_IMAGES, title: 'How to deploy an AI-generated app to production', url: 'https://wyberai.com/blog/how-to-deploy-ai-generated-app', type: 'article' },
 }

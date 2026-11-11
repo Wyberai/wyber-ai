@@ -171,7 +171,8 @@ function PlanCard({
   const monthly = inr ? plan.monthlyPriceINR : plan.monthlyPrice
   const annualUnit = inr ? plan.annualPriceINR : plan.annualPrice
   const price = annual ? annualUnit : monthly
-  const perCredit = inr ? plan.perCreditINR : plan.perCredit
+  // Computed from the price shown (monthly or annual) and the credits, so the label can never drift from the plan cards.
+  const perCredit = plan.perCredit && plan.credits && price ? (inr ? `₹${(price / plan.credits).toFixed(1)}` : `$${(price / plan.credits).toFixed(2)}`) : null
   const isLoading = loading === plan.planKey || loading === plan.planKey?.replace('monthly', 'annual')
 
   return (

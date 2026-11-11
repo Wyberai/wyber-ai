@@ -6,7 +6,7 @@ import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
 export const metadata: Metadata = {
   title: 'WyberAi vs Lovable',
-  description: 'Both tools build full-stack apps from plain English. An honest comparison for developers and founders.',
+  description: 'Both tools build full-stack apps from plain English. An honest WyberAi vs Lovable comparison for developers and founders: pricing, output, limits.',
   alternates: { canonical: 'https://wyberai.com/blog/wyber-vs-lovable' },
   openGraph: { images: DEFAULT_OG_IMAGES, title: 'WyberAi vs Lovable', url: 'https://wyberai.com/blog/wyber-vs-lovable', type: 'article' },
 };

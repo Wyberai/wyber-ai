@@ -4,7 +4,7 @@ import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
 export const metadata: Metadata = {
   title: '7 best Lovable alternatives in 2026',
-  description: 'Looking for a Lovable alternative? Honest 2026 comparison of WyberAi, Bolt, v0, Replit, Rork, Softr and Base44 — pricing, code ownership, mobile output, and security.',
+  description: 'Looking for a Lovable alternative? Honest 2026 comparison of WyberAi, Bolt, v0, Replit, Rork, Softr and Base44: pricing, code ownership, mobile.',
   alternates: { canonical: 'https://wyberai.com/lovable-alternatives' },
   openGraph: { images: DEFAULT_OG_IMAGES,
     title: '7 Best Lovable Alternatives in 2026',

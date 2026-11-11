@@ -5,7 +5,7 @@ import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
 export const metadata: Metadata = {
   title: 'Why startups choose AI app builders over agencies',
-  description: 'Dev agencies charge $15k–$50k and take 3–6 months. AI app builders like WyberAi ship an MVP the same day for $29/mo. A real comparison of cost, speed, and quality.',
+  description: 'Dev agencies charge $15k–$50k and take 3–6 months. AI app builders like WyberAi ship an MVP the same day. A real cost and speed comparison.',
   alternates: { canonical: 'https://wyberai.com/blog/ai-app-builder-for-startups' },
   openGraph: { images: DEFAULT_OG_IMAGES, title: 'Why startups are ditching dev agencies for AI app builders', url: 'https://wyberai.com/blog/ai-app-builder-for-startups', type: 'article' },
 }

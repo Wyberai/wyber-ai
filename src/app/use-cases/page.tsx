@@ -6,7 +6,7 @@ import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
 export const metadata: Metadata = {
   title: 'Use Cases: Build Web Apps & Mobile Apps',
-  description: 'Explore how WyberAi helps you build web apps and mobile apps from plain English — no code required.',
+  description: 'Explore how WyberAi helps you build web apps and mobile apps from plain English, with no code. Browse real use cases for founders and teams.',
   alternates: { canonical: 'https://wyberai.com/use-cases' },
   openGraph: { images: DEFAULT_OG_IMAGES, title: 'Use Cases — WyberAi', description: 'Build web apps and mobile apps from plain English. No code required.' },
 }
@@ -20,7 +20,7 @@ const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'WebPage',
   name: 'WyberAi Use Cases',
-  description: 'Explore how WyberAi helps you build web apps and mobile apps from plain English.',
+  description: 'Explore how WyberAi helps you build web apps and mobile apps from plain English, with no code. Browse real use cases for founders and teams.',
   url: 'https://wyberai.com/use-cases',
 }
 

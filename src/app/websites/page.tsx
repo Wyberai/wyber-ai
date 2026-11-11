@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
   title: 'Own your website, not just an Instagram page',
-  description: 'Move from a rented social profile to a website you own — found on Google and ChatGPT, taking orders on WhatsApp. Paste your Instagram bio or old site and see your plan free.',
+  description: 'Move from a rented social profile to a website you own, found on Google and ChatGPT and taking orders on WhatsApp. See your plan free.',
   alternates: { canonical: 'https://wyberai.com/websites' },
   openGraph: { images: DEFAULT_OG_IMAGES,
     title: 'Your Instagram page isn’t your business. Your website is.',

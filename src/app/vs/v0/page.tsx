@@ -5,7 +5,7 @@ import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
 export const metadata: Metadata = {
   title: 'WyberAi vs v0 (2026): full-app builder vs UI tool',
-  description: 'v0 generates UI components. WyberAi generates full-stack web + mobile apps with self-healing builds and 27 integrations. Honest comparison last reviewed June 2026.',
+  description: 'v0 generates UI components. WyberAi generates full-stack web and mobile apps with self-healing builds and integrations. Last reviewed June 2026.',
   alternates: { canonical: 'https://wyberai.com/vs/v0', languages: localeAlternates('/vs/v0') },
   openGraph: { images: DEFAULT_OG_IMAGES, title: 'WyberAi vs v0 by Vercel (2026)', description: 'Full-stack app builder vs UI component generator. Last reviewed June 2026.', url: 'https://wyberai.com/vs/v0' },
 }

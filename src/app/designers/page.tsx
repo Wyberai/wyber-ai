@@ -2,7 +2,7 @@ import { NavbarClient as Navbar } from '@/components/shared/NavbarClient';
 import { Footer } from '@/components/shared/FooterClient';
 import Link from 'next/link';
 import type { Metadata } from 'next';
-export const metadata: Metadata = { title: 'WyberAi for Designers', description: 'Turn your Figma designs into production code. Import, generate, and ship real apps.' };
+export const metadata: Metadata = { title: 'WyberAi for Designers', description: 'Turn your Figma designs into production code. Import a design, generate a real app from it, and ship it live without waiting on engineering.' };
 const FEATURES = [
   { icon: '◈', title: 'Figma import', desc: 'Paste a Figma URL and WyberAi converts your design to a production React component. Design in Figma, ship in Wyber.' },
   { icon: '✦', title: 'AI image generation', desc: 'Generate hero illustrations, product mockups, and UI assets directly in the IDE. DALL-E 3 built in.' },

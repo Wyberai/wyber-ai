@@ -5,7 +5,7 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'WyberAi MCP server: build from Claude or Cursor',
-  description: 'WyberAi ships a real remote MCP server with 34 tools. Create projects, run builds, inspect files, run SQL, scan for security holes, and publish live apps — without leaving your AI editor.',
+  description: 'WyberAi ships a real remote MCP server with 34 tools: create projects, run builds, inspect files, run SQL and publish apps from your AI editor.',
 }
 
 const GROUPS: { label: string; accent?: boolean; tools: [string, string][] }[] = [

@@ -12,7 +12,7 @@ import { CsvDashboardPreview } from './CsvDashboardPreview'
 // what they want built.
 export const metadata: Metadata = {
   title: 'Your Margins, Inventory & Orders — One Dashboard',
-  description: 'Tracking margin, inventory, and orders across Amazon, Shopify, and Etsy in three logins and a spreadsheet? Build the dashboard that actually shows you what\'s happening.',
+  description: 'Tracking margin, inventory and orders across Amazon, Shopify and Etsy in a spreadsheet? Build one dashboard that shows what is really happening.',
   alternates: { canonical: 'https://wyberai.com/ecommerce' },
   robots: { index: true, follow: true },
 }

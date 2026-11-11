@@ -1,7 +1,7 @@
 import { NavbarClient as Navbar } from '@/components/shared/NavbarClient';
 import { Footer } from '@/components/shared/FooterClient';
 import type { Metadata } from 'next';
-export const metadata: Metadata = { title: 'WyberAi changelog: every feature and fix', description: 'Every feature, fix, and improvement — logged as we ship.', alternates: { canonical: 'https://wyberai.com/changelog' } };
+export const metadata: Metadata = { title: 'WyberAi changelog: every feature and fix', description: 'Every feature, fix and improvement to WyberAi, logged as we ship. See what is new in the AI app builder, from builds to deploys and security.', alternates: { canonical: 'https://wyberai.com/changelog' } };
 const RELEASES = [
   { date:'November 10, 2026', version:'v1.3', tag:'WyberCode 1.0', color:'#0EA5E9', items:[
     { type:'new', text:'WyberCode 1.0 — our new coding engine now builds every app, with faster, more consistent output' },
