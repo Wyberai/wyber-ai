@@ -110,14 +110,14 @@ export const STEPS = [
   { n: 'SAY IT', d: 'Describe it in plain words. WyberAi plans the build before it writes a line.', m: 'Describe it. WyberAi plans first.' },
   { n: 'SEE IT', d: 'Fresh code, never a template. Web app, mobile app, website or SaaS.', m: 'Fresh code, never a template.' },
   { n: 'SHAPE IT', d: 'Change anything by chatting. It fixes its own mistakes.', m: 'Change it by chatting. It repairs itself.' },
-  { n: 'LOCK IT', d: 'It probes its own database like an attacker before you publish.', m: 'It probes its own database first.', tag: 'BUILT IN' },
+  { n: 'LOCK IT', d: 'It probes its own database like an attacker the moment you publish.', m: 'It probes its own database on publish.', tag: 'BUILT IN' },
   { n: 'SHIP IT' },
 ]
 
 export const WHY = [
   { n: '01', a: 'Fresh code, ', b: 'every time.', p: 'No drag-and-drop and no stale templates. WyberAi writes real React and Tailwind from scratch for every project.' },
   { n: '02', a: 'Self-healing ', b: 'builds.', p: 'A broken import or a cut-off file does not stop the build. WyberAi finds the failure and repairs it in the same run.' },
-  { n: '03', a: 'It probes your database ', b: 'like an attacker.', p: 'A real Row-Level Security test against your live database, not a linter guessing at your schema. It runs before every publish, and a critical leak blocks the release.' },
+  { n: '03', a: 'It probes your database ', b: 'like an attacker.', p: 'A real Row-Level Security test against your live database, not a linter guessing at your schema. It runs right after every publish, and a critical leak is flagged the moment it is found.' },
   { n: '04', a: 'Your code. ', b: 'Zero lock-in.', p: 'Push to your own GitHub repo, connect your own domain, and fork it or hire developers later. Auth, database and API routes come wired up, and the database runs on WyberCloud, free for 2 years.' },
 ]
 

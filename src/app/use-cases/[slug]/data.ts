@@ -212,11 +212,11 @@ export const USE_CASES: UseCase[] = [
     slug: 'secure-ai-app-builder',
     h1: 'Secure AI App Builder — Live Database Security Scanning',
     metaTitle: 'Secure AI App Builder with RLS Security Scanning | WyberAi',
-    metaDesc: 'WyberAi builds apps on a real Supabase database and runs a live Row Level Security scan, probing it like an attacker would, before you publish.',
+    metaDesc: 'WyberAi builds apps on a real Supabase database and runs a live Row Level Security scan, probing it like an attacker would, the moment you publish.',
     pillar: 'web',
     pillarLabel: 'Web Apps',
     pillarColor: '#0EA5E9',
-    tagline: 'AI-generated apps ship with real user data. WyberAi is the only builder that checks your database is actually locked down before you go live.',
+    tagline: 'AI-generated apps ship with real user data. WyberAi checks your database is actually locked down the moment you publish.',
     body: [
       'Most AI app builders generate a database and authentication, then stop. They never check whether the security rules they wrote actually work. If Row Level Security is misconfigured, every user\'s private data is exposed to every other user — and nothing in the build process tells you.',
       'WyberAi runs a live RLS trust scan on every published app: it queries your actual Supabase database using the public anon key, exactly the way an outside attacker would, and reports what it can see. This isn\'t a static code linter checking for keywords — it\'s a real probe against your live data, run automatically from the Security tab.',
@@ -235,7 +235,7 @@ export const USE_CASES: UseCase[] = [
     faqs: [
       { q: 'What is an RLS trust scan?', a: 'Row Level Security (RLS) is the Postgres feature that restricts which rows a user can see in a Supabase database. A trust scan tests those policies for real by querying the database with the same anon key a public visitor would use — confirming the restrictions actually hold, not just that they were written.' },
       { q: 'Why does this matter for AI-generated apps?', a: 'AI builders write RLS policies the same way they write any other code — and they can get it wrong. Without verification, a subtle policy mistake means every signed-up user can read every other user\'s private data, and nobody finds out until it\'s reported or exploited.' },
-      { q: 'Do other AI app builders do this?', a: 'No. Most AI app builders provision a database and auth, then leave verification to you. WyberAi is the only one that runs a live, automated scan against the real database using the public anon key before you publish.' },
+      { q: 'Do other AI app builders do this?', a: 'Few do. Most AI app builders provision a database and auth, then leave verification to you. WyberAi runs a live, automated scan against the real database using the public anon key, automatically as soon as you publish and on demand before.' },
       { q: 'Does the scan modify my data?', a: 'No. The scan only reads — it queries what an anonymous user could see, the same as visiting your app\'s API without logging in. It never writes, updates, or deletes data.' },
       { q: 'Where do I run the scan?', a: 'Open your project, go to the Security tab, and run the scan against your connected Supabase project. Results show immediately with the specific table and policy to fix.' },
     ],

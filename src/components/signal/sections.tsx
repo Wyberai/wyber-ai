@@ -57,7 +57,7 @@ export function Facts({ items }: { items?: [string, string][] }) {
   const list = items ?? [
     ['Fresh code every time', 'No stale templates. Every project is generated from your description.'],
     ['Self-healing builds', 'When a build hits an error, WyberAi tries to fix it before you see it.'],
-    ['A security scan before publish', 'The app’s database is checked before anything goes live.'],
+    ['A security scan on publish', 'The moment you publish, the app’s database is probed like an attacker would, and anything exposed is flagged.'],
     ['You own the code', 'You can push it to your own GitHub repository. Zero lock-in.'],
   ]
   return <div className="sg-facts">{list.map(([h, p]) => <div className="sg-card" key={h}><h3>{h}</h3><p>{p}</p></div>)}</div>

@@ -430,7 +430,7 @@ export function buildWyberCodeAnnouncement(
   const start = `${APP_URL}/create?utm_source=email&utm_medium=announcement&utm_campaign=wybercode-1-0`
   const sign = `<p style="font-size:14px;line-height:1.7;color:#c8c8d4;margin:22px 0 0">Thank you,<br/>Sumeet<br/><span style="color:#8888a0">Founder, WyberAi</span></p>`
   const signText = 'Thank you,\nSumeet\nFounder, WyberAi'
-  const engine = 'WyberCode 1.0 is our new coding engine. It now builds every app on WyberAi, with staged builds, automatic repair of build errors, and a security scan of your database before anything goes live.'
+  const engine = 'WyberCode 1.0 is our new coding engine. It now builds every app on WyberAi, with staged builds, automatic repair of build errors, and a security scan of your database the moment you publish.'
 
   if (kind === 'spark-subscriber') {
     const planLine = opts.extraCreditsAdded
@@ -487,12 +487,12 @@ export function buildWyberCodeAnnouncement(
       ['A booking page', 'For your shop, clinic or studio'],
       ['A simple website', 'With your menu, prices and a contact button'],
     ])}
-    ${p(`Your ${n(PLAN_FACTS.free.credits)} free credits are still there, no card needed, and you see the cost before anything runs. WyberCode 1.0, our new coding engine, builds it, repairs its own errors and checks your database for leaks before you publish.`)}
+    ${p(`Your ${n(PLAN_FACTS.free.credits)} free credits are still there, no card needed, and you see the cost before anything runs. WyberCode 1.0, our new coding engine, builds it, repairs its own errors and checks your database for leaks as soon as you publish.`)}
     <div style="text-align:center;margin:28px 0">${btn('Start your first build →', start)}</div>
     ${p('If you tried it and it was not for you, reply and tell me why. That helps me more than a sale.')}
     ${sign}
   `, preheader, unsub)
-  const text = [subject, '', hiText, '', 'You signed up for WyberAi but have not built anything yet. That is normal. The easiest way to see what it does is to describe one small thing you actually need.', '', '- An invoice tracker: who owes what, and what is overdue', '- A booking page: for your shop, clinic or studio', '- A simple website: with your menu, prices and a contact button', '', `Your ${n(PLAN_FACTS.free.credits)} free credits are still there, no card needed, and you see the cost before anything runs. WyberCode 1.0, our new coding engine, builds it, repairs its own errors and checks your database for leaks before you publish.`, '', `Start your first build: ${start}`, '', 'If you tried it and it was not for you, reply and tell me why. That helps me more than a sale.', '', signText, '', `Unsubscribe: ${unsub}`].join('\n')
+  const text = [subject, '', hiText, '', 'You signed up for WyberAi but have not built anything yet. That is normal. The easiest way to see what it does is to describe one small thing you actually need.', '', '- An invoice tracker: who owes what, and what is overdue', '- A booking page: for your shop, clinic or studio', '- A simple website: with your menu, prices and a contact button', '', `Your ${n(PLAN_FACTS.free.credits)} free credits are still there, no card needed, and you see the cost before anything runs. WyberCode 1.0, our new coding engine, builds it, repairs its own errors and checks your database for leaks as soon as you publish.`, '', `Start your first build: ${start}`, '', 'If you tried it and it was not for you, reply and tell me why. That helps me more than a sale.', '', signText, '', `Unsubscribe: ${unsub}`].join('\n')
   return { subject, preheader, html, text }
 }
 
@@ -723,7 +723,7 @@ export async function sendScannerReport(to: string, opts: {
   const issueWord = isSec ? 'leak' : 'issue'
   const issues = `${opts.findingsCount} ${issueWord}${opts.findingsCount === 1 ? '' : 's'}`
   const cta = isSec
-    ? 'Every app you build on WyberAi is scanned for these leaks before it can publish. Build the fixed version — web + mobile — in minutes.'
+    ? 'Every app you build on WyberAi is scanned for these leaks the moment you publish. Build the fixed version — web + mobile — in minutes.'
     : 'Apps built on WyberAi ship SEO-ready out of the box. Rebuild it findable — web + mobile — in minutes.'
   const html = wrap(`
     ${h1(`Your ${label} results`)}

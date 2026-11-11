@@ -62,7 +62,7 @@ export const EVENTS_BUILD_CONTENT: Record<Locale, Record<string, TranslatedBuild
         { q: 'Can it handle paid tickets?', a: 'Start with free registration and add a payment step in chat when you need it — the registration flow and attendee list stay the same underneath.' },
         { q: 'How does the waitlist promotion work?', a: 'When a confirmed attendee cancels, the first waitlisted person is promoted automatically and appears in the confirmed list — no manual shuffling.' },
         { q: 'Can attendees cancel their own spot?', a: 'Yes — ask for a manage-registration link in your prompt and cancellations free the spot (and trigger the waitlist) without emailing you.' },
-        { q: 'Who owns the attendee data?', a: 'You do — it lives in your app\'s own database, secured with row-level security and scanned before publish. No platform is mining your attendee list.' },
+        { q: 'Who owns the attendee data?', a: 'You do — it lives in your app\'s own database, secured with row-level security and scanned as soon as you publish. No platform is mining your attendee list.' },
       ],
     },
     'sports-league-manager': {

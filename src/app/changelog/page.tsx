@@ -9,7 +9,7 @@ const RELEASES = [
     { type:'improved', text:'Top-up packs now give 120, 300 and 600 credits at the same prices' },
   ] },
   { date:'July 17, 2026', version:'v1.2', tag:'Security-first', color:'#0EA5E9', items:[
-    { type:'new', text:'Live RLS Trust Scan on every publish — probes your real database with the public anon key (an attacker\'s exact view); critical data leaks block publishing' },
+    { type:'new', text:'Live RLS Trust Scan on every publish — probes your real database with the public anon key (an attacker\'s exact view); critical data leaks are flagged straight away' },
     { type:'new', text:'Security dashboard — per-project security status, scan history, and publish badges' },
     { type:'new', text:'Interactive mobile preview — React Native apps run live in an embedded Expo Snack, tap and scroll like a real device' },
     { type:'new', text:'Wyberman — in-editor help agent that answers questions about your project and the platform' },

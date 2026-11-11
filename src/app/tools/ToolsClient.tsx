@@ -57,7 +57,7 @@ export default function ToolsClient() {
           <div style={{ marginTop: 40, padding: 24, borderRadius: 16, background: 'rgba(14,165,233,0.06)', border: '1px solid rgba(14,165,233,0.2)', textAlign: 'center' }}>
             <p style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Found problems? Build the fixed version in minutes.</p>
             <p style={{ color: '#9aa8bb', fontSize: 14, margin: '8px 0 16px', lineHeight: 1.6 }}>
-              Every app you build on WyberAi is scanned for these leaks <b style={{ color: '#fafafa' }}>before it can publish</b>, and
+              Every app you build on WyberAi is scanned for these leaks <b style={{ color: '#fafafa' }}>the moment you publish</b>, and
               ships SEO-ready out of the box. Describe your app, get a working web + mobile version.
             </p>
             <Link href="/?utm_source=tools&utm_campaign=scanner" onClick={() => track('tools_cta_clicked', { tab })}

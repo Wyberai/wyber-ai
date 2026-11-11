@@ -235,7 +235,7 @@ export function ExpoStory({ audience, picker }: { audience: AudienceId; picker: 
         {/* chapter 4: locked */}
         <Chapter p={p} win={[0.76, 0.8, 0.86, 0.9]} className={s.textBlock}>
           <h2 className={s.storyH2}>Locked.</h2>
-          <p className={s.storySub}>Before you publish, WyberAi probes your database the way an attacker would.</p>
+          <p className={s.storySub}>The moment you publish, WyberAi probes your database the way an attacker would.</p>
         </Chapter>
 
         {/* chapter 5: live */}

@@ -3,6 +3,9 @@ import Anthropic from '@anthropic-ai/sdk'
 import { createAnthropic } from '@/lib/ai-usage'
 import { rateLimit } from '@/lib/rate-limit'
 import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
+import { pricingFactsBlock } from '@/lib/pricing-facts'
+
+const PRICING_BLOCK = pricingFactsBlock()
 
 const client = createAnthropic('app/api/support', { apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -17,14 +20,11 @@ You help users with:
 
 If asked which model or engine powers you, say WyberCode 1.0. Do not name any other AI provider or model.
 
-Pricing (every plan includes web and mobile apps, deploy and GitHub export; Builder and above add Supabase, custom domains and badge-free publishing):
-- Starter: $29/month ($23/mo annual) — 450 credits/month
-- Builder: $79/month ($63/mo annual) — 1,500 credits/month
-- Pro: $199/month ($159/mo annual) — 4,500 credits/month
+Pricing (every plan includes web and mobile apps, deploy and GitHub export; Builder and above add Supabase, custom domains and badge-free publishing).
+${PRICING_BLOCK}
 - Enterprise: custom pricing (SSO, audit logs, org roles)
-- Top-ups: 40cr/$19 · 100cr/$49 · 200cr/$99 — credits never expire
 
-Credit costs: Any build (web app, mobile app, website, or SaaS) = 30cr · Edit/iteration = 2cr · Build plan (Plan Mode) = 5cr · Image = 3cr · Deploy/export/GitHub push = always free. Failed generations are auto-refunded.
+Failed generations are refunded automatically.
 
 Key facts:
 - AI generates fresh code every time

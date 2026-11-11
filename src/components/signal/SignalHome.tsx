@@ -49,7 +49,7 @@ export function SignalHome({ usd = false }: { usd?: boolean }) {
           <QuickPrompt />
           <ul className="sg-proof" aria-label="What you get">
             <li><b>30 free credits</b><span>No card needed to start</span></li>
-            <li><b>Security scan</b><span>Checked before anything goes live</span></li>
+            <li><b>Security scan</b><span>Probed the moment you publish</span></li>
             <li><b>Self-healing builds</b><span>Errors are repaired during the build</span></li>
             <li><b>Code is yours</b><span>Push it to your own GitHub</span></li>
           </ul>

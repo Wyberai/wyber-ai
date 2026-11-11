@@ -5,6 +5,10 @@ import { createAnthropic } from '@/lib/ai-usage'
 import { createClient } from '@/lib/supabase/server'
 import { rateLimit } from '@/lib/rate-limit'
 import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
+import { pricingFactsBlock, estimateRubric } from '@/lib/pricing-facts'
+
+const PRICING_BLOCK = pricingFactsBlock()
+const ESTIMATE_RUBRIC = estimateRubric()
 
 const anthropic = createAnthropic('app/api/chat', { apiKey: process.env.ANTHROPIC_API_KEY! })
 const ANON_COOKIE = 'wyb_anon_id'
@@ -29,13 +33,9 @@ HELPING USERS:
 - Website stuck? Describe which section needs work, paste a reference URL or screenshot for inspiration
 - Mobile App stuck? Describe screens, install Expo Go on your phone, scan QR to preview
 - Build errors? Click "Send to AI" — self-healing fixes it automatically
-- Credits? First build = 40–80cr (free/Spark: 40cr, Starter+: 80cr), edit = 2–5cr, plan mode = 13cr, deploy/export = free. Exact cost shown before each action.
+- Credits and prices: use the PRICING and CREDIT COSTS blocks below; the exact cost is always shown before each action.
 
-PRICING (3 plans):
-- Starter: $29/month — 450 credits
-- Builder: $79/month — 1,500 credits (most popular)
-- Pro: $199/month — 4,500 credits
-- Top-ups: 200cr/$19, 600cr/$49, 2000cr/$99 — never expire
+${PRICING_BLOCK}
 - Students: 60% off with .edu email
 - Blood donors: double credits on purchases
 
@@ -44,14 +44,12 @@ DONE-FOR-YOU BUILDS:
 - Free scoping call (worldwide): book at wyberai.com/setup-call — 30 min with our founder, no charge, no commitment. We scope it, quote it, and give you a clear plan. Only worth booking if you're seriously considering building something.
 
 CREDIT ESTIMATES — if someone describes an app/website idea and asks (or seems to want to know) roughly what it would cost to build, give a rough estimate using this rubric, then invite them to sign up free to get an exact plan:
-- Simple (a few screens, no auth/database — e.g. landing page, portfolio, single-tool app): ~15-25 credits
-- Medium (auth + database, several screens — e.g. SaaS MVP, booking system, CRM): ~25-45 credits
-- Complex (multi-role, payments, many screens/integrations — e.g. full SaaS, marketplace): ~40-130 credits
-Credits are roughly $0.15-0.20 each depending on plan. Always frame this as a ROUGH estimate ("roughly", "ballpark") — the exact cost depends on details you don't have yet, and an exact number requires either signing up for a real build plan or booking the free scoping call above.
+${ESTIMATE_RUBRIC}
+Always frame this as a ROUGH estimate ("roughly", "ballpark") — the exact cost depends on details you don't have yet, and an exact number requires either signing up for a real build plan or booking the free scoping call above.
 
 COMPARED TO COMPETITORS:
 - vs Lovable: Wyber generates fresh code from scratch (not templates), does web apps AND mobile apps AND websites AND full SaaS, self-heals build errors, and you own the code on GitHub. Starts at $29/mo.
-- vs Bolt: Similar app generation, but Wyber also does mobile apps, websites, SaaS, self-healing builds, and 48 built-in integrations.
+- vs Bolt: Similar app generation, but Wyber also does mobile apps, websites, SaaS, self-healing builds, and 68 connectors.
 
 HOW TO GET STARTED:
 1. Sign up free at wyberai.com — no credit card

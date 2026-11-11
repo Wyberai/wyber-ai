@@ -55,7 +55,7 @@ export const FINANCE_PAGES: BuildPage[] = [
       { q: 'Can both my partner and I use it?', a: 'Yes — it generates with authentication, and a shared-household structure means you both see and update the same budget live.' },
       { q: 'What happens to leftover money at month end?', a: 'Your choice of rule: roll unspent balances into next month\'s envelope, sweep them to a savings goal, or reset — set it in the prompt or change it in chat.' },
       { q: 'Can it do the 50/30/20 method instead of envelopes?', a: 'Yes — describe the method you follow and the budget structure, math, and dashboard are generated to match it.' },
-      { q: 'Is our financial data private?', a: 'The app runs on its own Postgres database with row-level security, and WyberAi\'s live scan probes it as an attacker would before you publish.' },
+      { q: 'Is our financial data private?', a: 'The app runs on its own Postgres database with row-level security, and WyberAi\'s live scan probes it as an attacker would as soon as you publish.' },
     ],
     related: ['expense-tracker-app', 'subscription-tracker', 'meal-planner-app'],
   },

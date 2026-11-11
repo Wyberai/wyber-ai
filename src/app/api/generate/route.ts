@@ -3,6 +3,7 @@ import { NextRequest, after } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getTemplateReference } from '@/lib/template-reference'
+import { buildCosts, editCost, planCost } from '@/lib/pricing-facts'
 import { MODEL_IDS, creditCost, tierAllowedForPlan, resolveBuildTier, computeOverageCharge, computeEditSettlement, resolveEditTierFromTokens, type ModelTier } from '@/lib/credits'
 import { sendCreditLowEmail, sendFirstBuildEmail } from '@/lib/email'
 import { notify } from '@/lib/push'
@@ -142,6 +143,11 @@ async function streamWithRetry(params: Parameters<typeof client.messages.stream>
 // Use central model map — single source of truth
 const MODELS = MODEL_IDS
 
+// The credit costs the assistant quotes, read from the same tables the billing code uses (src/lib/pricing-facts.ts).
+const GEN_BUILD_RANGE = `${buildCosts().small}–${buildCosts().xl}`
+const GEN_EDIT = editCost()
+const GEN_PLAN = planCost()
+
 const WYBER_FEATURES = `
 ABOUT WyberAi — your knowledge base:
 
@@ -172,11 +178,11 @@ CREDITS & PLANS:
 - Scale ($799/mo): 30,000 credits/month — all features unlocked
 - No employee caps, no agent limits, no feature gates — every plan unlocks ALL features
 - Prebuilt templates: 0 credits always
-- Web/mobile app build: 15–130 credits depending on size (exact cost always shown before generation) | App edit: 2 credits | Build plan: 5 credits
+- Web/mobile app build: ${GEN_BUILD_RANGE} credits depending on size (exact cost always shown before generation) | App edit: about ${GEN_EDIT} credits | Build plan: ${GEN_PLAN} credits
 - AI Employee run: 5 credits | Agent run: 5 credits | Workflow run: 2 credits
 - GTM campaign action: 3 credits | Lead enrichment: 1 credit per contact | Image: 3 credits
 - Always free: templates, self-healing, export, deploy, GitHub push
-- Credits never expire, top-ups never expire
+- Unused plan credits roll over while the subscription is active; top-ups never expire
 - Credit estimate shown before every generation — no surprises
 
 vs COMPETITORS:

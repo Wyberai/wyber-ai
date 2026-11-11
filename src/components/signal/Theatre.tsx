@@ -67,9 +67,9 @@ export function Theatre({ usd = false }: { usd?: boolean }) {
       [1900, () => { add('Building the database and sign-in'); setRowsOn(3); tickTo(26) }],
       [3300, () => { add('Error: ' + d.err, 'sg-err'); setBadRow(true) }],
       [4400, () => { add('Repaired automatically. No charge.', 'sg-ok'); setBadRow(false); setFixes(1); tickTo(COST) }],
-      [5400, () => { add('Probing the live database the way an attacker would'); setSec('Scanning') }],
-      [6700, () => { add('Locked: 0 rows readable without signing in', 'sg-ok'); setSec('Locked') }],
-      [7600, () => { add('Ready to publish', 'sg-ok'); setDone(true) }],
+      [5400, () => { add('Ready to publish', 'sg-ok') }],
+      [6300, () => { add('Published. Probing the live database the way an attacker would'); setSec('Scanning') }],
+      [7600, () => { add('Locked: 0 rows readable without signing in', 'sg-ok'); setSec('Locked'); setDone(true) }],
     ]
     const reduce = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
     if (reduce) { steps.forEach(([, f]) => f()); setCredits(COST); return }
@@ -119,10 +119,10 @@ export function Theatre({ usd = false }: { usd?: boolean }) {
             <h3>Receipt · {d.title}</h3>
             <div className="sg-rrow"><span>Small build, estimated</span><i /><b>{COST}</b></div>
             <div className="sg-rrow"><span>Automatic error fix (1)</span><i /><b className="sg-free">free</b></div>
-            <div className="sg-rrow"><span>Security check before publish</span><i /><b className="sg-free">included</b></div>
+            <div className="sg-rrow"><span>Security check on publish</span><i /><b className="sg-free">included</b></div>
             <div className="sg-rrow"><span>Publish</span><i /><b className="sg-free">free</b></div>
             <div className="sg-rrow sg-rtot"><span>Total</span><i /><b>about {COST} credits</b></div>
-            <p className="sg-rfoot">An estimate. The exact cost is shown before every build. Credits never expire.</p>
+            <p className="sg-rfoot">An estimate. The exact cost is shown before every build. Unused credits roll over.</p>
           </div>
         )}
         <p className="sg-note" style={{ textAlign: 'left' }}>An illustration of a typical small build. Real builds vary by size.</p>

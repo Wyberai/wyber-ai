@@ -156,7 +156,7 @@ export default function LovableAlternatives() {
             This year, security researchers reported 380,000 publicly exposed assets built with AI app builders — about 5,000 containing sensitive corporate data — and studies put the share of AI-generated code containing vulnerabilities at 40–62%. Whichever tool you pick, ask one question: <em>who verifies that the app you’re about to publish doesn’t leak your users’ data?</em>
           </p>
           <p style={{ fontSize: 14.5, color: s.muted, lineHeight: 1.7 }}>
-            WyberAi’s answer: every publish runs a live scan against your app’s real database using the public anon key — the exact access an attacker has — and critical leaks block the publish. <Link href="/security" style={{ color: s.sky }}>How the scan works →</Link>
+            WyberAi’s answer: every publish runs a live scan against your app’s real database using the public anon key — the exact access an attacker has — and critical leaks are flagged straight away. <Link href="/security" style={{ color: s.sky }}>How the scan works →</Link>
           </p>
         </section>
 

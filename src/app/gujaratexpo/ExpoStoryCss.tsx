@@ -152,7 +152,7 @@ export function ExpoStoryCss({ audience, picker }: { audience: AudienceId; picke
         {/* chapter 4: locked */}
         <div className={`${s.textBlock} ${d(s.sdCh4)}`}>
           <h2 className={s.storyH2}>Locked.</h2>
-          <p className={s.storySub}>Before you publish, WyberAi probes your database the way an attacker would.</p>
+          <p className={s.storySub}>The moment you publish, WyberAi probes your database the way an attacker would.</p>
         </div>
 
         {/* chapter 5: live */}
