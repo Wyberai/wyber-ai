@@ -43,7 +43,7 @@ export const REPLIT_CONTENT: Record<Locale, VsContent> = {
     ],
     faqs: [
       { q: 'What is the main difference between WyberAi and Replit?', a: 'Replit is a cloud IDE with AI assistance — great for developers who want to write and run code in any language. WyberAi is a no-code app builder that generates complete apps from plain English, optimized for non-technical founders who want to ship fast without coding.' },
-      { q: 'Is WyberAi cheaper than Replit?', a: 'WyberAi Starter is $29/month for 450 credits vs Replit Core at $20/month. WyberAi includes mobile apps, 27 integrations, and fresh code generation that Replit doesn\'t offer. Top-ups never expire.' },
+      { q: 'Is WyberAi cheaper than Replit?', a: 'WyberAi Starter is $29/month for 450 credits vs Replit Core at $20/month. WyberAi includes mobile apps, 68 connectors, and fresh code generation that Replit doesn\'t offer. Top-ups never expire.' },
       { q: 'Does Replit have a mobile app builder?', a: 'No. Replit supports many programming languages but does not have a dedicated mobile app builder. WyberAi generates complete React Native + Expo apps that run on iOS and Android.' },
       { q: 'Which should a non-technical founder use?', a: 'WyberAi. Replit is powerful but assumes programming knowledge. WyberAi is designed for people who have never written code — you describe the app in plain English and it\'s built for you.' },
       { q: 'Can I use WyberAi if I also code?', a: 'Yes. WyberAi exports clean React code you can take anywhere — to GitHub, Vercel, or your own IDE. Many users prototype in Wyber and then refine the exported code themselves.' },

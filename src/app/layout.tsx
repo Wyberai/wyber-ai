@@ -132,7 +132,7 @@ const jsonLd = {
         'Automatic error detection and resolution during builds',
         'One-click deploy to a live URL on Vercel',
         'Supabase database + auth, GitHub push, custom domains',
-        '27 integrations — Supabase, Stripe, OpenAI and more',
+        '68 connectors — Supabase, Stripe, OpenAI and more',
       ],
       // AggregateOffer (not a single $29 Offer) so engines report the real
       // range — free to start, paid plans up to $199 — instead of "$29 only".

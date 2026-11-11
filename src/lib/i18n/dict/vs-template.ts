@@ -24,7 +24,7 @@ export const VS_TEMPLATE_STRINGS: Record<Locale, Record<string, string>> = {
     sixProductsBody: '{pillarNote} Same prompt, same credits — WyberAi ships web and mobile apps from one workspace, with deploy, integrations, and GitHub code ownership built in.',
     productWebLabel: 'Web Apps', productWebDesc: 'Full-stack React app in minutes',
     productMobileLabel: 'Mobile Apps', productMobileDesc: 'React Native + Expo, iOS & Android',
-    productIntegrationsLabel: '27 Integrations', productIntegrationsDesc: 'Supabase, Stripe, OpenAI & more',
+    productIntegrationsLabel: '68 Connectors', productIntegrationsDesc: 'Supabase, Stripe, OpenAI & more',
     productDeployLabel: 'One-click Deploy', productDeployDesc: 'Live URL in seconds',
     productGithubLabel: 'GitHub Sync', productGithubDesc: 'Own your code, zero lock-in',
     productChallengeLabel: 'Premier League', productChallengeDesc: 'Win real cash prizes every month',

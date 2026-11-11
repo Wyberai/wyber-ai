@@ -18,7 +18,7 @@ const ROWS = [
   { feature: 'Authentication',           wyber: '✓ Built-in',             other: '✗ Manual integration',  winner: 'wyber' as const },
   { feature: 'Mobile app builder',       wyber: '✓ React Native',         other: '✗',                     winner: 'wyber' as const },
   { feature: 'Self-healing builds',       wyber: '✓ Auto-fixes errors',    other: '✗',                     winner: 'wyber' as const },
-  { feature: '27 integrations',          wyber: '✓ Built-in',             other: '✗',                     winner: 'wyber' as const },
+  { feature: '68 connectors',          wyber: '✓ Built-in',             other: '✗',                     winner: 'wyber' as const },
   { feature: 'One-click deploy',         wyber: '✓ Vercel',               other: '✓ Vercel',              winner: 'tie'   as const },
   { feature: 'GitHub sync',             wyber: '✓',                       other: '✓',                     winner: 'tie'   as const },
   { feature: 'Design system quality',    wyber: 'Good',                   other: '✓ Excellent',           winner: 'other' as const },
@@ -59,7 +59,7 @@ export default function VsV0() {
       slug="v0"
       competitorName="v0 by Vercel"
       competitorUrl="https://v0.dev"
-      tagline="v0 by Vercel generates polished UI components. WyberAi generates complete full-stack web + mobile applications with self-healing builds and 27 integrations."
+      tagline="v0 by Vercel generates polished UI components. WyberAi generates complete full-stack web + mobile applications with self-healing builds and 68 connectors."
       blurb="Honest comparison of WyberAi vs v0 by Vercel: full-stack app builder vs UI generator. Last reviewed June 2026."
       rows={ROWS}
       faqs={FAQS}

@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { readCtx, type SignalCtx } from '@/lib/signal/handoff'
+import { readCtx, briefBelongsTo, type SignalCtx } from '@/lib/signal/handoff'
 
 /**
  * Sign-up and sign-in in the Signal design. The auth logic is the same as before: Google and GitHub OAuth, an email
@@ -23,6 +23,8 @@ export function AuthForm({ mode }: { mode: 'signup' | 'login' }) {
   const [other, setOther] = useState('')
   const [ref, setRef] = useState('')
   const [ctx, setCtx] = useState<SignalCtx | null>(null)
+  // Where this sign-in is headed. A saved brief only belongs to a sign-in that is going to the builder.
+  const [dest, setDest] = useState<string | null>(null)
   const boxes = useRef<(HTMLInputElement | null)[]>([])
   const supabase = createClient()
 
@@ -40,6 +42,7 @@ export function AuthForm({ mode }: { mode: 'signup' | 'login' }) {
     } else if (q.get('error') === 'auth') {
       setError("That sign-in link didn't work. It may have expired, already been used, or been opened in a different browser than the one you asked from. Try again in this browser.")
     }
+    setDest(next)
     setCtx(readCtx())
   }, [signup])
 
@@ -108,7 +111,12 @@ export function AuthForm({ mode }: { mode: 'signup' | 'login' }) {
     <div className="sg-auth">
       <div className="sg-actx">
         <span className="sg-mono sg-eyebrow">{signup ? 'Create your account' : 'Welcome back'}</span>
-        {ctx ? (
+        {dest?.startsWith('/clients') ? (
+          <>
+            <h2>Your client desk is <span className="sg-em">waiting.</span></h2>
+            <p className="sg-sub2">{signup ? 'Create your account to add your first client. 30 free credits to start, no card needed.' : 'Sign in to pick up your clients, quotes and handovers.'}</p>
+          </>
+        ) : ctx && briefBelongsTo(dest) ? (
           <>
             <h2>Your {ctx.kindLabel.toLowerCase()} is <span className="sg-em">waiting.</span></h2>
             <div className="sg-ctxcard">

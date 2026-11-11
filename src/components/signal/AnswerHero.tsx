@@ -31,9 +31,20 @@ export function AnswerHero({ door, eyebrow, title, lede, placeholder, video, pos
     if (!v) { setNote('Write one sentence first, then build it.'); return }
     if (v.length < 12) { setNote('Tell us a little more: what is it, in your own words?'); return }
     setNote('')
-    const s = sketchFor(door, v)
+    const s = sketchFor(door, v, type)
     setSketch(s); setAnswers(s.qs.map(() => null))
     requestAnimationFrame(() => guide.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+  }
+
+  const pickType = (k: ProjectType) => {
+    const next = type === k ? null : k
+    setType(next)
+    const v = text.trim()
+    if (!sketch || v.length < 12) return
+    const s = sketchFor(door, v, next)
+    const sameQuestions = s.qs.map(q => q[0]).join('|') === sketch.qs.map(q => q[0]).join('|')
+    setSketch(s)
+    if (!sameQuestions) setAnswers(s.qs.map(() => null))
   }
 
   const build = async () => {
@@ -57,7 +68,7 @@ export function AnswerHero({ door, eyebrow, title, lede, placeholder, video, pos
           <textarea id="sg-idea" ref={box} value={text} onChange={e => setText(e.target.value)} placeholder={placeholder} />
           <div className="sg-row">
             <div role="group" aria-label="What are you building?" style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-              {TYPES.map(([k, l]) => <button key={k} type="button" className="sg-pill" style={{ padding: '10px 14px' }} aria-pressed={type === k} onClick={() => setType(type === k ? null : k)}>{l}</button>)}
+              {TYPES.map(([k, l]) => <button key={k} type="button" className="sg-pill" style={{ padding: '10px 14px' }} aria-pressed={type === k} onClick={() => pickType(k)}>{l}</button>)}
             </div>
             <button className="sg-btn" type="submit">Show me the plan <span aria-hidden="true">→</span></button>
           </div>

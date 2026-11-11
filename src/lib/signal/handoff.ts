@@ -57,6 +57,20 @@ export function clearCtx(s: Store | null = store()): void {
   try { s?.removeItem(CTX_KEY) } catch { /* storage blocked */ }
 }
 
+/** A saved brief only belongs to a sign-in that is headed to the builder (the dashboard), never to one headed elsewhere, like the client desk. */
+export function briefBelongsTo(next: string | null | undefined): boolean {
+  return !next || next === '/dashboard' || next.startsWith('/dashboard?') || next.startsWith('/dashboard/')
+}
+
+/** Forgets a pending build. Used when someone starts a different journey, so an old brief never starts a build they did not ask for. */
+export function clearPending(s: Store | null = store()): void {
+  try {
+    s?.removeItem('wyber-pending-prompt')
+    s?.removeItem('wyber-pending-type')
+    s?.removeItem('wyber-pending-project-label')
+  } catch { /* storage blocked */ }
+}
+
 /** Maps a sketch kind to the dashboard's four project types. */
 export function projectTypeFor(kindLabel: string): ProjectType {
   if (/^mobile/i.test(kindLabel)) return 'mobile'

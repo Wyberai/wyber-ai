@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { TOPICS, sketchFor, pickIdeaKind } from './guide'
-import { saveCtx, readCtx, clearCtx, projectTypeFor, composeGuidePrompt, stashPending, CTX_KEY, PROMPT_LIMIT } from './handoff'
+import { TOPICS, sketchFor, pickIdeaKind, kindForType } from './guide'
+import { saveCtx, readCtx, clearCtx, clearPending, briefBelongsTo, projectTypeFor, composeGuidePrompt, stashPending, CTX_KEY, PROMPT_LIMIT } from './handoff'
 import { BANNED_COPY } from '@/lib/customer-copy-rules'
 
 function fakeStore() {
@@ -77,5 +77,94 @@ describe('handoff', () => {
     expect(composeGuidePrompt('x'.repeat(5000), sk, []).length).toBeLessThanOrEqual(PROMPT_LIMIT)
     const s = fakeStore(); stashPending(p, 'app', 'Invoice tracker', s)
     expect(s.getItem('wyber-pending-prompt')).toBe(p); expect(s.getItem('wyber-pending-type')).toBe('app'); expect(s.getItem('wyber-pending-project-label')).toBe('Invoice tracker')
+  })
+})
+
+describe('the plan follows what the visitor chose and said', () => {
+  const idea = 'A booking app for my salon with reminders on WhatsApp'
+
+  it('maps the type buttons to a kind, and none to nothing', () => {
+    expect(kindForType('app')).toBe('Web app')
+    expect(kindForType('mobile')).toBe('Mobile app')
+    expect(kindForType('website')).toBe('Website')
+    expect(kindForType('saas')).toBe('SaaS')
+    expect(kindForType(null)).toBeNull()
+    expect(kindForType('agent')).toBeNull()
+  })
+
+  it('a booking idea gets a booking plan on the Build apps door, not the blank generic one', () => {
+    const s = sketchFor('idea', idea)
+    expect(s.title).toBe('Booking and appointments manager')
+    expect(s.screens.map(x => x[0])).toContain('Calendar')
+    expect(s.kind).toBe('Web app')
+  })
+
+  it('the type they press wins: Mobile makes it a mobile app, with the same booking screens', () => {
+    const s = sketchFor('idea', idea, 'mobile')
+    expect(s.kind).toBe('Mobile app')
+    expect(s.title).toBe('Booking and appointments manager')
+    expect(s.why).toContain('You chose a mobile app')
+  })
+
+  it('their choice beats a guess from the words', () => {
+    expect(sketchFor('idea', 'a mobile app where tutors list classes', 'app').kind).toBe('Web app')
+    expect(sketchFor('idea', 'a mobile app where tutors list classes').kind).toBe('Mobile app')
+  })
+
+  it('a website for a salon is a website plan, not the booking manager', () => {
+    for (const s of [sketchFor('idea', 'a website for my salon'), sketchFor('idea', idea, 'website')]) {
+      expect(s.kind).toBe('Website')
+      expect(s.title).not.toBe('Booking and appointments manager')
+      expect(s.screens.map(x => x[0])).toContain('Contact or booking')
+    }
+  })
+
+  it('SaaS keeps its own screens', () => {
+    const s = sketchFor('idea', idea, 'saas')
+    expect(s.kind).toBe('SaaS')
+    expect(s.screens.map(x => x[0])).toContain('Plans and billing')
+  })
+
+  it('an idea that only mentions payments or classes is NOT turned into an invoice tracker or a schedule', () => {
+    expect(sketchFor('idea', 'a marketplace where sellers take payments').title).toBe('Your first version')
+    expect(sketchFor('idea', 'a place where tutors list classes and students pay').title).toBe('Your first version')
+  })
+
+  it('the problem door honours the type too, and still matches on its wider words', () => {
+    const s = sketchFor('problem', 'I have too many invoices and nothing to track them', 'mobile')
+    expect(s.title).toBe('Invoice and payment tracker')
+    expect(s.kind).toBe('Mobile app')
+    expect(sketchFor('problem', 'people phone to book appointments').kind).toBe('Web app')
+  })
+
+  it('every combination still gives a usable sketch: 4 or 5 screens, a first win, three questions', () => {
+    const texts = ['', 'a thing', idea, 'invoices', 'a marketplace with payments', 'stock and expiry', 'drivers and deliveries', 'leads and follow-ups', 'staff attendance']
+    for (const door of ['problem', 'idea'] as const) for (const t of texts) for (const chosen of [null, 'app', 'mobile', 'website', 'saas']) {
+      const s = sketchFor(door, t, chosen)
+      expect(s.screens.length, `${door} ${t} ${chosen}`).toBeGreaterThanOrEqual(4)
+      expect(s.screens.length).toBeLessThanOrEqual(5)
+      expect(s.win.length).toBeGreaterThan(5)
+      expect(s.qs.length).toBeGreaterThanOrEqual(3)
+      expect(s.why.length).toBeGreaterThan(5)
+    }
+  })
+})
+
+describe('a brief from one door never follows someone through another', () => {
+  it('belongs only to a sign-in headed for the builder', () => {
+    for (const ok of [null, undefined, '', '/dashboard', '/dashboard?new=mobile', '/dashboard/x']) expect(briefBelongsTo(ok), String(ok)).toBe(true)
+    for (const no of ['/clients', '/clients?welcome=1', '/settings', '/project/abc', '/dashboardx', '/pricing']) expect(briefBelongsTo(no), no).toBe(false)
+  })
+
+  it('clearPending forgets the build that would start after sign-in, and clearCtx the saved plan', () => {
+    const s = fakeStore()
+    saveCtx({ src: 'guide', title: 'Invoice tracker', kindLabel: 'Web app', chips: [], answers: [], idea: 'invoices', cost: 30 }, s)
+    stashPending('build an invoice tracker', 'app', 'Invoice tracker', s)
+    expect(s.getItem('wyber-pending-prompt')).toBeTruthy()
+    clearPending(s); clearCtx(s)
+    expect(s.getItem('wyber-pending-prompt')).toBeNull()
+    expect(s.getItem('wyber-pending-type')).toBeNull()
+    expect(s.getItem('wyber-pending-project-label')).toBeNull()
+    expect(readCtx(s)).toBeNull()
   })
 })

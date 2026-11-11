@@ -17,7 +17,7 @@ export interface VsContent {
 // only, etc.) and the feature labels themselves are translated.
 export const LOVABLE_CONTENT: Record<Locale, VsContent> = {
   en: {
-    tagline: 'Lovable is the leading AI web app builder. WyberAi generates fresh code (no templates), builds mobile apps, and includes 27 integrations that Lovable doesn\'t have.',
+    tagline: 'Lovable is the leading AI web app builder. WyberAi generates fresh code (no templates), builds mobile apps, and includes 68 connectors that Lovable doesn\'t have.',
     blurb: 'Honest comparison of WyberAi vs Lovable: pricing, credits, features, and what each builder can actually ship. Last reviewed June 2026.',
     pillarNote: 'Lovable builds web apps only.',
     rows: [
@@ -28,7 +28,7 @@ export const LOVABLE_CONTENT: Record<Locale, VsContent> = {
       { feature: 'Top-up expiry', wyber: 'Never', other: '12 months', winner: 'wyber' },
       { feature: 'Credit estimate upfront', wyber: '✓', other: '✗', winner: 'wyber' },
       { feature: 'Mobile app builder', wyber: '✓ React Native', other: '✗ Web only', winner: 'wyber' },
-      { feature: '27 integrations', wyber: '✓ Built-in', other: 'Limited', winner: 'wyber' },
+      { feature: '68 connectors', wyber: '✓ Built-in', other: 'Limited', winner: 'wyber' },
       { feature: 'Code generation', wyber: 'Always fresh AI code', other: 'Templates', winner: 'wyber' },
       { feature: 'Visual click-to-edit', wyber: '✓', other: '✓', winner: 'tie' },
       { feature: 'GitHub sync', wyber: '✓', other: '✓', winner: 'tie' },
@@ -40,7 +40,7 @@ export const LOVABLE_CONTENT: Record<Locale, VsContent> = {
       { feature: 'India/APAC pricing', wyber: '✓ INR soon', other: 'USD only', winner: 'wyber' },
     ],
     faqs: [
-      { q: 'How does WyberAi pricing compare to Lovable?', a: 'WyberAi Starter is $29/month for 450 credits vs Lovable\'s $25/month for 100 credits (plus 5 a day). WyberAi includes mobile apps, 27 integrations, and fresh code generation that Lovable doesn\'t offer. Top-ups on Wyber never expire.' },
+      { q: 'How does WyberAi pricing compare to Lovable?', a: 'WyberAi Starter is $29/month for 450 credits vs Lovable\'s $25/month for 100 credits (plus 5 a day). WyberAi includes mobile apps, 68 connectors, and fresh code generation that Lovable doesn\'t offer. Top-ups on Wyber never expire.' },
       { q: 'Can WyberAi build mobile apps? Lovable can\'t.', a: 'Correct. Lovable generates React web apps only. WyberAi also generates full React Native + Expo mobile apps that run on iOS and Android. You can scan a QR code to preview on your phone instantly.' },
       { q: 'Does WyberAi build mobile apps? Lovable doesn\'t.', a: 'WyberAi builds both web and mobile apps (React Native + Expo) from the same workspace. Lovable only builds web apps. WyberAi also includes self-healing builds that auto-fix errors, so your app ships clean every time.' },
       { q: 'Which is better for non-technical founders?', a: 'Both tools are designed for non-technical users. WyberAi adds upfront credit estimates so you always know the cost before generating, and guided prompts help you describe what you want.' },

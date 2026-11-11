@@ -95,19 +95,59 @@ export function pickIdeaKind(text: string): SketchKind {
 
 export type Door = 'problem' | 'idea'
 
-export function sketchFor(door: Door, text: string): Sketch {
-  if (door === 'problem') {
-    for (const t of TOPICS) if (t.match.test(text)) { const { match: _m, ...s } = t; void _m; return s }
-    return { ...FALLBACK_PROBLEM }
+/** The kind for the project type the visitor picked with the buttons, or null when they picked none. */
+export function kindForType(t: string | null | undefined): SketchKind | null {
+  return t === 'app' ? 'Web app' : t === 'mobile' ? 'Mobile app' : t === 'website' ? 'Website' : t === 'saas' ? 'SaaS' : null
+}
+
+// For an IDEA the six business shapes are matched on narrower words than for a problem, so "payments" in a marketplace
+// idea or "class" in a tutoring one never turns into an invoice tracker. When nothing fits, the generic plan stays.
+const IDEA_MATCH: Array<[RegExp, string]> = [
+  [/appointment|booking|\bsalon\b|clinic|\bslots?\b/i, 'Booking and appointments manager'],
+  [/invoice|receipt|ledger|udhaar|\bgst\b/i, 'Invoice and payment tracker'],
+  [/\bstock\b|inventory|warehouse|expiry/i, 'Stock and inventory tracker'],
+  [/deliver|dispatch|courier|\bdrivers?\b|shipment/i, 'Order and delivery tracker'],
+  [/\bcrm\b|\bleads?\b|enquir|inquir|follow.?up|prospect/i, 'Leads and follow-up tracker'],
+  [/attendance|payroll|\bshifts?\b|employee/i, 'Staff and attendance manager'],
+]
+
+function ideaTopic(text: string): Topic | null {
+  for (const [re, title] of IDEA_MATCH) if (re.test(text)) return TOPICS.find(t => t.title === title) ?? null
+  return null
+}
+
+const clone = <T,>(v: T): T => JSON.parse(JSON.stringify(v))
+const strip = ({ match: _m, ...rest }: Topic): Sketch => (void _m, rest)
+
+const WEBSITE_SCREENS: Sketch['screens'] = [['Home', 'What you offer, in one screen'], ['About', 'Who you are'], ['Services or products', 'What people can get'], ['Contact or booking', 'The one action you want people to take']]
+const SAAS_SCREENS: Sketch['screens'] = [['Landing page', 'What it is and who it is for'], ['Sign up and sign in', 'Accounts and plans'], ['The main screen', 'The thing customers pay for'], ['Plans and billing', 'What each plan includes']]
+
+/**
+ * What we would build first, from the visitor's words and, when they pressed one, the type they chose. The type they
+ * pick always wins over a guess from the text, so the plan, the sign-up page ("Your mobile app is waiting") and the
+ * project that is created all agree.
+ */
+export function sketchFor(door: Door, text: string, chosen?: string | null): Sketch {
+  const picked = kindForType(chosen)
+  const wanted: SketchKind | null = picked ?? (door === 'idea' ? pickIdeaKind(text) : null)
+  const fallback = () => clone(door === 'problem' ? FALLBACK_PROBLEM : FALLBACK_IDEA)
+
+  // A website or a SaaS is a different shape from the tracker topics, so they keep their own screens.
+  if (wanted === 'Website' || wanted === 'SaaS') {
+    const base = fallback()
+    return {
+      ...base, kind: wanted,
+      why: wanted === 'Website' ? 'You described something people visit and read, so a website fits first.' : 'You mentioned plans or billing, so we would include sign-ups and a plan page.',
+      screens: wanted === 'Website' ? WEBSITE_SCREENS : SAAS_SCREENS,
+    }
   }
-  const kind = pickIdeaKind(text)
-  const s: Sketch = JSON.parse(JSON.stringify(FALLBACK_IDEA))
-  s.kind = kind
-  s.why = kind === 'Mobile app' ? 'You mentioned phones, so we would start with a phone-first app.'
-    : kind === 'Website' ? 'You described something people visit and read, so a website fits first.'
-    : kind === 'SaaS' ? 'You mentioned plans or billing, so we would include sign-ups and a plan page.'
-    : 'A web app is the quickest way to get a working first version you can click through.'
-  if (kind === 'Website') s.screens = [['Home', 'What you offer, in one screen'], ['About', 'Who you are'], ['Services or products', 'What people can get'], ['Contact or booking', 'The one action you want']]
-  if (kind === 'SaaS') s.screens = [['Landing page', 'What it is and who it is for'], ['Sign up and sign in', 'Accounts and plans'], ['The main screen', 'The thing customers pay for'], ['Plans and billing', 'Choose a plan, see the status']]
-  return s
+
+  const topic = door === 'problem' ? TOPICS.find(t => t.match.test(text)) ?? null : ideaTopic(text)
+  const base = topic ? strip(topic) : fallback()
+  const kind: SketchKind = wanted ?? base.kind
+  if (kind === 'Mobile app') {
+    return { ...base, kind, why: picked ? 'You chose a mobile app, so we would start with a phone-first version of these screens.' : 'You mentioned phones, so we would start with a phone-first app.' }
+  }
+  // A plain web app: the topic's own wording, or the generic line when there is no topic.
+  return { ...base, kind, why: base.why || 'A web app is the quickest way to get a working first version you can click through.' }
 }

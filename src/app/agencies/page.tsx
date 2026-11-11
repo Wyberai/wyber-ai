@@ -1,12 +1,12 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { SignalFrame } from '@/components/signal/SignalFrame'
 import { AgencyDesk } from '@/components/signal/AgencyDesk'
 import { Faq, FinalCta, Section } from '@/components/signal/sections'
 import { QuickPrompt } from '@/components/signal/QuickPrompt'
+import { AgencyStart } from '@/components/signal/AgencyStart'
 
 export const metadata: Metadata = {
-  title: 'Agency mode: deliver apps on a branded page',
+  title: 'Agency mode: run the whole client job',
   description: 'For freelancers and agencies: brief form, build, client approval, your client\'s domain, a quote they accept, and a handover. Their feedback becomes edits.',
   alternates: { canonical: '/agencies' },
 }
@@ -39,7 +39,7 @@ export default function AgenciesPage() {
           <h1 id="sg-ag">Run the whole client job, <span className="sg-em">start to finish.</span></h1>
           <p className="sg-lede">For freelancers and agencies who build websites and apps for other people. From the first brief to the handover, in one place, with your name on it.</p>
           <p style={{ marginTop: 22, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            <Link className="sg-btn" href="/clients?welcome=1">Set up your client desk</Link>
+            <AgencyStart className="sg-btn" href="/clients?welcome=1">Set up your client desk</AgencyStart>
             <a className="sg-btn sg-ghost" href="#sg-try">See what your client sees</a>
           </p>
         </section>

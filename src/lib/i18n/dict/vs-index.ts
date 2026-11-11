@@ -29,7 +29,7 @@ export const VS_INDEX_CONTENT: Record<Locale, VsIndexContent> = {
     productLabels: [
       { label: 'Web Apps', sub: 'Full-stack React app' },
       { label: 'Mobile Apps', sub: 'React Native + Expo' },
-      { label: '27 Integrations', sub: 'Supabase, Stripe, OpenAI...' },
+      { label: '68 Connectors', sub: 'Supabase, Stripe, OpenAI...' },
       { label: 'One-click Deploy', sub: 'Live URL in seconds' },
       { label: 'GitHub Sync', sub: 'Own your code' },
       { label: 'Premier League', sub: '$1,800 in monthly prizes' },

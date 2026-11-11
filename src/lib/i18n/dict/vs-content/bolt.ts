@@ -18,7 +18,7 @@ export interface VsContent {
 // themselves are translated.
 export const BOLT_CONTENT: Record<Locale, VsContent> = {
   en: {
-    tagline: 'Bolt.new is a powerful web app builder for developers. WyberAi offers predictable fixed-credit pricing, a friendlier interface, mobile apps, self-healing builds, and 27 integrations Bolt doesn\'t have.',
+    tagline: 'Bolt.new is a powerful web app builder for developers. WyberAi offers predictable fixed-credit pricing, a friendlier interface, mobile apps, self-healing builds, and 68 connectors Bolt doesn\'t have.',
     blurb: 'Honest comparison of WyberAi vs Bolt.new: pricing model, credits, and features. Last reviewed June 2026.',
     pillarNote: 'Bolt.new builds web apps only.',
     rows: [
@@ -30,7 +30,7 @@ export const BOLT_CONTENT: Record<Locale, VsContent> = {
       { feature: 'Daily bonus', wyber: '8 credits/day', other: 'None', winner: 'wyber' },
       { feature: 'Mobile app builder', wyber: '✓ React Native', other: '✗ Web only', winner: 'wyber' },
       { feature: 'Self-healing builds', wyber: '✓ Auto-fixes errors', other: '✗', winner: 'wyber' },
-      { feature: '27 integrations', wyber: '✓ Built-in', other: 'Limited', winner: 'wyber' },
+      { feature: '68 connectors', wyber: '✓ Built-in', other: 'Limited', winner: 'wyber' },
       { feature: 'Code generation', wyber: 'Always fresh AI code', other: 'None', winner: 'wyber' },
       { feature: 'Credit estimate upfront', wyber: '✓', other: '✗', winner: 'wyber' },
       { feature: 'Visual click-to-edit', wyber: '✓', other: 'Limited', winner: 'wyber' },

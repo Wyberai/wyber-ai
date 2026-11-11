@@ -18,7 +18,7 @@ export interface VsContent {
 // feature labels themselves are translated.
 export const V0_CONTENT: Record<Locale, VsContent> = {
   en: {
-    tagline: 'v0 by Vercel generates polished UI components. WyberAi generates complete full-stack web + mobile applications with self-healing builds and 27 integrations.',
+    tagline: 'v0 by Vercel generates polished UI components. WyberAi generates complete full-stack web + mobile applications with self-healing builds and 68 connectors.',
     blurb: 'Honest comparison of WyberAi vs v0 by Vercel: full-stack app builder vs UI generator. Last reviewed June 2026.',
     pillarNote: 'v0 generates frontend UI components only — no backend, no mobile apps.',
     rows: [
@@ -29,7 +29,7 @@ export const V0_CONTENT: Record<Locale, VsContent> = {
       { feature: 'Authentication', wyber: '✓ Built-in', other: '✗ Manual integration', winner: 'wyber' },
       { feature: 'Mobile app builder', wyber: '✓ React Native', other: '✗', winner: 'wyber' },
       { feature: 'Self-healing builds', wyber: '✓ Auto-fixes errors', other: '✗', winner: 'wyber' },
-      { feature: '27 integrations', wyber: '✓ Built-in', other: '✗', winner: 'wyber' },
+      { feature: '68 connectors', wyber: '✓ Built-in', other: '✗', winner: 'wyber' },
       { feature: 'One-click deploy', wyber: '✓ Vercel', other: '✓ Vercel', winner: 'tie' },
       { feature: 'GitHub sync', wyber: '✓', other: '✓', winner: 'tie' },
       { feature: 'Design system quality', wyber: 'Good', other: '✓ Excellent', winner: 'other' },

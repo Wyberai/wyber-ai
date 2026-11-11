@@ -29,7 +29,7 @@ export const CURSOR_CONTENT: Record<Locale, VsContent> = {
       { feature: 'App generation speed', wyber: 'A few minutes', other: 'Hours (code-assisted)', winner: 'wyber' },
       { feature: 'Mobile app builder', wyber: '✓ React Native', other: '✗ (editor only)', winner: 'wyber' },
       { feature: 'Self-healing builds', wyber: '✓ Auto-fixes errors', other: '✗', winner: 'wyber' },
-      { feature: '27 integrations', wyber: '✓ Built-in', other: '✗', winner: 'wyber' },
+      { feature: '68 connectors', wyber: '✓ Built-in', other: '✗', winner: 'wyber' },
       { feature: 'Code generation', wyber: 'Always fresh AI code', other: 'None', winner: 'wyber' },
       { feature: 'Live preview', wyber: '✓ Real-time', other: 'Run locally', winner: 'wyber' },
       { feature: 'One-click deploy', wyber: '✓ Vercel', other: '✗ Manual deploy', winner: 'wyber' },
