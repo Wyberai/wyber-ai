@@ -10,6 +10,7 @@ export interface Deliverable {
   sort_order: number; is_visible: boolean; project_id: string
   review_status: Review | null; reviewed_at: string | null
   delivered_at: string | null; handover_note: string | null
+  preview_token?: string | null; preview_enabled?: boolean | null; preview_built_at?: string | null
   projects: ProjectLite | null
 }
 export interface Feedback { id: string; deliverable_id: string | null; kind: 'approved' | 'changes_requested' | 'comment'; author_name: string | null; body: string | null; resolved: boolean; created_at: string }

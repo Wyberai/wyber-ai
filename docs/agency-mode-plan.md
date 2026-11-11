@@ -64,3 +64,18 @@ route, refused and unchanged, nothing leaked. Mutation-checked.
 
 Not built, deliberately: a shared credit pool for a workspace (credits live on each person; that is a billing change),
 in-place project transfer, client logins, per-client custom domains, taking payment on the freelancer's behalf.
+
+---
+
+# Shareable previews (Nov 12)
+
+A freelancer can give a client a private link to the latest SAVED version of a project without publishing it.
+- `/preview/<token>`: random token is the access; works only while the client is active and the preview is on; on a
+  passcode-locked client it only opens in a browser that has unlocked the page (and never reveals the page address).
+- Built with the publishing build (same sanitising, secret scan, smoke test) but none of publishing's side effects: not
+  public, no published address, no image generation, no credits. Stored at `previews/<token>/index.html`.
+- A generated app is code, so it runs in a sandboxed frame with an opaque origin (same isolation as published apps),
+  never on our own origin. A test fails if the frame ever gains `allow-same-origin`.
+- Create, update, make a new link, turn off. A failed rebuild leaves the previous preview working.
+- Mobile projects reuse the phone-frame render that /m/<id> uses (now one shared module).
+- Pinned comments appear in a web preview when they are switched on for the project.

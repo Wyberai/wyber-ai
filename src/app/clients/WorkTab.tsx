@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { buildFixPrompt, type OpenFeedback } from '@/lib/agency/feedback-prompt'
 import { api, ago, ghostBtn, primaryBtn, inputStyle, sectionTitle, dangerText } from './ui'
 import { GoLive } from './GoLive'
+import { SharePreview } from './SharePreview'
 import type { Ctx, Deliverable, Review } from './types'
 
 const REVIEW: Record<Review, { text: string; color: string }> = {
@@ -181,6 +182,8 @@ export function WorkTab({ ctx }: { ctx: Ctx }) {
                     <button type="button" onClick={() => patchDel(d.id, { delivered: false }, { delivered_at: null })} style={ghostBtn}>Undo delivered</button>
                   )}
                 </div>
+
+                <SharePreview ctx={ctx} d={d} onChange={p => setDel(d.id, p)} />
 
                 <GoLive ctx={ctx} d={d} onChange={p => setDel(d.id, { projects: d.projects ? { ...d.projects, ...p } : d.projects })} />
 

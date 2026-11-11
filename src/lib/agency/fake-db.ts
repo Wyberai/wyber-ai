@@ -40,5 +40,17 @@ export function makeFakeDb(tables: Tables) {
     }
     return b
   }
-  return { from }
+  // A tiny in-memory object store, for code that keeps files in storage buckets.
+  const objects = new Map<string, string>()
+  const storage = {
+    from: (bucket: string) => ({
+      upload: async (path: string, body: string) => { objects.set(`${bucket}/${path}`, body); return { error: null as unknown } },
+      download: async (path: string) => {
+        const v = objects.get(`${bucket}/${path}`)
+        return v === undefined ? { data: null, error: { message: 'Object not found' } } : { data: new Blob([v]), error: null }
+      },
+      remove: async (paths: string[]) => { paths.forEach(p => objects.delete(`${bucket}/${p}`)); return { data: [], error: null } },
+    }),
+  }
+  return { from, storage, objects }
 }

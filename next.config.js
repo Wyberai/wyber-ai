@@ -98,7 +98,7 @@ const nextConfig = {
       // Client-facing pages and their APIs are private to one client: the secret is in the address. Never cache them
       // (a shared cache must not hand one client's page to another), never send the address as a referrer, and keep
       // them out of search. These come after the general rule above, so they win for the same header.
-      ...['/client/:path*', '/brief/:path*', '/api/portal/:path*', '/api/brief/:path*'].map(source => ({
+      ...['/client/:path*', '/brief/:path*', '/preview/:path*', '/api/portal/:path*', '/api/brief/:path*'].map(source => ({
         source,
         headers: [
           { key: 'Cache-Control', value: 'private, no-store, max-age=0' },

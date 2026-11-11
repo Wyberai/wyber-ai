@@ -16,6 +16,9 @@ interface DeliverableRow {
   review_status: string | null
   delivered_at: string | null
   handover_note: string | null
+  preview_token: string | null
+  preview_enabled: boolean | null
+  preview_built_at: string | null
   projects: {
     id?: string
     name: string
@@ -55,7 +58,7 @@ export default async function ClientDeliveryPage({ params }: { params: Promise<{
 
   const { data: client } = await db
     .from('clients')
-    .select('id, owner_id, org_id, name, logo_url, brand_color, intro_text, status, portal_passcode_hash, client_deliverables(id, headline, description, sort_order, is_visible, review_status, delivered_at, handover_note, projects(name, thumbnail_url, deployed_url, published_url, custom_domain))')
+    .select('id, owner_id, org_id, name, logo_url, brand_color, intro_text, status, portal_passcode_hash, client_deliverables(id, headline, description, sort_order, is_visible, review_status, delivered_at, handover_note, preview_token, preview_enabled, preview_built_at, projects(name, thumbnail_url, deployed_url, published_url, custom_domain))')
     .eq('slug', slug)
     .maybeSingle()
 
@@ -198,6 +201,11 @@ export default async function ClientDeliveryPage({ params }: { params: Promise<{
                       </div>
                     )}
                   </div>
+                  {d.preview_enabled && d.preview_token && (
+                    <a href={`/preview/${d.preview_token}`} target="_blank" rel="noopener" style={{ padding: '10px 20px', borderRadius: 9, background: liveUrl ? 'transparent' : brand, color: liveUrl ? '#e8eef7' : ink, border: liveUrl ? '1px solid #1b2a3b' : 'none', fontSize: 13, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap' }}>
+                      View preview →
+                    </a>
+                  )}
                   {liveUrl && (
                     <a href={liveUrl} target="_blank" rel="noreferrer" style={{ padding: '10px 20px', borderRadius: 9, background: brand, color: ink, fontSize: 13, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap' }}>
                       View live →

@@ -39,7 +39,7 @@ beforeEach(() => {
     organization_members: [{ org_id: 'W', user_id: 'GO', role: 'owner' }, { org_id: 'W', user_id: 'GA', role: 'admin' }, { org_id: 'W', user_id: 'GM', role: 'member' }, { org_id: 'W', user_id: 'GV', role: 'viewer' }],
     organizations: [{ id: 'W', name: 'Agency G', slug: 'g' }],
     projects: [{ id: 'pF', user_id: 'F', org_id: null }, { id: 'pG', user_id: 'GO', org_id: 'W' }, { id: 'pX', user_id: 'X', org_id: null }],
-    client_deliverables: (['F', 'G'] as const).map(t => ({ id: WORLD[t].deliverable, client_id: WORLD[t].client, project_id: WORLD[t].project, is_visible: true, headline: `${t} work`, review_status: 'pending', sort_order: 0 })),
+    client_deliverables: (['F', 'G'] as const).map(t => ({ id: WORLD[t].deliverable, client_id: WORLD[t].client, project_id: WORLD[t].project, is_visible: true, headline: `${t} work`, review_status: 'pending', sort_order: 0, preview_token: null, preview_enabled: false })),
     client_feedback: (['F', 'G'] as const).map(t => ({ id: WORLD[t].feedback, client_id: WORLD[t].client, deliverable_id: WORLD[t].deliverable, kind: 'changes_requested', author_name: `${t} client person`, body: `${t} PRIVATE FEEDBACK`, resolved: false, created_at: '2026-11-01T00:00:00Z' })),
     client_updates: (['F', 'G'] as const).map(t => ({ id: WORLD[t].update, client_id: WORLD[t].client, body: `${t} PRIVATE UPDATE`, created_at: '2026-11-01T00:00:00Z' })),
     client_quotes: (['F', 'G'] as const).map(t => ({ id: WORLD[t].quote, client_id: WORLD[t].client, number: 'Q-001', title: `${t} PRIVATE QUOTE`, currency: 'USD', items: [{ description: 'x', qty: 1, unit: 100 }], total: 100, status: 'sent', recurrence: 'one_time' })),
@@ -76,6 +76,10 @@ function attacks(t: 'F' | 'G'): Attack[] {
     { name: 'send quote', write: true, run: async () => (await import('./[id]/quotes/[quoteId]/route')).PATCH(req({ action: 'send' }, 'PATCH'), P({ id: c, quoteId: w.quote })) },
     { name: 'edit quote', write: true, run: async () => (await import('./[id]/quotes/[quoteId]/route')).PATCH(req({ title: 'pwned' }, 'PATCH'), P({ id: c, quoteId: w.quote })) },
     { name: 'delete quote', write: true, run: async () => (await import('./[id]/quotes/[quoteId]/route')).DELETE(req(undefined, 'DELETE'), P({ id: c, quoteId: w.quote })) },
+    { name: 'preview create', write: true, run: async () => (await import('./[id]/deliverables/[deliverableId]/preview/route')).POST(req({ action: 'create' }), P({ id: c, deliverableId: w.deliverable })) },
+    { name: 'preview refresh', write: true, run: async () => (await import('./[id]/deliverables/[deliverableId]/preview/route')).POST(req({ action: 'refresh' }), P({ id: c, deliverableId: w.deliverable })) },
+    { name: 'preview rotate', write: true, run: async () => (await import('./[id]/deliverables/[deliverableId]/preview/route')).POST(req({ action: 'rotate' }), P({ id: c, deliverableId: w.deliverable })) },
+    { name: 'preview off', write: true, run: async () => (await import('./[id]/deliverables/[deliverableId]/preview/route')).POST(req({ action: 'off' }), P({ id: c, deliverableId: w.deliverable })) },
     { name: 'read approval log', write: false, run: async () => (await import('./[id]/approvals/route')).GET(req(undefined, 'GET'), P({ id: c })) },
   ]
 }

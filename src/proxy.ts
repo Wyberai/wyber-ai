@@ -126,6 +126,8 @@ export async function proxy(request: NextRequest) {
     path.startsWith('/quote/') ||
     // A freelancer's client fills in an intake brief at /brief/<unguessable token> before they have any account.
     path.startsWith('/brief/') ||
+    // A client's private preview of a project (/preview/<unguessable token>): clients are not signed in.
+    path.startsWith('/preview/') ||
     // Inventory intelligence demo — live under /app/inventory, public for customer demos.
     path.startsWith('/app/inventory') ||
     path.startsWith('/complexity-guide') ||
