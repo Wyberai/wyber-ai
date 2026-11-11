@@ -1,7 +1,7 @@
 import { DocsPage, DocSection, Steps, Step, ScreenshotPlaceholder, Note } from '@/components/docs/DocsPage'
 import Link from 'next/link'
 
-export const metadata = { title: 'Custom Domains — Docs' }
+export const metadata = { title: 'Custom Domains — Docs', description: "Point your own domain at a published Wyber web app. You'll add a DNS record at your registrar and verify ownership in Wyber." }
 
 export default function Page() {
   return (

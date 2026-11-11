@@ -1,7 +1,7 @@
 import { DocsPage, DocSection, Steps, Step, ScreenshotPlaceholder, Note } from '@/components/docs/DocsPage'
 import Link from 'next/link'
 
-export const metadata = { title: 'Exporting to Expo — Docs' }
+export const metadata = { title: 'Exporting to Expo — Docs', description: "Download your Wyber mobile app as a standard Expo project you can build, submit to the App Store / Play Store, or continue developing locally." }
 
 export default function Page() {
   return (

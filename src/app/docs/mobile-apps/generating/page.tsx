@@ -1,7 +1,7 @@
 import { DocsPage, DocSection, Steps, Step, ScreenshotPlaceholder, Note } from '@/components/docs/DocsPage'
 import Link from 'next/link'
 
-export const metadata = { title: 'Generating a Mobile App — Docs' }
+export const metadata = { title: 'Generating a Mobile App — Docs', description: "Describe your mobile app in plain English and Wyber generates a React Native (Expo) app with a live in-browser preview — no Xcode or Android Studio…" }
 
 export default function Page() {
   return (

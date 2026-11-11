@@ -75,7 +75,7 @@ export function PricingBand() {
 export function Faq({ items }: { items?: Array<[string, string]> } = {}) {
   const faqs = items ?? HOME_STRINGS.en.homeFaqs
   return (
-    <Section id="faq" label="Questions" title="Questions, answered">
+    <Section id="faq" label="FAQ" title="Questions, answered">
       <div style={{ marginTop: 28 }}>
         {faqs.map(([q, a], i) => <details key={q} open={i === 0}><summary>{q}</summary><p>{a}</p></details>)}
       </div>

@@ -1,7 +1,7 @@
 import { DocsPage, DocSection, Steps, Step, ScreenshotPlaceholder, Note } from '@/components/docs/DocsPage'
 import Link from 'next/link'
 
-export const metadata = { title: 'Bring Your Own Keys — Docs' }
+export const metadata = { title: 'Bring Your Own Keys — Docs', description: "By default Wyber uses its own API keys for Claude and Composio. Power users can provide their own keys to use higher rate limits, specific model…" }
 
 export default function Page() {
   return (

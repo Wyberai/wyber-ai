@@ -1,7 +1,7 @@
 import { DocsPage, DocSection, Steps, Step, ScreenshotPlaceholder, Note } from '@/components/docs/DocsPage'
 import Link from 'next/link'
 
-export const metadata = { title: 'Publishing — Docs' }
+export const metadata = { title: 'Publishing — Docs', description: "One click publishes your app to a live public URL on Vercel. No deployment configuration required." }
 
 export default function Page() {
   return (

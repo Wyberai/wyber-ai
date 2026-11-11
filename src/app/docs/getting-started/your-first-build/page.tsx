@@ -1,7 +1,7 @@
 import { DocsPage, DocSection, Steps, Step, ScreenshotPlaceholder, Note } from '@/components/docs/DocsPage'
 import Link from 'next/link'
 
-export const metadata = { title: 'Your First Build — Docs' }
+export const metadata = { title: 'Your First Build — Docs', description: "From sign-up to a live, shareable web app — this walkthrough covers the exact steps." }
 
 export default function Page() {
   return (
@@ -48,7 +48,7 @@ export default function Page() {
           </Step>
           <Step n={5} title="Preview and iterate">
             <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
-              Once generation is complete, click any element in the preview to select it and describe a change — this uses <strong>click-to-edit</strong> mode. Or type a follow-up prompt in the chat panel to change a whole section. Each edit costs 2 credits and is non-destructive — you can always go back to the previous version.
+              Once generation is complete, click any element in the preview to select it and describe a change — this uses <strong>click-to-edit</strong> mode. Or type a follow-up prompt in the chat panel to change a whole section. A small edit starts at 4 credits and is non-destructive — you can always go back to the previous version.
             </p>
             <ScreenshotPlaceholder label="Preview pane + chat panel" />
           </Step>

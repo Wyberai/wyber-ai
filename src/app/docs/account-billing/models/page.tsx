@@ -1,7 +1,7 @@
 import { DocsPage, DocSection, Note } from '@/components/docs/DocsPage'
 import Link from 'next/link'
 
-export const metadata = { title: 'AI Models — Docs' }
+export const metadata = { title: 'AI Models — Docs', description: "Wyber builds with WyberCode 1.0, our coding engine for app generation, agent planning and workflow logic. Higher-tier plans unlock the more powerful…" }
 
 export default function Page() {
   return (

@@ -1,7 +1,7 @@
 import { DocsPage, DocSection, Steps, Step, ScreenshotPlaceholder, Note } from '@/components/docs/DocsPage'
 import Link from 'next/link'
 
-export const metadata = { title: 'Running an Agent — Docs' }
+export const metadata = { title: 'Running an Agent — Docs', description: "Once your canvas is built and tools are connected, you can run the agent with a single click and watch it execute each step in real time." }
 
 export default function Page() {
   return (

@@ -1,7 +1,7 @@
 import { DocsPage, DocSection, ScreenshotPlaceholder } from '@/components/docs/DocsPage'
 import Link from 'next/link'
 
-export const metadata = { title: 'What is WyberAi? — Docs' }
+export const metadata = { title: 'What is WyberAi? — Docs', description: "WyberAi is a plain-English product builder. Describe what you want to build and Wyber generates a working app — web, mobile, agent, or workflow — with…" }
 
 export default function Page() {
   return (

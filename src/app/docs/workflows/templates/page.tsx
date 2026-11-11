@@ -1,7 +1,7 @@
 import { DocsPage, DocSection, Note } from '@/components/docs/DocsPage'
 import Link from 'next/link'
 
-export const metadata = { title: 'Workflow Templates — Docs' }
+export const metadata = { title: 'Workflow Templates — Docs', description: "Start faster with a pre-built workflow template. Templates cover common automation patterns — you clone one, connect your accounts, and it's ready to run." }
 
 export default function Page() {
   return (

@@ -102,18 +102,9 @@ export function Step({ n, title, children }: { n: number; title: string; childre
   )
 }
 
-export function ScreenshotPlaceholder({ label }: { label: string }) {
-  return (
-    <div style={{ background: CARD, border: `1px dashed rgba(255,255,255,0.12)`, borderRadius: 10, height: 200, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, margin: '12px 0 24px', color: TEXT3, fontSize: 12 }}>
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" opacity="0.4">
-        <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="1.5"/>
-        <circle cx="8.5" cy="10.5" r="1.5" fill="currentColor"/>
-        <path d="M3 17l4.5-4.5 3 3 3-3 4.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-      </svg>
-      <span style={{ fontWeight: 500 }}>{label}</span>
-      <span style={{ fontSize: 11, opacity: 0.6 }}>Screenshot placeholder — to be added after testing</span>
-    </div>
-  )
+// Screenshots are not captured yet. Until they are, the public docs show nothing rather than a "to be added" box.
+export function ScreenshotPlaceholder(_props: { label: string }) {
+  return null
 }
 
 export function TodoBlock({ note }: { note: string }) {

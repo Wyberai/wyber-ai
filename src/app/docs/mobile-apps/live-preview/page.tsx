@@ -1,7 +1,7 @@
 import { DocsPage, DocSection, Steps, Step, ScreenshotPlaceholder, Note } from '@/components/docs/DocsPage'
 import Link from 'next/link'
 
-export const metadata = { title: 'The Live Preview — Docs' }
+export const metadata = { title: 'The Live Preview — Docs', description: "Wyber renders your mobile app directly in the browser using react-native-web, so you can interact with it without a phone or simulator." }
 
 export default function Page() {
   return (

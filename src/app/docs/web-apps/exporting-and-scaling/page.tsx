@@ -1,7 +1,7 @@
 import { DocsPage, DocSection, Steps, Step, Note } from '@/components/docs/DocsPage'
 import Link from 'next/link'
 
-export const metadata = { title: 'Exporting & Self-Hosting — Docs' }
+export const metadata = { title: 'Exporting & Self-Hosting — Docs', description: "Your app's code belongs to you. As traffic grows, you can export the full project and run it on your own infrastructure — no migration tool required,…" }
 
 export default function Page() {
   return (

@@ -1,7 +1,7 @@
 import { DocsPage, DocSection, Note } from '@/components/docs/DocsPage'
 import Link from 'next/link'
 
-export const metadata = { title: 'How Credits Work — Docs' }
+export const metadata = { title: 'How Credits Work — Docs', description: "Credits are the unit of usage on WyberAi. Each generation spends credits; everything else — editing, previewing, navigating — is free." }
 
 export default function Page() {
   return (

@@ -1,7 +1,7 @@
 import { DocsPage, DocSection, Steps, Step, ScreenshotPlaceholder, Note } from '@/components/docs/DocsPage'
 import Link from 'next/link'
 
-export const metadata = { title: 'Building AI Agents — Docs' }
+export const metadata = { title: 'Building AI Agents — Docs', description: "Describe what you want your agent to do and Wyber builds a visual canvas of nodes and edges — no code, no prompt engineering, just a description of the…" }
 
 export default function Page() {
   return (

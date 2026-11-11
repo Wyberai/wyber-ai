@@ -1,7 +1,7 @@
 import { DocsPage, DocSection, Note } from '@/components/docs/DocsPage'
 import Link from 'next/link'
 
-export const metadata = { title: 'Plans & Pricing — Docs' }
+export const metadata = { title: 'Plans & Pricing — Docs', description: "WyberAi offers a free tier and paid plans. All plans include the web and mobile app builders, with AI agents, workflows, AI employees, and the GTM…" }
 
 export default function Page() {
   return (

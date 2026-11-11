@@ -65,7 +65,7 @@ export default async function VsLovable() {
       slug="lovable"
       competitorName="Lovable"
       competitorUrl="https://lovable.dev"
-      tagline="Lovable is the leading AI web app builder. WyberAi generates fresh code (no templates), builds mobile apps, and includes 68 connectors that Lovable doesn't have."
+      tagline="Lovable is the leading AI web app builder. WyberAi writes fresh code from your description, builds mobile apps, and includes 68 connectors that Lovable doesn't have."
       blurb="Honest comparison of WyberAi vs Lovable: pricing, credits, features, and what each builder can actually ship. Last reviewed June 2026."
       rows={ROWS}
       faqs={FAQS}

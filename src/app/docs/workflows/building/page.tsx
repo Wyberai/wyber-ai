@@ -1,7 +1,7 @@
 import { DocsPage, DocSection, Steps, Step, ScreenshotPlaceholder, Note } from '@/components/docs/DocsPage'
 import Link from 'next/link'
 
-export const metadata = { title: 'Building a Workflow — Docs' }
+export const metadata = { title: 'Building a Workflow — Docs', description: "Workflows are visual automations — a sequence of triggers, AI steps, and actions that run on a schedule or in response to an event." }
 
 export default function Page() {
   return (
