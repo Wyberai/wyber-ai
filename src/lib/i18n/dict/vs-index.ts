@@ -22,7 +22,7 @@ export interface VsIndexContent {
 export const VS_INDEX_CONTENT: Record<Locale, VsIndexContent> = {
   en: {
     metaTitle: 'WyberAi vs Competitors (2026) — Honest Comparisons',
-    metaDescription: 'Compare WyberAi to Lovable, Bolt.new, v0, Replit, and Cursor. See how pricing, credits, and the six-product difference (web + mobile + agents + workflows + AI employees) stack up.',
+    metaDescription: 'Compare WyberAi to Lovable, Bolt.new, v0, Replit, and Cursor. See how pricing, credits, and web plus mobile output stack up.',
     eyebrow: 'LAST REVIEWED JUNE 2026',
     heroTitle: 'WyberAi vs Every Alternative',
     heroBody: 'Honest, up-to-date comparisons. WyberAi ships full-stack web apps and native mobile apps from one workspace — with deploy, integrations, and GitHub code ownership built in.',
@@ -35,16 +35,16 @@ export const VS_INDEX_CONTENT: Record<Locale, VsIndexContent> = {
       { label: 'Premier League', sub: '$1,800 in monthly prizes' },
     ],
     comparisons: {
-      lovable: { summary: 'WyberAi Starter includes 450 credits a month for $29 against Lovable\'s 100 (plus 5 a day) for $25, plus mobile apps, agents, and workflows Lovable doesn\'t have.', wyberWins: ['450 credits/month on Starter ($29)', 'Top-ups never expire', 'Mobile + agents + workflows + AI employees + GTM', '6 products vs Lovable\'s 1'] },
-      bolt: { summary: 'WyberAi uses fixed-credit pricing (no token surprises) and adds mobile apps, agents, and workflows Bolt doesn\'t offer.', wyberWins: ['Predictable fixed credits', 'Daily bonus credits', 'Guided for non-technical users', 'Mobile + agents + workflows'] },
-      v0: { summary: 'v0 generates UI components. WyberAi generates complete full-stack apps — plus mobile, agents, and workflows.', wyberWins: ['Complete app in one generation', 'Database + auth included', 'No assembly required', 'Mobile + agents + workflows'] },
-      replit: { summary: 'Replit is an IDE for developers. WyberAi is a no-code builder for founders — faster, cheaper, and more predictable.', wyberWins: ['No coding knowledge needed', 'Predictable fixed credits', '< 60 second app generation', 'Mobile + agents + workflows'] },
-      cursor: { summary: 'Cursor makes developers faster. WyberAi builds complete apps from plain English — no developer needed.', wyberWins: ['Zero coding required', 'App in a few minutes', 'Live preview + one-click deploy', 'Mobile + agents + workflows'] },
+      lovable: { summary: 'WyberAi Starter includes 450 credits a month for $29 against Lovable\'s 100 (plus 5 a day) for $25, plus native mobile apps Lovable doesn\'t offer.', wyberWins: ['450 credits/month on Starter ($29)', 'Top-ups never expire', 'Web and mobile apps from one prompt', 'Real code you own and can export'] },
+      bolt: { summary: 'WyberAi uses fixed-credit pricing (no token surprises) and adds native mobile apps Bolt doesn\'t offer.', wyberWins: ['Predictable fixed credits', 'Daily bonus credits', 'Guided for non-technical users', 'Web and mobile from one prompt'] },
+      v0: { summary: 'v0 generates UI components. WyberAi generates complete full-stack apps — plus native mobile apps.', wyberWins: ['Complete app in one generation', 'Database + auth included', 'No assembly required', 'Web and mobile from one prompt'] },
+      replit: { summary: 'Replit is an IDE for developers. WyberAi is a no-code builder for founders — faster, cheaper, and more predictable.', wyberWins: ['No coding knowledge needed', 'Predictable fixed credits', '< 60 second app generation', 'Web and mobile from one prompt'] },
+      cursor: { summary: 'Cursor makes developers faster. WyberAi builds complete apps from plain English — no developer needed.', wyberWins: ['Zero coding required', 'App in a few minutes', 'Live preview + one-click deploy', 'Web and mobile from one prompt'] },
       softr: { summary: 'Softr hosts your app on their platform from $269/mo for Business. WyberAi generates real React code you own — web + mobile — from $29/mo.', wyberWins: ['Real code, GitHub export, zero lock-in', 'Native mobile apps (React Native)', 'Live database security scan', 'A tenth of the price for solo founders'] },
     },
     seeComparison: 'See comparison →',
     ctaHeading: 'Try WyberAi free — 30 free credits on signup',
-    ctaBody: 'Web app, mobile app, AI agent, or workflow. No credit card required.',
+    ctaBody: 'Web app or mobile app. No credit card required.',
     ctaButton: 'Start building free →',
   },
   hi: {

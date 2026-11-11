@@ -4,7 +4,7 @@ import { WyberLogo } from '@/components/shared/WyberLogo'
 
 export const metadata: Metadata = {
   title: 'WyberAi blog: guides on building apps with AI',
-  description: 'Build logs, product guides, and deep dives on AI app building — web apps, mobile apps, AI agents, and workflow automation.',
+  description: 'Guides on building web apps, mobile apps and SaaS with AI: what it costs, how to ship, and how to go from idea to a live product.',
   alternates: { canonical: 'https://wyberai.com/blog' },
 }
 
@@ -50,24 +50,6 @@ const POSTS = [
     isNew: true,
   },
   {
-    slug: 'what-are-ai-agents-guide',
-    title: 'What are AI agents? A practical guide for non-technical founders',
-    excerpt: 'Agents watch data, make decisions, and take action — automatically. Here\'s what they actually are, what they\'re good for, and how to build one in minutes.',
-    date: 'June 13, 2026',
-    readTime: '7 min read',
-    tag: 'AI Agents',
-    tagColor: '#10b981',
-  },
-  {
-    slug: 'ai-workflow-automation-guide',
-    title: 'AI workflow automation without code — connect your apps and let them run',
-    excerpt: 'Zapier and Make require manual setup. Wyber\'s workflow builder takes a plain-English description and generates the entire automation — AI reasoning included.',
-    date: 'June 12, 2026',
-    readTime: '5 min read',
-    tag: 'Workflows',
-    tagColor: '#f59e0b',
-  },
-  {
     slug: 'build-saas-mvp-with-ai-2026',
     title: 'How to build a SaaS MVP with AI in 2026 — no coding required',
     excerpt: 'A step-by-step guide to going from idea to live product in under an hour using AI app builders.',
@@ -75,15 +57,6 @@ const POSTS = [
     readTime: '7 min read',
     tag: 'Guide',
     tagColor: '#0EA5E9',
-  },
-  {
-    slug: 'why-we-charge-less-than-lovable',
-    title: 'How WyberAi keeps pricing transparent',
-    excerpt: 'Smart model routing, prompt caching, and self-healing builds. Here\'s how WyberAi keeps prices lower than competitors.',
-    date: 'May 25, 2026',
-    readTime: '4 min read',
-    tag: 'Pricing',
-    tagColor: '#10b981',
   },
   {
     slug: 'build-saas-without-code',
@@ -102,15 +75,6 @@ const POSTS = [
     readTime: '5 min read',
     tag: 'Guide',
     tagColor: '#0EA5E9',
-  },
-  {
-    slug: 'wyber-vs-lovable',
-    title: 'WyberAi vs Lovable — an honest comparison',
-    excerpt: 'Both tools build full-stack apps from plain English. Web + mobile vs web-only. Here\'s what actually matters.',
-    date: 'May 10, 2026',
-    readTime: '5 min read',
-    tag: 'Compare',
-    tagColor: '#f59e0b',
   },
 ]
 

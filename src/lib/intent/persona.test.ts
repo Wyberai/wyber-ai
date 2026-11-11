@@ -8,7 +8,7 @@ import { DOORS, type Door } from './types'
 
 const PROBLEM_AND_BUILD: Door[] = ['business', 'software'] // A and B
 const FOCUSED = ['hero', 'projects', 'examples', 'pricing', 'faq', 'final'] as const
-const CLUTTER = ['userbuilds', 'gallery', 'websites', 'byos', 'telemetry', 'journey', 'ph'] as const // never shown on any chosen page
+const CLUTTER = ['userbuilds', 'gallery', 'websites', 'byos', 'telemetry', 'ph'] as const // never shown on any chosen page
 
 describe('the three answers', () => {
   it('are named exactly as asked: Solve a problem, Build apps, Just scrolling', () => {

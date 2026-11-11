@@ -28,6 +28,14 @@ const nextConfig = {
       { source: '/contact-us', destination: '/contact', permanent: true },
       { source: '/dashboard/projects', destination: '/dashboard', permanent: false },
       { source: '/home', destination: '/', permanent: true },
+      // The scroll-journey demo page was retired; keep old links and bookmarks working.
+      { source: '/space-journey', destination: '/', permanent: true },
+      // Retired blog posts: they described products no longer sold from the site, or carried competitor and pricing claims that had gone stale.
+      { source: '/blog/ai-workflow-automation-guide', destination: '/blog', permanent: true },
+      { source: '/blog/what-are-ai-agents-guide', destination: '/blog', permanent: true },
+      { source: '/blog/built-lovable-competitor-6-weeks', destination: '/blog', permanent: true },
+      { source: '/blog/why-we-charge-less-than-lovable', destination: '/blog', permanent: true },
+      { source: '/blog/wyber-vs-lovable', destination: '/lovable-alternatives', permanent: true },
       { source: '/app', destination: '/dashboard', permanent: false },
       { source: '/community', destination: '/gallery', permanent: true },
       // NOTE: the old `/build → /dashboard` vanity alias was removed Jul 2026:

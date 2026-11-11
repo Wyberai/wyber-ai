@@ -25,7 +25,7 @@ export default function DocsIndexPage() {
           WyberAi Docs
         </h1>
         <p style={{ fontSize: 16, color: TEXT2, lineHeight: 1.7, maxWidth: 540, margin: 0 }}>
-          Everything you need to build web apps, mobile apps, AI agents, and workflows — in plain English, no code required.
+          Everything you need to build web apps and mobile apps — in plain English, no code required.
         </p>
       </div>
 

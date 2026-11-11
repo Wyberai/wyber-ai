@@ -556,7 +556,6 @@ export function PricingClient({ initialCurrency }: { initialCurrency: Currency }
               <details key={i} style={{ borderBottom: '1px solid var(--brand-border)', padding: '18px 0' }}>
                 <summary style={{ cursor: 'pointer', fontSize: 14, fontWeight: 700, color: '#e8eef7', listStyle: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
                   {q}
-                  <span style={{ color: '#8797ab', fontSize: 18, flexShrink: 0 }}>+</span>
                 </summary>
                 <p style={{ fontSize: 13, color: '#8797ab', lineHeight: 1.7, marginTop: 12, marginBottom: 0 }}>{a}</p>
               </details>

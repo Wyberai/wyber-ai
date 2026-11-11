@@ -36,7 +36,7 @@ export default function Post() {
           <ol>
             <li><strong>Start with a specific prompt.</strong> Instead of "build a client portal", try: "Build a client portal with email/password auth, a dashboard showing active projects, and a settings page where clients can update their profile."</li>
             <li><strong>Pick Next.js as your framework.</strong> It is the default in WyberAi -- SSR means your app ranks on Google from day one.</li>
-            <li><strong>Iterate for free.</strong> AI error fixes never cost credits. Ask it to adjust colors, move sections, add a feature -- you only pay for successful generations.</li>
+            <li><strong>Iterate in chat.</strong> Ask it to adjust colors, move sections or add a feature. Small edits start at 4 credits.</li>
             <li><strong>Connect your backend.</strong> Add Supabase in one click -- database, auth, and file storage set up in minutes.</li>
             <li><strong>Publish and share.</strong> One click gives you a live URL. Share it before you have spent a cent on infrastructure.</li>
           </ol>

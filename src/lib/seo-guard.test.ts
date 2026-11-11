@@ -56,7 +56,6 @@ describe('page titles', () => {
   it('login and the thin client-drawn pages are kept out of the index', () => {
     expect(read('src/app/login/layout.tsx')).toMatch(/index:\s*false/)
     expect(read('src/app/templates/page.tsx')).toMatch(/index:\s*false/)
-    expect(read('src/app/space-journey/page.tsx')).toMatch(/index:\s*false/)
   })
 
   it('pages that used to show the homepage title have their own', () => {
@@ -98,7 +97,7 @@ describe('structured data and llms.txt', () => {
   it('every blog post has Article markup from its route layout', () => {
     const dir = path.join(process.cwd(), 'src/app/blog')
     const posts = fs.readdirSync(dir).filter(d => fs.existsSync(path.join(dir, d, 'page.tsx')))
-    expect(posts.length).toBeGreaterThan(10)
+    expect(posts.length).toBeGreaterThan(5)
     for (const p of posts) expect(fs.existsSync(path.join(dir, p, 'layout.tsx')), p).toBe(true)
   })
 

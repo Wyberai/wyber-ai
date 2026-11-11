@@ -491,9 +491,8 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
 
   // /use-cases/[slug] has a real locale route (src/app/[locale]/use-cases/[slug]) —
   // route it through localePath so picking a non-English locale doesn't get
-  // dropped the moment the visitor leaves the homepage. /space-journey and
-  // /pricing have no locale-prefixed variant and self-translate client-side.
-  const navLinks: [string, string][] = [[t.navWebApps, localePath('/use-cases/no-code-web-app-builder', locale)], [t.navMobileApps, localePath('/use-cases/build-mobile-app-with-ai', locale)], [t.navWebsites, '/websites'], [t.navGallery, '/gallery'], [t.navJourney, '/space-journey'], [t.navPricing, '/pricing']];
+  // dropped the moment the visitor leaves the homepage. /pricing has no locale-prefixed variant and self-translates client-side.
+  const navLinks: [string, string][] = [[t.navWebApps, localePath('/use-cases/no-code-web-app-builder', locale)], [t.navMobileApps, localePath('/use-cases/build-mobile-app-with-ai', locale)], [t.navWebsites, '/websites'], [t.navGallery, '/gallery'], [t.navPricing, '/pricing']];
 
   return (
     <div className="mk-page" data-theme="dark" data-persona={adaptDoor ?? undefined} data-asking={!adaptDoor && asking ? '' : undefined} style={adaptDoor ? ({ display: 'flex', flexDirection: 'column', overflowAnchor: 'none', ...personaVars(adaptDoor) } as React.CSSProperties) : undefined}>
@@ -944,22 +943,6 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
         )}
 
         <Link href="/pricing" className="mk-btn-ghost" style={{ fontSize: 14 }}>{t.pricingSeeFullCta}</Link>
-      </section>
-
-      {/* ── SPACE JOURNEY INVITE ────────────────────────────────────── */}
-      <section data-sec="journey" style={{ position: 'relative', overflow: 'hidden', borderTop: '1px solid var(--brand-border)', borderBottom: '1px solid var(--brand-border)' }}>
-        <div className="mk-stars" aria-hidden />
-        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 60% 70% at 50% 100%, rgba(14,165,233,0.12) 0%, transparent 65%)', pointerEvents: 'none' }} />
-        <Link href="/space-journey" style={{ display: 'block', textDecoration: 'none', color: 'inherit', position: 'relative' }}>
-          <div style={{ maxWidth: 1120, margin: '0 auto', padding: 'clamp(48px,7vw,88px) clamp(20px,5vw,48px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap' }}>
-            <div>
-              <div className="mk-eyebrow" style={{ marginBottom: 14 }}>✦ {t.journeyLabel}</div>
-              <div className="mk-h2" style={{ fontSize: 'clamp(26px,3.5vw,42px)' }}>{t.journeyHeadingPre} <span className="mk-serif">{t.journeyHeadingEmphasis}</span></div>
-              <p className="mk-lead" style={{ marginTop: 10, fontSize: 15 }}>{t.journeyLead}</p>
-            </div>
-            <span className="mk-btn-ghost" style={{ flexShrink: 0 }}>{t.journeyCta}</span>
-          </div>
-        </Link>
       </section>
 
       {/* ── FAQ (with FAQPage schema for AEO) ───────────────────────── */}

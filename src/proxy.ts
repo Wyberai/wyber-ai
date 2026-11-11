@@ -168,7 +168,6 @@ export async function proxy(request: NextRequest) {
     // so a link can be opened/tested by anyone, like a published app.
     path.startsWith('/m/') ||
     path.startsWith('/unsubscribe') ||
-    path.startsWith('/space-journey') ||
     // Client-facing sales demos (e.g. /showcase/glocal-electronics) — sent to
     // prospects who have no account, must be public.
     path.startsWith('/showcase') ||

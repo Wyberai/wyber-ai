@@ -20,7 +20,6 @@ export default function ToolsClient() {
       <nav style={{ padding: '0 clamp(16px,4vw,48px)', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none', color: 'inherit' }}>
           <WyberLogo />
-          <span style={{ fontWeight: 800, fontSize: 15, letterSpacing: '-0.03em' }}>WyberAi</span>
         </Link>
         <Link href="/dashboard" style={{ padding: '7px 16px', borderRadius: 8, background: SKY, color: '#03111c', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>
           Build an app →

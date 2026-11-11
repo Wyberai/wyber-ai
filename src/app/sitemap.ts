@@ -74,13 +74,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // (/login, /signup) are intentionally excluded — they redirect crawlers to
     // login and get marked "not indexed", which drags down sitemap quality.
     { url: `${base}/blog`, lastModified: UPDATED, changeFrequency: 'weekly', priority: 0.7 },
-    { url: `${base}/blog/what-are-ai-agents-guide`, lastModified: UPDATED, changeFrequency: 'monthly', priority: 0.7 },
-    { url: `${base}/blog/ai-workflow-automation-guide`, lastModified: UPDATED, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${base}/blog/build-saas-mvp-with-ai-2026`, lastModified: UPDATED, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${base}/blog/build-saas-without-code`, lastModified: UPDATED, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${base}/blog/nextjs-app-in-one-hour`, lastModified: UPDATED, changeFrequency: 'monthly', priority: 0.7 },
-    { url: `${base}/blog/why-we-charge-less-than-lovable`, lastModified: UPDATED, changeFrequency: 'monthly', priority: 0.7 },
-    { url: `${base}/blog/wyber-vs-lovable`, lastModified: UPDATED, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${base}/blog/ai-app-builder-for-startups`, lastModified: UPDATED, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${base}/blog/no-code-vs-ai-code-generation`, lastModified: UPDATED, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${base}/blog/how-to-deploy-ai-generated-app`, lastModified: UPDATED, changeFrequency: 'monthly', priority: 0.7 },
