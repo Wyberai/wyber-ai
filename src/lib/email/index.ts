@@ -242,6 +242,20 @@ export async function sendQuoteAcceptedAlert(a: { title: string; totalLabel: str
   return sendMail({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `Quote accepted: ${a.title.slice(0, 60)} (${a.totalLabel})`, html })
 }
 
+// Agency mode: tell the agency when their client approves or asks for changes on a deliverable.
+export async function sendClientFeedbackAlert(a: { to: string; clientName: string; deliverable: string; kind: 'approved' | 'changes_requested' | 'comment'; author: string | null; note: string | null }) {
+  const verb = a.kind === 'approved' ? 'approved' : a.kind === 'changes_requested' ? 'asked for changes on' : 'commented on'
+  const who = a.author ? escHtml(a.author) : escHtml(a.clientName)
+  const html = wrap(`
+    ${h1(a.kind === 'approved' ? 'A client approved your work' : a.kind === 'changes_requested' ? 'A client asked for changes' : 'A client left a comment')}
+    ${p(`<strong style="color:#f0f0f4">${who}</strong> ${verb} <strong style="color:#f0f0f4">${escHtml(a.deliverable)}</strong> for ${escHtml(a.clientName)}.`)}
+    ${a.note ? infoBox([['Their note', escHtml(a.note.slice(0, 600))]]) : ''}
+    <div style="text-align:center;margin:24px 0">${btn('Open the client →', `${APP_URL}/clients`)}</div>
+  `, `${a.clientName}: ${verb} ${a.deliverable}`)
+  const subject = a.kind === 'approved' ? `Approved: ${a.deliverable.slice(0, 50)} (${a.clientName.slice(0, 30)})` : a.kind === 'changes_requested' ? `Changes requested: ${a.deliverable.slice(0, 50)} (${a.clientName.slice(0, 30)})` : `New comment: ${a.deliverable.slice(0, 50)} (${a.clientName.slice(0, 30)})`
+  return sendMail({ from: FROM_NOTIF, to: a.to, subject, html })
+}
+
 // Daily internal revenue brief for the founder (see lib/crm/brief.ts, /api/cron/crm-brief).
 export async function sendCrmDailyBrief(opts: { subject: string; text: string }) {
   const paras = opts.text.split('\n').map(l => (l.trim() ? p(escHtml(l)) : '')).join('')
