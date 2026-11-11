@@ -26,7 +26,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const { data, error } = await admin
     .from('clients').update(updates)
     .eq('id', id).eq('owner_id', user.id)
-    .select().single()
+    .select().maybeSingle()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 })

@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { createServiceClient } from '@/lib/supabase/server'
 import { readableOn } from '@/lib/color-contrast'
@@ -16,6 +17,12 @@ interface DeliverableRow {
     published_url: string | null
     custom_domain: string | null
   } | null
+}
+
+// A private delivery link sent to one client: keep it out of search results and give it a title that is not the homepage's.
+export const metadata: Metadata = {
+  title: 'Your project',
+  robots: { index: false, follow: false },
 }
 
 function liveUrlFor(p: NonNullable<DeliverableRow['projects']>): string | null {
