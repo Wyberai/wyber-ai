@@ -102,9 +102,11 @@ export async function POST(req: NextRequest) {
     // Support mode: allowlisted admins can publish on a customer's behalf
     // after fixing their project remotely.
     const { isAdminEmail } = await import('@/lib/admin')
-    let projectQuery = admin.from('projects').select('*').eq('id', projectId)
-    if (!isAdminEmail(user.email)) projectQuery = projectQuery.eq('user_id', user.id)
-    const { data: project } = await projectQuery.single()
+    // The owner, or a workspace member / editor collaborator on a shared project (see src/lib/project-access.ts).
+    if (!isAdminEmail(user.email) && !(await (await import('@/lib/project-access')).canEditProject(admin, user.id, projectId))) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 })
+    }
+    const { data: project } = await admin.from('projects').select('*').eq('id', projectId).single()
 
     if (!project) return NextResponse.json({ error: 'Project not found' }, { status: 404 })
 
@@ -362,13 +364,8 @@ export async function DELETE(req: NextRequest) {
 
     // Verify ownership BEFORE touching storage — an authenticated non-owner
     // could otherwise delete another user's published CDN files.
-    const { data: owned } = await admin
-      .from('projects')
-      .select('id')
-      .eq('id', projectId)
-      .eq('user_id', user.id)
-      .maybeSingle()
-    if (!owned) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    const { canEditProject } = await import('@/lib/project-access')
+    if (!(await canEditProject(admin, user.id, projectId))) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
     await admin.storage.from('published-apps').remove([
       `${projectId}/index.html`,
@@ -378,7 +375,6 @@ export async function DELETE(req: NextRequest) {
     await admin.from('projects')
       .update({ published_url: null, is_public: false })
       .eq('id', projectId)
-      .eq('user_id', user.id)
 
     return NextResponse.json({ success: true })
   } catch (err: any) {

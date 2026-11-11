@@ -3969,6 +3969,25 @@ export async function POST(req: NextRequest) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
     }
 
+    // ── Project ownership ─────────────────────────────────────────────
+    // `projectId` comes straight from the request body, and everything below reads and writes that project with the
+    // service-role client (project memory and knowledge, the Supabase connection, rescued files, naming). Without this
+    // check any signed-in user who learned another tenant's project id (project ids appear in public preview links)
+    // could pull that project's context into a prompt or write files into it. The caller must be able to EDIT the
+    // project: its owner, a workspace member, or an editor collaborator. An id that matches no project passes through
+    // unchanged, so nothing that worked before stops working. Support-mode admins keep their access.
+    if (typeof projectId === 'string' && projectId) {
+      const { isAdminEmail } = await import('@/lib/admin')
+      const email = (user as { email?: string | null }).email
+      if (!isAdminEmail(email)) {
+        const { createServiceClient: svc } = await import('@/lib/supabase/server')
+        const { mayActOnProject } = await import('@/lib/project-access')
+        if (!(await mayActOnProject(svc(), user.id, projectId))) {
+          return new Response(JSON.stringify({ error: 'Project not found' }), { status: 404 })
+        }
+      }
+    }
+
     // ── Free-lane abuse guard ─────────────────────────────────────────
     // `selfHeal` and the (legacy, now client-unused) 'plan' stage skip billing
     // entirely, and both flags come straight from the request body — so any

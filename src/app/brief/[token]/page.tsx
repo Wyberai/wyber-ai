@@ -5,6 +5,8 @@ import { QUESTIONS } from '@/lib/agency/brief'
 import { readableOn } from '@/lib/color-contrast'
 import { BriefForm } from './BriefForm'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = { title: 'Project brief', robots: { index: false, follow: false } }
 
 const SAFE_COLOR = /^#[0-9a-fA-F]{6}$/

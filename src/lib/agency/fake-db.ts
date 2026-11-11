@@ -33,9 +33,10 @@ export function makeFakeDb(tables: Tables) {
       update: (p: Row) => { op = 'update'; patch = p; return b },
       delete: (o?: { count?: string }) => { op = 'delete'; wantCount = !!o?.count; return b },
       insert: (r: Row) => { op = 'insert'; const row = { id: `id${++seq}`, created_at: new Date(Date.now() + seq).toISOString(), ...r }; rows().push(row); filters = [x => x === row]; return b },
-      maybeSingle: async () => ({ data: exec()[0] ?? null, error: null }),
-      single: async () => { const m = exec(); return m[0] ? { data: m[0], error: null } : { data: null, error: { message: 'JSON object requested, multiple (or no) rows returned', code: 'PGRST116' } } },
-      then: (res: (v: unknown) => void) => { const m = exec(); res({ data: m, error: null, count: wantCount ? m.length : null }) },
+      // Like Postgres, hand back copies: a later update must not change a row a route has already read.
+      maybeSingle: async () => { const r = exec()[0]; return { data: r ? { ...r } : null, error: null } },
+      single: async () => { const m = exec(); return m[0] ? { data: { ...m[0] }, error: null } : { data: null, error: { message: 'JSON object requested, multiple (or no) rows returned', code: 'PGRST116' } } },
+      then: (res: (v: unknown) => void) => { const m = exec(); res({ data: m.map(r => ({ ...r })), error: null, count: wantCount ? m.length : null }) },
     }
     return b
   }

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { clientAccess } from '@/lib/agency/access'
-import { validateItems, validatePaymentUrl, isCurrency, nextQuoteNumber } from '@/lib/agency/quote'
+import { validateItems, validatePaymentUrl, isCurrency, isRecurrence, nextQuoteNumber } from '@/lib/agency/quote'
 
 // A new draft quote for a client. Nothing is shown to the client until you send it.
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -31,6 +31,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     note: typeof body.note === 'string' ? body.note.trim().slice(0, 1500) || null : null,
     payment_instructions: typeof body.paymentInstructions === 'string' ? body.paymentInstructions.trim().slice(0, 1000) || null : null,
     payment_url: url.url, status: 'draft',
+    terms: typeof body.terms === 'string' ? body.terms.trim().slice(0, 2000) || null : null,
+    recurrence: isRecurrence(body.recurrence) ? body.recurrence : 'one_time',
   }).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ quote: data }, { status: 201 })

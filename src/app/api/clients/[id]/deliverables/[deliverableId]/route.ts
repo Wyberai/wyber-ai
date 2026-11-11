@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { clientAccess } from '@/lib/agency/access'
 import { emailClient } from '@/lib/agency/notify'
+import { auditClient } from '@/lib/agency/audit'
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string; deliverableId: string }> }) {
   const { id: clientId, deliverableId } = await params
@@ -32,6 +33,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const { data, error } = await admin.from('client_deliverables').update(updates).eq('id', deliverableId).select().maybeSingle()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (typeof body.delivered === 'boolean') auditClient(access, user.id, body.delivered ? 'delivered' : 'delivery_undone', { deliverable: deliverableId }, req)
   const mail = body.delivered === true && body.emailClient ? await emailClient(admin, access.client as never, { kind: 'delivered', message: data.handover_note }) : null
   return NextResponse.json({ deliverable: data, email: mail })
 }

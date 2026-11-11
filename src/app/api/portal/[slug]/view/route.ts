@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
-import { rateLimit } from '@/lib/rate-limit'
+import { hit } from '@/lib/agency/limits'
 import { loadActivePortalClient, portalAllowed, requestIp } from '@/lib/agency/portal'
 import { clientAccess } from '@/lib/agency/access'
 
@@ -8,7 +8,7 @@ import { clientAccess } from '@/lib/agency/access'
 // own visits (signed in and able to edit or view that client) are not counted, and nothing is counted while locked.
 export async function POST(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  if (!rateLimit(`portal-view:${requestIp(req)}:${slug}`, 30, 10 * 60_000).allowed) return new NextResponse(null, { status: 204 })
+  if (!(await hit(`portal-view:${requestIp(req)}:${slug}`, 30, 10 * 60_000))) return new NextResponse(null, { status: 204 })
 
   const admin = await createAdminClient()
   const client = await loadActivePortalClient(admin, slug)

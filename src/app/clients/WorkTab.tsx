@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { buildFixPrompt, type OpenFeedback } from '@/lib/agency/feedback-prompt'
 import { api, ago, ghostBtn, primaryBtn, inputStyle, sectionTitle, dangerText } from './ui'
+import { GoLive } from './GoLive'
 import type { Ctx, Deliverable, Review } from './types'
 
 const REVIEW: Record<Review, { text: string; color: string }> = {
@@ -21,6 +22,8 @@ export function WorkTab({ ctx }: { ctx: Ctx }) {
   const can = client._canEdit
   const dels = [...client.client_deliverables].sort((a, b) => a.sort_order - b.sort_order)
   const [pick, setPick] = useState('')
+  const [copyFrom, setCopyFrom] = useState('')
+  const [copying, setCopying] = useState(false)
   const [updateText, setUpdateText] = useState('')
   const [emailUpdate, setEmailUpdate] = useState(false)
   const [handing, setHanding] = useState<string | null>(null)
@@ -46,6 +49,17 @@ export function WorkTab({ ctx }: { ctx: Ctx }) {
     const project = projects.find(p => p.id === pick) ?? null
     merge({ client_deliverables: [...client.client_deliverables, { review_status: 'pending', reviewed_at: null, delivered_at: null, handover_note: null, ...r.data.deliverable, projects: project }] })
     setPick('')
+  }
+
+  // Start from a copy of a past job (a salon site you already built, say): copy it, attach the copy, open it.
+  async function copyAndAttach() {
+    if (!copyFrom || copying) return
+    setCopying(true)
+    const dup = await api('POST', '/api/projects/duplicate', { projectId: copyFrom, orgId: client.org_id ?? undefined })
+    if (!dup.ok || !dup.data.project?.id) { setCopying(false); toast(dup.data.error ?? 'Could not copy that project', false); return }
+    const att = await api('POST', `/api/clients/${client.id}/deliverables`, { projectId: dup.data.project.id })
+    if (!att.ok) { setCopying(false); toast(att.data.error ?? 'Copied, but could not attach it', false); return }
+    window.location.assign(`/project/${dup.data.project.id}`)
   }
 
   async function remove(id: string) {
@@ -168,6 +182,8 @@ export function WorkTab({ ctx }: { ctx: Ctx }) {
                   )}
                 </div>
 
+                <GoLive ctx={ctx} d={d} onChange={p => setDel(d.id, { projects: d.projects ? { ...d.projects, ...p } : d.projects })} />
+
                 {handing === d.id && (
                   <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
                     <textarea aria-label="Handover notes for the client" rows={4} maxLength={2000} value={note} onChange={e => setNote(e.target.value)} placeholder={'What they need to know to own it:\n- Where the code is (repo link or zip)\n- Their domain and where it points\n- Logins you are handing over\n- How to make a small change'} style={{ ...inputStyle, resize: 'vertical' }} />
@@ -208,6 +224,15 @@ export function WorkTab({ ctx }: { ctx: Ctx }) {
               {pickable.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
             <button onClick={attach} disabled={!pick} style={{ ...primaryBtn, opacity: pick ? 1 : 0.5 }}>Attach</button>
+          </div>
+        )}
+        {can && projects.length > 0 && (
+          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+            <select aria-label="Start from a copy of an earlier project" value={copyFrom} onChange={e => setCopyFrom(e.target.value)} style={{ ...inputStyle, flex: 1, padding: '8px 12px' }}>
+              <option value="">Start from a copy of an earlier project…</option>
+              {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+            <button onClick={copyAndAttach} disabled={!copyFrom || copying} style={{ ...ghostBtn, opacity: copyFrom ? 1 : 0.5 }}>{copying ? 'Copying…' : 'Copy and attach'}</button>
           </div>
         )}
       </div>

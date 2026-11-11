@@ -26,8 +26,9 @@ const agencyClients = clients.map((c, i) => ({ ...c, org_id: null, owner_id: 'me
   _role: 'owner', _canEdit: true, _canDelete: true,
   client_feedback: i === 0 ? [{ id: 'f1', deliverable_id: 'd1', kind: 'changes_requested', author_name: 'Asha', body: 'Can the booking button be larger on phones?', resolved: false, created_at: iso(0) }] : [],
   client_updates: i === 0 ? [{ id: 'u1', body: 'Booking flow is live on staging. Have a look and tell us what you think.', created_at: iso(1), emailed_at: iso(1) }] : [],
-  client_quotes: i === 0 ? [{ id: 'q1', number: 'Q-001', title: 'Website build', currency: 'INR', items: [{ description: 'Design and build', qty: 1, unit: 45000 }], total: 45000, note: null, payment_instructions: 'UPI: asha@upi', payment_url: null, status: 'accepted', sent_at: iso(8), responded_at: iso(7), responded_by: 'Asha Rao', decline_reason: null, paid_at: null, created_at: iso(8) }] : [],
-  client_deliverables: c.client_deliverables.map(d => ({ ...d, review_status: d.id === 'd1' ? 'changes_requested' : 'pending', reviewed_at: null, delivered_at: null, handover_note: null })) }))
+  client_quotes: i === 0 ? [{ id: 'q1', number: 'Q-001', title: 'Website build', currency: 'INR', items: [{ description: 'Design and build', qty: 1, unit: 45000 }], total: 45000, note: null, payment_instructions: 'UPI: asha@upi', payment_url: null, status: 'accepted', terms: 'Half up front, half on delivery. Two revision rounds included.', recurrence: 'one_time', sent_at: iso(8), responded_at: iso(7), responded_by: 'Asha Rao', decline_reason: null, paid_at: null, created_at: iso(8) }] : [],
+  client_deliverables: c.client_deliverables.map(d => ({ ...d, review_status: d.id === 'd1' ? 'changes_requested' : 'pending', reviewed_at: null, delivered_at: null, handover_note: null,
+    projects: d.projects ? { ...d.projects, published_url: d.id === 'd1' ? 'https://northwind.wyberai.app' : null, custom_domain: d.id === 'd1' ? 'northwind-interiors.com' : null, custom_domain_verified: false } : null })) }))
 
 /** Fake data only. ?s=dashboard (default) | clients | clients-empty | dashboard-empty | onboarding */
 export function ScreensSandbox() {
@@ -36,7 +37,7 @@ export function ScreensSandbox() {
   if (!s) return null
   return (
     <Suspense fallback={null}>
-      {s === 'clients' && <ClientsPageClient initialClients={agencyClients as never} projects={projects.map(p => ({ id: p.id, name: p.name, thumbnail_url: null }))} workspaces={[]} pins={[{ id: 'pin1', project_id: 'p1', page_path: '/contact', body: 'Typo in the header', author_name: 'Raj', resolved: false, created_at: iso(0) }] as never} feedbackModes={{ p1: true }} />}
+      {s === 'clients' && <ClientsPageClient initialClients={agencyClients as never} projects={projects.map(p => ({ id: p.id, name: p.name, thumbnail_url: null }))} workspaces={[]} profiles={{ me: { business_name: 'Sam Rivera Web', logo_url: null, website: 'https://samrivera.dev/', support_email: 'work@samrivera.dev', phone: null, address: null, tax_label: 'GST', tax_id: '29ABCDE1234F1Z5', default_currency: 'INR', default_payment_instructions: 'UPI: sam@upi', default_terms: null } }} welcome pins={[{ id: 'pin1', project_id: 'p1', page_path: '/contact', body: 'Typo in the header', author_name: 'Raj', resolved: false, created_at: iso(0) }] as never} feedbackModes={{ p1: true }} />}
       {s === 'clients-empty' && <ClientsPageClient initialClients={[]} projects={[]} workspaces={[]} />}
       {s === 'onboarding' && <OnboardingPage />}
       {s === 'dashboard-empty' && <DashboardClient profile={profile} projects={[]} />}

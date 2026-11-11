@@ -10,6 +10,9 @@ import { WorkTab } from './WorkTab'
 import { BriefTab } from './BriefTab'
 import { QuotesTab } from './QuotesTab'
 import { ShareTab } from './ShareTab'
+import { BusinessPanel } from './BusinessPanel'
+import { Checklist, checklistSteps } from './Checklist'
+import type { AgencyProfile } from '@/lib/agency/profile'
 
 type Tab = 'work' | 'brief' | 'quotes' | 'share'
 const TABS: Array<[Tab, string]> = [['work', 'Work'], ['brief', 'Brief'], ['quotes', 'Quotes'], ['share', 'Share']]
@@ -19,8 +22,10 @@ const STAGE_COLOR: Record<string, string> = {
   approved: '#22c55e', delivered: '#22c55e', lead: '#8797ab', paused: '#F59E0B', archived: '#8797ab',
 }
 
-export function ClientsPageClient({ initialClients, projects, workspaces: initialWorkspaces, pins: initialPins = [], feedbackModes: initialModes = {} }: {
+export function ClientsPageClient({ initialClients, projects, workspaces: initialWorkspaces, pins: initialPins = [], feedbackModes: initialModes = {}, profiles: initialProfiles = {}, welcome = false }: {
   initialClients: ClientRow[]; projects: ProjectLite[]; workspaces: Workspace[]; pins?: Pin[]; feedbackModes?: Record<string, boolean>
+  /** Business profiles by tenant: 'me' for the freelancer's own, or a workspace id. */
+  profiles?: Record<string, AgencyProfile | null>; welcome?: boolean
 }) {
   const [clients, setClients] = useState<ClientRow[]>(initialClients)
   const [workspaces, setWorkspaces] = useState<Workspace[]>(initialWorkspaces)
@@ -35,6 +40,8 @@ export function ClientsPageClient({ initialClients, projects, workspaces: initia
   const [tab, setTab] = useState<Record<string, Tab>>({})
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null)
   const [showTeam, setShowTeam] = useState(false)
+  const [showBiz, setShowBiz] = useState(false)
+  const [profiles, setProfiles] = useState<Record<string, AgencyProfile | null>>(initialProfiles)
   const [wsName, setWsName] = useState('')
   const [inviteEmail, setInviteEmail] = useState('')
   const [teamSpace, setTeamSpace] = useState('')
@@ -123,8 +130,13 @@ export function ClientsPageClient({ initialClients, projects, workspaces: initia
             <button key={id} role="tab" aria-selected={filter === id} onClick={() => setFilter(id)} style={{ ...ghostBtn, padding: '6px 14px', borderRadius: 20, color: filter === id ? '#03111c' : id === 'needs' && needsCount ? '#F59E0B' : '#9aa8bb', background: filter === id ? SKY : 'none', borderColor: filter === id ? SKY : '#1b2a3b', fontWeight: 600 }}>{label}</button>
           ))}
           <span style={{ flex: 1 }} />
+          <button onClick={() => setShowBiz(s => !s)} aria-expanded={showBiz} style={{ ...ghostBtn, border: 'none', color: '#9aa8bb' }}>Your business</button>
           <button onClick={() => setShowTeam(s => !s)} aria-expanded={showTeam} style={{ ...ghostBtn, border: 'none', color: '#5d6d82' }}>Team</button>
         </div>
+
+        {showBiz && <BusinessPanel profiles={profiles} workspaces={workspaces} onSaved={(k, p) => setProfiles(prev => ({ ...prev, [k]: p }))} toast={showToast} onClose={() => setShowBiz(false)} />}
+
+        <Checklist force={welcome} steps={checklistSteps(clients, !!profiles.me?.business_name || Object.values(profiles).some(p => !!p?.business_name), { business: () => setShowBiz(true), newClient: () => setShowCreate(true) })} />
 
         {showTeam && (
           <div style={{ background: '#0d141e', border: '1px solid #1b2a3b', borderRadius: 14, padding: 20, marginBottom: 24 }}>
@@ -181,7 +193,7 @@ export function ClientsPageClient({ initialClients, projects, workspaces: initia
               const activeTab: Tab = tab[client.id] ?? (stage.key === 'brief_ready' || stage.key === 'brief_waiting' || stage.key === 'not_started' ? 'brief' : 'work')
               const live = client.client_quotes.find(q => q.status === 'accepted' || q.status === 'sent') ?? client.client_quotes.find(q => q.status === 'paid')
               const ctx: Ctx = {
-                client, merge: p => merge(client.id, p), update: (p, m) => update(client.id, p, m), toast: showToast, projects, workspaces,
+                client, profile: client.org_id ? profiles[client.org_id] ?? null : profiles.me ?? null, merge: p => merge(client.id, p), update: (p, m) => update(client.id, p, m), toast: showToast, projects, workspaces,
                 pins, setPins, feedbackModes: modes, setFeedbackModes: setModes, removeClient: () => { setClients(prev => prev.filter(c => c.id !== client.id)); showToast('Client deleted') },
               }
               return (

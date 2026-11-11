@@ -137,7 +137,7 @@ export function ReviewControls({ slug, deliverableId, status: initial, feedback:
 
 export interface QuoteView {
   id: string; number: string; title: string; currency: string; items: Array<{ description: string; qty: number; unit: number }>
-  total: number; note: string | null; status: 'sent' | 'accepted' | 'declined' | 'paid'
+  total: number; note: string | null; terms?: string | null; recurrence?: string | null; status: 'sent' | 'accepted' | 'declined' | 'paid'
   responded_by: string | null; payment_instructions: string | null; payment_url: string | null
 }
 
@@ -145,7 +145,7 @@ function money(n: number, currency: string): string {
   try { return new Intl.NumberFormat('en', { style: 'currency', currency }).format(n) } catch { return currency + ' ' + n.toFixed(2) }
 }
 
-export function QuoteCard({ slug, quote, brand, ink }: { slug: string; quote: QuoteView; brand: string; ink: string }) {
+export function QuoteCard({ slug, quote, brand, ink, business }: { slug: string; quote: QuoteView; brand: string; ink: string; business?: { business_name: string | null } | null; clientName?: string }) {
   const [status, setStatus] = useState(quote.status)
   const [name, setName] = useState('')
   const [reason, setReason] = useState('')
@@ -183,10 +183,17 @@ export function QuoteCard({ slug, quote, brand, ink }: { slug: string; quote: Qu
           {quote.items.map((it, i) => (
             <tr key={i}><td style={{ ...cell, color: '#c7d1de' }}>{it.description}</td><td style={{ ...cell, textAlign: 'right', color: '#9aa8bb' }}>{it.qty}</td><td style={{ ...cell, textAlign: 'right', color: '#c7d1de' }}>{money(it.qty * it.unit, quote.currency)}</td></tr>
           ))}
-          <tr><td style={{ ...cell, fontWeight: 700, color: '#fff' }} colSpan={2}>Total</td><td style={{ ...cell, textAlign: 'right', fontWeight: 800, color: '#fff', fontSize: 15 }}>{money(quote.total, quote.currency)}</td></tr>
+          <tr><td style={{ ...cell, fontWeight: 700, color: '#fff' }} colSpan={2}>Total</td><td style={{ ...cell, textAlign: 'right', fontWeight: 800, color: '#fff', fontSize: 15 }}>{money(quote.total, quote.currency)}{quote.recurrence === 'monthly' ? ' / month' : quote.recurrence === 'yearly' ? ' / year' : ''}</td></tr>
         </tbody>
       </table>
       {quote.note && <p style={{ fontSize: 13, color: '#9aa8bb', lineHeight: 1.6, margin: '12px 0 0', whiteSpace: 'pre-wrap' }}>{quote.note}</p>}
+      {quote.terms && (
+        <details style={{ marginTop: 12 }}>
+          <summary style={{ fontSize: 12, color: '#8797ab', cursor: 'pointer' }}>Terms{business?.business_name ? ' from ' + business.business_name : ''}</summary>
+          <p style={{ fontSize: 12, color: '#9aa8bb', lineHeight: 1.6, margin: '8px 0 0', whiteSpace: 'pre-wrap' }}>{quote.terms}</p>
+        </details>
+      )}
+      <div style={{ marginTop: 12 }}><a href={'/client/' + slug + '/quote/' + quote.id} target="_blank" rel="noopener" style={{ fontSize: 12, color: '#8797ab' }}>Open a printable copy</a></div>
 
       {status === 'sent' && !declining && (
         <div style={{ marginTop: 16, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>

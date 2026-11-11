@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
-import { rateLimit } from '@/lib/rate-limit'
+import { hit, LIMITS } from '@/lib/agency/limits'
 import { QUESTIONS, validateBrief } from '@/lib/agency/brief'
 import { sendClientEventAlert } from '@/lib/email'
 import { requestIp } from '@/lib/agency/portal'
@@ -25,7 +25,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ tok
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   const { token } = await params
-  if (!rateLimit(`brief:${requestIp(req)}:${token.slice(0, 12)}`, 10, 60 * 60_000).allowed) {
+  if (!(await hit(`brief:${requestIp(req)}:${token.slice(0, 12)}`, LIMITS.briefPerIp.max, LIMITS.briefPerIp.windowMs))) {
     return NextResponse.json({ error: 'Too many tries. Wait a while and try again.' }, { status: 429 })
   }
   const found = await clientForToken(token)
@@ -39,8 +39,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
   const { error } = await admin.from('clients').update({ brief: v.answers, brief_submitted_at: new Date().toISOString() }).eq('id', client.id)
   if (error) return NextResponse.json({ error: 'Could not save that. Try again.' }, { status: 500 })
 
-  // Best effort: tell the freelancer.
+  // Best effort: tell the freelancer, at most three emails an hour per client.
   try {
+    if (!(await hit(`brief-alert:${client.id}`, LIMITS.briefAlert.max, LIMITS.briefAlert.windowMs))) return NextResponse.json({ ok: true })
     const { data: owner } = await admin.from('profiles').select('email').eq('id', client.owner_id).maybeSingle()
     if (owner?.email) await sendClientEventAlert({ to: owner.email, clientName: client.name, event: 'brief', detail: v.answers.business })
   } catch { /* ignore */ }

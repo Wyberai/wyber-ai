@@ -4,6 +4,11 @@
 export const CURRENCIES = ['INR', 'USD', 'EUR', 'GBP', 'AED', 'AUD', 'CAD', 'SGD'] as const
 export type Currency = (typeof CURRENCIES)[number]
 export type QuoteStatus = 'draft' | 'sent' | 'accepted' | 'declined' | 'paid'
+export const RECURRENCES = ['one_time', 'monthly', 'yearly'] as const
+export type Recurrence = (typeof RECURRENCES)[number]
+export function isRecurrence(v: unknown): v is Recurrence { return typeof v === 'string' && (RECURRENCES as readonly string[]).includes(v) }
+/** What follows the total: nothing for a one-off, "/ month" or "/ year" for a retainer or hosting. */
+export function recurrenceSuffix(r: string | null | undefined): string { return r === 'monthly' ? ' / month' : r === 'yearly' ? ' / year' : '' }
 
 export interface QuoteItem { description: string; qty: number; unit: number }
 

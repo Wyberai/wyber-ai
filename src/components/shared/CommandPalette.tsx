@@ -27,6 +27,7 @@ export function CommandPalette() {
     { id: 'new-mobile', label: 'New mobile app', desc: 'React Native + Expo', icon: '📱', category: 'Build', action: () => nav('/dashboard?new=mobile'), keywords: ['ios', 'android', 'expo'] },
     // Navigate
     { id: 'dashboard', label: 'Dashboard', icon: '🏠', category: 'Navigate', action: () => nav('/dashboard') },
+    { id: 'clients', label: 'Clients', desc: 'Briefs, feedback, quotes, handover', icon: '🤝', category: 'Navigate', action: () => nav('/clients'), keywords: ['agency', 'freelance', 'freelancer', 'client work', 'quote', 'invoice', 'brief'] },
     { id: 'settings', label: 'Settings', icon: '⚙️', category: 'Navigate', action: () => nav('/settings') },
     { id: 'employees', label: 'AI Employees', desc: 'Coming soon', icon: '🤖', category: 'Navigate', action: () => nav('/coming-soon?product=AI+Employees') },
     { id: 'workflows', label: 'Workflows', desc: 'Coming soon', icon: '🔀', category: 'Navigate', action: () => nav('/coming-soon?product=Workflows') },

@@ -259,20 +259,23 @@ export async function sendClientFeedbackAlert(a: { to: string; clientName: strin
 // Agency mode: the freelancer's client gets an email about their project. It is sent in the freelancer's name
 // ("Asha via WyberAi"), replies go to the freelancer, and it carries one button to the client's page.
 const cleanName = (s: string) => s.replace(/[<>"\r\n]/g, '').trim().slice(0, 60) || 'Your developer'
-export async function sendClientPortalEmail(a: { to: string; fromName: string; replyTo?: string | null; clientName: string; kind: 'update' | 'quote' | 'delivered'; message?: string | null; link: string; quoteTitle?: string; quoteTotal?: string }) {
+export async function sendClientPortalEmail(a: { to: string; fromName: string; replyTo?: string | null; clientName: string; kind: 'update' | 'quote' | 'delivered' | 'brief'; message?: string | null; link: string; quoteTitle?: string; quoteTotal?: string }) {
   const who = cleanName(a.fromName)
-  const heading = a.kind === 'update' ? `An update on your project` : a.kind === 'quote' ? `A quote is ready for you` : `Your project has been delivered`
+  const heading = a.kind === 'update' ? `An update on your project` : a.kind === 'quote' ? `A quote is ready for you` : a.kind === 'brief' ? `A few questions about your project` : `Your project has been delivered`
   const body = a.kind === 'update'
     ? p(escHtml((a.message ?? '').slice(0, 1000)).replace(/\n/g, '<br/>'))
+    : a.kind === 'brief'
+      ? p(`<strong style="color:#f0f0f4">${escHtml(who)}</strong> would like to start your project and sent a short form. It takes about five minutes, and short answers are fine.`)
     : a.kind === 'quote'
       ? `${p(`<strong style="color:#f0f0f4">${escHtml(who)}</strong> sent you a quote. You can read it and accept it on your project page.`)}${infoBox([['Quote', escHtml(a.quoteTitle ?? '')], ['Total', escHtml(a.quoteTotal ?? '')]])}`
       : `${p(`<strong style="color:#f0f0f4">${escHtml(who)}</strong> has marked your project as delivered.`)}${a.message ? p(escHtml(a.message.slice(0, 1000)).replace(/\n/g, '<br/>')) : ''}`
   const html = wrap(`
     ${h1(heading)}
     ${body}
-    <div style="text-align:center;margin:24px 0">${btn('Open your project page →', a.link)}</div>
+    <div style="text-align:center;margin:24px 0">${btn(a.kind === 'brief' ? 'Fill in the form →' : 'Open your project page →', a.link)}</div>
+    ${p(`You are getting this because ${escHtml(who)} shared a project page with you using WyberAi. Replying goes to them. If you were not expecting it, write to hello@wyberai.com and we will look into it.`)}
   `, `${who}: ${heading.toLowerCase()}`)
-  const subject = a.kind === 'update' ? `Update on your project from ${who}` : a.kind === 'quote' ? `Quote from ${who}` : `Your project is delivered`
+  const subject = a.kind === 'update' ? `Update on your project from ${who}` : a.kind === 'quote' ? `Quote from ${who}` : a.kind === 'brief' ? `A few questions about your project, from ${who}` : `Your project is delivered`
   return sendEmail({ from: `${who} via WyberAi <hello@wyberai.com>`, to: a.to, subject, html, ...(a.replyTo ? { replyTo: a.replyTo } : {}) })
 }
 

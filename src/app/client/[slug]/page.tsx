@@ -4,6 +4,7 @@ import { cookies } from 'next/headers'
 import { createServiceClient } from '@/lib/supabase/server'
 import { readableOn } from '@/lib/color-contrast'
 import { isUnlocked, unlockCookieName } from '@/lib/agency/passcode'
+import { loadAgencyProfile, publicProfile } from '@/lib/agency/profile'
 import { PasscodeGate, ReviewControls, ViewBeacon, QuoteCard, type FeedbackItem, type QuoteView } from './PortalClient'
 
 interface DeliverableRow {
@@ -16,7 +17,7 @@ interface DeliverableRow {
   delivered_at: string | null
   handover_note: string | null
   projects: {
-    id: string
+    id?: string
     name: string
     thumbnail_url: string | null
     deployed_url: string | null
@@ -26,6 +27,8 @@ interface DeliverableRow {
 }
 
 // A private delivery link sent to one client: keep it out of search results and give it a title that is not the homepage's.
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: 'Your project',
   robots: { index: false, follow: false },
@@ -52,7 +55,7 @@ export default async function ClientDeliveryPage({ params }: { params: Promise<{
 
   const { data: client } = await db
     .from('clients')
-    .select('id, name, logo_url, brand_color, intro_text, status, portal_passcode_hash, client_deliverables(id, headline, description, sort_order, is_visible, review_status, delivered_at, handover_note, projects(id, name, thumbnail_url, deployed_url, published_url, custom_domain))')
+    .select('id, owner_id, org_id, name, logo_url, brand_color, intro_text, status, portal_passcode_hash, client_deliverables(id, headline, description, sort_order, is_visible, review_status, delivered_at, handover_note, projects(name, thumbnail_url, deployed_url, published_url, custom_domain))')
     .eq('slug', slug)
     .maybeSingle()
 
@@ -65,12 +68,35 @@ export default async function ClientDeliveryPage({ params }: { params: Promise<{
   const ink = readableOn(brand)
   const unlocked = isUnlocked(slug, client.portal_passcode_hash, (await cookies()).get(unlockCookieName(slug))?.value)
 
+  // The business behind this client (the workspace's profile, or the freelancer's own). Its name and logo show on the
+  // locked page too; contact and tax details only once the page is unlocked.
+  const profile = publicProfile(await loadAgencyProfile(db, { owner_id: client.owner_id, org_id: client.org_id }))
+
   const header = (
-    <nav style={{ borderBottom: '1px solid #14202e', background: '#0a1018', borderTop: `3px solid ${brand}`, padding: '0 32px', height: 64, display: 'flex', alignItems: 'center', gap: 12 }}>
+    <nav style={{ borderBottom: '1px solid #14202e', background: '#0a1018', borderTop: `3px solid ${brand}`, padding: '0 32px', minHeight: 64, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
       {client.logo_url && <img src={client.logo_url} alt="" style={{ height: 28, width: 'auto' }} />}
       <div style={{ fontSize: 17, fontWeight: 800, color: '#fff', letterSpacing: '-0.03em' }}>{client.name}</div>
+      {profile?.business_name && (
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#8797ab' }}>
+          {profile.logo_url && <img src={profile.logo_url} alt="" style={{ height: 20, width: 'auto' }} />}
+          <span>Delivered by <strong style={{ color: '#c7d1de', fontWeight: 600 }}>{profile.business_name}</strong></span>
+        </div>
+      )}
     </nav>
   )
+
+  const footer = profile && (profile.business_name || profile.support_email || profile.website) ? (
+    <footer style={{ borderTop: '1px solid #14202e', padding: '24px 32px 40px', textAlign: 'center', fontSize: 12, color: '#8797ab', lineHeight: 1.8 }}>
+      {profile.business_name && <div style={{ color: '#c7d1de', fontWeight: 600 }}>{profile.business_name}</div>}
+      <div>
+        {[profile.website && <a key="w" href={profile.website} target="_blank" rel="noreferrer noopener" style={{ color: '#8797ab' }}>{profile.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}</a>,
+          profile.support_email && <a key="e" href={`mailto:${profile.support_email}`} style={{ color: '#8797ab' }}>{profile.support_email}</a>,
+          profile.phone && <span key="p">{profile.phone}</span>].filter(Boolean).reduce<React.ReactNode[]>((acc, el, i) => (i ? [...acc, ' · ', el] : [el]), [])}
+      </div>
+      {profile.address && <div style={{ whiteSpace: 'pre-line' }}>{profile.address}</div>}
+      {profile.tax_id && <div>{profile.tax_label || 'Tax ID'}: {profile.tax_id}</div>}
+    </footer>
+  ) : null
 
   if (!unlocked) {
     return (
@@ -96,7 +122,7 @@ export default async function ClientDeliveryPage({ params }: { params: Promise<{
       ? db.from('client_feedback').select('id, deliverable_id, kind, author_name, body, created_at, resolved').eq('client_id', client.id).in('deliverable_id', ids).order('created_at', { ascending: true })
       : Promise.resolve({ data: [] as Array<{ id: string; deliverable_id: string } & FeedbackItem> }),
     // Drafts are never shown. Payment details only travel once the client has accepted.
-    db.from('client_quotes').select('id, number, title, currency, items, total, note, status, responded_by, payment_instructions, payment_url').eq('client_id', client.id).in('status', ['sent', 'accepted', 'paid', 'declined']).order('created_at', { ascending: false }),
+    db.from('client_quotes').select('id, number, title, currency, items, total, note, terms, recurrence, status, responded_by, payment_instructions, payment_url').eq('client_id', client.id).in('status', ['sent', 'accepted', 'paid', 'declined']).order('created_at', { ascending: false }),
   ])
   const byDeliverable = new Map<string, FeedbackItem[]>()
   for (const f of (feedback ?? []) as Array<{ deliverable_id: string } & FeedbackItem>) {
@@ -141,7 +167,7 @@ export default async function ClientDeliveryPage({ params }: { params: Promise<{
             <h2 id="portal-quotes" style={{ fontSize: 12, fontWeight: 700, color: '#8797ab', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 14px' }}>{(quotes ?? []).length > 1 ? 'Quotes' : 'Quote'}</h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {(quotes as unknown as QuoteView[]).map(q => (
-                <QuoteCard key={q.id} slug={slug} quote={{ ...q, total: Number(q.total), payment_instructions: q.status === 'sent' || q.status === 'declined' ? null : q.payment_instructions, payment_url: q.status === 'sent' || q.status === 'declined' ? null : q.payment_url }} brand={brand} ink={ink} />
+                <QuoteCard key={q.id} slug={slug} business={profile} clientName={client.name} quote={{ ...q, total: Number(q.total), payment_instructions: q.status === 'sent' || q.status === 'declined' ? null : q.payment_instructions, payment_url: q.status === 'sent' || q.status === 'declined' ? null : q.payment_url }} brand={brand} ink={ink} />
               ))}
             </div>
           </section>
@@ -165,7 +191,7 @@ export default async function ClientDeliveryPage({ params }: { params: Promise<{
                       {d.delivered_at && <span style={{ marginLeft: 10, fontSize: 12, fontWeight: 700, color: '#22c55e' }}>Delivered {day(d.delivered_at)}</span>}
                     </div>
                     {d.description && <p style={{ fontSize: 13, color: '#8797ab', lineHeight: 1.6, margin: 0 }}>{d.description}</p>}
-                    {d.delivered_at && d.handover_note && (
+                    {d.delivered_at && d.handover_note && client.portal_passcode_hash && (
                       <div style={{ marginTop: 12, padding: '12px 14px', background: '#0a1018', border: '1px solid #14202e', borderRadius: 9 }}>
                         <div style={{ fontSize: 12, fontWeight: 700, color: '#8797ab', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Handover notes</div>
                         <div style={{ fontSize: 14, color: '#c7d1de', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{d.handover_note}</div>
@@ -184,6 +210,7 @@ export default async function ClientDeliveryPage({ params }: { params: Promise<{
           </div>
         )}
       </main>
+      {footer}
     </div>
   )
 }

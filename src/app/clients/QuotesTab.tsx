@@ -1,11 +1,14 @@
 'use client'
 import { useState } from 'react'
-import { CURRENCIES, formatMoney, ownerCan, validateItems } from '@/lib/agency/quote'
+import { CURRENCIES, RECURRENCES, formatMoney, recurrenceSuffix, ownerCan, validateItems } from '@/lib/agency/quote'
 import { api, ago, ghostBtn, primaryBtn, inputStyle, labelStyle, sectionTitle, dangerText } from './ui'
 import type { Ctx, QuoteRow } from './types'
 
 interface Line { description: string; qty: string; unit: string }
 const blank = (): Line => ({ description: '', qty: '1', unit: '' })
+
+// The things freelancers actually charge for beyond the build itself.
+const QUICK_LINES = ['Design and build', 'Domain registration (1 year)', 'Hosting (per month)', 'Maintenance and updates (per month)', 'Extra revision round', 'Content writing']
 
 const STATUS_TEXT: Record<string, { text: string; color: string }> = {
   draft: { text: 'Draft, not shown to the client', color: '#8797ab' },
@@ -16,13 +19,15 @@ const STATUS_TEXT: Record<string, { text: string; color: string }> = {
 }
 
 export function QuotesTab({ ctx }: { ctx: Ctx }) {
-  const { client, merge, toast } = ctx
+  const { client, merge, toast, profile } = ctx
   const can = client._canEdit
   const quotes = [...client.client_quotes].sort((a, b) => b.created_at.localeCompare(a.created_at))
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<string | null>(null)
   const [title, setTitle] = useState('Website build')
-  const [currency, setCurrency] = useState<string>('USD')
+  const [currency, setCurrency] = useState<string>(profile?.default_currency ?? 'USD')
+  const [recurrence, setRecurrence] = useState<string>('one_time')
+  const [terms, setTerms] = useState(profile?.default_terms ?? '')
   const [lines, setLines] = useState<Line[]>([blank()])
   const [note, setNote] = useState('')
   const [payInfo, setPayInfo] = useState('')
@@ -34,17 +39,17 @@ export function QuotesTab({ ctx }: { ctx: Ctx }) {
   const total = parsed.ok ? parsed.total : null
 
   function startNew() {
-    setEditing(null); setTitle('Website build'); setLines([blank()]); setNote(''); setPayInfo(''); setPayUrl(''); setOpen(true)
+    setEditing(null); setTitle('Website build'); setLines([blank()]); setNote(''); setPayInfo(profile?.default_payment_instructions ?? ''); setPayUrl(''); setCurrency(profile?.default_currency ?? 'USD'); setRecurrence('one_time'); setTerms(profile?.default_terms ?? ''); setOpen(true)
   }
   function startEdit(q: QuoteRow) {
-    setEditing(q.id); setTitle(q.title); setCurrency(q.currency); setNote(q.note ?? ''); setPayInfo(q.payment_instructions ?? ''); setPayUrl(q.payment_url ?? '')
+    setEditing(q.id); setTitle(q.title); setCurrency(q.currency); setRecurrence(q.recurrence ?? 'one_time'); setTerms(q.terms ?? ''); setNote(q.note ?? ''); setPayInfo(q.payment_instructions ?? ''); setPayUrl(q.payment_url ?? '')
     setLines(q.items.map(i => ({ description: i.description, qty: String(i.qty), unit: String(i.unit) }))); setOpen(true)
   }
 
   async function save() {
     if (!parsed.ok) { toast(parsed.error, false); return }
     setBusy(true)
-    const body = { title, currency, items: lines.map(l => ({ description: l.description, qty: Number(l.qty), unit: Number(l.unit) })), note, paymentInstructions: payInfo, paymentUrl: payUrl }
+    const body = { title, currency, recurrence, terms, items: lines.map(l => ({ description: l.description, qty: Number(l.qty), unit: Number(l.unit) })), note, paymentInstructions: payInfo, paymentUrl: payUrl }
     const r = editing ? await api('PATCH', `/api/clients/${client.id}/quotes/${editing}`, body) : await api('POST', `/api/clients/${client.id}/quotes`, body)
     setBusy(false)
     if (!r.ok) { toast(r.data.error ?? 'Could not save the quote', false); return }
@@ -88,6 +93,8 @@ export function QuotesTab({ ctx }: { ctx: Ctx }) {
             <div style={{ gridColumn: 'span 2' }}><label style={labelStyle} htmlFor="q-title">Title</label><input id="q-title" value={title} onChange={e => setTitle(e.target.value)} maxLength={120} style={inputStyle} /></div>
             <div><label style={labelStyle} htmlFor="q-cur">Currency</label>
               <select id="q-cur" value={currency} onChange={e => setCurrency(e.target.value)} style={{ ...inputStyle, padding: '10px 12px' }}>{CURRENCIES.map(c => <option key={c}>{c}</option>)}</select></div>
+            <div><label style={labelStyle} htmlFor="q-per">Billed</label>
+              <select id="q-per" value={recurrence} onChange={e => setRecurrence(e.target.value)} style={{ ...inputStyle, padding: '10px 12px' }}>{RECURRENCES.map(r => <option key={r} value={r}>{r === 'one_time' ? 'Once' : r === 'monthly' ? 'Every month' : 'Every year'}</option>)}</select></div>
           </div>
           <div>
             <div style={labelStyle}>Lines</div>
@@ -101,12 +108,16 @@ export function QuotesTab({ ctx }: { ctx: Ctx }) {
                 </div>
               ))}
             </div>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }} aria-label="Quick lines">
+              {QUICK_LINES.map(l => <button key={l} type="button" onClick={() => setLines(ls => (ls.length === 1 && !ls[0].description && !ls[0].unit ? [{ description: l, qty: '1', unit: '' }] : [...ls, { description: l, qty: '1', unit: '' }]))} style={{ ...ghostBtn, borderRadius: 20, fontSize: 11 }}>+ {l}</button>)}
+            </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
               <button type="button" onClick={() => setLines(ls => [...ls, blank()])} style={ghostBtn}>+ Add a line</button>
-              <div style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>Total {total !== null ? formatMoney(total, currency) : '…'}</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>Total {total !== null ? formatMoney(total, currency) + recurrenceSuffix(recurrence) : '…'}</div>
             </div>
           </div>
           <div><label style={labelStyle} htmlFor="q-note">Note to the client (optional)</label><textarea id="q-note" rows={2} value={note} onChange={e => setNote(e.target.value)} maxLength={1500} placeholder="What is included, timeline, what happens next." style={{ ...inputStyle, resize: 'vertical' }} /></div>
+          <div><label style={labelStyle} htmlFor="q-terms">Terms (optional)</label><textarea id="q-terms" rows={3} value={terms} onChange={e => setTerms(e.target.value)} maxLength={2000} placeholder="Payment schedule, revisions included, who owns the code, how to cancel." style={{ ...inputStyle, resize: 'vertical' }} /></div>
           <div><label style={labelStyle} htmlFor="q-pay">How to pay (shown after they accept)</label><textarea id="q-pay" rows={2} value={payInfo} onChange={e => setPayInfo(e.target.value)} maxLength={1000} placeholder="Bank details, UPI id, PayPal address… your own." style={{ ...inputStyle, resize: 'vertical' }} /></div>
           <div><label style={labelStyle} htmlFor="q-url">Payment link (optional, https only)</label><input id="q-url" value={payUrl} onChange={e => setPayUrl(e.target.value)} placeholder="https://rzp.io/l/…" style={inputStyle} /></div>
           <div style={{ display: 'flex', gap: 8 }}>
@@ -129,7 +140,7 @@ export function QuotesTab({ ctx }: { ctx: Ctx }) {
                     <div style={{ fontSize: 14, fontWeight: 600, color: '#fff' }}>{q.number} · {q.title}</div>
                     <div style={{ fontSize: 12, fontWeight: 700, color: st.color, marginTop: 2 }}>{st.text}{q.responded_by ? ` · ${q.responded_by}` : ''}{q.responded_at ? ` · ${ago(q.responded_at)}` : ''}</div>
                   </div>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: '#fff' }}>{formatMoney(Number(q.total), q.currency)}</div>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: '#fff' }}>{formatMoney(Number(q.total), q.currency)}{recurrenceSuffix(q.recurrence)}</div>
                 </div>
                 {q.decline_reason && <div style={{ fontSize: 12, color: '#9aa8bb', marginTop: 6 }}>Reason: {q.decline_reason}</div>}
                 {can && (

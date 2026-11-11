@@ -3,10 +3,12 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { visibleClients, myWorkspaces } from '@/lib/agency/access'
 import { clientForOwner, CLIENT_LIST_SELECT, creditsSpentFor } from '@/lib/agency/shape'
 import { ClientsPageClient } from './ClientsPageClient'
+import { PROFILE_COLUMNS } from '@/lib/agency/profile'
 
 export const metadata = { title: 'Clients', robots: { index: false, follow: false } }
 
-export default async function ClientsPage() {
+export default async function ClientsPage({ searchParams }: { searchParams: Promise<{ welcome?: string }> }) {
+  const { welcome } = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login?next=/clients')
@@ -36,6 +38,12 @@ export default async function ClientsPage() {
       ])
     : [{ data: [] }, { data: [] }, { data: [] }]
 
+  // The business profile for each tenant the person belongs to: their own, and one per workspace.
+  const { data: myProfile } = await admin.from('agency_profiles').select(PROFILE_COLUMNS).eq('owner_id', user.id).maybeSingle()
+  const { data: orgProfiles } = orgIds.length ? await admin.from('agency_profiles').select(`org_id, ${PROFILE_COLUMNS}`).in('org_id', orgIds) : { data: [] as Array<Record<string, unknown>> }
+  const profiles: Record<string, unknown> = { me: myProfile ?? null }
+  for (const p of (orgProfiles ?? []) as Array<{ org_id: string }>) { const { org_id, ...rest } = p; profiles[org_id] = rest }
+
   const clients = rows.map(c => {
     const projectIds = ((c.client_deliverables ?? []) as Array<{ project_id: string }>).map(d => d.project_id)
     return { ...clientForOwner(c), credits_used: creditsSpentFor(projectIds, (usage ?? []) as Array<{ project_id: string | null; credits_charged: number | null }>) }
@@ -47,6 +55,8 @@ export default async function ClientsPage() {
       projects={projects}
       workspaces={workspaces}
       pins={(pins ?? []) as never}
+      profiles={profiles as never}
+      welcome={welcome === '1'}
       feedbackModes={Object.fromEntries(((modes ?? []) as Array<{ id: string; feedback_mode_enabled: boolean | null }>).map(m => [m.id, !!m.feedback_mode_enabled]))}
     />
   )

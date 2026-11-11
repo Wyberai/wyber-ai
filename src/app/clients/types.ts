@@ -2,7 +2,7 @@ import type { QuoteStatus } from '@/lib/agency/quote'
 
 export interface ProjectLite {
   id: string; name: string; thumbnail_url: string | null; org_id?: string | null; project_type?: string | null
-  published_url?: string | null; deployed_url?: string | null; custom_domain?: string | null
+  published_url?: string | null; deployed_url?: string | null; custom_domain?: string | null; custom_domain_verified?: boolean | null
 }
 export type Review = 'pending' | 'approved' | 'changes_requested'
 export interface Deliverable {
@@ -18,7 +18,7 @@ export interface Pin { id: string; project_id: string; page_path: string; body: 
 export interface QuoteRow {
   id: string; number: string; title: string; currency: string
   items: Array<{ description: string; qty: number; unit: number }>; total: number
-  note: string | null; payment_instructions: string | null; payment_url: string | null
+  note: string | null; terms: string | null; recurrence: 'one_time' | 'monthly' | 'yearly'; payment_instructions: string | null; payment_url: string | null
   status: QuoteStatus; sent_at: string | null; responded_at: string | null; responded_by: string | null
   decline_reason: string | null; paid_at: string | null; created_at: string
 }
@@ -39,6 +39,8 @@ export interface ClientRow {
 /** What every tab is handed. */
 export interface Ctx {
   client: ClientRow
+  /** The business behind this client (the workspace's profile or the freelancer's own), for defaults. */
+  profile: import('@/lib/agency/profile').AgencyProfile | null
   merge: (p: Partial<ClientRow>) => void
   update: (patch: Record<string, unknown>, okMsg?: string) => Promise<boolean>
   toast: (msg: string, ok?: boolean) => void

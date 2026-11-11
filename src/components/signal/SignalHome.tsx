@@ -36,7 +36,7 @@ export function SignalHome({ usd = false }: { usd?: boolean }) {
               <span className="sg-go" aria-hidden="true">→</span>
               <span className="sg-meta">Agency mode</span>
               <h2>Work for clients</h2>
-              <p>Deliver apps to your clients on a branded page you can share with them.</p>
+              <p>Build for clients, get their approval, go live on their domain, and send the quote.</p>
             </Link>
             <a className="sg-door" href="#watch">
               <video src="/signal/explore.mp4" poster="/signal/explore.jpg" muted loop playsInline autoPlay preload="metadata" aria-hidden="true" />

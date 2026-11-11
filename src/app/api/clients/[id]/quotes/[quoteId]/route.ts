@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { clientAccess } from '@/lib/agency/access'
-import { validateItems, validatePaymentUrl, isCurrency, ownerCan, formatMoney, type QuoteStatus } from '@/lib/agency/quote'
+import { validateItems, validatePaymentUrl, isCurrency, isRecurrence, ownerCan, formatMoney, recurrenceSuffix, type QuoteStatus } from '@/lib/agency/quote'
 import { emailClient } from '@/lib/agency/notify'
+import { auditClient } from '@/lib/agency/audit'
 
 type P = { params: Promise<{ id: string; quoteId: string }> }
 
@@ -16,7 +17,7 @@ async function load(clientId: string, quoteId: string) {
   if (!access.canEdit) return { res: NextResponse.json({ error: 'Your role in this workspace is view-only' }, { status: 403 }) }
   const { data: quote } = await admin.from('client_quotes').select('*').eq('id', quoteId).eq('client_id', clientId).maybeSingle()
   if (!quote) return { res: NextResponse.json({ error: 'Not found' }, { status: 404 }) }
-  return { admin, access, quote }
+  return { admin, access, quote, userId: user.id }
 }
 
 // Edit a draft, or move a quote along: { action: 'send' | 'withdraw' | 'markPaid' }.
@@ -24,7 +25,7 @@ export async function PATCH(req: NextRequest, { params }: P) {
   const { id: clientId, quoteId } = await params
   const g = await load(clientId, quoteId)
   if (!g.admin) return g.res
-  const { admin, access, quote } = g
+  const { admin, access, quote, userId } = g
   const can = ownerCan(quote.status as QuoteStatus)
   const body = await req.json().catch(() => ({}))
 
@@ -32,7 +33,8 @@ export async function PATCH(req: NextRequest, { params }: P) {
     if (!can.send) return NextResponse.json({ error: 'Only a draft can be sent' }, { status: 409 })
     const { data, error } = await admin.from('client_quotes').update({ status: 'sent', sent_at: new Date().toISOString() }).eq('id', quoteId).select().maybeSingle()
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    const mail = body.emailClient ? await emailClient(admin, access.client as never, { kind: 'quote', quoteTitle: `${quote.number} ${quote.title}`, quoteTotal: formatMoney(Number(quote.total), quote.currency) }) : null
+    auditClient(access, userId, 'quote_sent', { number: quote.number }, req)
+    const mail = body.emailClient ? await emailClient(admin, access.client as never, { kind: 'quote', quoteTitle: `${quote.number} ${quote.title}`, quoteTotal: formatMoney(Number(quote.total), quote.currency) + recurrenceSuffix(quote.recurrence) }) : null
     return NextResponse.json({ quote: data, email: mail })
   }
   if (body.action === 'withdraw') {
@@ -43,6 +45,7 @@ export async function PATCH(req: NextRequest, { params }: P) {
   if (body.action === 'markPaid') {
     if (!can.markPaid) return NextResponse.json({ error: 'Only an accepted quote can be marked paid' }, { status: 409 })
     const { data } = await admin.from('client_quotes').update({ status: 'paid', paid_at: new Date().toISOString() }).eq('id', quoteId).select().maybeSingle()
+    auditClient(access, userId, 'quote_paid', { number: quote.number }, req)
     return NextResponse.json({ quote: data })
   }
 
@@ -60,6 +63,8 @@ export async function PATCH(req: NextRequest, { params }: P) {
     updates.payment_url = url.url
   }
   if (body.currency !== undefined) { if (!isCurrency(body.currency)) return NextResponse.json({ error: 'Unsupported currency' }, { status: 400 }); updates.currency = body.currency }
+  if (body.recurrence !== undefined) { if (!isRecurrence(body.recurrence)) return NextResponse.json({ error: 'Unsupported billing period' }, { status: 400 }); updates.recurrence = body.recurrence }
+  if (body.terms !== undefined) updates.terms = typeof body.terms === 'string' ? body.terms.trim().slice(0, 2000) || null : null
   if (typeof body.title === 'string') updates.title = body.title.trim().slice(0, 120) || 'Quote'
   if (body.note !== undefined) updates.note = typeof body.note === 'string' ? body.note.trim().slice(0, 1500) || null : null
   if (body.paymentInstructions !== undefined) updates.payment_instructions = typeof body.paymentInstructions === 'string' ? body.paymentInstructions.trim().slice(0, 1000) || null : null

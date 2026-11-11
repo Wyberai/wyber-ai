@@ -32,7 +32,10 @@ export async function POST(req: NextRequest, { params }: Params) {
   const check = await requireOrgCapability(user?.id, orgId, 'project.create')
   if (!check.ok) return NextResponse.json({ error: 'Forbidden' }, { status: check.status })
 
-  const body = await req.json().catch(() => ({})) as { name?: string; description?: string }
+  const body = await req.json().catch(() => ({})) as { name?: string; description?: string; framework?: string; projectType?: string; initialPrompt?: string }
+  // A build started from a client's brief needs the right framework and type from the first moment.
+  const framework = body.framework === 'react-native' || body.framework === 'react-vite' ? body.framework : undefined
+  const projectType = ['app', 'website', 'mobile', 'saas'].includes(body.projectType ?? '') ? body.projectType : undefined
 
   const db = createServiceClient()
   const { data, error } = await db
@@ -42,6 +45,9 @@ export async function POST(req: NextRequest, { params }: Params) {
       org_id: orgId,
       name: body.name?.trim() || 'Untitled App',
       description: body.description ?? null,
+      ...(framework ? { framework } : {}),
+      ...(projectType ? { project_type: projectType } : {}),
+      ...(typeof body.initialPrompt === 'string' ? { initial_prompt: body.initialPrompt.slice(0, 6000) } : {}),
     })
     .select('id, name, org_id')
     .single()

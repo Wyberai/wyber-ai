@@ -17,7 +17,7 @@ vi.mock('@/lib/supabase/server', () => ({
 }))
 vi.mock('@/lib/email', () => ({ sendClientFeedbackAlert: async (a: Record<string, unknown>) => { sent.push(a) } }))
 let allowRate = true
-vi.mock('@/lib/rate-limit', () => ({ rateLimit: () => ({ allowed: allowRate, remaining: 1 }) }))
+vi.mock('@/lib/agency/limits', async (orig) => ({ ...(await orig<typeof import('@/lib/agency/limits')>()), hit: async () => allowRate }))
 
 const jsonReq = (body: unknown, cookie?: string) =>
   new NextRequest('http://localhost/x', { method: 'POST', headers: { 'content-type': 'application/json', ...(cookie ? { cookie } : {}) }, body: JSON.stringify(body) })

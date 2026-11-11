@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
-import { rateLimit } from '@/lib/rate-limit'
+import { hit, LIMITS } from '@/lib/agency/limits'
 import { loadActivePortalClient, requestIp } from '@/lib/agency/portal'
 import { verifyPasscode, unlockToken, unlockCookieName } from '@/lib/agency/passcode'
 
@@ -8,7 +8,9 @@ import { verifyPasscode, unlockToken, unlockCookieName } from '@/lib/agency/pass
 export async function POST(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const ip = requestIp(req)
-  if (!rateLimit(`portal-unlock:${ip}:${slug}`, 8, 10 * 60_000).allowed || !rateLimit(`portal-unlock-all:${slug}`, 60, 60 * 60_000).allowed) {
+  const ok = (await hit(`portal-unlock:${ip}:${slug}`, LIMITS.unlockPerIp.max, LIMITS.unlockPerIp.windowMs, { failClosed: true }))
+    && (await hit(`portal-unlock-all:${slug}`, LIMITS.unlockPerLink.max, LIMITS.unlockPerLink.windowMs, { failClosed: true }))
+  if (!ok) {
     return NextResponse.json({ error: 'Too many tries. Wait a few minutes and try again.' }, { status: 429 })
   }
 

@@ -2,7 +2,7 @@
 // dashboard only learns whether one is set.
 
 export const CLIENT_LIST_SELECT =
-  '*, client_deliverables(id, headline, description, sort_order, is_visible, project_id, review_status, reviewed_at, delivered_at, handover_note, projects(id, name, thumbnail_url, published_url, deployed_url, custom_domain)), client_feedback(id, deliverable_id, kind, author_name, body, resolved, created_at), client_updates(id, body, created_at, emailed_at), client_quotes(id, number, title, currency, items, total, note, payment_instructions, payment_url, status, sent_at, responded_at, responded_by, decline_reason, paid_at, created_at)'
+  '*, client_deliverables(id, headline, description, sort_order, is_visible, project_id, review_status, reviewed_at, delivered_at, handover_note, projects(id, name, thumbnail_url, published_url, deployed_url, custom_domain, custom_domain_verified)), client_feedback(id, deliverable_id, kind, author_name, body, resolved, created_at), client_updates(id, body, created_at, emailed_at), client_quotes(id, number, title, currency, items, total, note, terms, recurrence, payment_instructions, payment_url, status, sent_at, responded_at, responded_by, decline_reason, paid_at, created_at)'
 
 export function clientForOwner<T extends Record<string, unknown>>(row: T): Omit<T, 'portal_passcode_hash'> & { has_passcode: boolean } {
   const { portal_passcode_hash, ...rest } = row as T & { portal_passcode_hash?: string | null }

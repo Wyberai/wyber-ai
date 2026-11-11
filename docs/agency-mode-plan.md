@@ -36,3 +36,31 @@ get the brief, build, show, take feedback, fix, hand over, get paid, and keep th
 3. Owner APIs: feedback resolve, brief link, quotes, delivered/handover, approvals CSV, emailed updates.
 4. Public: `/brief/[token]` and the quote response on the portal.
 5. Portal and dashboard rebuild; teams collapsed; builder draft prefill.
+
+---
+
+# v4 (Nov 12): audit findings and what changed
+
+The v3 flow was tested in isolation, never walked end to end as a freelancer, and never attacked across accounts. This
+pass did both. Findings, all fixed:
+
+| # | Finding | Fix |
+|---|---|---|
+| 1 | Nothing in the signed-in app linked to /clients, and the "agency" persona landed on /dashboard. | Clients in the dashboard nav and command palette; agency persona lands on /clients?welcome=1; first-run checklist read from real data. |
+| 2 | **/api/generate trusted a `projectId` from the request body** and read and wrote that project with the service client (memory, knowledge, Supabase connection, rescued files). Project ids appear in public preview links. | Caller must be able to edit the project (owner, workspace member, editor collaborator). `src/lib/project-access.ts`. |
+| 3 | Publish, custom domain and export required the project's creator, so a workspace teammate could open a shared project but not ship it. | Same shared check on publish, custom-domain, export and the pinned-comments switch. |
+| 4 | The portal put project ids on the wire. | Removed. |
+| 5 | Passcode brute-force limit and the review/brief spam limits were per serverless instance. | Database-backed limiter (`src/lib/agency/limits.ts`); passcode attempts fail closed. |
+| 6 | Anyone with a client link could flood the freelancer's inbox; a freelancer could mass-mail strangers. | One alert email per 10 minutes per client; 6 emails an hour per client and 25 a day per freelancer; footer on every client email. |
+| 7 | Handover notes (logins) were visible on an unlocked page. | Notes show only on a passcode-locked page. |
+| 8 | No agency identity: nothing showed the business name, logo, tax details. | `agency_profiles` (per person or per workspace); used on the client page, quotes, printable invoice and as the email sender. |
+| 9 | No domain step. | Go live panel: connect the client's domain, DNS note for their IT person, buy a domain with the client as registrant, add it to the quote. |
+| 10 | Build-from-brief made a personal project a teammate could not open. | Creates inside the workspace when the client lives in one; copy-and-attach duplicates into it too. |
+| 11 | No retainer, terms or invoice. | Billing period (once, monthly, yearly), terms, printable quote and invoice. |
+| 12 | Links 8 random characters; pages cacheable. | 12 characters; no-store, no-referrer, noindex on client pages and their APIs. |
+
+Tenant isolation is attacked by `src/app/api/clients/tenant-isolation.test.ts`: two tenants plus a stranger, every
+route, refused and unchanged, nothing leaked. Mutation-checked.
+
+Not built, deliberately: a shared credit pool for a workspace (credits live on each person; that is a billing change),
+in-place project transfer, client logins, per-client custom domains, taking payment on the freelancer's behalf.

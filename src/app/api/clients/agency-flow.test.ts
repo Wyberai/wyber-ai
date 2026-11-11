@@ -23,7 +23,7 @@ vi.mock('@/lib/email', () => ({
   sendClientPortalEmail: async (a: Record<string, unknown>) => { portalMail.push(a) },
   sendClientEventAlert: async (a: Record<string, unknown>) => { eventMail.push(a) },
 }))
-vi.mock('@/lib/rate-limit', () => ({ rateLimit: () => ({ allowed: allowRate, remaining: 1 }) }))
+vi.mock('@/lib/agency/limits', async (orig) => ({ ...(await orig<typeof import('@/lib/agency/limits')>()), hit: async () => allowRate }))
 
 const req = (body?: unknown, method = 'POST') =>
   new NextRequest('http://localhost/x', { method, headers: { 'content-type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body) })

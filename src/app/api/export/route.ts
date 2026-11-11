@@ -34,10 +34,11 @@ async function handleExport(projectId: string | null, format: string | null) {
     .from('projects')
     .select('*')
     .eq('id', projectId)
-    .eq('user_id', user.id)   // ownership check — service client used only after this gate
     .single();
 
-  if (!project) return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+  // Gate: the owner, or a workspace member / editor collaborator. The service client is used only after this check.
+  const { canEditProject } = await import('@/lib/project-access')
+  if (!project || !(await canEditProject(supabase, user.id, projectId))) return NextResponse.json({ error: 'Project not found' }, { status: 404 });
 
   if (format === 'json') {
     // Return all project data as JSON

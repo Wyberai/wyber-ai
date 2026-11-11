@@ -37,7 +37,8 @@ export default function OnboardingPage() {
   const router = useRouter()
   const supabase = createClient()
   useEffect(() => { setCtx(readCtx()) }, [])
-  const total = ctx ? 2 : 3
+  // Someone who builds for clients does not need to pick a product first: they start from their client desk.
+  const total = ctx || persona === 'agency' ? 2 : 3
 
   const finish = async (chosen: string, skipPersona = false) => {
     setLoading(true)
@@ -45,7 +46,8 @@ export default function OnboardingPage() {
     if (user) {
       await supabase.from('profiles').update({ full_name: name, ...(skipPersona || !persona ? {} : { persona }), onboarded: true }).eq('id', user.id)
     }
-    router.push(ctx ? '/dashboard' : ROUTES[chosen] ?? '/dashboard')
+    // Someone who builds for clients lands on their client desk; everyone else goes where they asked to build.
+    router.push(ctx ? '/dashboard' : persona === 'agency' && !skipPersona ? '/clients?welcome=1' : ROUTES[chosen] ?? '/dashboard')
   }
 
   return (
@@ -85,7 +87,7 @@ export default function OnboardingPage() {
                     <p className="sg-hint">The dashboard opens with your brief and starts building.</p>
                   </>
                 ) : (
-                  <button className="sg-btn" type="button" style={{ width: '100%' }} onClick={() => setStep(3)}>Continue</button>
+                  <button className="sg-btn" type="button" style={{ width: '100%' }} onClick={() => (persona === 'agency' ? finish('web') : setStep(3))}>{persona === 'agency' ? (loading ? 'Setting up…' : 'Open my client desk') : 'Continue'}</button>
                 )}
               </>
             )}

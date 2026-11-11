@@ -4,6 +4,7 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { clientAccess, myWorkspaces } from '@/lib/agency/access'
 import { hashPasscode, MIN_PASSCODE, MAX_PASSCODE } from '@/lib/agency/passcode'
 import { clientForOwner, newSlug } from '@/lib/agency/shape'
+import { auditClient } from '@/lib/agency/audit'
 
 const PATCHABLE = ['name', 'companyName', 'contactEmail', 'contactName', 'logoUrl', 'brandColor', 'introText', 'status', 'notes'] as const
 const COLUMN_FOR: Record<(typeof PATCHABLE)[number], string> = {
@@ -43,7 +44,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 
   // A new link: the old one stops working at once (it will 404), and every browser unlocked on it is signed out.
-  if (body.rotateLink === true) updates.slug = newSlug(String(updates.name ?? access.client.name ?? 'client'), nanoid(8))
+  if (body.rotateLink === true) updates.slug = newSlug(String(updates.name ?? access.client.name ?? 'client'), nanoid(12))
 
   // Move a client between your own account and a workspace you can edit in. Only the person who created it can move it.
   if (body.orgId !== undefined) {
@@ -63,10 +64,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (body.rotateLink === true) auditClient(access, user.id, 'link_rotated', undefined, req)
+  if (body.passcode !== undefined) auditClient(access, user.id, body.passcode ? 'passcode_set' : 'passcode_removed', undefined, req)
+  if (updates.status !== undefined && updates.status !== access.client.status) auditClient(access, user.id, 'status_changed', { from: access.client.status, to: updates.status }, req)
+  if (body.orgId !== undefined) auditClient(access, user.id, 'workspace_changed', { to: body.orgId }, req)
   return NextResponse.json({ client: clientForOwner(data) })
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const auth = await createClient()
   const { data: { user } } = await auth.auth.getUser()
@@ -79,5 +84,6 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
 
   const { error } = await admin.from('clients').delete().eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  auditClient(access, user.id, 'deleted', { name: access.client.name }, req)
   return NextResponse.json({ success: true })
 }

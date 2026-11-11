@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
-import { rateLimit } from '@/lib/rate-limit'
+import { hit, LIMITS } from '@/lib/agency/limits'
 import { loadActivePortalClient, portalAllowed, requestIp } from '@/lib/agency/portal'
 import { clientCanRespond, formatMoney, type QuoteStatus } from '@/lib/agency/quote'
 import { sendClientEventAlert } from '@/lib/email'
@@ -9,7 +9,7 @@ import { sendClientEventAlert } from '@/lib/email'
 // Only a quote that was sent and is still waiting can be answered, once.
 export async function POST(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  if (!rateLimit(`portal-quote:${requestIp(req)}:${slug}`, 12, 10 * 60_000).allowed) {
+  if (!(await hit(`portal-quote:${requestIp(req)}:${slug}`, LIMITS.quotePerIp.max, LIMITS.quotePerIp.windowMs))) {
     return NextResponse.json({ error: 'Too many tries. Wait a few minutes.' }, { status: 429 })
   }
   const admin = await createAdminClient()

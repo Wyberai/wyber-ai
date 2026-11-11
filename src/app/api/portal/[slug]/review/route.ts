@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
-import { rateLimit } from '@/lib/rate-limit'
+import { hit, LIMITS } from '@/lib/agency/limits'
 import { loadActivePortalClient, portalAllowed, requestIp } from '@/lib/agency/portal'
 import { sendClientFeedbackAlert } from '@/lib/email'
 
@@ -13,7 +13,7 @@ const MAX_NAME = 80
 // No account is needed; the link, and the passcode if one is set, is the access.
 export async function POST(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  if (!rateLimit(`portal-review:${requestIp(req)}:${slug}`, 20, 10 * 60_000).allowed) {
+  if (!(await hit(`portal-review:${requestIp(req)}:${slug}`, LIMITS.reviewPerIp.max, LIMITS.reviewPerIp.windowMs))) {
     return NextResponse.json({ error: 'Too many messages. Try again in a few minutes.' }, { status: 429 })
   }
 
@@ -46,8 +46,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
     await admin.from('client_deliverables').update({ review_status: kind, reviewed_at: new Date().toISOString() }).eq('id', deliverable.id)
   }
 
-  // Best effort: tell the agency. A failed email never fails the client's review.
+  // Best effort: tell the agency, at most once every ten minutes per client (the link is public, so a flood of
+  // reviews must not become a flood of emails). A failed email never fails the client's review.
   try {
+    if (!(await hit(`review-alert:${client.id}`, LIMITS.reviewAlert.max, LIMITS.reviewAlert.windowMs))) return NextResponse.json({ ok: true, reviewStatus })
     const { data: owner } = await admin.from('profiles').select('email').eq('id', client.owner_id).maybeSingle()
     const proj = deliverable.projects as { name?: string } | Array<{ name?: string }> | null
     const projectName = Array.isArray(proj) ? proj[0]?.name : proj?.name

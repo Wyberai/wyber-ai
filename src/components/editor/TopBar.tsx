@@ -111,6 +111,26 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
     return () => window.removeEventListener('wyber-open-publish', open);
   }, []);
 
+  // Agency mode, "Buy a domain for your client": the Clients page leaves a note for this project with the client's details,
+  // so the registrant (the legal owner of the domain) starts as the client and not the freelancer. It opens the same
+  // Publish & Share modal; nothing is bought until the freelancer completes the purchase there.
+  useEffect(() => {
+    if (!projectId) return;
+    try {
+      const key = `wyber_domain_handoff_${projectId}`;
+      const raw = sessionStorage.getItem(key);
+      if (!raw) return;
+      sessionStorage.removeItem(key);
+      const h = JSON.parse(raw) as { contact?: Record<string, unknown> };
+      if (h.contact) {
+        const clean = Object.fromEntries(Object.entries(h.contact).filter(([k, v]) => typeof v === 'string' && k in domainContact));
+        setDomainContact(c => ({ ...c, ...clean }));
+      }
+      setShowShareModal(true);
+    } catch { /* storage blocked or bad note: nothing to prefill */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId]);
+
   // Close + reset so the next open starts without a stale "done" state.
   const closeShareModal = () => { setShowShareModal(false); setRepublished(false); };
 

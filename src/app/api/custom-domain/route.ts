@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { detectProvider, type DnsProvider } from '@/lib/dns-provider'
+import { dnsRecordFor, VERCEL_A_IP } from '@/lib/dns-records'
 
 // dashboardUrl is a function — resolve it to a plain string before returning
 // from an API route, since NextResponse.json() silently drops function props.
@@ -8,21 +9,13 @@ function serializeProvider(provider: DnsProvider | null, domain: string) {
   return provider ? { name: provider.name, dashboardUrl: provider.dashboardUrl(domain) } : null
 }
 
-// Where users point their domain. Apex (root) domains cannot use a CNAME —
-// they must use an A record to Vercel's anycast IP. Subdomains (e.g. www) use a CNAME.
-const VERCEL_A_IP = '76.76.21.21'
-const VERCEL_CNAME = 'cname.vercel-dns.com'
+// Where users point their domain (the records live in src/lib/dns-records.ts, shared with the freelancer's hand-off
+// message). Apex (root) domains cannot use a CNAME, they need an A record to Vercel's anycast IP; subdomains (www) use a CNAME.
 // Accepted CNAME targets (back-compat with older "point at wyberai.com" guidance)
 const ACCEPTED_CNAME = ['cname.vercel-dns.com', 'vercel-dns.com', 'wyberai.com', 'vercel.app']
 
-const isApex = (domain: string) => domain.replace(/\.$/, '').split('.').length <= 2
-
 // Returns the correct DNS record a given domain should add.
-function recordFor(domain: string) {
-  return isApex(domain)
-    ? { type: 'A', name: '@', value: VERCEL_A_IP, ttl: '300' as string }
-    : { type: 'CNAME', name: domain.split('.')[0], value: VERCEL_CNAME, ttl: '300' as string }
-}
+const recordFor = dnsRecordFor
 
 async function verifyDNS(domain: string, _projectId: string): Promise<{ verified: boolean; error?: string }> {
   try {
@@ -84,10 +77,11 @@ export async function POST(req: NextRequest) {
       .from('projects')
       .select('id, name, subdomain, is_public')
       .eq('id', projectId)
-      .eq('user_id', user.id)
       .single()
 
-    if (!project) return NextResponse.json({ error: 'Project not found' }, { status: 404 })
+    // The owner, or a workspace member / editor collaborator on a shared project.
+    const { canEditProject } = await import('@/lib/project-access')
+    if (!project || !(await canEditProject(admin, user.id, projectId))) return NextResponse.json({ error: 'Project not found' }, { status: 404 })
 
     // Custom domains are a paid feature (pricing lists them under Builder+),
     // and they serve WITHOUT the free-tier "Built with WyberAi" badge — so an
@@ -205,10 +199,13 @@ export async function DELETE(req: NextRequest) {
     const { projectId } = await req.json()
     const admin = await createAdminClient()
 
+    const { canEditProject } = await import('@/lib/project-access')
+    if (!projectId || !(await canEditProject(admin, user.id, projectId))) return NextResponse.json({ error: 'Project not found' }, { status: 404 })
+
     await admin.from('projects').update({
       custom_domain: null,
       custom_domain_verified: false,
-    }).eq('id', projectId).eq('user_id', user.id)
+    }).eq('id', projectId)
 
     return NextResponse.json({ success: true })
   } catch (err: any) {

@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
   // Non-guessable slug (no auth gate on the public /client/[slug] page, so
   // this is the only thing standing between "the client I sent this to" and
   // "anyone who guesses a URL") — a readable prefix plus a random suffix.
-  const slug = `${slugify(name) || 'client'}-${nanoid(8)}`
+  const slug = `${slugify(name) || 'client'}-${nanoid(12)}`
 
   const { data, error } = await admin.from('clients').insert({
     owner_id: user.id,
