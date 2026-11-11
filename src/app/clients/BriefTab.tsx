@@ -23,7 +23,7 @@ export function BriefTab({ ctx }: { ctx: Ctx }) {
   async function resend() {
     const r = await api('POST', `/api/clients/${client.id}/brief`, { resend: true })
     const e = r.data.email
-    toast(r.ok && e?.sent ? `Emailed to ${client.contact_email}` : e ? `Not emailed: ${e.reason === 'no_email' ? 'no email saved for this client' : e.reason === 'rate_limited' ? 'too many emails right now' : 'the email failed'}` : r.data.error ?? 'Could not email it', !!(r.ok && e?.sent))
+    toast(r.ok && e?.sent ? `Emailed to ${client.contact_email}` : e ? `Not emailed: ${e.reason === 'no_email' ? 'no email saved for this client' : e.reason === 'no_sender' ? 'add your business name in Business details first' : e.reason === 'rate_limited' ? 'too many emails right now' : 'the email failed'}` : r.data.error ?? 'Could not email it', !!(r.ok && e?.sent))
   }
 
   async function turnOff() {

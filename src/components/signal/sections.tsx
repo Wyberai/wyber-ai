@@ -71,8 +71,8 @@ export function PricingBand() {
   )
 }
 
-export function Faq() {
-  const faqs = HOME_STRINGS.en.homeFaqs
+export function Faq({ items }: { items?: Array<[string, string]> } = {}) {
+  const faqs = items ?? HOME_STRINGS.en.homeFaqs
   return (
     <Section label="Questions" title="Questions, answered">
       <div style={{ marginTop: 28 }}>

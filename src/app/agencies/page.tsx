@@ -5,6 +5,7 @@ import { AgencyDesk } from '@/components/signal/AgencyDesk'
 import { Faq, FinalCta, Section } from '@/components/signal/sections'
 import { QuickPrompt } from '@/components/signal/QuickPrompt'
 import { AgencyStart } from '@/components/signal/AgencyStart'
+import { FREE_CREDITS } from '@/lib/signal/handoff'
 
 export const metadata: Metadata = {
   title: 'Agency mode: run the whole client job',
@@ -29,6 +30,17 @@ const PROMISES: Array<[string, string]> = [
   ['Private links', 'Long links nobody can guess, an optional passcode, and a new link that stops the old one working at once.'],
   ['Your name, not ours', 'Your logo and details show on the client page, quotes, invoices and emails. Replies go to you.'],
   ['Room for a team', 'Add teammates to a workspace. Admins manage, members edit, viewers can only look, and every sensitive change is logged.'],
+]
+
+// Only things that are true of the product today, each tied to how it works. Pricing comes from the plan tables.
+const AGENCY_FAQS: Array<[string, string]> = [
+  ['Does my client need an account?', 'No. They open one private link, see the work in your name, approve it or ask for changes, and accept a quote by typing their name. You can add a passcode to the link.'],
+  ['Who pays for the builds?', `You do, from your own credits. A free account has ${FREE_CREDITS} credits, which cover one small first build. Your client is never charged by WyberAi.`],
+  ['Can I put the site on my client’s own domain?', 'Yes. Connecting a domain your client already owns needs a paid plan, and you get a short DNS note to hand to their IT person. A domain bought through WyberAi works on any plan and is billed to you.'],
+  ['Can clients see each other’s work?', 'No. Every client page is a separate private link, and each freelancer or agency only sees their own clients, projects, quotes and feedback.'],
+  ['Does WyberAi take payment from my client?', 'Not today. Quotes and invoices are for you to send. You collect payment your own way and mark it paid.'],
+  ['Does the client see the code?', 'Only if you hand it over. You decide what goes on their page, and handover notes can sit behind a passcode.'],
+  ['Does it email my clients by itself?', 'No. Emails go out when you press send, from your business name, and replies come to you. If you have not set a business name or your name, nothing is sent until you do.'],
 ]
 
 export default function AgenciesPage() {
@@ -73,7 +85,7 @@ export default function AgenciesPage() {
       </Section>
 
       <Section label="Start" title="Build the first project"><QuickPrompt /></Section>
-      <Faq />
+      <Faq items={AGENCY_FAQS} />
       <FinalCta />
     </SignalFrame>
   )

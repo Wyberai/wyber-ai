@@ -95,7 +95,7 @@ export function WorkTab({ ctx }: { ctx: Ctx }) {
     merge({ client_updates: [{ ...r.data.update, emailed_at: r.data.email?.sent ? new Date().toISOString() : null }, ...client.client_updates] })
     setUpdateText('')
     const e = r.data.email
-    toast(e?.sent ? 'Posted, and emailed to your client' : e ? `Posted. Not emailed: ${e.reason === 'no_email' ? 'no email saved for this client' : e.reason === 'inactive' ? 'their link is off' : e.reason === 'rate_limited' ? 'too many emails this hour' : 'the email failed'}` : 'Update posted to their page')
+    toast(e?.sent ? 'Posted, and emailed to your client' : e ? `Posted. Not emailed: ${e.reason === 'no_email' ? 'no email saved for this client' : e.reason === 'no_sender' ? 'add your business name in Business details first' : e.reason === 'inactive' ? 'their link is off' : e.reason === 'rate_limited' ? 'too many emails this hour' : 'the email failed'}` : 'Update posted to their page')
   }
 
   async function deliver(d: Deliverable) {

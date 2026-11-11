@@ -97,6 +97,12 @@ describe('emails go out in the business\'s name', () => {
     await send('cW')
     expect(portalMail[0]).toMatchObject({ fromName: 'Sam Rivera', replyTo: 'sam@personal.test' })
   })
+  it('does not send when there is no business name and no personal name, so the client is never mailed from a stranger', async () => {
+    tables.profiles.find(p => p.id === 'A')!.full_name = ''
+    const r = await (await send('cW')).json()
+    expect(r.email).toEqual({ sent: false, reason: 'no_sender' })
+    expect(portalMail).toHaveLength(0)
+  })
   it('a daily cap per freelancer stops them being used to mass-mail', async () => {
     allowRate = false
     const r = await (await send('cW')).json()

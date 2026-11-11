@@ -64,7 +64,7 @@ export function QuotesTab({ ctx }: { ctx: Ctx }) {
     merge({ client_quotes: client.client_quotes.map(x => (x.id === q.id ? r.data.quote : x)) })
     if (action === 'send') {
       const e = r.data.email
-      toast(e?.sent ? 'Sent, and emailed to your client' : e ? `Sent on their page. Not emailed: ${e.reason === 'no_email' ? 'no email saved for this client' : e.reason === 'inactive' ? 'their link is off' : 'try again later'}` : 'Sent on their page. Share their link so they can see it.')
+      toast(e?.sent ? 'Sent, and emailed to your client' : e ? `Sent on their page. Not emailed: ${e.reason === 'no_email' ? 'no email saved for this client' : e.reason === 'no_sender' ? 'add your business name in Business details first' : e.reason === 'inactive' ? 'their link is off' : 'try again later'}` : 'Sent on their page. Share their link so they can see it.')
     }
   }
 
