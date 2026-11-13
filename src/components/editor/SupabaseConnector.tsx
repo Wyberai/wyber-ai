@@ -4,6 +4,7 @@ import { useEditorStore } from '@/store/editor'
 import { useT } from '@/lib/i18n/useT'
 import { EDITOR_CONNECTORS_STRINGS } from '@/lib/i18n/dict/editor-connectors'
 import { COMMON_STRINGS } from '@/lib/i18n/dict/common'
+import { supabaseRestHeaders } from '@/lib/supabase/keys'
 
 interface Connector {
   service: string
@@ -122,7 +123,7 @@ export function SupabaseConnector({ onClose }: { onClose: () => void }) {
     try {
       // Validate the credentials work
       const test = await fetch(`${url}/rest/v1/`, {
-        headers: { 'apikey': anonKey, 'Authorization': `Bearer ${anonKey}` }
+        headers: supabaseRestHeaders(anonKey)
       })
       if (!test.ok && test.status !== 200 && test.status !== 401) {
         setError(t('couldNotConnectCheckCreds'))

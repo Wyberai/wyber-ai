@@ -4,6 +4,7 @@ import { SkeletonList } from './ui'
 import { useT } from '@/lib/i18n/useT'
 import { EDITOR_CONNECTORS_STRINGS } from '@/lib/i18n/dict/editor-connectors'
 import { COMMON_STRINGS } from '@/lib/i18n/dict/common'
+import { supabaseRestHeaders } from '@/lib/supabase/keys'
 
 interface ConnectorRow {
   id: string
@@ -85,7 +86,7 @@ export function SupabasePanel({ projectId }: { projectId: string }) {
     setTesting(true)
     try {
       const probe = await fetch(`${trimUrl}/rest/v1/`, {
-        headers: { apikey: trimKey, Authorization: `Bearer ${trimKey}` },
+        headers: supabaseRestHeaders(trimKey),
       })
       if (!probe.ok && probe.status !== 400) {
         // 400 is fine (no table name given) — it means the server responded

@@ -154,3 +154,28 @@ Two claims in an earlier version were wrong (device persistence via IndexedDB, r
   cheapest lever: move the contract into the web-app system prompt.
 - The 50-versus-30 credit mismatch reproduced on an 11-file build. It must be fixed before the new contract makes builds larger.
 - A browser-only PIN is not security; the contract must say so in the app or not offer roles by PIN.
+
+## 9. Real-browser check and design rules (built 13 Nov 2026)
+
+`scripts/verify-app.mjs <published url> [--setup]` opens a published app in the installed Chrome (puppeteer-core and axe-core from node_modules,
+nothing downloaded), finds the sandboxed app frame, and measures what a person meets. Score out of 100: console and network errors 20,
+no horizontal overflow at 375/768/1280 15, axe-core WCAG A/AA violations 20, navigation walk (including whether the page wrapper covers a
+tab) 15, launch-ready signals on screen 15, quiet design (gradients, glows, emoji, heavy weights, tracked uppercase, transition-all, looping
+animation, read from computed styles) 15. If an app opens on a setup screen the navigation part is left out and the rest is rescaled;
+`--setup` fills throwaway values and loads sample data. This is a different scale from the spec scorecard in section 2 (it measures only
+what a browser can see).
+
+First measured results (live site, old wrapper):
+| App | Harness score | Notes |
+|---|---|---|
+| kirana-khata-book (plain prompt) | 67 | axe critical: select without a name; 12 elements with transition-all; 5 tracked uppercase labels; 1 gradient; 1 of 7 launch signals |
+| kirana-billing-pro (contract in prompt, with --setup) | 78 | axe serious: color-contrast (7 nodes); 0 design-slop signs except 1 tracked label; 4 of 7 launch signals on visited screens |
+Platform bug found by the check: on phones the page wrapper's Report button and "Built with WyberAi" badge sat on top of the app's first and
+last bottom tabs, so those tabs could not be tapped. Fixed in the wrapper (a 36 px strip reserved under the app); not yet deployed.
+
+Unslop (Damir Sokolovsky, CC BY 4.0, https://github.com/heydamir/unslop) is built in as `src/lib/unslop.ts`: ten design rules appended to the
+launch-ready prompt, and a source check (gradient text, hue gradients, glows, blobs, emoji, tracked uppercase, weight 800+, off-scale spacing,
+looping motion, transition-all, exclamation marks, greeting headlines, hype words, sparklines in stat cards) that feeds the same free fix lane.
+Finding: our own web-app prompt (the "August 2026" section) asks for grain, mesh orbs, glow shadows, gradient borders, parallax, magnetic
+buttons, uppercase mono microlabels and a sparkline in every KPI card. unslop lists every one of those as slop. The new block says it
+overrides them when the launch-ready flag is on; the old section itself is untouched so the flag-off behaviour does not change.

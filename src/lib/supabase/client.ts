@@ -1,4 +1,5 @@
 import { createBrowserClient } from '@supabase/ssr';
+import { publicSupabaseKey } from './keys';
 
 // Fallbacks keep static prerendering from crashing when the NEXT_PUBLIC_*
 // env vars aren't present at build time (e.g. a Preview build missing them).
@@ -7,7 +8,7 @@ import { createBrowserClient } from '@supabase/ssr';
 // In the browser the real values are baked in at build time, so auth works
 // normally — the placeholders only ever apply to an env-less build.
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key';
+const SUPABASE_ANON_KEY = publicSupabaseKey() || 'placeholder-anon-key';
 
 export function createClient() {
   return createBrowserClient(SUPABASE_URL, SUPABASE_ANON_KEY);

@@ -56,7 +56,7 @@ export default function ReportButton({ slug }: { slug: string }) {
         aria-label="Report this app"
         style={{
           position: 'fixed',
-          bottom: 12,
+          bottom: 6,
           left: 12,
           zIndex: 9999,
           display: 'flex',

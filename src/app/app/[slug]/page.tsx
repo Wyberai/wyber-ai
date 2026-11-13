@@ -192,7 +192,7 @@ export default async function PublishedAppPage({ params }: Props) {
       )}
       {/* Free-tier attribution — paid plans publish clean, unbranded apps. */}
       {ownerPlan === 'free' && (
-        <div style={{ position: 'fixed', bottom: 12, right: 12, zIndex: 9999, display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', padding: '5px 10px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.08)' }}>
+        <div style={{ position: 'fixed', bottom: 6, right: 12, zIndex: 9999, display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', padding: '5px 10px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.08)' }}>
           <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', fontFamily: 'var(--font-sans)' }}>Built with</span>
           {/* Attributed link — every free published app is an acquisition
               channel; utm+ref make it measurable in GA/PostHog. */}
@@ -213,6 +213,8 @@ export default async function PublishedAppPage({ params }: Props) {
           lib/published-app-sandbox.ts. It used to run with allow-same-origin,
           which let any published app read visitors' wyberai.com session. */}
       <SandboxedApp html={html} slug={slug} projectId={loaded.id} title={name} />
+      {/* Reserved strip under the app for the Report button and the badge: they used to sit on top of the app's bottom tabs. */}
+      <div aria-hidden style={{ position: 'fixed', left: 0, right: 0, bottom: 0, height: 36, background: '#0b0b0f', zIndex: 9998 }} />
       {/* UGC abuse-report control — required on every published app regardless of plan. */}
       <ReportButton slug={slug} />
       {/* Install pill — the shell is the top-level document Chrome reads the

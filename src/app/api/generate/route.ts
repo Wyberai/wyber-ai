@@ -7,6 +7,7 @@ import { buildCosts, editCost, planCost } from '@/lib/pricing-facts'
 import { MODEL_IDS, creditCost, tierAllowedForPlan, resolveBuildTier, computeOverageCharge, computeEditSettlement, resolveEditTierFromTokens, type ModelTier } from '@/lib/credits'
 import { sendCreditLowEmail, sendFirstBuildEmail } from '@/lib/email'
 import { isLaunchReadyApp, floorBuildTier, WEBAPP_LAUNCH_READY_CONTRACT } from '@/lib/launch-ready'
+import { UNSLOP_WEBAPP_RULES } from '@/lib/unslop'
 import { notify } from '@/lib/push'
 import { userCurrency } from '@/lib/user-currency'
 import { withCacheBreakpoint } from '@/lib/anthropic-cache'
@@ -4320,7 +4321,7 @@ export async function POST(req: NextRequest) {
             const wcSystemPrompt = projectType === 'mobile' ? buildMobileSystemPrompt()
               : projectType === 'website' ? buildWebsiteSystemPrompt()
               : projectType === 'saas' ? buildSaasSystemPrompt()
-              : buildSystemPrompt() + (isLaunchReadyApp(projectType) ? WEBAPP_LAUNCH_READY_CONTRACT : '')
+              : buildSystemPrompt() + (isLaunchReadyApp(projectType) ? WEBAPP_LAUNCH_READY_CONTRACT + UNSLOP_WEBAPP_RULES : '')
             const result = await runWyberCode({
               systemPrompt: wcSystemPrompt, userPrompt: prompt, fileContext, projectType, isNewBuild,
             })
@@ -5356,7 +5357,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
         ? buildSaasSystemPrompt()
         : buildSystemPrompt()
       staticSystemPrompt = basePrompt
-        + (isLaunchReadyApp(projectType) ? WEBAPP_LAUNCH_READY_CONTRACT : '')
+        + (isLaunchReadyApp(projectType) ? WEBAPP_LAUNCH_READY_CONTRACT + UNSLOP_WEBAPP_RULES : '')
         + (projectType === 'mobile' ? '' : wyberDNA)
         + (useToolUse ? toolUseOutputRule : outputRule)
       // Both staged-pass prompts below override rule 9's "end with a question"

@@ -4,6 +4,7 @@
 // Pure module: no React, no network.
 
 import { isLaunchReadyApp, launchReadyIssues } from '@/lib/launch-ready'
+import { slopIssues } from '@/lib/unslop'
 
 type FileVal = { content?: string } | string
 
@@ -90,7 +91,7 @@ export function runQaChecks(files: Record<string, FileVal>, projectType?: string
   }
 
   // Launch-ready web apps (flag off by default): missing contract items go back through the same free fix lane.
-  if (isLaunchReadyApp(projectType) && paths.size > 0) issues.push(...launchReadyIssues(files))
+  if (isLaunchReadyApp(projectType) && paths.size > 0) issues.push(...launchReadyIssues(files), ...slopIssues(files))
 
   return issues
 }

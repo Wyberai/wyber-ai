@@ -1,3 +1,4 @@
+import { supabaseRestHeaders } from '@/lib/supabase/keys'
 // RLS-correctness scanner — the trust differentiator.
 //
 // Lovable's scanner (and our old LLM-based SecurityScanner) checked whether RLS
@@ -204,7 +205,7 @@ const TABLE_CAP = 60
 const PROBE_BATCH = 8
 
 function anonHeaders(anonKey: string): Record<string, string> {
-  return { apikey: anonKey, Authorization: `Bearer ${anonKey}` }
+  return supabaseRestHeaders(anonKey)
 }
 
 export async function enumerateTables(

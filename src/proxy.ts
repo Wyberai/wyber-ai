@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { NON_ENGLISH_LOCALES } from '@/lib/i18n/locales'
 import { OWNER_COOKIE, isOwnerToken } from '@/lib/owner-preview'
 import { isProtectedPath } from '@/lib/route-gate'
+import { publicSupabaseKey } from '@/lib/supabase/keys'
 
 export async function proxy(request: NextRequest) {
   const rawPath = request.nextUrl.pathname
@@ -195,7 +196,7 @@ export async function proxy(request: NextRequest) {
 
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      publicSupabaseKey()!,
       {
         cookies: {
           getAll: () => request.cookies.getAll(),

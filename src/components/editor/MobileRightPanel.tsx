@@ -4,6 +4,7 @@ import { useEditorStore } from '@/store/editor'
 import { useT } from '@/lib/i18n/useT'
 import { EDITOR_MOBILE_STRINGS } from '@/lib/i18n/dict/editor-mobile'
 import { COMMON_STRINGS } from '@/lib/i18n/dict/common'
+import { supabaseRestHeaders } from '@/lib/supabase/keys'
 
 interface StoreListing {
   title: string
@@ -292,7 +293,7 @@ function DatabaseTab({ projectId }: { projectId?: string }) {
     if (!url.trim() || !anonKey.trim() || !projectId) return
     setTesting(true); setSupabaseError(null)
     try {
-      const testRes = await fetch(`${url.replace(/\/$/, '')}/rest/v1/`, { headers: { apikey: anonKey, Authorization: `Bearer ${anonKey}` } })
+      const testRes = await fetch(`${url.replace(/\/$/, '')}/rest/v1/`, { headers: supabaseRestHeaders(anonKey) })
       if (!testRes.ok) { setSupabaseError(t('connectionFailedError')); setTesting(false); return }
       await fetch('/api/connectors', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projectId, service: 'supabase', apiKey: anonKey, config: { url } }) })
       setConnected(true)
