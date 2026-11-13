@@ -6,6 +6,7 @@ import { getTemplateReference } from '@/lib/template-reference'
 import { buildCosts, editCost, planCost } from '@/lib/pricing-facts'
 import { MODEL_IDS, creditCost, tierAllowedForPlan, resolveBuildTier, computeOverageCharge, computeEditSettlement, resolveEditTierFromTokens, type ModelTier } from '@/lib/credits'
 import { sendCreditLowEmail, sendFirstBuildEmail } from '@/lib/email'
+import { isLaunchReadyApp, floorBuildTier, WEBAPP_LAUNCH_READY_CONTRACT } from '@/lib/launch-ready'
 import { notify } from '@/lib/push'
 import { userCurrency } from '@/lib/user-currency'
 import { withCacheBreakpoint } from '@/lib/anthropic-cache'
@@ -4183,12 +4184,16 @@ export async function POST(req: NextRequest) {
     const trustedTotalPlannedFiles = stage === 'scaffold' && typeof totalPlannedFiles === 'number' && Number.isFinite(totalPlannedFiles)
       ? Math.max(totalPlannedFiles, Array.isArray(stageFiles) ? stageFiles.length : 0)
       : undefined
-    const buildTier = isNewBuild && (stage === 'full' || stage === 'scaffold')
+    const rawBuildTier = isNewBuild && (stage === 'full' || stage === 'scaffold')
       ? resolveBuildTier({
           totalPlannedFiles: trustedTotalPlannedFiles,
           isComplex: newBuildComplexity,
         })
       : undefined
+    // Launch-ready web apps (flag off by default) are always priced as at least a large build, at the fast-tier
+    // price the editor shows beforehand, so the number shown and the number charged are the same table.
+    const launchReadyBuild = isNewBuild && isLaunchReadyApp(projectType)
+    const buildTier = launchReadyBuild && rawBuildTier ? floorBuildTier(rawBuildTier) : rawBuildTier
     // Pricing is decoupled from which model literally executes the build.
     // resolveModelTier's automatic routing always resolves to 'fast' (Sonnet)
     // now — generation never auto-escalates to Opus (real Claude-API cost is
@@ -4200,7 +4205,7 @@ export async function POST(req: NextRequest) {
     // Confirmed explicitly: keep charging the premium. Only applies to
     // automatic (non-explicit-dropdown) tiered build pricing — an explicit
     // user tier pick already prices off its own real tier.
-    const pricingTier: ModelTier = (!explicitClaudeTier && buildTier && newBuildComplexity === true) ? 'default' : tier
+    const pricingTier: ModelTier = (!explicitClaudeTier && buildTier && newBuildComplexity === true && !launchReadyBuild) ? 'default' : tier
     let cost = creditCost(actionType, pricingTier, buildTier)
 
     // Fetch profile and enforce balance (skip for 'plan' stage — no generation happens).
@@ -4315,7 +4320,7 @@ export async function POST(req: NextRequest) {
             const wcSystemPrompt = projectType === 'mobile' ? buildMobileSystemPrompt()
               : projectType === 'website' ? buildWebsiteSystemPrompt()
               : projectType === 'saas' ? buildSaasSystemPrompt()
-              : buildSystemPrompt()
+              : buildSystemPrompt() + (isLaunchReadyApp(projectType) ? WEBAPP_LAUNCH_READY_CONTRACT : '')
             const result = await runWyberCode({
               systemPrompt: wcSystemPrompt, userPrompt: prompt, fileContext, projectType, isNewBuild,
             })
@@ -5351,6 +5356,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
         ? buildSaasSystemPrompt()
         : buildSystemPrompt()
       staticSystemPrompt = basePrompt
+        + (isLaunchReadyApp(projectType) ? WEBAPP_LAUNCH_READY_CONTRACT : '')
         + (projectType === 'mobile' ? '' : wyberDNA)
         + (useToolUse ? toolUseOutputRule : outputRule)
       // Both staged-pass prompts below override rule 9's "end with a question"

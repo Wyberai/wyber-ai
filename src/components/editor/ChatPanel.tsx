@@ -21,6 +21,7 @@ import { isImportedButMissing } from '@/lib/stub-missing-imports';
 import { scrubCopy } from '@/lib/customer-copy-rules';
 import { deterministicWire } from '@/lib/deterministic-wire';
 import { resolveBuildTier, largestAffordableSmallerBuild } from '@/lib/credits';
+import { isLaunchReadyApp, floorBuildTier, launchReadyCostText, checkLaunchReady, launchReadySummary } from '@/lib/launch-ready';
 import { useAgentTurnStore } from '@/store/agent-turn';
 import type { ChatMessage } from '@/store/editor';
 import { AgentTeamFeed, AgentFeedBoundary } from './agent-team/AgentTeamFeed';
@@ -2035,6 +2036,10 @@ const storeProjectId = useEditorStore.getState().project?.id;
           && (!opts?.stage || opts?.finalPass)
           && (newFiles.length > 0 || editBlocks.length > 0)) {
         const qaIssues = runQaChecks(updatedFiles, projectType).filter(i => i.kind !== 'missing-entry')
+        // Launch-ready web apps: tell the owner plainly what the source check found (it reads code, it does not run the app).
+        if (isLaunchReadyApp(projectType)) {
+          pushAgentEvents({ agent: 'qa', status: 'done', detail: launchReadySummary(checkLaunchReady(updatedFiles)) })
+        }
         if (qaIssues.length > 0) {
           qaRetryFired = true
           // Same reasoning as the placeholder-retry branch above.
@@ -2051,7 +2056,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
               detail: { continuation: true, qaFix: true, prompt: combined }
             }))
           }, 700)
-        } else {
+        } else if (!isLaunchReadyApp(projectType)) {
           pushAgentEvents({ agent: 'qa', status: 'done', detail: t('qaPassedMsg') })
         }
       }
@@ -2698,9 +2703,12 @@ const storeProjectId = useEditorStore.getState().project?.id;
     // quoted 120 credits (server charges 80) and a simple 6-10 file plan was
     // quoted 50 (server charges 30), walling users who could afford it.
     const isOneShotBuild = !staged || !staged.shouldStage;
-    const estimateBuildTier = plannedFileCount > 0
+    const launchReadyApp = isLaunchReadyApp(projectType);
+    const baseEstimateTier = plannedFileCount > 0
       ? (isOneShotBuild ? resolveBuildTier({ isComplex: buildComplexity === 'HIGH' }) : resolveBuildTier({ totalPlannedFiles: plannedFileCount }))
       : undefined;
+    // Launch-ready web apps are priced as at least a large build; the server applies the same floor (generate/route.ts).
+    const estimateBuildTier = baseEstimateTier && launchReadyApp ? floorBuildTier(baseEstimateTier) : baseEstimateTier;
     if (estimateBuildTier) {
       const buildActionType: ActionType = projectType === 'mobile' ? 'mobile-build'
         : projectType === 'website' ? 'website-build'
@@ -2768,7 +2776,9 @@ I can build a **simpler version** instead: just the core screens (up to ${simple
         : projectType === 'website' ? 'website'
         : projectType === 'saas' ? 'SaaS'
         : 'app';
-      const preMsg = `Building your ${appLabel} — ${plannedFileCount} files planned, ~${exactCost}–${hi} credits. Starting now.`;
+      const preMsg = launchReadyApp
+        ? `Building your launch-ready ${appLabel} — ${plannedFileCount} files planned. Cost: ${launchReadyCostText()}. Starting now.`
+        : `Building your ${appLabel} — ${plannedFileCount} files planned, ~${exactCost}–${hi} credits. Starting now.`;
       updateMessage(chainId, { content: preMsg, status: 'done' });
       // Do NOT persist the intermediate progress message — finishChain persists
       // the final summary. Persisting here creates a duplicate DB row that comes

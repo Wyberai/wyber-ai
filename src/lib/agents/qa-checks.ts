@@ -3,6 +3,8 @@
 // self-heal lane (wyber-autofix), narrated as QA agent events.
 // Pure module: no React, no network.
 
+import { isLaunchReadyApp, launchReadyIssues } from '@/lib/launch-ready'
+
 type FileVal = { content?: string } | string
 
 const content = (v: FileVal | undefined): string =>
@@ -37,7 +39,7 @@ function resolveLocal(spec: string, fromPath: string, paths: Set<string>): boole
 }
 
 export interface QaIssue {
-  kind: 'broken-import' | 'missing-entry'
+  kind: 'broken-import' | 'missing-entry' | 'launch-ready'
   detail: string
   /** Prompt for the free self-heal lane to fix this issue. */
   fixPrompt: string
@@ -86,6 +88,9 @@ export function runQaChecks(files: Record<string, FileVal>, projectType?: string
       fixPrompt: `${entry} is missing, so the app cannot render. Output the COMPLETE <file> block for ${entry}, wiring together the components that already exist.`,
     })
   }
+
+  // Launch-ready web apps (flag off by default): missing contract items go back through the same free fix lane.
+  if (isLaunchReadyApp(projectType) && paths.size > 0) issues.push(...launchReadyIssues(files))
 
   return issues
 }
