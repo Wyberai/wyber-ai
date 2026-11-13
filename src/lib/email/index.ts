@@ -1615,7 +1615,7 @@ export async function sendUnusedCreditsEmail(to: string, name: string, credits: 
     <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px">
       <tr><td style="padding:10px 0;font-size:14px;color:#8888a0;border-bottom:1px solid #2e2e38">→ &nbsp;<strong style="color:#f0f0f4">Pick any idea</strong> — landing page, dashboard, booking tool, anything</td></tr>
       <tr><td style="padding:10px 0;font-size:14px;color:#8888a0;border-bottom:1px solid #2e2e38">→ &nbsp;<strong style="color:#f0f0f4">Type one sentence</strong> — no code, no setup, no account to create</td></tr>
-      <tr><td style="padding:10px 0;font-size:14px;color:#8888a0">→ &nbsp;<strong style="color:#f0f0f4">See it live in ~60 seconds</strong> — real URL, shareable immediately</td></tr>
+      <tr><td style="padding:10px 0;font-size:14px;color:#8888a0">→ &nbsp;<strong style="color:#f0f0f4">See it live in about two minutes</strong> — real URL, shareable immediately</td></tr>
     </table>
     <div style="text-align:center;margin:28px 0">
       ${btn('Use your free credits now →', `${APP_URL}/dashboard`)}

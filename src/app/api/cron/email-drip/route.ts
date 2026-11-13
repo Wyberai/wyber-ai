@@ -3,10 +3,10 @@ import { createAdminClient } from '@/lib/supabase/server'
 import {
   sendCreditsExhaustedEmail, sendGettingStartedNudgeEmail, sendPublishNudgeEmail,
   sendQuickStartNudgeEmail, sendNextStepNurtureEmail, sendSocialProofEmail,
-  sendFeatureSpotlightEmail, sendReferralNudgeEmail, sendEarlyCreditWarningEmail,
+  sendReferralNudgeEmail, sendEarlyCreditWarningEmail,
   sendWinBackEmail, sendBreakupEmail, sendCheckoutAbandonedEmail, sendUnusedCreditsEmail,
 } from '@/lib/email'
-import type { FeatureSpotlightKey } from '@/lib/email'
+import { LIFECYCLE_STEPS, LIFECYCLE_WINDOW_DAYS, LIFECYCLE_MIN_GAP_DAYS, nextLifecycleStep, sendLifecycleEmail } from '@/lib/email/lifecycle'
 import type { Currency } from '@/lib/currency'
 import { userCurrency } from '@/lib/user-currency'
 
@@ -25,7 +25,7 @@ export const maxDuration = 300
 //   quick-start       — 18–36h old, zero projects: once (fast touch 1)
 //   getting-started   — 3–14 days old, zero projects: once (touch 2)
 //   social-proof      — 3–4 days old, has ≥1 project, low engagement: once
-//   feature-spotlight — 5–7 days old: once, rotates through FEATURE_KEYS
+//   lifecycle         — day 8 to ~80, everyone: one "did you know" email every ~5 days (lib/email/lifecycle.ts)
 //   referral-nudge     — 5+ days old, ≥2 projects or ≥1 published: once
 //   publish-nudge      — has an unpublished 3+ day-old project: every 4 days, max 2
 //   early-credit-warn — free plan, 21–50 credits: once
@@ -38,7 +38,6 @@ const DRIP_MAX_SENDS = 4
 const PUBLISH_NUDGE_INTERVAL_DAYS = 4
 const PUBLISH_NUDGE_MAX_SENDS = 2
 const BATCH = 50 // per campaign per run — spreads big backlogs over days
-const FEATURE_KEYS: FeatureSpotlightKey[] = ['mobile', 'connectors', 'domain', 'templates']
 
 type EventRow = { user_id: string; kind: string; sent_count: number; last_sent_at: string | null }
 
@@ -53,7 +52,7 @@ export async function GET(req: NextRequest) {
   const publishNudgeDueBefore = new Date(now - PUBLISH_NUDGE_INTERVAL_DAYS * 24 * 3600_000).toISOString()
   const results = {
     creditsDrip: 0, gettingStarted: 0, publishNudge: 0,
-    quickStart: 0, nextStep: 0, socialProof: 0, featureSpotlight: 0, referralNudge: 0,
+    quickStart: 0, nextStep: 0, socialProof: 0, lifecycle: 0, referralNudge: 0,
     earlyCreditWarn: 0, checkoutAbandoned: 0, winBack: 0, breakup: 0, unusedCredits: 0, errors: 0,
   }
 
@@ -70,11 +69,9 @@ export async function GET(req: NextRequest) {
 
   const markSent = async (userId: string, kind: string) => {
     const prev = events.get(`${userId}:${kind}`)
-    await admin.from('email_events').upsert({
-      user_id: userId, kind,
-      sent_count: (prev?.sent_count ?? 0) + 1,
-      last_sent_at: new Date().toISOString(),
-    })
+    const row = { user_id: userId, kind, sent_count: (prev?.sent_count ?? 0) + 1, last_sent_at: new Date().toISOString() }
+    await admin.from('email_events').upsert(row)
+    events.set(`${userId}:${kind}`, row) // so later blocks in this run see it (e.g. the lifecycle gap rule)
   }
 
   try {
@@ -99,11 +96,13 @@ export async function GET(req: NextRequest) {
       } catch { results.errors++ }
     }
 
-    // ── 2a. Quick-start nudge (4–12h old, never generated an app) — touch 1 ─
-    // Window tightened from 18–36h to 4–12h: by 18h the user has already mentally
-    // churned. 4h catches them while the signup intent is still warm.
+    // ── 2a. Quick-start nudge (4–28h old, never generated an app) — touch 1 ─
+    // Starts at 4h so it lands while the signup intent is still warm. The window must
+    // be at least 24h wide: this cron runs once a day, and the old 4–12h window only
+    // matched signups from an 8-hour slice of the day (about a third of people).
+    // The once-ever guard below means the wider window cannot send twice.
     const fourHoursAgo = new Date(now - 4 * 3600_000).toISOString()
-    const twelveHoursAgo = new Date(now - 12 * 3600_000).toISOString()
+    const twelveHoursAgo = new Date(now - 28 * 3600_000).toISOString()
     const { data: brandNew } = await admin
       .from('profiles')
       .select('id, email, full_name, email_opt_out, created_at')
@@ -200,26 +199,44 @@ export async function GET(req: NextRequest) {
       } catch { results.errors++ }
     }
 
-    // ── 2d. Feature spotlight (5–7 days old, any engagement level) ─────────
+    // ── 2d. Lifecycle sequence (day 8 → ~day 80, everyone, one email per run) ─
+    // Replaces the old single feature spotlight. Time-based like Continuum's day-N
+    // emails: what is sent depends on signup age, not on whether they built. Each step
+    // is once per person (`seq-<id>` in email_events) and nobody gets it within
+    // LIFECYCLE_MIN_GAP_DAYS of any other email, so it never stacks on the nudges above.
     const fiveDaysAgo = new Date(now - 5 * 24 * 3600_000).toISOString()
-    const sevenDaysAgo = new Date(now - 7 * 24 * 3600_000).toISOString()
-    const { data: weekOld } = await admin
+    const seqOldest = new Date(now - (LIFECYCLE_STEPS[LIFECYCLE_STEPS.length - 1].day + LIFECYCLE_WINDOW_DAYS) * 24 * 3600_000).toISOString()
+    const seqNewest = new Date(now - LIFECYCLE_STEPS[0].day * 24 * 3600_000).toISOString()
+    const lastAnyEmail = new Map<string, string>()
+    for (const r of events.values()) {
+      if (r.last_sent_at && r.last_sent_at > (lastAnyEmail.get(r.user_id) ?? '')) lastAnyEmail.set(r.user_id, r.last_sent_at)
+    }
+    const gapCutoff = new Date(now - LIFECYCLE_MIN_GAP_DAYS * 24 * 3600_000).toISOString()
+    const { data: seqUsers } = await admin
       .from('profiles')
-      .select('id, email, email_opt_out, created_at')
-      .lt('created_at', fiveDaysAgo)
-      .gt('created_at', sevenDaysAgo)
+      .select('id, email, full_name, email_opt_out, created_at')
+      .lt('created_at', seqNewest)
+      .gt('created_at', seqOldest)
       .eq('email_opt_out', false)
-      .limit(300)
-    for (const u of weekOld ?? []) {
-      if (results.featureSpotlight >= BATCH) break
+      .limit(1000)
+    for (const u of seqUsers ?? []) {
+      if (results.lifecycle >= BATCH) break
       if (!u.email) continue
-      if (events.get(`${u.id}:feature-spotlight`)) continue
-      // Rotate deterministically per-user so re-runs don't reshuffle who gets what.
-      const key = FEATURE_KEYS[u.id.charCodeAt(0) % FEATURE_KEYS.length]
+      if ((lastAnyEmail.get(u.id) ?? '') > gapCutoff) continue
+      const sentIds = new Set<string>()
+      for (const s of LIFECYCLE_STEPS) if (events.get(`${u.id}:seq-${s.id}`)) sentIds.add(s.id)
+      const { count } = await admin.from('projects').select('id', { count: 'exact', head: true }).eq('user_id', u.id)
+      const step = nextLifecycleStep({
+        createdAtMs: new Date(u.created_at as string).getTime(),
+        nowMs: now,
+        sentIds,
+        hasBuilt: (count ?? 0) > 0,
+      })
+      if (!step) continue
       try {
-        await sendFeatureSpotlightEmail(u.email, key)
-        await markSent(u.id, 'feature-spotlight')
-        results.featureSpotlight++
+        await sendLifecycleEmail(u.email, (u.full_name as string | null)?.split(' ')[0] || u.email.split('@')[0], step)
+        await markSent(u.id, `seq-${step.id}`)
+        results.lifecycle++
       } catch { results.errors++ }
     }
 
@@ -355,7 +372,7 @@ export async function GET(req: NextRequest) {
       .from('profiles')
       .select('id, email, full_name, credits, email_opt_out, created_at')
       .eq('plan', 'free')
-      .gte('credits', 45)
+      .gte('credits', 30) // free signups start at 30 (was 50); the old 45 floor matched nobody
       .lt('created_at', threeDaysAgoStrict)
       .gt('created_at', tenDaysAgo)
       .eq('email_opt_out', false)
