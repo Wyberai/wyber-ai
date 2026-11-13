@@ -605,7 +605,9 @@ export default function SettingsPage({ isIndia }: { isIndia?: boolean }) {
                   : recentSpend.map((row, i) => (
                     <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#9aa8bb', marginBottom: 3 }}>
                       <span style={{ textTransform: 'capitalize' }}>{row.reason.replace(/-/g, ' ')}</span>
-                      <span style={{ color: '#ef4444', fontWeight: 600 }}>−{row.amount} cr</span>
+                      {row.amount < 0
+                        ? <span style={{ color: '#22c55e', fontWeight: 600 }}>+{Math.abs(row.amount)} cr</span>
+                        : <span style={{ color: '#ef4444', fontWeight: 600 }}>−{row.amount} cr</span>}
                     </div>
                   ))
                 }

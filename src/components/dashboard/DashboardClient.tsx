@@ -367,7 +367,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
   const totalCredits = planStr === 'scale' ? LARGE_PLAN_CREDITS.scale : planStr === 'growth' ? LARGE_PLAN_CREDITS.growth : planStr === 'pro' ? PLAN_FACTS.pro.credits : planStr === 'builder' ? PLAN_FACTS.builder.credits : planStr === 'starter' ? PLAN_FACTS.starter.credits : planStr === 'spark' ? PLAN_FACTS.spark.credits : 50;
   const creditPct = Math.min(100, (credits / totalCredits) * 100);
 
-  const MOBILE_KEYWORDS = /\b(mobile app|ios app|android app|react native|phone app|iphone|smartphone app|expo)\b/i;
+  const MOBILE_KEYWORDS = /\b(mobile app|ios app|android app|react native|phone app|iphone|smartphone app|expo go|expo sdk|built with expo)\b/i;
   const WEBSITE_KEYWORDS = /\b(landing page|marketing site|marketing website|business website|portfolio site|portfolio website|company site|company website|product website|personal website|blog site|brochure site|one.?page site|one.?page website|coming soon page|event page|restaurant website|agency website)\b/i;
   const SAAS_KEYWORDS = /\b(saas|saas app|saas product|saas platform|subscription app|subscription platform|admin panel|admin dashboard|multi.?tenant|b2b app|b2b platform|api dashboard|developer dashboard|user management|role.?based|rbac)\b/i;
 

@@ -224,7 +224,9 @@
 
 .scrim { position: absolute; inset: 0; z-index: 4; pointer-events: none; background: linear-gradient(90deg, rgba(5, 6, 10, 0.92) 0%, rgba(5, 6, 10, 0.78) 26%, rgba(5, 6, 10, 0) 52%); }
 @media (max-width: 760px) {
-  .scrim { background: linear-gradient(180deg, rgba(5, 6, 10, 0.92) 0%, rgba(5, 6, 10, 0.75) 34%, rgba(5, 6, 10, 0) 58%); }
+  /* The audience buttons and CTA sit at roughly 42-72% of the screen on a phone, so keep the scrim dark until past them. */
+  .scrim { background: linear-gradient(180deg, rgba(5, 6, 10, 0.92) 0%, rgba(5, 6, 10, 0.84) 52%, rgba(5, 6, 10, 0.6) 74%, rgba(5, 6, 10, 0) 90%); }
+  .pill:not(.pillOn) { background: rgba(5, 6, 10, 0.78); }
 }
 
 /* ================= compositor-driven story (CSS scroll-driven animations) =================

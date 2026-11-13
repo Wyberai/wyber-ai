@@ -2539,6 +2539,12 @@ const storeProjectId = useEditorStore.getState().project?.id;
       if (ownsBubble) setIsGenerating(false);
       clearStreamingContent();
       setProgressSteps([]);
+      // The staged build charges after the response headers arrive, so the balance
+      // fetched at stream start can be stale. Re-read it once the run is over.
+      fetch('/api/credits/deduct', { method: 'GET' })
+        .then(r => r.json())
+        .then(data => { if (typeof data?.credits === 'number') useEditorStore.getState().setCredits(data.credits); })
+        .catch(() => {});
     }
     return succeeded;
   }, [credits, files, messages, framework, resolvedProjectId, resolvedUserId, knowledge, addMessage, updateMessage, setMessages, setIsGenerating, bumpGenerationTurn, setStreamingContent, clearStreamingContent, consumeCredit, setFiles, hasGeneratedFiles, setHasGeneratedFiles, saveProject, persistMessage, pushCheckpoint, project, setProject, pushAgentEvents, failBuildAfterDrop]);
