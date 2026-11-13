@@ -10,6 +10,7 @@ import { extraFontLinks } from './direction-fonts'
 import { WYBER_UI_KIT_FILES } from './wyber-ui-kit'
 import { WYBER_STORE_FILES } from './wyber-store'
 import { CONNECTOR_INFRA_FILES } from './connector-infra'
+import { DATA_TABLE_FILES } from './data-table-infra'
 import { resolveDirectivesForPreview } from './image-directives'
 import { synthesizeAppTsx } from './synthesize-app'
 
@@ -131,6 +132,14 @@ export function sanitizeFiles<T extends Record<string, FileVal>>(files: T, opts?
     //     from these rather than regenerating them (saves ~900 tokens per build).
     for (const { path: infPath, content: infContent } of CONNECTOR_INFRA_FILES) {
       if (!(infPath in out)) out[infPath] = { content: infContent, language: 'typescript' }
+    }
+
+    // 0d. Data table — pre-built sort/search/paginate/select/export-CSV table.
+    //     Same rules: transient, user files win, tree-shaken when unused. LLM
+    //     imports and configures it rather than hand-writing table logic and
+    //     CSV-export boilerplate on every build.
+    for (const { path: dtPath, content: dtContent } of DATA_TABLE_FILES) {
+      if (!(dtPath in out)) out[dtPath] = { content: dtContent, language: 'typescript' }
     }
 
     // 1. index.css must carry the @tailwind directives AND the design-system

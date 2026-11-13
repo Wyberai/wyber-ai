@@ -4,68 +4,146 @@
     {
       "name": "wyberai",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
       "port": 3000,
       "autoPort": true
     },
     {
       "name": "session-c-worktree",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--prefix", "C:\\Users\\sumit\\wyberai-session-c", "--", "-p", "3011"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "C:\\Users\\sumit\\wyberai-session-c",
+        "--",
+        "-p",
+        "3011"
+      ],
       "port": 3011
     },
     {
       "name": "recon-site",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "-w", "apps/site", "--prefix", "C:\\Users\\sumit\\recon-signal-v3"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "-w",
+        "apps/site",
+        "--prefix",
+        "C:\\Users\\sumit\\recon-signal-v3"
+      ],
       "port": 3001
     },
     {
       "name": "recon-web",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "-w", "apps/web", "--prefix", "C:\\Users\\sumit\\recon-signal-v3"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "-w",
+        "apps/web",
+        "--prefix",
+        "C:\\Users\\sumit\\recon-signal-v3"
+      ],
       "port": 3000
     },
     {
       "name": "wyberai-mobile-web",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "web", "--prefix", "C:\\Users\\sumit\\wyberai-mobile", "--", "--port", "8099"],
+      "runtimeArgs": [
+        "run",
+        "web",
+        "--prefix",
+        "C:\\Users\\sumit\\wyberai-mobile",
+        "--",
+        "--port",
+        "8099"
+      ],
       "port": 8099
     },
     {
       "name": "jobpulse",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--prefix", "C:\\Users\\sumit\\jobpulse-app", "--", "--port", "5199"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "C:\\Users\\sumit\\jobpulse-app",
+        "--",
+        "--port",
+        "5199"
+      ],
       "port": 5199
     },
     {
       "name": "jobpulse-verify",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--prefix", "C:\\Users\\sumit\\jobpulse", "--", "--port", "5200"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "C:\\Users\\sumit\\jobpulse",
+        "--",
+        "--port",
+        "5200"
+      ],
       "port": 5200
     },
     {
       "name": "session-a-worktree",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--prefix", "C:\\Users\\sumit\\wyberai-session-a", "--", "-p", "3012"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "C:\\Users\\sumit\\wyberai-session-a",
+        "--",
+        "-p",
+        "3012"
+      ],
       "port": 3012
     },
     {
       "name": "trugrain",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--prefix", "C:\\Users\\sumit\\trugrain", "--", "--port", "3100"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "C:\\Users\\sumit\\trugrain",
+        "--",
+        "--port",
+        "3100"
+      ],
       "port": 3100
     },
     {
       "name": "tryfitai-dev",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--prefix", "C:\\Users\\sumit\\tryfitai", "--", "--port", "3200"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "C:\\Users\\sumit\\tryfitai",
+        "--",
+        "--port",
+        "3200"
+      ],
       "port": 3200
     },
     {
       "name": "wearon",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--prefix", "C:\\Users\\sumit\\wearon-platform"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "C:\\Users\\sumit\\wearon-platform"
+      ],
       "port": 3300,
       "autoPort": true
     },
@@ -77,44 +155,119 @@
     {
       "name": "setu-app",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--prefix", "C:\\Users\\sumit\\setu-app", "--", "--port", "3400"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "C:\\Users\\sumit\\setu-app",
+        "--",
+        "--port",
+        "3400"
+      ],
       "port": 3400
     },
     {
       "name": "sendkar",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--prefix", "C:\\Users\\sumit\\OneDrive\\Desktop\\Sendkar", "--", "--port", "3500"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "C:\\Users\\sumit\\OneDrive\\Desktop\\Sendkar",
+        "--",
+        "--port",
+        "3500"
+      ],
       "port": 3500
     },
     {
       "name": "wyber-game-proto",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--prefix", "C:\\Users\\sumit\\wyber-game-proto", "--", "--port", "3600"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "C:\\Users\\sumit\\wyber-game-proto",
+        "--",
+        "--port",
+        "3600"
+      ],
       "port": 3600
     },
     {
       "name": "continuum-web",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--prefix", "C:\\Users\\sumit\\projects\\continuum-web", "--", "--port", "3700"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "C:\\Users\\sumit\\projects\\continuum-web",
+        "--",
+        "--port",
+        "3700"
+      ],
       "port": 3700
     },
     {
       "name": "anti-piracy-dashboard",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--prefix", "C:\\Users\\sumit\\anti-piracy-platform\\apps\\producer-dashboard", "--", "--port", "3800"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "C:\\Users\\sumit\\anti-piracy-platform\\apps\\producer-dashboard",
+        "--",
+        "--port",
+        "3800"
+      ],
       "port": 3800
     },
     {
       "name": "trueframe-mobile-web",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "web", "--prefix", "C:\\Users\\sumit\\anti-piracy-platform\\apps\\mobile-companion", "--", "--port", "8098"],
+      "runtimeArgs": [
+        "run",
+        "web",
+        "--prefix",
+        "C:\\Users\\sumit\\anti-piracy-platform\\apps\\mobile-companion",
+        "--",
+        "--port",
+        "8098"
+      ],
       "port": 8098
     },
     {
       "name": "continuum-app",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--prefix", "C:\\Users\\sumit\\projects\\continuum-app-lovable"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "C:\\Users\\sumit\\projects\\continuum-app-lovable"
+      ],
       "port": 5173
+    },
+    {
+      "name": "slnv-website",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "C:/Users/sumit/slnv-website"
+      ],
+      "port": 5190
+    },
+    {
+      "name": "wyberai-prod-local",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "next",
+        "start",
+        "-p",
+        "3200"
+      ],
+      "port": 3200
     }
   ]
 }

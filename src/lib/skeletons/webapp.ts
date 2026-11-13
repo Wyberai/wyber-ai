@@ -158,10 +158,11 @@ export default function Dashboard() {
 
   'src/components/ItemList.tsx': `import { useState } from 'react'
 import { Search, Plus, MoreHorizontal, ChevronUp, ChevronDown } from 'lucide-react'
+import { useCollection } from '../wyber-store'
 
 interface Item { id: string; name: string; status: 'active' | 'inactive' | 'pending'; date: string; value: string }
 
-const INITIAL_ITEMS: Item[] = [
+const SEED_ITEMS: Item[] = [
   { id: '1', name: 'Sample Record Alpha', status: 'active', date: '2026-08-20', value: '\$1,200' },
   { id: '2', name: 'Project Beta Launch', status: 'pending', date: '2026-08-18', value: '\$850' },
   { id: '3', name: 'Customer Gamma Onboard', status: 'active', date: '2026-08-15', value: '\$2,100' },
@@ -177,7 +178,7 @@ const STATUS_STYLES: Record<string, string> = {
 }
 
 export default function ItemList() {
-  const [items] = useState<Item[]>(INITIAL_ITEMS)
+  const [items] = useCollection<Item>('items', SEED_ITEMS)
   const [query, setQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
@@ -303,14 +304,13 @@ export default function Analytics() {
 }`,
 
   'src/components/Settings.tsx': `import { useState } from 'react'
-import { User, Bell, Shield, CreditCard, Key } from 'lucide-react'
+import { User, Bell, Shield, Key } from 'lucide-react'
 
-type SettingsTab = 'profile' | 'notifications' | 'security' | 'billing' | 'api'
+type SettingsTab = 'profile' | 'notifications' | 'security' | 'api'
 const TABS: { id: SettingsTab; label: string; icon: typeof User }[] = [
   { id: 'profile', label: 'Profile', icon: User },
   { id: 'notifications', label: 'Notifications', icon: Bell },
   { id: 'security', label: 'Security', icon: Shield },
-  { id: 'billing', label: 'Billing', icon: CreditCard },
   { id: 'api', label: 'API Keys', icon: Key },
 ]
 
