@@ -10,6 +10,7 @@ import { isLaunchReadyApp, floorBuildTier, WEBAPP_LAUNCH_READY_CONTRACT } from '
 import { UNSLOP_WEBAPP_RULES } from '@/lib/unslop'
 import { UNSLOP_WEBSITE_RULES } from '@/lib/unslop-website'
 import { isLaunchReadyWebsite, floorWebsiteTier, WEBSITE_LAUNCH_READY_CONTRACT } from '@/lib/website-ready'
+import { isLaunchReadySaas, floorSaasTier, SAAS_LAUNCH_READY_CONTRACT } from '@/lib/saas-ready'
 import { notify } from '@/lib/push'
 import { userCurrency } from '@/lib/user-currency'
 import { withCacheBreakpoint } from '@/lib/anthropic-cache'
@@ -4195,9 +4196,9 @@ export async function POST(req: NextRequest) {
       : undefined
     // Launch-ready web apps (flag off by default) are always priced as at least a large build, at the fast-tier
     // price the editor shows beforehand, so the number shown and the number charged are the same table.
-    const launchReadyBuild = isNewBuild && (isLaunchReadyApp(projectType) || isLaunchReadyWebsite(projectType))
+    const launchReadyBuild = isNewBuild && (isLaunchReadyApp(projectType) || isLaunchReadyWebsite(projectType) || isLaunchReadySaas(projectType))
     const buildTier = launchReadyBuild && rawBuildTier
-      ? (isLaunchReadyWebsite(projectType) ? floorWebsiteTier(rawBuildTier) : floorBuildTier(rawBuildTier))
+      ? (isLaunchReadyWebsite(projectType) ? floorWebsiteTier(rawBuildTier) : isLaunchReadySaas(projectType) ? floorSaasTier(rawBuildTier) : floorBuildTier(rawBuildTier))
       : rawBuildTier
     // Pricing is decoupled from which model literally executes the build.
     // resolveModelTier's automatic routing always resolves to 'fast' (Sonnet)
@@ -5363,6 +5364,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
       staticSystemPrompt = basePrompt
         + (isLaunchReadyApp(projectType) ? WEBAPP_LAUNCH_READY_CONTRACT + UNSLOP_WEBAPP_RULES : '')
         + (isLaunchReadyWebsite(projectType) ? WEBSITE_LAUNCH_READY_CONTRACT + UNSLOP_WEBSITE_RULES : '')
+        + (isLaunchReadySaas(projectType) ? SAAS_LAUNCH_READY_CONTRACT + UNSLOP_WEBAPP_RULES : '')
         + (projectType === 'mobile' ? '' : wyberDNA)
         + (useToolUse ? toolUseOutputRule : outputRule)
       // Both staged-pass prompts below override rule 9's "end with a question"
