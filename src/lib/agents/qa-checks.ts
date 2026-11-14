@@ -5,6 +5,7 @@
 
 import { isLaunchReadyApp, launchReadyIssues } from '@/lib/launch-ready'
 import { slopIssues } from '@/lib/unslop'
+import { isLaunchReadyWebsite, websiteReadyIssues } from '@/lib/website-ready'
 
 type FileVal = { content?: string } | string
 
@@ -92,6 +93,9 @@ export function runQaChecks(files: Record<string, FileVal>, projectType?: string
 
   // Launch-ready web apps (flag off by default): missing contract items go back through the same free fix lane.
   if (isLaunchReadyApp(projectType) && paths.size > 0) issues.push(...launchReadyIssues(files), ...slopIssues(files))
+
+  // Launch-ready websites (flag off by default).
+  if (isLaunchReadyWebsite(projectType) && paths.size > 0) issues.push(...websiteReadyIssues(files))
 
   return issues
 }

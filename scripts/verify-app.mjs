@@ -22,6 +22,7 @@ const opt = (name, fallback) => { const i = args.indexOf(name); return i >= 0 ? 
 if (!url) { console.error('usage: node scripts/verify-app.mjs <url> [--out dir] [--chrome path]'); process.exit(2) }
 
 const SETUP = args.includes('--setup')
+const FLOW = args.includes('--flow')
 const outDir = resolve(opt('--out', 'verify-out'))
 mkdirSync(outDir, { recursive: true })
 const slug = url.replace(/^https?:\/\//, '').replace(/[^a-z0-9]+/gi, '-').replace(/-+$/, '')
@@ -162,6 +163,41 @@ try {
         return r.violations.map(v => ({ id: v.id, impact: v.impact, help: v.help, nodes: v.nodes.length }))
       })
       report.axe = axeResult
+
+      // Speed and stability as the frame reports them. LCP is only exposed for the top-level page in Chrome, so for a framed app we report
+      // first contentful paint and layout shift from inside the frame, plus the wrapper page's own LCP.
+      report.vitals = await frame.evaluate(() => new Promise(res => {
+        let cls = 0
+        try { new PerformanceObserver(l => { for (const e of l.getEntries()) if (!e.hadRecentInput) cls += e.value }).observe({ type: 'layout-shift', buffered: true }) } catch { /* unsupported */ }
+        const fcp = (performance.getEntriesByType('paint').find(p => p.name === 'first-contentful-paint') || {}).startTime || 0
+        setTimeout(() => res({ fcpMs: Math.round(fcp), cls: Math.round(cls * 1000) / 1000 }), 400)
+      }))
+      report.vitals.pageLcpMs = await page.evaluate(() => new Promise(res => {
+        let v = 0
+        try { new PerformanceObserver(l => { for (const e of l.getEntries()) v = e.startTime }).observe({ type: 'largest-contentful-paint', buffered: true }) } catch { /* unsupported */ }
+        setTimeout(() => res(Math.round(v)), 300)
+      }))
+
+      // Keyboard walk: Tab through the app and record what gets focus, whether a focus ring shows, and whether focus gets stuck.
+      try {
+        const fe = await frame.frameElement(); if (fe) await fe.focus()
+        const stops = []; let stuck = 0; let last = ''
+        for (let i = 0; i < 45; i++) {
+          await page.keyboard.press('Tab')
+          const info = await frame.evaluate(() => {
+            const e = document.activeElement; if (!e || e === document.body) return null
+            const s = getComputedStyle(e); const r = e.getBoundingClientRect()
+            const ring = (s.outlineStyle !== 'none' && parseFloat(s.outlineWidth) > 0) || (s.boxShadow && s.boxShadow !== 'none')
+            return { tag: e.tagName, label: ((e.innerText || e.getAttribute('aria-label') || e.placeholder || '') + '').replace(/\s+/g, ' ').trim().slice(0, 24), ring: !!ring, visible: r.width > 0 && r.height > 0 }
+          })
+          if (!info) continue
+          const key = info.tag + ':' + info.label
+          if (key === last) { stuck++; if (stuck >= 3) break } else { stuck = 0 }
+          last = key; stops.push(info)
+        }
+        const unique = new Set(stops.map(s => s.tag + ':' + s.label)).size
+        report.keyboard = { stops: stops.length, unique, withVisibleRing: stops.filter(s => s.ring).length, trapped: stuck >= 3, controlsOnScreen: m.interactive }
+      } catch (e) { report.keyboard = { error: String(e.message).slice(0, 80) } }
     }
     if (vp.name === 'phone') {
       // Walk the navigation (clicks only; never types or submits).
@@ -191,7 +227,7 @@ try {
         try { await el.evaluate(e => e.click()); await sleep(500) } catch (e) { steps.push({ label, ok: false, note: 'click failed: ' + String(e.message).slice(0, 60) }); continue }
         const info = await frame.evaluate(() => ({ text: (document.body?.innerText || '').trim(), head: (document.querySelector('h1,h2')?.textContent || '').trim().slice(0, 50) }))
         mergeSignals(signalsOf(info.text))
-        steps.push({ label: label.replace(/s+/g, ' '), ok: info.text.length > 40 && errors.length === before && !covered, textLength: info.text.length, heading: info.head, newErrors: errors.length - before, ...(covered ? { note: `covered by wrapper element ${covered}` } : {}) })
+        steps.push({ label: label.replace(/\s+/g, ' ').trim(), ok: info.text.length > 40 && errors.length === before && !covered, textLength: info.text.length, heading: info.head, newErrors: errors.length - before, ...(covered ? { note: `covered by wrapper element ${covered}` } : {}) })
       }
       report.nav = steps
       const keysAfter = await frame.evaluate(() => { try { return Object.keys(localStorage).length } catch { return -1 } })
@@ -201,6 +237,55 @@ try {
       report.persistence = { keysBeforeReload: keysAfter, keysAfterReload: keysReload }
     }
     report.errors.push(...errors.map(e => `${vp.name}: ${e}`))
+    await page.close()
+  }
+  if (FLOW) {
+    // Opt-in: add one record through the UI with throwaway values, reload, and see whether it is still there. For sites with a lead
+    // form, fill it and look for a confirmation. This WRITES to the app under test (in this throwaway browser profile only).
+    const { page, frame } = await openApp(VIEWPORTS[2])
+    const flow = { addButton: null, formFilled: 0, submitted: false, appeared: false, persisted: null, confirmation: null, notes: [] }
+    const MARK = 'Zz Test Entry'
+    try {
+      const textBefore = await frame.evaluate(() => (document.body?.innerText || '').toLowerCase())
+      flow.addButton = await frame.evaluate(() => {
+        // Prefer "Add item / Add customer" style buttons; fall back to any "New ..." or "Create ..." button.
+        const vis = Array.from(document.querySelectorAll('button,a')).filter(x => x.getBoundingClientRect().width > 0)
+        const txt = x => (x.innerText || '').trim()
+        const b = vis.find(x => /^(\+\s*)?add\b/i.test(txt(x))) || vis.find(x => /\badd (item|product|customer|client|record|entry)/i.test(txt(x))) || vis.find(x => /^(\+\s*)?(new|create)\b/i.test(txt(x)))
+        if (b) { b.click(); return txt(b).slice(0, 30) }
+        return null
+      })
+      flow.textBefore = textBefore.length
+      await sleep(700)
+      const inputs = await frame.$$('input:not([type=hidden]):not([type=checkbox]):not([type=radio]):not([type=file]):not([type=password]), textarea, select')
+      let first = true
+      for (const h of inputs) {
+        const info = await h.evaluate(e => { const r = e.getBoundingClientRect(); return { visible: r.width > 0 && r.height > 0, value: e.value, tag: e.tagName, type: e.type, name: ((e.name || '') + ' ' + (e.placeholder || '') + ' ' + (e.getAttribute('aria-label') || '') + ' ' + (e.labels && e.labels[0] ? e.labels[0].innerText : '')).toLowerCase() } })
+        if (!info.visible || info.value) continue
+        try {
+          if (info.tag === 'SELECT') { await h.evaluate(e => { if (e.options.length > 1) e.selectedIndex = 1; e.dispatchEvent(new Event('change', { bubbles: true })) }); flow.formFilled++; continue }
+          await h.evaluate(e => e.focus())
+          const v = info.type === 'email' || /email/.test(info.name) ? 'test@example.com' : info.type === 'tel' || /phone|mobile|whatsapp/.test(info.name) ? '9999999999' : info.type === 'number' || /price|qty|quantity|amount|stock|rate/.test(info.name) ? '10' : first ? MARK : 'Test note'
+          await h.type(v); flow.formFilled++; first = false
+        } catch { /* ignore */ }
+      }
+      flow.submitted = await frame.evaluate(() => {
+        const b = Array.from(document.querySelectorAll('button,input[type=submit]')).find(x => /^(save|add|create|submit|send|done|book|request|get in touch|confirm)\b/i.test(((x.innerText || x.value) || '').trim()) && x.getBoundingClientRect().width > 0 && !x.disabled)
+        if (b) { b.click(); return true }
+        return false
+      })
+      await sleep(1200)
+      const text = await frame.evaluate(() => (document.body?.innerText || ''))
+      flow.appeared = text.includes(MARK)
+      // A confirmation only counts if it was not already on the page before we submitted.
+      const confirm = text.toLowerCase().match(/thank you|thanks for|received|message sent|we.ll (be in touch|get back)|saved|added|booked|request sent/)
+      flow.confirmation = !!(confirm && !textBefore.includes(confirm[0]))
+      await page.reload({ waitUntil: 'networkidle2' }); await sleep(1500)
+      let after = ''
+      for (const f of page.frames().filter(f => f !== page.mainFrame())) { try { after = await f.evaluate(() => document.body?.innerText || ''); if (after) break } catch { /* ignore */ } }
+      flow.persisted = after.includes(MARK)
+    } catch (e) { flow.notes.push(String(e.message).slice(0, 100)) }
+    report.flow = flow
     await page.close()
   }
 } finally {
@@ -246,6 +331,9 @@ console.log(`Navigation walk: ${navOk}/${navTotal} steps fine`); (report.nav || 
 console.log(`Persistence: keys ${report.persistence?.keysBeforeReload} before reload, ${report.persistence?.keysAfterReload} after (the walk does not write data)`)
 console.log(`Launch-ready signals on screen: ${sigHit}/${sigKeys.length}  ${JSON.stringify(sig)}`)
 console.log(`Runtime design signs: ${JSON.stringify(slopTotals)}`)
+if (report.vitals) console.log(`Speed: first paint ${report.vitals.fcpMs} ms, layout shift ${report.vitals.cls}, page LCP ${report.vitals.pageLcpMs} ms`)
+if (report.keyboard) console.log(`Keyboard: ${report.keyboard.error ? 'error ' + report.keyboard.error : `${report.keyboard.unique} distinct stops of ${report.keyboard.controlsOnScreen} controls, ${report.keyboard.withVisibleRing}/${report.keyboard.stops} with a visible focus ring${report.keyboard.trapped ? ', FOCUS GOT STUCK' : ''}`}`)
+if (report.flow) console.log(`Flow (--flow): add button ${JSON.stringify(report.flow.addButton)}, fields filled ${report.flow.formFilled}, submitted ${report.flow.submitted}, appeared ${report.flow.appeared}, confirmation text ${report.flow.confirmation}, persisted after reload ${report.flow.persisted}${report.flow.notes.length ? ' notes: ' + report.flow.notes.join('; ') : ''}`)
 if (score.note) console.log(score.note)
 console.log(`\nScore ${score.total}/100  (errors ${score.noErrors}/20, overflow ${score.noOverflow}/15, access ${score.accessibility}/20, nav ${score.navigation}/15, signals ${score.launchSignals}/15, quiet design ${score.quietDesign}/15)`)
 console.log(`Files: ${outDir}`)

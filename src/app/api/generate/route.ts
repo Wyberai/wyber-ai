@@ -8,6 +8,8 @@ import { MODEL_IDS, creditCost, tierAllowedForPlan, resolveBuildTier, computeOve
 import { sendCreditLowEmail, sendFirstBuildEmail } from '@/lib/email'
 import { isLaunchReadyApp, floorBuildTier, WEBAPP_LAUNCH_READY_CONTRACT } from '@/lib/launch-ready'
 import { UNSLOP_WEBAPP_RULES } from '@/lib/unslop'
+import { UNSLOP_WEBSITE_RULES } from '@/lib/unslop-website'
+import { isLaunchReadyWebsite, floorWebsiteTier, WEBSITE_LAUNCH_READY_CONTRACT } from '@/lib/website-ready'
 import { notify } from '@/lib/push'
 import { userCurrency } from '@/lib/user-currency'
 import { withCacheBreakpoint } from '@/lib/anthropic-cache'
@@ -990,7 +992,7 @@ const PERSONAS: { key: Persona; label: string }[] = [
 const PERSONA_COPY: Record<Persona, { subheadline: string; featureHook: string; ctaText: string }> = {
   freelancer: { subheadline: 'Invoice clients in seconds, get paid faster.', featureHook: 'Made for solo operators.', ctaText: 'Start free — no card' },
   agency: { subheadline: 'Manage 10+ clients without losing track.', featureHook: 'Built for teams of 2–15.', ctaText: 'Start agency trial' },
-  enterprise: { subheadline: 'SSO, audit logs, and custom contracts.', featureHook: 'SOC 2 Type II certified.', ctaText: 'Talk to sales' },
+  enterprise: { subheadline: 'Built for larger teams.', featureHook: 'Talk to us about your setup.', ctaText: 'Talk to sales' },
 }
 // In App.tsx:
 const [persona, setPersona] = useState<Persona>(() => (localStorage.getItem('persona') as Persona) || 'freelancer')
@@ -1347,7 +1349,7 @@ RESULTS-FIRST SOCIAL PROOF:
 Every testimonial must follow the formula: RESULT → HOW → WHO. "We cut reporting time by 80% using [Product]'s automated exports. — Sarah Chen, COO at Meridian Labs." NOT "This product is amazing! — John D." Include a stat callout band with 3-4 SPECIFIC numbers (only use numbers the user gave you; if they gave none, use a capability stat like "builds in 60 seconds" not "50,000+ users").
 
 TRUST SIGNALS (mandatory on every commercial site):
-Alongside or below the hero: a small band of trust signals. Choose 2-3 that fit: "No credit card required", "SOC 2 Type II certified", "GDPR compliant", "Cancel anytime", "24/7 support", "30-day money-back guarantee", "Used by teams at [category]". Never invent specific company names or logos unless the user provided them.
+Alongside or below the hero: a small band of 2-3 trust signals, using ONLY facts the owner gave you or that the site itself makes true (for example the owner's own opening hours, city, years in business, a guarantee or policy they stated, "No credit card required" or "Cancel anytime" for a product that really works that way). NEVER state a certification, audit, legal-compliance status, support-hours promise, guarantee, customer count or named customer unless the owner stated it: no "SOC 2", "ISO 27001", "GDPR compliant", "HIPAA", "24/7 support", "money-back guarantee" or "Used by teams at" of your own invention. If the owner gave no facts, show no trust band and let the real content carry the page.
 
 FEATURE COMPLETENESS — ZERO TOLERANCE:
 Every section/page the user explicitly named in their prompt MUST be built and linked. "I need a pricing page, about page, and contact form" → all three must exist. Never skip a user-requested section.
@@ -4193,8 +4195,10 @@ export async function POST(req: NextRequest) {
       : undefined
     // Launch-ready web apps (flag off by default) are always priced as at least a large build, at the fast-tier
     // price the editor shows beforehand, so the number shown and the number charged are the same table.
-    const launchReadyBuild = isNewBuild && isLaunchReadyApp(projectType)
-    const buildTier = launchReadyBuild && rawBuildTier ? floorBuildTier(rawBuildTier) : rawBuildTier
+    const launchReadyBuild = isNewBuild && (isLaunchReadyApp(projectType) || isLaunchReadyWebsite(projectType))
+    const buildTier = launchReadyBuild && rawBuildTier
+      ? (isLaunchReadyWebsite(projectType) ? floorWebsiteTier(rawBuildTier) : floorBuildTier(rawBuildTier))
+      : rawBuildTier
     // Pricing is decoupled from which model literally executes the build.
     // resolveModelTier's automatic routing always resolves to 'fast' (Sonnet)
     // now — generation never auto-escalates to Opus (real Claude-API cost is
@@ -5358,6 +5362,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
         : buildSystemPrompt()
       staticSystemPrompt = basePrompt
         + (isLaunchReadyApp(projectType) ? WEBAPP_LAUNCH_READY_CONTRACT + UNSLOP_WEBAPP_RULES : '')
+        + (isLaunchReadyWebsite(projectType) ? WEBSITE_LAUNCH_READY_CONTRACT + UNSLOP_WEBSITE_RULES : '')
         + (projectType === 'mobile' ? '' : wyberDNA)
         + (useToolUse ? toolUseOutputRule : outputRule)
       // Both staged-pass prompts below override rule 9's "end with a question"

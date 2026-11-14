@@ -1,0 +1,119 @@
+import { describe, it, expect, afterEach, vi } from 'vitest'
+import fs from 'node:fs'
+import path from 'node:path'
+import { creditCost } from './credits'
+import {
+  WEBSITE_LAUNCH_READY_CONTRACT, WEBSITE_MIN_TIER, checkWebsiteReady, floorWebsiteTier, isLaunchReadyWebsite,
+  websiteLaunchReadyCost, websiteLaunchReadyCostText, websiteReadyIssues, websiteReadySummary,
+} from './website-ready'
+import { UNSLOP_WEBSITE_RULES } from './unslop-website'
+import { runQaChecks } from './agents/qa-checks'
+
+afterEach(() => { vi.unstubAllEnvs() })
+
+describe('flag and price', () => {
+  it('is off unless NEXT_PUBLIC_WEBSITE_LAUNCH_READY is "true", and only for websites', () => {
+    expect(isLaunchReadyWebsite('website')).toBe(false)
+    vi.stubEnv('NEXT_PUBLIC_WEBSITE_LAUNCH_READY', 'true')
+    expect(isLaunchReadyWebsite('website')).toBe(true)
+    for (const t of ['app', 'saas', 'mobile', undefined]) expect(isLaunchReadyWebsite(t as string | undefined)).toBe(false)
+  })
+  it('floors at medium and shows what credits.ts charges, with the ceiling', () => {
+    expect(WEBSITE_MIN_TIER).toBe('medium')
+    expect(floorWebsiteTier('small')).toBe('medium')
+    expect(floorWebsiteTier('large')).toBe('large')
+    const { price, ceiling } = websiteLaunchReadyCost()
+    expect(price).toBe(creditCost('website-build', 'fast', 'medium'))
+    expect(ceiling).toBe(creditCost('website-build', 'fast', 'large'))
+    expect(websiteLaunchReadyCostText()).toContain(String(price))
+    expect(websiteLaunchReadyCostText()).toContain(String(ceiling))
+  })
+})
+
+describe('contract and rules', () => {
+  it('has twelve website rules and ten design rules, with credit to unslop', () => {
+    for (let i = 1; i <= 12; i++) expect(WEBSITE_LAUNCH_READY_CONTRACT).toContain(`W${i} `)
+    for (let i = 1; i <= 10; i++) expect(UNSLOP_WEBSITE_RULES).toContain(`UW${i} `)
+    expect(UNSLOP_WEBSITE_RULES).toMatch(/Damir Sokolovsky/)
+    expect(UNSLOP_WEBSITE_RULES).toMatch(/CC BY 4\.0/)
+  })
+  it('forbids invented claims and false success messages, and names the delivery path', () => {
+    expect(WEBSITE_LAUNCH_READY_CONTRACT).toMatch(/NEVER show "Thank you, we received it" unless/)
+    expect(WEBSITE_LAUNCH_READY_CONTRACT).toMatch(/publicInsert/)
+    expect(WEBSITE_LAUNCH_READY_CONTRACT).toMatch(/public_enquiries/)
+    expect(WEBSITE_LAUNCH_READY_CONTRACT).toMatch(/Never invent a phone number/)
+    expect(WEBSITE_LAUNCH_READY_CONTRACT).toMatch(/no "SOC 2"/)
+  })
+  it('is wired into the generator behind the flag', () => {
+    const src = fs.readFileSync(path.join(process.cwd(), 'src/app/api/generate/route.ts'), 'utf8')
+    expect(src).toMatch(/isLaunchReadyWebsite\(projectType\) \? WEBSITE_LAUNCH_READY_CONTRACT \+ UNSLOP_WEBSITE_RULES/)
+    expect(src).toMatch(/floorWebsiteTier\(rawBuildTier\)/)
+  })
+})
+
+const GOOD: Record<string, string> = {
+  'src/owner-details.ts': `export const OWNER = { name: 'Asha Dental', city: 'Ahmedabad', phone: '', whatsapp: '919999999999' }`,
+  'index.html': `<title>Asha Dental, Ahmedabad</title><meta name="description" content="x"/><link rel="canonical" href="https://ashadental.example/"/><script type="application/ld+json">{"@type":"LocalBusiness"}</script>`,
+  'public/robots.txt': 'User-agent: *', 'public/sitemap.xml': '<urlset/>',
+  'src/App.tsx': `
+    <h1>Gentle dental care in Ahmedabad</h1>
+    <a href="https://wa.me/919999999999?text=Hi">WhatsApp</a>
+    <form onSubmit={submit}><label htmlFor="n">Name</label><input id="n" className="focus-visible:ring-2"/><input name="company_website" tabIndex={-1} aria-hidden/>
+    <p>We use your details only to reply to your enquiry.</p></form>
+    const submit = async () => { const r = await publicInsert('public_enquiries', d); if (r.success) setSubmitted(true) }
+    <img src="a.jpg" alt="Clinic reception"/>
+    <footer><a href="#privacy">Privacy</a> <a href="#terms">Terms</a> <button>हिन्दी</button> const translations = {}</footer>
+  `,
+}
+
+describe('checkWebsiteReady', () => {
+  it('passes a site that has everything', () => {
+    const r = checkWebsiteReady(GOOD)
+    expect(r.items.filter(i => !i.ok).map(i => i.id)).toEqual([])
+    expect(websiteReadySummary(r)).toMatch(/all \d+ items are present/)
+    expect(websiteReadySummary(r)).toMatch(/does not open the site in a browser/)
+  })
+
+  it('flags the classic failures: fake compliance, fake success, no contact path, no owner file', () => {
+    const r = checkWebsiteReady({
+      'src/App.tsx': `<h1>Best</h1><p>SOC 2 Type II certified. Trusted by 5000 clinics. 24/7 support</p><form onSubmit={() => setSubmitted(true)}><input/></form><img src="a.jpg"/>`,
+    })
+    const failed = r.items.filter(i => !i.ok).map(i => i.id)
+    for (const id of ['owner-details', 'no-invented-claims', 'contact-path', 'form-delivers', 'no-fake-success', 'form-purpose', 'alt', 'title-meta', 'json-ld', 'robots-sitemap', 'privacy-terms']) {
+      expect(failed).toContain(id)
+    }
+  })
+
+  it('skips form checks when there is no form and the language check outside India', () => {
+    const r = checkWebsiteReady({ 'src/App.tsx': '<h1>Bakery in Austin</h1>' })
+    const ids = r.items.map(i => i.id)
+    for (const id of ['form-delivers', 'no-fake-success', 'form-purpose', 'honeypot', 'language-toggle']) expect(ids).not.toContain(id)
+  })
+
+  it('requires the language toggle for an Indian business', () => {
+    const r = checkWebsiteReady({ 'src/App.tsx': '<h1>Clinic in Pune</h1>' })
+    expect(r.items.find(i => i.id === 'language-toggle')?.ok).toBe(false)
+  })
+
+  it('does not count a success state that follows a real write as fake', () => {
+    const r = checkWebsiteReady({ 'src/App.tsx': `<form onSubmit={s}/> const s = async () => { const res = await publicInsert('public_enquiries', d); if (res.success) setSubmitted(true) }` })
+    expect(r.items.find(i => i.id === 'no-fake-success')?.ok).toBe(true)
+  })
+
+  it('returns at most four launch items plus two design items as fix prompts', () => {
+    const issues = websiteReadyIssues({ 'src/App.tsx': `<h1>x</h1> bg-clip-text text-transparent 👋 Welcome back!` })
+    expect(issues.length).toBeLessThanOrEqual(6)
+    expect(issues.filter(i => !i.detail.startsWith('Design')).length).toBe(4)
+    expect(issues.some(i => i.detail.startsWith('Design'))).toBe(true)
+  })
+})
+
+describe('qa-checks integration', () => {
+  it('adds website items only for websites and only when the flag is on', () => {
+    const files = { 'src/App.tsx': 'export default function App(){return null}' }
+    expect(runQaChecks(files, 'website').some(i => i.kind === 'launch-ready')).toBe(false)
+    vi.stubEnv('NEXT_PUBLIC_WEBSITE_LAUNCH_READY', 'true')
+    expect(runQaChecks(files, 'website').some(i => i.kind === 'launch-ready')).toBe(true)
+    expect(runQaChecks(files, 'app').some(i => i.kind === 'launch-ready')).toBe(false)
+  })
+})
