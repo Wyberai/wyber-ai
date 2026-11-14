@@ -33,8 +33,20 @@ export function quoteBuild(featureCount: number, integrationCount: number): { ti
   return { tier, credits: creditCost('saas-build', 'fast', tier), maxCredits: creditCost('saas-build', 'default', tier), typical, plannedFiles }
 }
 
-/** The set DashboardClient's pending-prompt contract accepts is capped at 2000 chars. */
-export const PROMPT_LIMIT = 2000
+/**
+ * Longest hand-off prompt we send. The dashboard reads `wyber-pending-prompt` without a length cap (the /websites flow already sends
+ * 6000), so a 14-feature pick no longer has to lose its feature descriptions to fit 2000 characters.
+ */
+export const PROMPT_LIMIT = 6000
+
+/**
+ * What every replacement build must contain so the owner can check it and switch over. The checklist file is parsed after the build
+ * (src/lib/byos/acceptance.ts): each listed feature must also appear on a screen.
+ */
+export const REPLACEMENT_REQUIREMENTS =
+  'Replacement checklist: add src/replacement-checklist.ts exporting FEATURES, an array of { name, status: "built" | "simplified", note } with ONE entry per feature above using its exact name, and a Replacement page in the app that lists them with a plain "Built" or "Simplified: <what is cut>" label. Every listed feature must have a visible screen, button or menu entry labelled with its name. ' +
+  'Cut-over page: a field for what the owner pays now, what this app costs to run (list each outside service above with its billing note), a parallel-run checklist (export from the old tool, import here, run both for two weeks, compare totals weekly, switch the team, cancel the old plan last) and a rollback step. ' +
+  'Import: a column-mapping screen, a preview with a list of row errors and a dry-run count before anything is saved. Never claim a perfect migration.'
 
 export function composeBuildPrompt(opts: {
   product: string
@@ -59,6 +71,7 @@ export function composeBuildPrompt(opts: {
     connectLive.length ? `Connect for real: ${connectLive.join(', ')}.` : '',
     connectPlaceholder.length ? `Add clearly-labelled placeholder settings (no fake data) for: ${connectPlaceholder.join(', ')}.` : '',
     importCsv ? 'Include a CSV import so we can bring our existing data in.' : '',
+    REPLACEMENT_REQUIREMENTS,
   ].filter(Boolean).join('\n')
 
   const lineFor = (f: PickedFeature, withDesc: boolean) => {

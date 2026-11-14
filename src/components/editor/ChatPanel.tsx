@@ -24,6 +24,7 @@ import { resolveBuildTier, largestAffordableSmallerBuild } from '@/lib/credits';
 import { isLaunchReadyApp, floorBuildTier, launchReadyCostText, checkLaunchReady, launchReadySummary } from '@/lib/launch-ready';
 import { isLaunchReadyWebsite, floorWebsiteTier, websiteLaunchReadyCostText, checkWebsiteReady, websiteReadySummary } from '@/lib/website-ready';
 import { isLaunchReadySaas, floorSaasTier, saasLaunchReadyCostText, checkSaasReady, saasReadySummary } from '@/lib/saas-ready';
+import { checkReplacement, replacementSummary } from '@/lib/byos/acceptance';
 import { useAgentTurnStore } from '@/store/agent-turn';
 import type { ChatMessage } from '@/store/editor';
 import { AgentTeamFeed, AgentFeedBoundary } from './agent-team/AgentTeamFeed';
@@ -2046,6 +2047,9 @@ const storeProjectId = useEditorStore.getState().project?.id;
         } else if (isLaunchReadySaas(projectType)) {
           pushAgentEvents({ agent: 'qa', status: 'done', detail: saasReadySummary(checkSaasReady(updatedFiles)) })
         }
+        // Replace-your-SaaS builds: tell the owner how many of the listed features really appear on a screen.
+        const replacement = checkReplacement(updatedFiles)
+        if (replacement) pushAgentEvents({ agent: 'qa', status: 'done', detail: replacementSummary(replacement) })
         if (qaIssues.length > 0) {
           qaRetryFired = true
           // Same reasoning as the placeholder-retry branch above.
@@ -2062,7 +2066,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
               detail: { continuation: true, qaFix: true, prompt: combined }
             }))
           }, 700)
-        } else if (!isLaunchReadyApp(projectType) && !isLaunchReadyWebsite(projectType) && !isLaunchReadySaas(projectType)) {
+        } else if (!replacement && !isLaunchReadyApp(projectType) && !isLaunchReadyWebsite(projectType) && !isLaunchReadySaas(projectType)) {
           pushAgentEvents({ agent: 'qa', status: 'done', detail: t('qaPassedMsg') })
         }
       }
