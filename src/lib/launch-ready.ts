@@ -30,15 +30,17 @@ export function floorBuildTier(tier: BuildSizeTier): BuildSizeTier {
  * single build can ever cost: the existing overage safety valve tops a build up by at most one tier step (see computeOverageCharge), and
  * the owner sees a receipt when it happens.
  */
-export function launchReadyCost(): { price: number; ceiling: number } {
+export function launchReadyCost(complex = false): { price: number; ceiling: number } {
+  // A build the planner calls complex is charged at the 'default' price column today (the server's pricingTier); simple ones at 'fast'.
+  const col = complex ? 'default' : 'fast'
   return {
-    price: creditCost('web-build', 'fast', LAUNCH_READY_MIN_TIER),
-    ceiling: creditCost('web-build', 'fast', 'xl'),
+    price: creditCost('web-build', col, LAUNCH_READY_MIN_TIER),
+    ceiling: creditCost('web-build', col, 'xl'),
   }
 }
 
-export function launchReadyCostText(): string {
-  const { price, ceiling } = launchReadyCost()
+export function launchReadyCostText(complex = false): string {
+  const { price, ceiling } = launchReadyCost(complex)
   return `${price} credits (up to ${ceiling} only if the build turns out unusually large; you will see a receipt)`
 }
 

@@ -4216,7 +4216,7 @@ export async function POST(req: NextRequest) {
     // Confirmed explicitly: keep charging the premium. Only applies to
     // automatic (non-explicit-dropdown) tiered build pricing — an explicit
     // user tier pick already prices off its own real tier.
-    const pricingTier: ModelTier = (!explicitClaudeTier && buildTier && newBuildComplexity === true && !launchReadyBuild) ? 'default' : tier
+    const pricingTier: ModelTier = (!explicitClaudeTier && buildTier && newBuildComplexity === true) ? 'default' : tier
     let cost = creditCost(actionType, pricingTier, buildTier)
 
     // Fetch profile and enforce balance (skip for 'plan' stage — no generation happens).

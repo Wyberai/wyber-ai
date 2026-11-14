@@ -20,11 +20,12 @@ export function isLaunchReadySaas(projectType?: string | null): boolean {
 export function floorSaasTier(tier: BuildSizeTier): BuildSizeTier {
   return TIER_ORDER.indexOf(tier) < TIER_ORDER.indexOf(SAAS_MIN_TIER) ? SAAS_MIN_TIER : tier
 }
-export function saasLaunchReadyCost(): { price: number; ceiling: number } {
-  return { price: creditCost('saas-build', 'fast', SAAS_MIN_TIER), ceiling: creditCost('saas-build', 'fast', 'xl') }
+export function saasLaunchReadyCost(complex = false): { price: number; ceiling: number } {
+  const col = complex ? 'default' : 'fast'
+  return { price: creditCost('saas-build', col, SAAS_MIN_TIER), ceiling: creditCost('saas-build', col, 'xl') }
 }
-export function saasLaunchReadyCostText(): string {
-  const { price, ceiling } = saasLaunchReadyCost()
+export function saasLaunchReadyCostText(complex = false): string {
+  const { price, ceiling } = saasLaunchReadyCost(complex)
   return `${price} credits (up to ${ceiling} only if the build turns out unusually large; you will see a receipt)`
 }
 

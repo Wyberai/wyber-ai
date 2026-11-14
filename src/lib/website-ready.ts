@@ -18,12 +18,13 @@ export function isLaunchReadyWebsite(projectType?: string | null): boolean {
 export function floorWebsiteTier(tier: BuildSizeTier): BuildSizeTier {
   return TIER_ORDER.indexOf(tier) < TIER_ORDER.indexOf(WEBSITE_MIN_TIER) ? WEBSITE_MIN_TIER : tier
 }
-export function websiteLaunchReadyCost(): { price: number; ceiling: number } {
+export function websiteLaunchReadyCost(complex = false): { price: number; ceiling: number } {
   const next = TIER_ORDER[TIER_ORDER.indexOf(WEBSITE_MIN_TIER) + 1]
-  return { price: creditCost('website-build', 'fast', WEBSITE_MIN_TIER), ceiling: creditCost('website-build', 'fast', next) }
+  const col = complex ? 'default' : 'fast'
+  return { price: creditCost('website-build', col, WEBSITE_MIN_TIER), ceiling: creditCost('website-build', col, next) }
 }
-export function websiteLaunchReadyCostText(): string {
-  const { price, ceiling } = websiteLaunchReadyCost()
+export function websiteLaunchReadyCostText(complex = false): string {
+  const { price, ceiling } = websiteLaunchReadyCost(complex)
   return `${price} credits (up to ${ceiling} only if the build turns out unusually large; you will see a receipt)`
 }
 

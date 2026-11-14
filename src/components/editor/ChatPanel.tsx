@@ -2722,17 +2722,21 @@ const storeProjectId = useEditorStore.getState().project?.id;
       : undefined;
     // Launch-ready web apps are priced as at least a large build; the server applies the same floor (generate/route.ts).
     const launchReadySite = isLaunchReadyWebsite(projectType);
+    // Launch-ready builds: the server charges a build the planner calls complex at the 'default' price column, so the estimate must too.
+    const complexBuild = buildComplexity === 'HIGH';
     const estimateBuildTier = baseEstimateTier && launchReadyApp ? floorBuildTier(baseEstimateTier)
       : baseEstimateTier && launchReadySite ? floorWebsiteTier(baseEstimateTier)
       : baseEstimateTier && isLaunchReadySaas(projectType) ? floorSaasTier(baseEstimateTier)
       : baseEstimateTier && isLaunchReadyMobile(projectType) ? floorMobileTier(baseEstimateTier)
       : baseEstimateTier;
+    const anyLaunchReady = launchReadyApp || launchReadySite || isLaunchReadySaas(projectType) || isLaunchReadyMobile(projectType);
+    const estimateTierName: ModelTier = anyLaunchReady && complexBuild ? 'default' : effectiveModelTier;
     if (estimateBuildTier) {
       const buildActionType: ActionType = projectType === 'mobile' ? 'mobile-build'
         : projectType === 'website' ? 'website-build'
         : projectType === 'saas' ? 'saas-build'
         : 'web-build';
-      const estimatedCost = creditCost(buildActionType, effectiveModelTier, estimateBuildTier);
+      const estimatedCost = creditCost(buildActionType, estimateTierName, estimateBuildTier);
       // Read credits fresh from the store — the closure value can be stale if
       // a real-time subscription updated the balance after the last render.
       const freshCredits = useEditorStore.getState().credits ?? 0;
@@ -2778,7 +2782,7 @@ I can build a **simpler version** instead: just the core screens (up to ${simple
     // down, before the user ever really saw it.
     const costSuffix = estimateBuildTier ? ` — ~${creditCost(
       projectType === 'mobile' ? 'mobile-build' : projectType === 'website' ? 'website-build' : projectType === 'saas' ? 'saas-build' : 'web-build',
-      effectiveModelTier, estimateBuildTier,
+      estimateTierName, estimateBuildTier,
     )}cr` : '';
 
     // Update the "Planning..." bubble with the real credit estimate now that
@@ -2788,20 +2792,20 @@ I can build a **simpler version** instead: just the core screens (up to ${simple
         : projectType === 'website' ? 'website-build'
         : projectType === 'saas' ? 'saas-build'
         : 'web-build';
-      const exactCost = creditCost(buildActionForCost, effectiveModelTier, estimateBuildTier);
+      const exactCost = creditCost(buildActionForCost, estimateTierName, estimateBuildTier);
       const hi = Math.ceil(exactCost * 1.12);
       const appLabel = projectType === 'mobile' ? 'mobile app'
         : projectType === 'website' ? 'website'
         : projectType === 'saas' ? 'SaaS'
         : 'app';
       const preMsg = launchReadyApp
-        ? `Building your launch-ready ${appLabel} — ${plannedFileCount} files planned. Cost: ${launchReadyCostText()}. Starting now.`
+        ? `Building your launch-ready ${appLabel} — ${plannedFileCount} files planned. Cost: ${launchReadyCostText(complexBuild)}. Starting now.`
         : launchReadySite
-        ? `Building your launch-ready ${appLabel} — ${plannedFileCount} files planned. Cost: ${websiteLaunchReadyCostText()}. Starting now.`
+        ? `Building your launch-ready ${appLabel} — ${plannedFileCount} files planned. Cost: ${websiteLaunchReadyCostText(complexBuild)}. Starting now.`
         : isLaunchReadySaas(projectType)
-        ? `Building your launch-ready ${appLabel} — ${plannedFileCount} files planned. Cost: ${saasLaunchReadyCostText()}. Starting now.`
+        ? `Building your launch-ready ${appLabel} — ${plannedFileCount} files planned. Cost: ${saasLaunchReadyCostText(complexBuild)}. Starting now.`
         : isLaunchReadyMobile(projectType)
-        ? `Building your launch-ready ${appLabel} — ${plannedFileCount} files planned. Cost: ${mobileLaunchReadyCostText()}. Starting now.`
+        ? `Building your launch-ready ${appLabel} — ${plannedFileCount} files planned. Cost: ${mobileLaunchReadyCostText(complexBuild)}. Starting now.`
         : `Building your ${appLabel} — ${plannedFileCount} files planned, ~${exactCost}–${hi} credits. Starting now.`;
       updateMessage(chainId, { content: preMsg, status: 'done' });
       // Do NOT persist the intermediate progress message — finishChain persists

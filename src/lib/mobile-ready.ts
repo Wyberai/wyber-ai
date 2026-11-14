@@ -18,11 +18,12 @@ export function isLaunchReadyMobile(projectType?: string | null): boolean {
 export function floorMobileTier(tier: BuildSizeTier): BuildSizeTier {
   return TIER_ORDER.indexOf(tier) < TIER_ORDER.indexOf(MOBILE_MIN_TIER) ? MOBILE_MIN_TIER : tier
 }
-export function mobileLaunchReadyCost(): { price: number; ceiling: number } {
-  return { price: creditCost('mobile-build', 'fast', MOBILE_MIN_TIER), ceiling: creditCost('mobile-build', 'fast', 'xl') }
+export function mobileLaunchReadyCost(complex = false): { price: number; ceiling: number } {
+  const col = complex ? 'default' : 'fast'
+  return { price: creditCost('mobile-build', col, MOBILE_MIN_TIER), ceiling: creditCost('mobile-build', col, 'xl') }
 }
-export function mobileLaunchReadyCostText(): string {
-  const { price, ceiling } = mobileLaunchReadyCost()
+export function mobileLaunchReadyCostText(complex = false): string {
+  const { price, ceiling } = mobileLaunchReadyCost(complex)
   return `${price} credits (up to ${ceiling} only if the build turns out unusually large; you will see a receipt)`
 }
 
