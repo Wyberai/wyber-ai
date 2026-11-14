@@ -8,9 +8,11 @@ import { MODEL_IDS, creditCost, tierAllowedForPlan, resolveBuildTier, computeOve
 import { sendCreditLowEmail, sendFirstBuildEmail } from '@/lib/email'
 import { isLaunchReadyApp, floorBuildTier, WEBAPP_LAUNCH_READY_CONTRACT } from '@/lib/launch-ready'
 import { UNSLOP_WEBAPP_RULES } from '@/lib/unslop'
+import { activeMobileSdk, sdkPromptNotes } from '@/lib/mobile-sdk'
 import { UNSLOP_WEBSITE_RULES } from '@/lib/unslop-website'
 import { isLaunchReadyWebsite, floorWebsiteTier, WEBSITE_LAUNCH_READY_CONTRACT } from '@/lib/website-ready'
 import { isLaunchReadySaas, floorSaasTier, SAAS_LAUNCH_READY_CONTRACT } from '@/lib/saas-ready'
+import { isLaunchReadyMobile, floorMobileTier, MOBILE_LAUNCH_READY_CONTRACT } from '@/lib/mobile-ready'
 import { notify } from '@/lib/push'
 import { userCurrency } from '@/lib/user-currency'
 import { withCacheBreakpoint } from '@/lib/anthropic-cache'
@@ -211,7 +213,7 @@ You are the AI engine inside WyberAi Mobile — a React Native + Expo app builde
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 TECH STACK — MANDATORY
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-- React Native with Expo SDK 54 + TypeScript
+- React Native with Expo SDK ${activeMobileSdk()} + TypeScript
 - Navigation: @react-navigation/native + @react-navigation/stack or @react-navigation/bottom-tabs
 - Peer deps (REQUIRED): react-native-screens, react-native-safe-area-context, react-native-gesture-handler — wrap root with GestureHandlerRootView
 - Styling: StyleSheet.create() — NO Tailwind, NO web CSS
@@ -4196,9 +4198,12 @@ export async function POST(req: NextRequest) {
       : undefined
     // Launch-ready web apps (flag off by default) are always priced as at least a large build, at the fast-tier
     // price the editor shows beforehand, so the number shown and the number charged are the same table.
-    const launchReadyBuild = isNewBuild && (isLaunchReadyApp(projectType) || isLaunchReadyWebsite(projectType) || isLaunchReadySaas(projectType))
+    const launchReadyBuild = isNewBuild && (isLaunchReadyApp(projectType) || isLaunchReadyWebsite(projectType) || isLaunchReadySaas(projectType) || isLaunchReadyMobile(projectType))
     const buildTier = launchReadyBuild && rawBuildTier
-      ? (isLaunchReadyWebsite(projectType) ? floorWebsiteTier(rawBuildTier) : isLaunchReadySaas(projectType) ? floorSaasTier(rawBuildTier) : floorBuildTier(rawBuildTier))
+      ? (isLaunchReadyWebsite(projectType) ? floorWebsiteTier(rawBuildTier)
+        : isLaunchReadySaas(projectType) ? floorSaasTier(rawBuildTier)
+        : isLaunchReadyMobile(projectType) ? floorMobileTier(rawBuildTier)
+        : floorBuildTier(rawBuildTier))
       : rawBuildTier
     // Pricing is decoupled from which model literally executes the build.
     // resolveModelTier's automatic routing always resolves to 'fast' (Sonnet)
@@ -5355,7 +5360,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
       stageMaxTokens = planIsComplex ? 6000 : 2000
     } else {
       const basePrompt = projectType === 'mobile'
-        ? buildMobileSystemPrompt()
+        ? buildMobileSystemPrompt() + sdkPromptNotes()
         : projectType === 'website'
         ? buildWebsiteSystemPrompt()
         : projectType === 'saas'
@@ -5365,6 +5370,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
         + (isLaunchReadyApp(projectType) ? WEBAPP_LAUNCH_READY_CONTRACT + UNSLOP_WEBAPP_RULES : '')
         + (isLaunchReadyWebsite(projectType) ? WEBSITE_LAUNCH_READY_CONTRACT + UNSLOP_WEBSITE_RULES : '')
         + (isLaunchReadySaas(projectType) ? SAAS_LAUNCH_READY_CONTRACT + UNSLOP_WEBAPP_RULES : '')
+        + (isLaunchReadyMobile(projectType) ? MOBILE_LAUNCH_READY_CONTRACT : '')
         + (projectType === 'mobile' ? '' : wyberDNA)
         + (useToolUse ? toolUseOutputRule : outputRule)
       // Both staged-pass prompts below override rule 9's "end with a question"

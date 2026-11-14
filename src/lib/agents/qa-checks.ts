@@ -8,6 +8,7 @@ import { slopIssues } from '@/lib/unslop'
 import { isLaunchReadyWebsite, websiteReadyIssues } from '@/lib/website-ready'
 import { isLaunchReadySaas, saasReadyIssues } from '@/lib/saas-ready'
 import { replacementIssues } from '@/lib/byos/acceptance'
+import { isLaunchReadyMobile, mobileReadyIssues } from '@/lib/mobile-ready'
 
 type FileVal = { content?: string } | string
 
@@ -98,6 +99,9 @@ export function runQaChecks(files: Record<string, FileVal>, projectType?: string
 
   // Replace-your-SaaS builds list their features in src/replacement-checklist.ts; each must appear on a screen.
   issues.push(...replacementIssues(files))
+
+  // Launch-ready mobile apps (flag off by default).
+  if (isLaunchReadyMobile(projectType) && paths.size > 0) issues.push(...mobileReadyIssues(files))
 
   // Launch-ready SaaS products (flag off by default).
   if (isLaunchReadySaas(projectType) && paths.size > 0) issues.push(...saasReadyIssues(files))

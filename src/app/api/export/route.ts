@@ -3,6 +3,7 @@ import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { sanitizeFiles } from '@/lib/sanitize-files';
 import { scanForExposedSecrets } from '@/lib/security-scan';
 import { rateLimit } from '@/lib/rate-limit';
+import { buildStorePack } from '@/lib/mobile-store-pack';
 
 // GET — a plain clicked link (e.g. from the MCP export_code tool's response,
 // which can only ever offer a URL for the user to click, not fire a POST)
@@ -87,6 +88,11 @@ async function handleExport(projectId: string | null, format: string | null) {
     }
 
     const hasSupabaseEnv = Object.keys(files).some(p => /supabase/i.test(p));
+    const looksMobile = project.project_type === 'mobile' || Object.keys(files).some(p => /^(src\/)?screens\//i.test(p));
+    if (looksMobile) {
+      // Store pack: plain-language drafts for the Play Console and App Store Connect forms, built from what the code does.
+      for (const [path, text] of Object.entries(buildStorePack(files, String(project.name ?? '')))) zip.file(path, text);
+    }
     // Mobile projects are stored with project_type='mobile' (framework is often
     // still 'react-vite'), so key off project_type — with a framework/App.tsx
     // fallback — to decide Expo vs web run instructions.

@@ -25,6 +25,7 @@ import { isLaunchReadyApp, floorBuildTier, launchReadyCostText, checkLaunchReady
 import { isLaunchReadyWebsite, floorWebsiteTier, websiteLaunchReadyCostText, checkWebsiteReady, websiteReadySummary } from '@/lib/website-ready';
 import { isLaunchReadySaas, floorSaasTier, saasLaunchReadyCostText, checkSaasReady, saasReadySummary } from '@/lib/saas-ready';
 import { checkReplacement, replacementSummary } from '@/lib/byos/acceptance';
+import { isLaunchReadyMobile, floorMobileTier, mobileLaunchReadyCostText, checkMobileReady, mobileReadySummary } from '@/lib/mobile-ready';
 import { useAgentTurnStore } from '@/store/agent-turn';
 import type { ChatMessage } from '@/store/editor';
 import { AgentTeamFeed, AgentFeedBoundary } from './agent-team/AgentTeamFeed';
@@ -2046,6 +2047,8 @@ const storeProjectId = useEditorStore.getState().project?.id;
           pushAgentEvents({ agent: 'qa', status: 'done', detail: websiteReadySummary(checkWebsiteReady(updatedFiles)) })
         } else if (isLaunchReadySaas(projectType)) {
           pushAgentEvents({ agent: 'qa', status: 'done', detail: saasReadySummary(checkSaasReady(updatedFiles)) })
+        } else if (isLaunchReadyMobile(projectType)) {
+          pushAgentEvents({ agent: 'qa', status: 'done', detail: mobileReadySummary(checkMobileReady(updatedFiles)) })
         }
         // Replace-your-SaaS builds: tell the owner how many of the listed features really appear on a screen.
         const replacement = checkReplacement(updatedFiles)
@@ -2066,7 +2069,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
               detail: { continuation: true, qaFix: true, prompt: combined }
             }))
           }, 700)
-        } else if (!replacement && !isLaunchReadyApp(projectType) && !isLaunchReadyWebsite(projectType) && !isLaunchReadySaas(projectType)) {
+        } else if (!replacement && !isLaunchReadyApp(projectType) && !isLaunchReadyWebsite(projectType) && !isLaunchReadySaas(projectType) && !isLaunchReadyMobile(projectType)) {
           pushAgentEvents({ agent: 'qa', status: 'done', detail: t('qaPassedMsg') })
         }
       }
@@ -2722,6 +2725,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
     const estimateBuildTier = baseEstimateTier && launchReadyApp ? floorBuildTier(baseEstimateTier)
       : baseEstimateTier && launchReadySite ? floorWebsiteTier(baseEstimateTier)
       : baseEstimateTier && isLaunchReadySaas(projectType) ? floorSaasTier(baseEstimateTier)
+      : baseEstimateTier && isLaunchReadyMobile(projectType) ? floorMobileTier(baseEstimateTier)
       : baseEstimateTier;
     if (estimateBuildTier) {
       const buildActionType: ActionType = projectType === 'mobile' ? 'mobile-build'
@@ -2796,6 +2800,8 @@ I can build a **simpler version** instead: just the core screens (up to ${simple
         ? `Building your launch-ready ${appLabel} — ${plannedFileCount} files planned. Cost: ${websiteLaunchReadyCostText()}. Starting now.`
         : isLaunchReadySaas(projectType)
         ? `Building your launch-ready ${appLabel} — ${plannedFileCount} files planned. Cost: ${saasLaunchReadyCostText()}. Starting now.`
+        : isLaunchReadyMobile(projectType)
+        ? `Building your launch-ready ${appLabel} — ${plannedFileCount} files planned. Cost: ${mobileLaunchReadyCostText()}. Starting now.`
         : `Building your ${appLabel} — ${plannedFileCount} files planned, ~${exactCost}–${hi} credits. Starting now.`;
       updateMessage(chainId, { content: preMsg, status: 'done' });
       // Do NOT persist the intermediate progress message — finishChain persists
