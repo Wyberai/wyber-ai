@@ -58,7 +58,9 @@ W11 ACCESS: every input has a visible label; focus-visible rings; a skip-to-cont
 
 W13 NO NOTES TO THE OWNER ON THE PAGE: visitors see the site, not a to-do list. Never write instructions, hints or placeholders aimed at the owner into anything rendered ("Add your number", "set this in owner-details", "turn this on", "replace this"). If a fact is missing, leave the element out. Instructions for the owner belong in code comments only.
 
-W12 DEFINITION OF DONE (confirm silently before the "Built:" line): owner-details file with empty strings where unknown, read at render time; no button, link or form that cannot work with the facts present; no notes to the owner on the page; sections match the archetype; contact path on every page; the form delivers or opens a pre-filled link; no invented claims; title, description, canonical, one h1, alt text, JSON-LD from owner details, robots and sitemap; language toggle when Indian; privacy line beside the form.
+W14 NAV LINKS LAND SOMEWHERE: every in-page link (href="#timings" and the like) must point at an element that exists. A section that is only rendered when an OWNER value is set (hours, address, phone) must have its nav and footer link rendered under the same condition, so an empty value never leaves a dead menu item.
+
+W12 DEFINITION OF DONE (confirm silently before the "Built:" line): owner-details file with empty strings where unknown, read at render time; no button, link or form that cannot work with the facts present; no notes to the owner on the page; every #anchor link has a target; sections match the archetype; contact path on every page; the form delivers or opens a pre-filled link; no invented claims; title, description, canonical, one h1, alt text, JSON-LD from owner details, robots and sitemap; language toggle when Indian; privacy line beside the form.
 `
 
 // ── The check ────────────────────────────────────────────────────────────────
@@ -103,6 +105,15 @@ export function contactNudge(files: Record<string, FileVal>): string | null {
   return `Your site is built, but visitors cannot reach you yet: no WhatsApp number, phone or email is set, so the contact button and enquiry form are left out. ${how}`
 }
 
+/** Static #anchors with no matching id in the same source. Dynamic hrefs are ignored. */
+export function deadAnchors(code: string): string[] {
+  const ids = new Set<string>()
+  for (const m of code.matchAll(/\b(?:id|name)\s*=\s*(?:["']([^"']+)["']|\{\s*["'`]([^"'`$]+)["'`]\s*\})/g)) ids.add(m[1] || m[2])
+  const dead = new Set<string>()
+  for (const m of code.matchAll(/\bhref\s*=\s*(?:["']|\{\s*["'`])#([A-Za-z][\w-]*)["'`]/g)) if (!ids.has(m[1])) dead.add(m[1])
+  return [...dead]
+}
+
 const CHECKS: Check[] = [
   { id: 'owner-details', label: 'Business facts kept in one owner-details file',
     fix: 'Create src/owner-details.ts with name, city, address, phone, whatsapp, email, hours (empty strings where unknown) and render phone, hours and address blocks only when present.',
@@ -117,6 +128,10 @@ const CHECKS: Check[] = [
     fix: 'Build wa.me and tel: links from OWNER.whatsapp and OWNER.phone and render the button only when that value is non-empty; when every contact fact is empty, drop the button and the form instead of rendering one that cannot work.',
     applies: c => /whatsapp/i.test(c.replace(/\/\/ FILE [^\n]*owner-details[^\n]*\n[^\n]*/i, '')) || /tel:/.test(c),
     test: c => /wa\.me\/|tel:|mailto:/.test(c) && /OWNER\.(whatsapp|phone|email)\s*(\?|&&|\|\||!==|===|\))|(has|show)(WhatsApp|Phone|Contact)|if\s*\(\s*!?\s*OWNER\.(whatsapp|phone|email)/.test(c) },
+  { id: 'anchors-resolve', label: 'Every in-page link has a target',
+    fix: 'Every href="#something" needs an element with id="something". Render a nav or footer link only when the section it points to is rendered (for example hours, address).',
+    applies: c => /href=["']#[A-Za-z][\w-]*["']/.test(c),
+    test: c => deadAnchors(c).length === 0 },
   { id: 'contact-path', label: 'A working contact path (WhatsApp, phone or email)',
     fix: 'Add a visible contact path: a wa.me WhatsApp link and/or a tel: link and/or a mailto: link, in the header or a sticky bar and in the footer.',
     test: c => /wa\.me\/|tel:|mailto:/.test(c) },

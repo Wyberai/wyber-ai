@@ -63,6 +63,7 @@ const GOOD: Record<string, string> = {
     const submit = async () => { const r = await publicInsert('public_enquiries', d); if (r.success) setSubmitted(true) }
     <img src="a.jpg" alt="Clinic reception"/>
     <footer><a href="#privacy">Privacy</a> <a href="#terms">Terms</a> <button>हिन्दी</button> const translations = {}</footer>
+    <section id="privacy"/><section id="terms"/>
   `,
 }
 
@@ -197,5 +198,20 @@ describe('Grow panel fills owner-details', () => {
     const { 'src/owner-details.ts': _drop, ...without } = base
     const out2 = applyGrowKit(without, cfg, { qrSvg: '' }) as Record<string, unknown>
     expect('src/owner-details.ts' in out2).toBe(false)
+  })
+})
+
+import { deadAnchors } from './website-ready'
+describe('in-page links land somewhere (14 Nov)', () => {
+  it('the contract tells the model to hide the nav link with its section', () => {
+    expect(WEBSITE_LAUNCH_READY_CONTRACT).toMatch(/W14 NAV LINKS LAND SOMEWHERE/)
+  })
+  it('finds the dead #timings link from the dental build', () => {
+    const code = '<a href="#services">S</a><a href="#timings">T</a><section id="services"/>'
+    expect(deadAnchors(code)).toEqual(['timings'])
+    expect(checkWebsiteReady({ 'src/App.tsx': code }).items.find(i => i.id === 'anchors-resolve')?.ok).toBe(false)
+  })
+  it('passes when every target exists, including id set from a string expression', () => {
+    expect(deadAnchors('<a href="#a">x</a><a href={"#b"}>y</a><div id="a"/><div id={"b"}/>')).toEqual([])
   })
 })
