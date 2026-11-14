@@ -180,7 +180,9 @@ export function ByosClient() {
     try {
       localStorage.setItem('wyber-pending-prompt', prompt)
       localStorage.setItem('wyber-pending-type', 'saas')
-      localStorage.setItem('wyber-pending-project-label', `${analysis.product} replacement`)
+      // An exact project name ("Pipedrive replacement"), not a label: a label gets "<your name>'s " put in front of it, which gave
+      // names like "sumeet sutar's Pipedrive replacement" and the address /app/sumeet-sutar-s-pipedrive-replacement-1.
+      localStorage.setItem('wyber-pending-project-name', `${analysis.product} replacement`)
       localStorage.removeItem(STATE_KEY)
     } catch { /* private mode */ }
     track('byos_cta_clicked', { domain: analysis.domain, features: picked.length, integrations: names.length, tier: quote.tier, credits: quote.credits, hasSpend: !!yearly })

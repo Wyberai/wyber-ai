@@ -34,15 +34,15 @@ LAUNCH-READY CONTRACT — WEBSITES (OVERRIDES EARLIER RULES WHERE THEY CONFLICT)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 This site goes live for a real business the day it is published. Its job is to be believed and to bring in enquiries. Every item below is checked after the build; missing items are sent back to you. When output space is short, drop decoration before you drop any item here.
 
-W1 OWNER DETAILS: put every business fact in ONE file, src/owner-details.ts: name, what it does, city and areas served, address, phone, WhatsApp number, email, opening hours, years in business, languages. Fill only what the prompt states; leave the rest as empty strings. Components render a block (phone button, hours, address, map link) ONLY when its fact is present. Never invent a phone number, address, hours, founding year, team member or price. The owner fills the rest later in the editor.
+W1 OWNER DETAILS: put every business fact in ONE file, src/owner-details.ts, as \`export const OWNER = { name: "", city: "", address: "", phone: "", whatsapp: "", email: "", hours: "", years: "", languages: "" }\`: every value is a plain string (languages as "en,hi,gu"), WhatsApp as digits with the country code and no plus sign. Fill only what the prompt states; leave the rest as empty strings. The editor can rewrite this file later (the owner types their phone, WhatsApp, address and hours), so read every value from OWNER at render time and never copy a value into another file. Components render a block (phone button, hours, address, map link) ONLY when its fact is present. Never invent a phone number, address, hours, founding year, team member or price.
 
 W2 STRUCTURE BY BUSINESS TYPE: pick ONE archetype from the prompt and say which in a [progress:] line: local service (clinic, salon, cleaner), practitioner or studio, shop or bakery, B2B supplier or exporter, portfolio, institute. Build only the sections that archetype needs. The persona chips, pricing toggle, logo strip, stat band and testimonial carousel from earlier rules apply ONLY when the owner supplied the content for them; otherwise omit them.
 
 W3 FIRST SCREEN: one plain promise (what you do, for whom, where), one primary action, at most one secondary action. A real image or a clearly empty image slot, never filler. Nothing stacked under the buttons.
 
-W4 CONTACT PATH ON EVERY PAGE: a visible way to reach the business: a WhatsApp button (https://wa.me/<number>?text=<prefilled message>) and/or a tap-to-call link (tel:) when those facts exist, plus an enquiry form. A sticky contact bar on phones.
+W4 CONTACT PATH ON EVERY PAGE: a visible way to reach the business: a WhatsApp button (https://wa.me/<OWNER.whatsapp>?text=<prefilled message>) when OWNER.whatsapp is set, a tap-to-call link (tel:) when OWNER.phone is set, a mailto: link when OWNER.email is set, plus the enquiry form when it can deliver (W5). A sticky contact bar on phones. NEVER render a WhatsApp or call button, or a wa.me link, when its OWNER value is empty: a button that goes nowhere is worse than none. When OWNER.whatsapp, OWNER.phone and OWNER.email are ALL empty, the primary action becomes "Send an enquiry" (scrolls to the form, if the form can deliver), and otherwise the first screen shows the business name, what it does and where, with no button at all.
 
-W5 FORMS THAT DELIVER: an enquiry form (name, phone or email, message) must really reach the owner. If a WyberCloud database is connected (see its context), write with publicInsert to a table named public_enquiries and show success only after the write succeeds; on failure show an error with a Try again button. If no database is connected, the form's button reads "Send on WhatsApp" (or "Send by email") and opens a pre-filled wa.me or mailto: link. NEVER show "Thank you, we received it" unless a write or a link opened. Add a hidden honeypot input; if it is filled, do not submit. Beside the form say what happens next in one sentence, and promise a reply time only if the owner gave one.
+W5 FORMS THAT DELIVER: an enquiry form (name, phone or email, message) must really reach the owner. If a WyberCloud database is connected (see its context), write with publicInsert to a table named public_enquiries and show success only after the write succeeds; on failure show an error with a Try again button. If no database is connected, the form's button reads "Send on WhatsApp" (or "Send by email") and opens a pre-filled wa.me or mailto: link built from OWNER.whatsapp or OWNER.email. If there is no database AND OWNER.whatsapp and OWNER.email are empty, DO NOT render the form at all (a form that cannot deliver is a lie); show the other contact facts that exist, or one calm line "Contact details coming soon." NEVER show "Thank you, we received it" unless a write or a link opened. Add a hidden honeypot input; if it is filled, do not submit. Beside the form say what happens next in one sentence, and promise a reply time only if the owner gave one.
 
 W6 TRUTH: no certification, award, audit, legal-compliance status, guarantee, support-hours promise, customer count, rating, client logo or testimonial unless the owner stated it. No stock-name testimonials, no "trusted by", no "SOC 2", "ISO", "GDPR compliant", "24/7", "money-back". If the owner gave none of these, the site simply does not have them.
 
@@ -56,7 +56,9 @@ W10 PRIVACY: footer links to Privacy and Terms pages (short, plain, with "have t
 
 W11 ACCESS: every input has a visible label; focus-visible rings; a skip-to-content link; touch targets at least 44px on phones; contrast that passes; prefers-reduced-motion respected.
 
-W12 DEFINITION OF DONE (confirm silently before the "Built:" line): owner-details file with empty strings where unknown; sections match the archetype; contact path on every page; the form delivers or opens a pre-filled link; no invented claims; title, description, canonical, one h1, alt text, JSON-LD from owner details, robots and sitemap; language toggle when Indian; privacy line beside the form.
+W13 NO NOTES TO THE OWNER ON THE PAGE: visitors see the site, not a to-do list. Never write instructions, hints or placeholders aimed at the owner into anything rendered ("Add your number", "set this in owner-details", "turn this on", "replace this"). If a fact is missing, leave the element out. Instructions for the owner belong in code comments only.
+
+W12 DEFINITION OF DONE (confirm silently before the "Built:" line): owner-details file with empty strings where unknown, read at render time; no button, link or form that cannot work with the facts present; no notes to the owner on the page; sections match the archetype; contact path on every page; the form delivers or opens a pre-filled link; no invented claims; title, description, canonical, one h1, alt text, JSON-LD from owner details, robots and sitemap; language toggle when Indian; privacy line beside the form.
 `
 
 // ── The check ────────────────────────────────────────────────────────────────
@@ -72,6 +74,35 @@ interface Check { id: string; label: string; fix: string; applies?: (code: strin
 const FORM = /<form[\s>]|onSubmit=/
 const CLAIMS = /(soc ?2|iso ?27001|gdpr[- ]compliant|hipaa|24\/7 support|money-back|trusted by \d|\b\d{1,3},\d{3}\+ (customers|clients|users|patients)|rated \d(\.\d)?\s?\/\s?5)/i
 
+/** Text aimed at the owner that would show on the public page: it mentions owner-details or tells someone to add a fact to turn something on. */
+function visibleOwnerNote(code: string): boolean {
+  const blocks = code.split(/(?=\/\/ FILE )/).filter(b => !/^\/\/ FILE [^\n]*owner-details/i.test(b))
+  for (const block of blocks) {
+    const stripped = block
+      .split('\n')
+      .filter(l => !/^\s*(import |\/\/|\*|\/\*)/.test(l))
+      .join('\n')
+    if (/(add|set|enter|fill in|put)\s+(the|your)\s+[a-z ]{0,30}(whatsapp|phone|number|email|hours|address)[^\n<>{}]{0,60}(owner-details|to turn|in the editor|here)/i.test(stripped)) return true
+    if (/>[^<>{}\n]*owner-details[^<>{}\n]*</i.test(stripped) || /['"`][^'"`\n]*\bowner-details\b[^'"`\n]*['"`]/.test(stripped.replace(/from\s+['"`][^'"`]*owner-details['"`]/g, ''))) return true
+    if (/>[^<>{}\n]*(to turn this on|turn this on|replace this (text|number)|coming from owner|todo:)[^<>{}\n]*</i.test(stripped)) return true
+  }
+  return false
+}
+
+/**
+ * After a website build: when no way for a visitor to reach the owner is filled in, say so once and say how to fix it.
+ * Returns null when at least one of whatsapp, phone or email has a value (or there is no owner-details file).
+ */
+export function contactNudge(files: Record<string, FileVal>): string | null {
+  const entry = Object.entries(files || {}).find(([p]) => /(^|\/)owner-details\.(ts|tsx|js)$/.test(p))
+  if (!entry) return null
+  const src = contentOf(entry[1])
+  const val = (k: string) => (src.match(new RegExp(`${k}\\s*:\\s*(['"\`])((?:\\\\.|(?!\\1).)*)\\1`))?.[2] ?? '').trim()
+  if (val('whatsapp') || val('phone') || val('email')) return null
+  const how = 'Add your WhatsApp number, phone and opening hours: in the Grow tab if you have it (0 credits), or just tell me in the chat and I will add them.'
+  return `Your site is built, but visitors cannot reach you yet: no WhatsApp number, phone or email is set, so the contact button and enquiry form are left out. ${how}`
+}
+
 const CHECKS: Check[] = [
   { id: 'owner-details', label: 'Business facts kept in one owner-details file',
     fix: 'Create src/owner-details.ts with name, city, address, phone, whatsapp, email, hours (empty strings where unknown) and render phone, hours and address blocks only when present.',
@@ -79,6 +110,13 @@ const CHECKS: Check[] = [
   { id: 'no-invented-claims', label: 'No invented certifications, guarantees or counts',
     fix: 'Remove every certification, guarantee, support-hours promise, rating, customer count and "trusted by" line the owner did not state.',
     test: c => !CLAIMS.test(c) },
+  { id: 'no-owner-notes', label: 'No notes to the owner on the page',
+    fix: 'Remove every instruction or hint aimed at the owner from what visitors see (for example "Add the clinic WhatsApp number in owner-details to turn this on"). If a fact is missing, leave the element out; keep owner instructions in code comments.',
+    test: c => !visibleOwnerNote(c) },
+  { id: 'cta-guarded', label: 'No WhatsApp or call button that goes nowhere',
+    fix: 'Build wa.me and tel: links from OWNER.whatsapp and OWNER.phone and render the button only when that value is non-empty; when every contact fact is empty, drop the button and the form instead of rendering one that cannot work.',
+    applies: c => /whatsapp/i.test(c.replace(/\/\/ FILE [^\n]*owner-details[^\n]*\n[^\n]*/i, '')) || /tel:/.test(c),
+    test: c => /wa\.me\/|tel:|mailto:/.test(c) && /OWNER\.(whatsapp|phone|email)\s*(\?|&&|\|\||!==|===|\))|(has|show)(WhatsApp|Phone|Contact)|if\s*\(\s*!?\s*OWNER\.(whatsapp|phone|email)/.test(c) },
   { id: 'contact-path', label: 'A working contact path (WhatsApp, phone or email)',
     fix: 'Add a visible contact path: a wa.me WhatsApp link and/or a tel: link and/or a mailto: link, in the header or a sticky bar and in the footer.',
     test: c => /wa\.me\/|tel:|mailto:/.test(c) },

@@ -57,7 +57,7 @@ const GOOD: Record<string, string> = {
   'public/robots.txt': 'User-agent: *', 'public/sitemap.xml': '<urlset/>',
   'src/App.tsx': `
     <h1>Gentle dental care in Ahmedabad</h1>
-    <a href="https://wa.me/919999999999?text=Hi">WhatsApp</a>
+    {OWNER.whatsapp ? <a href={'https://wa.me/' + OWNER.whatsapp}>WhatsApp</a> : null}
     <form onSubmit={submit}><label htmlFor="n">Name</label><input id="n" className="focus-visible:ring-2"/><input name="company_website" tabIndex={-1} aria-hidden/>
     <p>We use your details only to reply to your enquiry.</p></form>
     const submit = async () => { const r = await publicInsert('public_enquiries', d); if (r.success) setSubmitted(true) }
@@ -115,5 +115,87 @@ describe('qa-checks integration', () => {
     vi.stubEnv('NEXT_PUBLIC_WEBSITE_LAUNCH_READY', 'true')
     expect(runQaChecks(files, 'website').some(i => i.kind === 'launch-ready')).toBe(true)
     expect(runQaChecks(files, 'app').some(i => i.kind === 'launch-ready')).toBe(false)
+  })
+})
+
+import { contactNudge } from './website-ready'
+import { mergeOwnerDetails, applyGrowKit, EMPTY_GROW_CONFIG } from './grow-kit'
+
+describe('contact path fix (14 Nov): no dead buttons, no notes to the owner', () => {
+  it('the contract says never to render a button or form that cannot work, and never to leave notes on the page', () => {
+    expect(WEBSITE_LAUNCH_READY_CONTRACT).toMatch(/NEVER render a WhatsApp or call button, or a wa\.me link, when its OWNER value is empty/)
+    expect(WEBSITE_LAUNCH_READY_CONTRACT).toMatch(/DO NOT render the form at all/)
+    expect(WEBSITE_LAUNCH_READY_CONTRACT).toMatch(/W13 NO NOTES TO THE OWNER ON THE PAGE/)
+    expect(WEBSITE_LAUNCH_READY_CONTRACT).toMatch(/read every value from OWNER at render time/)
+  })
+
+  it('flags the exact note the last build showed to visitors', () => {
+    const r = checkWebsiteReady({
+      'src/owner-details.ts': `export const OWNER = { whatsapp: '' }`,
+      'src/App.tsx': `<p className="text-sm">Add the clinic WhatsApp number or email in owner-details to turn this on.</p>`,
+    })
+    expect(r.items.find(i => i.id === 'no-owner-notes')?.ok).toBe(false)
+  })
+
+  it('does not flag an import of owner-details or a code comment', () => {
+    const r = checkWebsiteReady({
+      'src/owner-details.ts': `export const OWNER = { whatsapp: '' }`,
+      'src/App.tsx': `import { OWNER } from './owner-details'\n// owner: set your number in owner-details\nconst x = OWNER.whatsapp ? <a href={'https://wa.me/' + OWNER.whatsapp}>WhatsApp</a> : null`,
+    })
+    expect(r.items.find(i => i.id === 'no-owner-notes')?.ok).toBe(true)
+    expect(r.items.find(i => i.id === 'cta-guarded')?.ok).toBe(true)
+  })
+
+  it('flags a WhatsApp button with no link, and an unguarded wa.me link built from an empty value', () => {
+    expect(checkWebsiteReady({ 'src/App.tsx': `<button>WhatsApp પર બુક કરો</button>` }).items.find(i => i.id === 'cta-guarded')?.ok).toBe(false)
+    expect(checkWebsiteReady({ 'src/App.tsx': "<a href={`https://wa.me/${OWNER.whatsapp}`}>WhatsApp</a>" }).items.find(i => i.id === 'cta-guarded')?.ok).toBe(false)
+  })
+
+  it('nudges once when no WhatsApp, phone or email is set, and stays quiet when one is', () => {
+    const empty = { 'src/owner-details.ts': `export const OWNER = { name: "Smilecraft", whatsapp: "", phone: "", email: "" }` }
+    expect(contactNudge(empty)).toMatch(/visitors cannot reach you yet/)
+    expect(contactNudge(empty)).toMatch(/Grow tab/)
+    expect(contactNudge({ 'src/owner-details.ts': `export const OWNER = { whatsapp: "919999999999", phone: "" }` })).toBeNull()
+    expect(contactNudge({ 'src/owner-details.ts': `export const OWNER = { phone: '+91 99999 99999' }` })).toBeNull()
+    expect(contactNudge({ 'src/App.tsx': 'x' })).toBeNull()
+  })
+
+  it('the editor shows the nudge after a launch-ready website build', () => {
+    const src = fs.readFileSync(path.join(process.cwd(), 'src/components/editor/ChatPanel.tsx'), 'utf8')
+    expect(src).toMatch(/const contactMsg = contactNudge\(updatedFiles\)/)
+  })
+})
+
+describe('Grow panel fills owner-details', () => {
+  const existing = `export const OWNER = {\n  name: "Smilecraft",\n  city: "Ahmedabad",\n  phone: "",\n  whatsapp: "",\n  hours: "",\n  years: "",\n  languages: "en,hi,gu",\n};\n`
+  const cfg = { ...EMPTY_GROW_CONFIG, businessName: 'Smilecraft Dental', whatsapp: '99999 88888', phone: '079 1234 5678', hours: 'Mon to Sat, 10am to 7pm' }
+
+  it('rewrites the Grow facts and keeps every other key', () => {
+    const out = mergeOwnerDetails(existing, cfg)
+    expect(out).toContain('name: "Smilecraft Dental"')
+    expect(out).toContain('whatsapp: "919999988888"')
+    expect(out).toContain('phone: "079 1234 5678"')
+    expect(out).toContain('hours: "Mon to Sat, 10am to 7pm"')
+    expect(out).toContain('city: "Ahmedabad"')
+    expect(out).toContain('languages: "en,hi,gu"')
+    expect(out).toContain('years: ""')
+  })
+
+  it('does not blank a value the owner already had when the panel field is empty', () => {
+    const out = mergeOwnerDetails(`export const OWNER = { address: "12 MG Road", phone: "" }`, { ...EMPTY_GROW_CONFIG, businessName: 'X' })
+    expect(out).toContain('address: "12 MG Road"')
+  })
+
+  it('applyGrowKit updates owner-details.ts only when the project has one', () => {
+    const base = {
+      'index.html': '<html><head></head><body></body></html>',
+      'src/main.tsx': `import React from 'react'\n`,
+      'src/owner-details.ts': { path: 'src/owner-details.ts', language: 'typescript', content: existing },
+    }
+    const out = applyGrowKit(base, cfg, { qrSvg: '' }) as Record<string, { content?: string }>
+    expect(out['src/owner-details.ts'].content).toContain('whatsapp: "919999988888"')
+    const { 'src/owner-details.ts': _drop, ...without } = base
+    const out2 = applyGrowKit(without, cfg, { qrSvg: '' }) as Record<string, unknown>
+    expect('src/owner-details.ts' in out2).toBe(false)
   })
 })

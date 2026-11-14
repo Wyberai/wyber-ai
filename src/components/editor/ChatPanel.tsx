@@ -22,7 +22,7 @@ import { scrubCopy } from '@/lib/customer-copy-rules';
 import { deterministicWire } from '@/lib/deterministic-wire';
 import { resolveBuildTier, largestAffordableSmallerBuild } from '@/lib/credits';
 import { isLaunchReadyApp, floorBuildTier, launchReadyCostText, checkLaunchReady, launchReadySummary } from '@/lib/launch-ready';
-import { isLaunchReadyWebsite, floorWebsiteTier, websiteLaunchReadyCostText, checkWebsiteReady, websiteReadySummary } from '@/lib/website-ready';
+import { isLaunchReadyWebsite, floorWebsiteTier, websiteLaunchReadyCostText, checkWebsiteReady, websiteReadySummary, contactNudge } from '@/lib/website-ready';
 import { isLaunchReadySaas, floorSaasTier, saasLaunchReadyCostText, checkSaasReady, saasReadySummary } from '@/lib/saas-ready';
 import { checkReplacement, replacementSummary } from '@/lib/byos/acceptance';
 import { isLaunchReadyMobile, floorMobileTier, mobileLaunchReadyCostText, checkMobileReady, mobileReadySummary } from '@/lib/mobile-ready';
@@ -2045,6 +2045,12 @@ const storeProjectId = useEditorStore.getState().project?.id;
           pushAgentEvents({ agent: 'qa', status: 'done', detail: launchReadySummary(checkLaunchReady(updatedFiles)) })
         } else if (isLaunchReadyWebsite(projectType)) {
           pushAgentEvents({ agent: 'qa', status: 'done', detail: websiteReadySummary(checkWebsiteReady(updatedFiles)) })
+          // A site with no contact facts cannot be reached: say so once, and how to fix it.
+          const contactMsg = contactNudge(updatedFiles)
+          if (contactMsg) {
+            useEditorStore.getState().addMessage({ id: uid(), role: 'assistant', content: contactMsg, timestamp: Date.now(), status: 'done' })
+            persistMessage('assistant', contactMsg)
+          }
         } else if (isLaunchReadySaas(projectType)) {
           pushAgentEvents({ agent: 'qa', status: 'done', detail: saasReadySummary(checkSaasReady(updatedFiles)) })
         } else if (isLaunchReadyMobile(projectType)) {

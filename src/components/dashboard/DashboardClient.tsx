@@ -298,7 +298,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
         }
         return;
       }
-      if (resolvedType) startProject(pending.trim(), resolvedType, nameOverride);
+      if (resolvedType) startProject(pending.trim(), resolvedType, pendingName || nameOverride);
       else openChooser(pending.trim(), nameOverride);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
