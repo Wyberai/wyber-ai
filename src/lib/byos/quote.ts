@@ -33,11 +33,14 @@ export function quoteBuild(featureCount: number, integrationCount: number): { ti
   return { tier, credits: creditCost('saas-build', 'fast', tier), maxCredits: creditCost('saas-build', 'default', tier), typical, plannedFiles }
 }
 
+/** The old cap on the hand-off prompt (what the pending-prompt convention assumed). Still the default. */
+export const PROMPT_LIMIT = 2000
 /**
- * Longest hand-off prompt we send. The dashboard reads `wyber-pending-prompt` without a length cap (the /websites flow already sends
- * 6000), so a 14-feature pick no longer has to lose its feature descriptions to fit 2000 characters.
+ * With NEXT_PUBLIC_REPLACE_READY=true the limit is 6000: the dashboard never capped the pending prompt (the /websites flow already sends
+ * 6000), so a 14-feature pick keeps its descriptions, and every replacement build also carries REPLACEMENT_REQUIREMENTS.
  */
-export const PROMPT_LIMIT = 6000
+export const PROMPT_LIMIT_READY = 6000
+export function replaceReadyEnabled(): boolean { return process.env.NEXT_PUBLIC_REPLACE_READY === 'true' }
 
 /**
  * What every replacement build must contain so the owner can check it and switch over. The checklist file is parsed after the build
@@ -57,6 +60,7 @@ export function composeBuildPrompt(opts: {
   importCsv: boolean
 }): string {
   const { product, category, features, connectLive, connectPlaceholder, importCsv } = opts
+  const limit = replaceReadyEnabled() ? PROMPT_LIMIT_READY : PROMPT_LIMIT
   const head =
     `Build our own internal ${category || 'business'} tool to replace ${product}. ` +
     `It must do ONLY the features listed below — nothing else, no extra modules. ` +
@@ -71,7 +75,7 @@ export function composeBuildPrompt(opts: {
     connectLive.length ? `Connect for real: ${connectLive.join(', ')}.` : '',
     connectPlaceholder.length ? `Add clearly-labelled placeholder settings (no fake data) for: ${connectPlaceholder.join(', ')}.` : '',
     importCsv ? 'Include a CSV import so we can bring our existing data in.' : '',
-    REPLACEMENT_REQUIREMENTS,
+    replaceReadyEnabled() ? REPLACEMENT_REQUIREMENTS : '',
   ].filter(Boolean).join('\n')
 
   const lineFor = (f: PickedFeature, withDesc: boolean) => {
@@ -83,7 +87,7 @@ export function composeBuildPrompt(opts: {
   for (const withDesc of [true, false]) {
     const body = features.map(f => lineFor(f, withDesc)).join('\n')
     const prompt = `${head}\n\nFeatures to build:\n${body}${tail ? `\n\n${tail}` : ''}`
-    if (prompt.length <= PROMPT_LIMIT) return prompt
+    if (prompt.length <= limit) return prompt
   }
   // Still too long (very many picks): keep the head, the tail, and as many feature lines as fit.
   const reserve = head.length + tail.length + 60
@@ -91,9 +95,9 @@ export function composeBuildPrompt(opts: {
   let used = 0
   for (const f of features) {
     const line = lineFor(f, false)
-    if (reserve + used + line.length + 1 > PROMPT_LIMIT) break
+    if (reserve + used + line.length + 1 > limit) break
     kept.push(line)
     used += line.length + 1
   }
-  return `${head}\n\nFeatures to build:\n${kept.join('\n')}${tail ? `\n\n${tail}` : ''}`.slice(0, PROMPT_LIMIT)
+  return `${head}\n\nFeatures to build:\n${kept.join('\n')}${tail ? `\n\n${tail}` : ''}`.slice(0, limit)
 }

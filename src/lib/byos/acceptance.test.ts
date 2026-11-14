@@ -1,5 +1,7 @@
-import { describe, it, expect } from 'vitest'
-import { composeBuildPrompt, PROMPT_LIMIT, REPLACEMENT_REQUIREMENTS } from './quote'
+import { describe, it, expect, afterEach, vi } from 'vitest'
+import { composeBuildPrompt, PROMPT_LIMIT, PROMPT_LIMIT_READY, REPLACEMENT_REQUIREMENTS } from './quote'
+
+afterEach(() => { vi.unstubAllEnvs() })
 import { checkReplacement, parseChecklist, replacementIssues, replacementSummary } from './acceptance'
 import { runQaChecks } from '../agents/qa-checks'
 
@@ -67,11 +69,21 @@ describe('checkReplacement', () => {
 })
 
 describe('hand-off prompt', () => {
-  it('now allows 6000 characters and always carries the replacement requirements', () => {
-    expect(PROMPT_LIMIT).toBe(6000)
-    const feats = Array.from({ length: 14 }, (_, i) => ({ module: 'Sales', name: `Feature number ${i}`, description: `Describes in a full sentence what feature ${i} does for the user.` }))
-    const p = composeBuildPrompt({ product: 'Pipedrive', category: 'CRM', features: feats, connectLive: [], connectPlaceholder: [], importCsv: true })
+  const feats = Array.from({ length: 14 }, (_, i) => ({ module: 'Sales', name: `Feature number ${i}`, description: `Describes in a full sentence what feature ${i} does for the user.` }))
+  const opts = { product: 'Pipedrive', category: 'CRM', features: feats, connectLive: [], connectPlaceholder: [], importCsv: true }
+
+  it('is unchanged while the flag is off: 2000 characters and no replacement requirements', () => {
+    expect(PROMPT_LIMIT).toBe(2000)
+    const p = composeBuildPrompt(opts)
     expect(p.length).toBeLessThanOrEqual(PROMPT_LIMIT)
+    expect(p).not.toContain('src/replacement-checklist.ts')
+  })
+
+  it('with NEXT_PUBLIC_REPLACE_READY=true allows 6000 characters and carries the replacement requirements', () => {
+    vi.stubEnv('NEXT_PUBLIC_REPLACE_READY', 'true')
+    expect(PROMPT_LIMIT_READY).toBe(6000)
+    const p = composeBuildPrompt(opts)
+    expect(p.length).toBeLessThanOrEqual(PROMPT_LIMIT_READY)
     expect(p).toContain('src/replacement-checklist.ts')
     expect(p).toContain('Describes in a full sentence what feature 13 does')
     expect(REPLACEMENT_REQUIREMENTS).toMatch(/parallel-run checklist/)
