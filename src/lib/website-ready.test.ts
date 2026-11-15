@@ -272,3 +272,39 @@ describe('launch-ready fix passes are free (15 Nov)', () => {
     expect(src).toMatch(/const freeSelfHeal = isSelfHeal && \(!!opts\?\.qaFix \|\| totalRepairPassesRef\.current <= FREE_REPAIR_PASSES\)/)
   })
 })
+
+import { deadActionButtons, formTextWithoutForm } from './website-ready'
+describe('no action promised without an action (15 Nov)', () => {
+  const emptyOwner = `// FILE src/owner-details.ts\nexport const OWNER = { name: "", whatsapp: "", phone: "", email: "" }\n`
+  const filledOwner = `// FILE src/owner-details.ts\nexport const OWNER = { name: "", whatsapp: "919999999999", phone: "", email: "" }\n`
+  const coaching = `// FILE src/App.tsx\n<a href="#contact" className="btn">Demo class</a>\n<section id="contact"><p>We will get back to you about a demo class.</p></section>\n<p>We collect only the details you type into the enquiry form.</p>`
+
+  it('flags the Demo class button and the enquiry-form text from the coaching build', () => {
+    expect(deadActionButtons(emptyOwner + coaching)).toEqual(['Demo class'])
+    expect(formTextWithoutForm(emptyOwner + coaching)).toBe(true)
+    const r = checkWebsiteReady({ 'src/owner-details.ts': emptyOwner, 'src/App.tsx': coaching })
+    expect(r.items.find(i => i.id === 'actions-have-action')?.ok).toBe(false)
+    expect(r.items.find(i => i.id === 'privacy-matches-form')?.ok).toBe(false)
+  })
+
+  it('allows the button once a contact fact exists, or when a form is rendered', () => {
+    expect(deadActionButtons(filledOwner + coaching)).toEqual([])
+    expect(formTextWithoutForm(filledOwner + coaching)).toBe(false)
+    expect(deadActionButtons(emptyOwner + coaching + `\n<form onSubmit={go}></form>`)).toEqual([])
+    expect(formTextWithoutForm(emptyOwner + coaching + `\n<form onSubmit={go}></form>`)).toBe(false)
+  })
+
+  it('allows a button inside the same condition as the contact fact', () => {
+    const guarded = `// FILE src/App.tsx\n{OWNER.whatsapp && <a href="https://wa.me/1">Book a class</a>}`
+    expect(deadActionButtons(emptyOwner + guarded)).toEqual([])
+  })
+
+  it('ignores words that are not actions, and code comments', () => {
+    expect(deadActionButtons(emptyOwner + `// FILE src/App.tsx\n<a href="#courses">See courses</a>\n// <a>Book now</a>`)).toEqual([])
+  })
+
+  it('the contract covers words as well as buttons', () => {
+    expect(WEBSITE_LAUNCH_READY_CONTRACT).toMatch(/"Demo class"/)
+    expect(WEBSITE_LAUNCH_READY_CONTRACT).toMatch(/we will get back to you/)
+  })
+})

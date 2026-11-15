@@ -60,7 +60,7 @@ W13 NO NOTES TO THE OWNER ON THE PAGE: visitors see the site, not a to-do list. 
 
 W14 NAV LINKS LAND SOMEWHERE: every in-page link (href="#timings" and the like) must point at an element that exists. A section that is only rendered when an OWNER value is set (hours, address, phone) must have its nav and footer link rendered under the same condition, so an empty value never leaves a dead menu item.
 
-W15 NO INVENTED FACTS ABOUT THE BUSINESS: the owner gave you a one-line brief, not their staff list. Do not make up: a business name (when the prompt names none, call it by what it is and where, for example "Yoga studio in Pune"), a person (teacher, doctor, trainer, founder, "Dr. Name"), a timetable, prices, class or appointment lengths, years in business, or a number of anything. Add \`team: ""\` and \`timetable: ""\` to OWNER (plain strings, "Name, role; Name, role" for team) and render the people section, the timetable and prices ONLY when that value is filled, each with its menu link under the same condition. Describe what the business offers in plain general terms taken from the brief. When there is no way to enquire (W4 and W5 leave no button and no form), do not show "Book", "Free trial" or "Reserve" buttons that only scroll to another section: say what is offered and where the business is.
+W15 NO INVENTED FACTS ABOUT THE BUSINESS: the owner gave you a one-line brief, not their staff list. Do not make up: a business name (when the prompt names none, call it by what it is and where, for example "Yoga studio in Pune"), a person (teacher, doctor, trainer, founder, "Dr. Name"), a timetable, prices, class or appointment lengths, years in business, or a number of anything. Add \`team: ""\` and \`timetable: ""\` to OWNER (plain strings, "Name, role; Name, role" for team) and render the people section, the timetable and prices ONLY when that value is filled, each with its menu link under the same condition. Describe what the business offers in plain general terms taken from the brief. When there is no way to enquire (W4 and W5 leave no button and no form), do not show "Book", "Demo class", "Free trial", "Enquire" or "Reserve" buttons that only scroll to another section: say what is offered and where the business is. The same goes for words: a privacy line, a heading or a paragraph may mention an enquiry, contact or booking form only inside the same condition that renders the form, and a promise like "we will get back to you" appears only beside a form or contact link that works.
 
 W12 DEFINITION OF DONE (confirm silently before the "Built:" line): owner-details file with empty strings where unknown, read at render time; no button, link or form that cannot work with the facts present; no notes to the owner on the page; every #anchor link has a target; sections match the archetype; contact path on every page; the form delivers or opens a pre-filled link; no invented claims, names, people, timetable or prices; title, description, canonical, one h1, alt text, JSON-LD from owner details, robots and sitemap; language toggle when Indian; privacy line beside the form.
 `
@@ -132,6 +132,44 @@ export function inventedPeople(code: string): string[] {
   return [...found].filter(n => !owner.includes(n))
 }
 
+const ACTION_WORDS = /\b(book|demo|free trial|enquir\w*|reserve|get a quote|request a quote|schedule|apply now|register|sign up)\b/i
+
+function stripped(code: string): string[] {
+  return code.split(/(?=\/\/ FILE )/)
+    .filter(b => !/^\/\/ FILE [^\n]*owner-details/i.test(b))
+    .map(b => b.split('\n').filter(l => !/^\s*(import |\/\/|\*|\/\*)/.test(l)).join('\n'))
+}
+
+function ownerHasContact(code: string): boolean {
+  const owner = code.split(/(?=\/\/ FILE )/).find(b => /^\/\/ FILE [^\n]*owner-details/i.test(b)) ?? ''
+  return /\b(?:whatsapp|phone|email)\s*:\s*["'`][^"'`\s][^"'`]*["'`]/.test(owner)
+}
+
+/** Buttons and links that promise an action (book, demo, enquire) when the site has no form, number or email to act on. */
+export function deadActionButtons(code: string): string[] {
+  if (ownerHasContact(code)) return []
+  const found = new Set<string>()
+  for (const src of stripped(code)) {
+    if (/<form[\s>]|onSubmit=/.test(src)) return []
+    for (const m of src.matchAll(/<(a|button)\b[^>]*>([^<{]{2,40})<\/\1>/g)) {
+      const label = m[2].trim()
+      if (!ACTION_WORDS.test(label)) continue
+      const before = src.slice(Math.max(0, (m.index ?? 0) - 140), m.index ?? 0)
+      if (/OWNER\.(whatsapp|phone|email)\s*(&&|\?)/.test(before)) continue
+      found.add(label)
+    }
+  }
+  return [...found]
+}
+
+/** Privacy or form text that talks about a form the site does not have. */
+export function formTextWithoutForm(code: string): boolean {
+  if (ownerHasContact(code)) return false
+  const blocks = stripped(code)
+  if (blocks.some(s => /<form[\s>]|onSubmit=/.test(s))) return false
+  return blocks.some(s => /["'`>][^"'`<\n]*\b(enquiry|contact|booking|demo class) form\b[^"'`<\n]*["'`<]/i.test(s))
+}
+
 /** Static #anchors with no matching id in the same source. Dynamic hrefs are ignored. */
 export function deadAnchors(code: string): string[] {
   const ids = new Set<string>()
@@ -158,6 +196,12 @@ const CHECKS: Check[] = [
   { id: 'no-invented-people', label: 'No made-up people (teachers, doctors, staff)',
     fix: 'Remove every person name the owner did not give you (teacher, doctor, trainer, founder cards and "Dr." names). Leave the people section and its menu link out, or read the names from OWNER.team when the owner has filled it in.',
     test: c => inventedPeople(c).length === 0 },
+  { id: 'actions-have-action', label: 'No Book / Demo / Enquire button without a way to act',
+    fix: 'Remove every Book, Demo class, Free trial, Enquire or Get a quote button and link while the site has no form, no WhatsApp number, no phone and no email: a button that only scrolls to a section with nothing to do is a dead end. Render it only inside the same condition as the contact fact or form it leads to.',
+    test: c => deadActionButtons(c).length === 0 },
+  { id: 'privacy-matches-form', label: 'Privacy text does not mention a form the site lacks',
+    fix: 'Remove every mention of an enquiry, contact, booking or demo-class form from privacy and page text while the site has no form. Say the privacy line beside the form only when the form is rendered.',
+    test: c => !formTextWithoutForm(c) },
   { id: 'anchors-resolve', label: 'Every in-page link has a target',
     fix: 'Every href="#something" needs an element with id="something". Render a nav or footer link only when the section it points to is rendered (for example hours, address).',
     applies: c => /href=["']#[A-Za-z][\w-]*["']/.test(c),
