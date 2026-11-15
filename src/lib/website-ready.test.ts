@@ -215,3 +215,31 @@ describe('in-page links land somewhere (14 Nov)', () => {
     expect(deadAnchors('<a href="#a">x</a><a href={"#b"}>y</a><div id="a"/><div id={"b"}/>')).toEqual([])
   })
 })
+
+import { inventedPeople } from './website-ready'
+describe('no invented facts (15 Nov)', () => {
+  const owner = `// FILE src/owner-details.ts\nexport const OWNER = { name: "", team: "", timetable: "" }\n`
+  it('contract bans invented names, people, timetables and prices, and dead Book buttons', () => {
+    expect(WEBSITE_LAUNCH_READY_CONTRACT).toMatch(/W15 NO INVENTED FACTS ABOUT THE BUSINESS/)
+    expect(WEBSITE_LAUNCH_READY_CONTRACT).toMatch(/team: ""[^a-z]{1,8}timetable: ""/)
+    expect(WEBSITE_LAUNCH_READY_CONTRACT).toMatch(/only scroll to another section/)
+  })
+  it('flags the teachers from the Pune yoga build', () => {
+    const app = `// FILE src/App.tsx\n<h2>Teachers</h2><h3>Meera Kulkarni</h3><p>Lead teacher</p><h3>Rohan Deshpande</h3>`
+    expect(inventedPeople(owner + app)).toEqual(['Meera Kulkarni', 'Rohan Deshpande'])
+    expect(checkWebsiteReady({ 'src/owner-details.ts': owner, 'src/App.tsx': app.replace('// FILE src/App.tsx\n', '') }).items.find(i => i.id === 'no-invented-people')?.ok).toBe(false)
+  })
+  it('flags Dr. names and teacher: keys', () => {
+    expect(inventedPeople(owner + `// FILE src/App.tsx\n<p>Dr. Asha Shah</p>`)).toEqual(['Dr. Asha Shah'])
+    expect(inventedPeople(owner + `// FILE src/App.tsx\nconst c = { teacher: "Rohan Deshpande" }`)).toEqual(['Rohan Deshpande'])
+  })
+  it('allows names the owner gave, and headings that are not people', () => {
+    const own = `// FILE src/owner-details.ts\nexport const OWNER = { team: "Meera Kulkarni, lead teacher" }\n`
+    expect(inventedPeople(own + `// FILE src/App.tsx\n<h2>Teachers</h2><h3>Meera Kulkarni</h3>`)).toEqual([])
+    expect(inventedPeople(owner + `// FILE src/App.tsx\n<h2>Classes</h2><h3>Hatha Foundations</h3>`)).toEqual([])
+    expect(inventedPeople(owner + `// FILE src/App.tsx\n<h2>Teachers</h2>{OWNER.team && <p>{OWNER.team}</p>}`)).toEqual([])
+  })
+  it('the nudge also says staff, timetable and prices were left out', () => {
+    expect(contactNudge({ 'src/owner-details.ts': 'export const OWNER = { whatsapp: "", phone: "", email: "", team: "", timetable: "" }' })).toMatch(/staff names, the timetable and prices/)
+  })
+})

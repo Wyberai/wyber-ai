@@ -34,7 +34,7 @@ LAUNCH-READY CONTRACT — WEBSITES (OVERRIDES EARLIER RULES WHERE THEY CONFLICT)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 This site goes live for a real business the day it is published. Its job is to be believed and to bring in enquiries. Every item below is checked after the build; missing items are sent back to you. When output space is short, drop decoration before you drop any item here.
 
-W1 OWNER DETAILS: put every business fact in ONE file, src/owner-details.ts, as \`export const OWNER = { name: "", city: "", address: "", phone: "", whatsapp: "", email: "", hours: "", years: "", languages: "" }\`: every value is a plain string (languages as "en,hi,gu"), WhatsApp as digits with the country code and no plus sign. Fill only what the prompt states; leave the rest as empty strings. The editor can rewrite this file later (the owner types their phone, WhatsApp, address and hours), so read every value from OWNER at render time and never copy a value into another file. Components render a block (phone button, hours, address, map link) ONLY when its fact is present. Never invent a phone number, address, hours, founding year, team member or price.
+W1 OWNER DETAILS: put every business fact in ONE file, src/owner-details.ts, as \`export const OWNER = { name: "", city: "", address: "", phone: "", whatsapp: "", email: "", hours: "", years: "", languages: "", team: "", timetable: "" }\`: every value is a plain string (languages as "en,hi,gu"), WhatsApp as digits with the country code and no plus sign. Fill only what the prompt states; leave the rest as empty strings. The editor can rewrite this file later (the owner types their phone, WhatsApp, address and hours), so read every value from OWNER at render time and never copy a value into another file. Components render a block (phone button, hours, address, map link) ONLY when its fact is present. Never invent a phone number, address, hours, founding year, team member or price.
 
 W2 STRUCTURE BY BUSINESS TYPE: pick ONE archetype from the prompt and say which in a [progress:] line: local service (clinic, salon, cleaner), practitioner or studio, shop or bakery, B2B supplier or exporter, portfolio, institute. Build only the sections that archetype needs. The persona chips, pricing toggle, logo strip, stat band and testimonial carousel from earlier rules apply ONLY when the owner supplied the content for them; otherwise omit them.
 
@@ -60,7 +60,9 @@ W13 NO NOTES TO THE OWNER ON THE PAGE: visitors see the site, not a to-do list. 
 
 W14 NAV LINKS LAND SOMEWHERE: every in-page link (href="#timings" and the like) must point at an element that exists. A section that is only rendered when an OWNER value is set (hours, address, phone) must have its nav and footer link rendered under the same condition, so an empty value never leaves a dead menu item.
 
-W12 DEFINITION OF DONE (confirm silently before the "Built:" line): owner-details file with empty strings where unknown, read at render time; no button, link or form that cannot work with the facts present; no notes to the owner on the page; every #anchor link has a target; sections match the archetype; contact path on every page; the form delivers or opens a pre-filled link; no invented claims; title, description, canonical, one h1, alt text, JSON-LD from owner details, robots and sitemap; language toggle when Indian; privacy line beside the form.
+W15 NO INVENTED FACTS ABOUT THE BUSINESS: the owner gave you a one-line brief, not their staff list. Do not make up: a business name (when the prompt names none, call it by what it is and where, for example "Yoga studio in Pune"), a person (teacher, doctor, trainer, founder, "Dr. Name"), a timetable, prices, class or appointment lengths, years in business, or a number of anything. Add \`team: ""\` and \`timetable: ""\` to OWNER (plain strings, "Name, role; Name, role" for team) and render the people section, the timetable and prices ONLY when that value is filled, each with its menu link under the same condition. Describe what the business offers in plain general terms taken from the brief. When there is no way to enquire (W4 and W5 leave no button and no form), do not show "Book", "Free trial" or "Reserve" buttons that only scroll to another section: say what is offered and where the business is.
+
+W12 DEFINITION OF DONE (confirm silently before the "Built:" line): owner-details file with empty strings where unknown, read at render time; no button, link or form that cannot work with the facts present; no notes to the owner on the page; every #anchor link has a target; sections match the archetype; contact path on every page; the form delivers or opens a pre-filled link; no invented claims, names, people, timetable or prices; title, description, canonical, one h1, alt text, JSON-LD from owner details, robots and sitemap; language toggle when Indian; privacy line beside the form.
 `
 
 // ── The check ────────────────────────────────────────────────────────────────
@@ -102,7 +104,32 @@ export function contactNudge(files: Record<string, FileVal>): string | null {
   const val = (k: string) => (src.match(new RegExp(`${k}\\s*:\\s*(['"\`])((?:\\\\.|(?!\\1).)*)\\1`))?.[2] ?? '').trim()
   if (val('whatsapp') || val('phone') || val('email')) return null
   const how = 'Add your WhatsApp number, phone and opening hours: in the Grow tab if you have it (0 credits), or just tell me in the chat and I will add them.'
-  return `Your site is built, but visitors cannot reach you yet: no WhatsApp number, phone or email is set, so the contact button and enquiry form are left out. ${how}`
+  const people = /\bteam\s*:|\btimetable\s*:/.test(src) ? ' I also left out staff names, the timetable and prices because you did not give them; tell me who works there and when, and I will add them.' : ''
+  return `Your site is built, but visitors cannot reach you yet: no WhatsApp number, phone or email is set, so the contact button and enquiry form are left out. ${how}${people}`
+}
+
+const ROLE_WORDS = /teacher|trainer|instructor|doctor|dentist|team|faculty|founder|therapist|stylist|chef|photographer|lawyer|accountant|surgeon|coach|mentor/i
+
+/**
+ * Person names written into the page as literals that the owner never gave (they are not in owner-details).
+ * Looks for "Dr. Name" and for two-word names that sit right after a heading or key about people.
+ */
+export function inventedPeople(code: string): string[] {
+  const blocks = code.split(/(?=\/\/ FILE )/)
+  const owner = blocks.filter(b => /^\/\/ FILE [^\n]*owner-details/i.test(b)).join('\n')
+  const found = new Set<string>()
+  for (const block of blocks) {
+    if (/^\/\/ FILE [^\n]*owner-details/i.test(block)) continue
+    const src = block.split('\n').filter(l => !/^\s*(import |\/\/|\*|\/\*)/.test(l)).join('\n')
+    for (const m of src.matchAll(/\bDr\.?\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?/g)) found.add(m[0])
+    const personKey = /\b(?:teacher|doctor|trainer|instructor|founder|dentist|therapist|coach)\s*:\s*["']([A-Z][a-z]+(?:\s[A-Z][a-z]+)+)["']/g
+    for (const m of src.matchAll(personKey)) found.add(m[1])
+    for (const m of src.matchAll(/>\s*([A-Z][a-z]{2,}\s[A-Z][a-z]{2,})\s*</g)) {
+      const before = src.slice(Math.max(0, (m.index ?? 0) - 400), m.index ?? 0)
+      if (ROLE_WORDS.test(before)) found.add(m[1])
+    }
+  }
+  return [...found].filter(n => !owner.includes(n))
 }
 
 /** Static #anchors with no matching id in the same source. Dynamic hrefs are ignored. */
@@ -128,6 +155,9 @@ const CHECKS: Check[] = [
     fix: 'Build wa.me and tel: links from OWNER.whatsapp and OWNER.phone and render the button only when that value is non-empty; when every contact fact is empty, drop the button and the form instead of rendering one that cannot work.',
     applies: c => /whatsapp/i.test(c.replace(/\/\/ FILE [^\n]*owner-details[^\n]*\n[^\n]*/i, '')) || /tel:/.test(c),
     test: c => /wa\.me\/|tel:|mailto:/.test(c) && /OWNER\.(whatsapp|phone|email)\s*(\?|&&|\|\||!==|===|\))|(has|show)(WhatsApp|Phone|Contact)|if\s*\(\s*!?\s*OWNER\.(whatsapp|phone|email)/.test(c) },
+  { id: 'no-invented-people', label: 'No made-up people (teachers, doctors, staff)',
+    fix: 'Remove every person name the owner did not give you (teacher, doctor, trainer, founder cards and "Dr." names). Leave the people section and its menu link out, or read the names from OWNER.team when the owner has filled it in.',
+    test: c => inventedPeople(c).length === 0 },
   { id: 'anchors-resolve', label: 'Every in-page link has a target',
     fix: 'Every href="#something" needs an element with id="something". Render a nav or footer link only when the section it points to is rendered (for example hours, address).',
     applies: c => /href=["']#[A-Za-z][\w-]*["']/.test(c),
