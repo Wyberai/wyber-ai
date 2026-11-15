@@ -627,7 +627,7 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Ref so event handlers always get the latest executeGeneration without stale closure
-  const executeGenerationRef = useRef<((msg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'wire' | 'agentFix'; stageFiles?: string[]; stagePurposes?: string[]; internalPass?: boolean; finalPass?: boolean; quietRetryEligible?: boolean; preserveAgentTurn?: boolean; completenessRetryFor?: PlannedFile[]; completenessRetryCount?: number; knownPlan?: PlannedFile[]; totalPlannedFiles?: number; buildId?: string; buildComplexity?: 'HIGH' | 'LOW'; sharedBubbleId?: string; autoRetry?: boolean }) => Promise<boolean>) | null>(null);
+  const executeGenerationRef = useRef<((msg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'wire' | 'agentFix'; stageFiles?: string[]; stagePurposes?: string[]; internalPass?: boolean; finalPass?: boolean; quietRetryEligible?: boolean; qaFix?: boolean; preserveAgentTurn?: boolean; completenessRetryFor?: PlannedFile[]; completenessRetryCount?: number; knownPlan?: PlannedFile[]; totalPlannedFiles?: number; buildId?: string; buildComplexity?: 'HIGH' | 'LOW'; sharedBubbleId?: string; autoRetry?: boolean }) => Promise<boolean>) | null>(null);
   // Cap consecutive self-heal (autofix) runs so a broken build can't loop and drain credits.
   const autofixCountRef = useRef(0);
   // Set by executeGeneration whenever ITS OWN completeness check (4c) just
@@ -1042,7 +1042,7 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
       // continuation: this is the user's own build still in flight (cut stream,
       // missing entry file, failed patches) → visible bubble + persisted receipt.
       // Untagged events (runtime-error self-heals from the preview) stay silent.
-      executeGenerationRef.current?.(detail.prompt, null, { silent: true, continuation: !!detail.continuation, completenessRetryFor: detail.completenessRetryFor, completenessRetryCount: detail.completenessRetryCount })
+      executeGenerationRef.current?.(detail.prompt, null, { silent: true, continuation: !!detail.continuation, qaFix: !!detail.qaFix, completenessRetryFor: detail.completenessRetryFor, completenessRetryCount: detail.completenessRetryCount })
     }
     window.addEventListener('wyber-autofix', autofixHandler)
     // Connector/theme panels send prompts via this event
@@ -1324,7 +1324,7 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
     })();
   }, [resolvedProjectId, resolvedUserId, addMessage, setProject]);
 
-  const executeGeneration = useCallback(async (userMsg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'wire' | 'agentFix'; stageFiles?: string[]; stagePurposes?: string[]; internalPass?: boolean; finalPass?: boolean; quietRetryEligible?: boolean; preserveAgentTurn?: boolean; completenessRetryFor?: PlannedFile[]; completenessRetryCount?: number; knownPlan?: PlannedFile[]; totalPlannedFiles?: number; buildId?: string; buildComplexity?: 'HIGH' | 'LOW'; sharedBubbleId?: string; autoRetry?: boolean }) => {
+  const executeGeneration = useCallback(async (userMsg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'wire' | 'agentFix'; stageFiles?: string[]; stagePurposes?: string[]; internalPass?: boolean; finalPass?: boolean; quietRetryEligible?: boolean; qaFix?: boolean; preserveAgentTurn?: boolean; completenessRetryFor?: PlannedFile[]; completenessRetryCount?: number; knownPlan?: PlannedFile[]; totalPlannedFiles?: number; buildId?: string; buildComplexity?: 'HIGH' | 'LOW'; sharedBubbleId?: string; autoRetry?: boolean }) => {
     // Clear any stale progress steps/reasoning from a previous generation before starting
     setProgressSteps([]);
     setLiveReasoning('');
@@ -1391,7 +1391,7 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
     // background pass") for the UI/eligibility checks elsewhere that don't
     // care about money.
     const isSelfHeal = !!opts?.silent;
-    const freeSelfHeal = isSelfHeal && totalRepairPassesRef.current <= FREE_REPAIR_PASSES;
+    const freeSelfHeal = isSelfHeal && (!!opts?.qaFix || totalRepairPassesRef.current <= FREE_REPAIR_PASSES);
     if (!freeSelfHeal) consumeCredit();
     // displayContent lets a caller send a large/technical userMsg to the model
     // (e.g. an approved plan's full spec) while showing something clean and
@@ -2036,29 +2036,38 @@ const storeProjectId = useEditorStore.getState().project?.id;
       // by design) — but never on the QA fix pass itself (silent, no stage),
       // so a failed fix can't loop.
       const qaEligible = !isSelfHeal || (opts?.stage === 'fill' && !!opts?.finalPass)
-      if (AGENT_TEAM_ENABLED && qaEligible && !fileCut && !editCut
+      // The agent team UI is off, but the launch-ready source checks (web app, website, SaaS, mobile) and the
+      // Replace-your-SaaS feature check are not part of it: they run on their own gate, show their result as a
+      // normal chat message, and act only on their own findings (never on the older generic structural checks).
+      const launchQaOn = isLaunchReadyApp(projectType) || isLaunchReadyWebsite(projectType) || isLaunchReadySaas(projectType)
+        || isLaunchReadyMobile(projectType) || !!checkReplacement(updatedFiles)
+      if ((AGENT_TEAM_ENABLED || launchQaOn) && qaEligible && !fileCut && !editCut
           && (!opts?.stage || opts?.finalPass)
           && (newFiles.length > 0 || editBlocks.length > 0)) {
-        const qaIssues = runQaChecks(updatedFiles, projectType).filter(i => i.kind !== 'missing-entry')
+        const say = (text: string) => {
+          if (AGENT_TEAM_ENABLED) { pushAgentEvents({ agent: 'qa', status: 'done', detail: text }); return }
+          useEditorStore.getState().addMessage({ id: uid(), role: 'assistant', content: text, timestamp: Date.now(), status: 'done' })
+          persistMessage('assistant', text)
+        }
+        const qaIssues = runQaChecks(updatedFiles, projectType)
+          .filter(i => i.kind !== 'missing-entry')
+          .filter(i => AGENT_TEAM_ENABLED || i.kind === 'launch-ready')
         // Launch-ready web apps: tell the owner plainly what the source check found (it reads code, it does not run the app).
         if (isLaunchReadyApp(projectType)) {
-          pushAgentEvents({ agent: 'qa', status: 'done', detail: launchReadySummary(checkLaunchReady(updatedFiles)) })
+          say(launchReadySummary(checkLaunchReady(updatedFiles)))
         } else if (isLaunchReadyWebsite(projectType)) {
-          pushAgentEvents({ agent: 'qa', status: 'done', detail: websiteReadySummary(checkWebsiteReady(updatedFiles)) })
+          say(websiteReadySummary(checkWebsiteReady(updatedFiles)))
           // A site with no contact facts cannot be reached: say so once, and how to fix it.
           const contactMsg = contactNudge(updatedFiles)
-          if (contactMsg) {
-            useEditorStore.getState().addMessage({ id: uid(), role: 'assistant', content: contactMsg, timestamp: Date.now(), status: 'done' })
-            persistMessage('assistant', contactMsg)
-          }
+          if (contactMsg) say(contactMsg)
         } else if (isLaunchReadySaas(projectType)) {
-          pushAgentEvents({ agent: 'qa', status: 'done', detail: saasReadySummary(checkSaasReady(updatedFiles)) })
+          say(saasReadySummary(checkSaasReady(updatedFiles)))
         } else if (isLaunchReadyMobile(projectType)) {
-          pushAgentEvents({ agent: 'qa', status: 'done', detail: mobileReadySummary(checkMobileReady(updatedFiles)) })
+          say(mobileReadySummary(checkMobileReady(updatedFiles)))
         }
         // Replace-your-SaaS builds: tell the owner how many of the listed features really appear on a screen.
         const replacement = checkReplacement(updatedFiles)
-        if (replacement) pushAgentEvents({ agent: 'qa', status: 'done', detail: replacementSummary(replacement) })
+        if (replacement) say(replacementSummary(replacement))
         if (qaIssues.length > 0) {
           qaRetryFired = true
           // Same reasoning as the placeholder-retry branch above.
@@ -2069,7 +2078,10 @@ const storeProjectId = useEditorStore.getState().project?.id;
           // feed the user is looking at right after their build finished —
           // that made a normal-looking build sprout a list of problems it
           // supposedly just had, right as it wrapped up.
+          // The fix prompts say what is missing; this tells the model how to answer (a pass that only
+          // talks changes nothing, which is what the first localhost test of this wiring produced).
           const combined = qaIssues.slice(0, 4).map(i => i.fixPrompt).join('\n')
+            + '\nMake these changes now. Output each changed file as a COMPLETE <file> block (only files that change; keep every other behaviour and all owner facts as they are). AUTOMATED CONTINUATION: after the last </file> tag, write ZERO additional words.'
           setTimeout(() => {
             window.dispatchEvent(new CustomEvent('wyber-autofix', {
               detail: { continuation: true, qaFix: true, prompt: combined }
@@ -2347,7 +2359,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
         // message if this was NOT a quiet-retry-eligible attempt (i.e. the
         // retry itself also came back empty, or this was a user-visible turn
         // to begin with).
-        if (isVisible && !editIncompleteReported && !opts?.quietRetryEligible) {
+        if (isVisible && !editIncompleteReported && !opts?.quietRetryEligible && !opts?.qaFix) {
           const emittedNothing = full.trim().length === 0;
           const errMsg = (fileCut || editCut)
             ? t('streamCutOffMsg')
@@ -2356,7 +2368,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
             : t('nothingChangedMsg');
           updateMessage(assistantId, { content: errMsg, status: (fileCut || editCut) ? 'done' : 'error', retryPrompt: userMsg, retryLane: 'build' });
           persistMessage('assistant', errMsg);
-        } else if (isVisible && opts?.quietRetryEligible) {
+        } else if (isVisible && (opts?.quietRetryEligible || opts?.qaFix)) {
           // Close out the streaming bubble this pass added with no visible
           // text rather than an alarming error message — the orchestrator is
           // about to silently retry, and there's no ChatMessage field to fully

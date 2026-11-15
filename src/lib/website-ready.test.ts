@@ -243,3 +243,32 @@ describe('no invented facts (15 Nov)', () => {
     expect(contactNudge({ 'src/owner-details.ts': 'export const OWNER = { whatsapp: "", phone: "", email: "", team: "", timetable: "" }' })).toMatch(/staff names, the timetable and prices/)
   })
 })
+
+describe('post-build check is wired without the agent team (15 Nov)', () => {
+  const src = fs.readFileSync(path.join(process.cwd(), 'src/components/editor/ChatPanel.tsx'), 'utf8')
+  it('runs on its own launch-ready gate, not only on AGENT_TEAM_ENABLED', () => {
+    expect(src).toMatch(/const launchQaOn = isLaunchReadyApp\(projectType\)/)
+    expect(src).toMatch(/\(AGENT_TEAM_ENABLED \|\| launchQaOn\) && qaEligible/)
+  })
+  it('with the agent team off it acts only on launch-ready findings, and shows results as chat messages', () => {
+    expect(src).toMatch(/\.filter\(i => AGENT_TEAM_ENABLED \|\| i\.kind === 'launch-ready'\)/)
+    expect(src).toMatch(/const say = \(text: string\) =>/)
+    expect(src).toMatch(/if \(contactMsg\) say\(contactMsg\)/)
+  })
+})
+
+describe('fix pass instructions (15 Nov)', () => {
+  const src = fs.readFileSync(path.join(process.cwd(), 'src/components/editor/ChatPanel.tsx'), 'utf8')
+  it('tells the model to answer with file blocks, and never shows a scary bubble when a fix pass changes nothing', () => {
+    expect(src).toMatch(/Output each changed file as a COMPLETE <file> block/)
+    expect(src).toMatch(/!opts\?\.quietRetryEligible && !opts\?\.qaFix/)
+    expect(src).toMatch(/qaFix: !!detail\.qaFix/)
+  })
+})
+
+describe('launch-ready fix passes are free (15 Nov)', () => {
+  const src = fs.readFileSync(path.join(process.cwd(), 'src/components/editor/ChatPanel.tsx'), 'utf8')
+  it('a qaFix pass is free even when earlier repair passes used the allowance', () => {
+    expect(src).toMatch(/const freeSelfHeal = isSelfHeal && \(!!opts\?\.qaFix \|\| totalRepairPassesRef\.current <= FREE_REPAIR_PASSES\)/)
+  })
+})
