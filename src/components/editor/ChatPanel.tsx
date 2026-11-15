@@ -24,7 +24,7 @@ import { resolveBuildTier, largestAffordableSmallerBuild } from '@/lib/credits';
 import { isLaunchReadyApp, floorBuildTier, launchReadyCostText, checkLaunchReady, launchReadySummary } from '@/lib/launch-ready';
 import { isLaunchReadyWebsite, floorWebsiteTier, websiteLaunchReadyCostText, checkWebsiteReady, websiteReadySummary, contactNudge } from '@/lib/website-ready';
 import { isLaunchReadySaas, floorSaasTier, saasLaunchReadyCostText, checkSaasReady, saasReadySummary } from '@/lib/saas-ready';
-import { checkReplacement, replacementSummary } from '@/lib/byos/acceptance';
+import { checkReplacement, replacementSummary, hasReplacementChecklist } from '@/lib/byos/acceptance';
 import { isLaunchReadyMobile, floorMobileTier, mobileLaunchReadyCostText, checkMobileReady, mobileReadySummary } from '@/lib/mobile-ready';
 import { useAgentTurnStore } from '@/store/agent-turn';
 import type { ChatMessage } from '@/store/editor';
@@ -2060,7 +2060,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
           // A site with no contact facts cannot be reached: say so once, and how to fix it.
           const contactMsg = contactNudge(updatedFiles)
           if (contactMsg) say(contactMsg)
-        } else if (isLaunchReadySaas(projectType)) {
+        } else if (isLaunchReadySaas(projectType) && !hasReplacementChecklist(updatedFiles)) {
           say(saasReadySummary(checkSaasReady(updatedFiles)))
         } else if (isLaunchReadyMobile(projectType)) {
           say(mobileReadySummary(checkMobileReady(updatedFiles)))

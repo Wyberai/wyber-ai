@@ -46,7 +46,7 @@ describe('contract', () => {
   })
   it('is wired into the generator behind the flag', () => {
     const src = fs.readFileSync(path.join(process.cwd(), 'src/app/api/generate/route.ts'), 'utf8')
-    expect(src).toMatch(/isLaunchReadySaas\(projectType\) \? SAAS_LAUNCH_READY_CONTRACT \+ UNSLOP_WEBAPP_RULES/)
+    expect(src).toMatch(/isLaunchReadySaas\(projectType\) \? \(isReplacementBrief\(prompt\) \? UNSLOP_WEBAPP_RULES : SAAS_LAUNCH_READY_CONTRACT \+ UNSLOP_WEBAPP_RULES\)/)
     expect(src).toMatch(/floorSaasTier\(rawBuildTier\)/)
   })
 })

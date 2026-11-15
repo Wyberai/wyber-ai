@@ -12,6 +12,7 @@ import { activeMobileSdk, sdkPromptNotes } from '@/lib/mobile-sdk'
 import { UNSLOP_WEBSITE_RULES } from '@/lib/unslop-website'
 import { isLaunchReadyWebsite, floorWebsiteTier, WEBSITE_LAUNCH_READY_CONTRACT } from '@/lib/website-ready'
 import { isLaunchReadySaas, floorSaasTier, SAAS_LAUNCH_READY_CONTRACT } from '@/lib/saas-ready'
+import { isReplacementBrief } from '@/lib/byos/acceptance'
 import { isLaunchReadyMobile, floorMobileTier, MOBILE_LAUNCH_READY_CONTRACT } from '@/lib/mobile-ready'
 import { notify } from '@/lib/push'
 import { userCurrency } from '@/lib/user-currency'
@@ -5369,7 +5370,8 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
       staticSystemPrompt = basePrompt
         + (isLaunchReadyApp(projectType) ? WEBAPP_LAUNCH_READY_CONTRACT + UNSLOP_WEBAPP_RULES : '')
         + (isLaunchReadyWebsite(projectType) ? WEBSITE_LAUNCH_READY_CONTRACT + UNSLOP_WEBSITE_RULES : '')
-        + (isLaunchReadySaas(projectType) ? SAAS_LAUNCH_READY_CONTRACT + UNSLOP_WEBAPP_RULES : '')
+        // A Replace-your-SaaS build is the owner's own tool, not a product sold to customers: no plans, checkout or webhook contract.
+        + (isLaunchReadySaas(projectType) ? (isReplacementBrief(prompt) ? UNSLOP_WEBAPP_RULES : SAAS_LAUNCH_READY_CONTRACT + UNSLOP_WEBAPP_RULES) : '')
         + (isLaunchReadyMobile(projectType) ? MOBILE_LAUNCH_READY_CONTRACT : '')
         + (projectType === 'mobile' ? '' : wyberDNA)
         + (useToolUse ? toolUseOutputRule : outputRule)

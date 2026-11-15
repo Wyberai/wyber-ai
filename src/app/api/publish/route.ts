@@ -6,7 +6,7 @@ import { runSmokeTest } from '@/lib/smoke-test'
 import { scanForExposedSecrets } from '@/lib/security-scan'
 import { runProjectRlsScan, hasCriticalLeak } from '@/lib/rls-scan-project'
 import { runProjectWyberCloudScan, hasCriticalWyberCloudLeak } from '@/lib/wybercloud-scan-project'
-import { extractImageDirectives, replaceTokenInFiles } from '@/lib/image-directives'
+import { extractImageDirectives, replaceTokenInFiles, resolveDirectivesForPreview } from '@/lib/image-directives'
 import { generateAndPersistImage, billBuildImage } from '@/lib/generate-image-persist'
 import { syncSupabaseAuthUrl } from '@/lib/sync-supabase-auth-url'
 import { notify } from '@/lib/push'
@@ -206,6 +206,17 @@ export async function POST(req: NextRequest) {
       appId: projectId,
       securityBadge: (project.show_security_badge && rlsScore !== undefined) ? { score: rlsScore } : undefined,
     })
+
+    // Last guard: a raw {{wyber-image: ...}} token must never reach the live page, where it becomes a broken
+    // <img src>. Anything sanitizeFiles left behind (any file type) turns into the same gradient placeholder.
+    for (const [path, val] of Object.entries(sanitized as Record<string, unknown>)) {
+      const content = typeof val === 'string' ? val : (val as { content?: string } | null)?.content
+      if (typeof content !== 'string' || !/wyber-image/i.test(content)) continue
+      const resolved = resolveDirectivesForPreview(content)
+      if (resolved === content) continue
+      console.warn('[publish] image token survived sanitize in', path)
+      ;(sanitized as Record<string, unknown>)[path] = typeof val === 'string' ? resolved : { ...(val as object), content: resolved }
+    }
 
     const secretScan = scanForExposedSecrets(sanitized)
     if (!secretScan.ok) {

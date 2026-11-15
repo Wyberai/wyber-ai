@@ -43,6 +43,16 @@ function appears(name: string, screens: string[]): boolean {
   return false
 }
 
+/** True for the hand-off brief of a Replace-your-SaaS build (it asks for src/replacement-checklist.ts). */
+export function isReplacementBrief(prompt: string): boolean {
+  return /Replacement checklist: add src\/replacement-checklist\.ts/.test(prompt || '')
+}
+
+/** True when the project already has the replacement checklist file. */
+export function hasReplacementChecklist(files: Record<string, FileVal>): boolean {
+  return Object.keys(files || {}).some(p => CHECKLIST_PATH.test(p))
+}
+
 export function checkReplacement(files: Record<string, FileVal>): ReplacementResult | null {
   const entries = Object.entries(files || {})
   const list = entries.find(([p]) => CHECKLIST_PATH.test(p))
