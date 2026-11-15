@@ -38,6 +38,19 @@ interface SelectedEl {
   locText: string | null
 }
 
+// The preview frame is sandboxed without allow-same-origin. Loaded from a blob: URL, a click on an in-app hash link (#/page) counts as a
+// cross-document navigation and is blocked, so a generated app's sidebar did nothing in the editor (found 15 Nov on a Typeform replacement).
+// Published apps use srcdoc, where hash navigation works; the editor now loads the same HTML through srcdoc.
+let previewLoadSeq = 0
+function loadPreviewFrame(frame: HTMLIFrameElement, url: string) {
+  const tok = String(++previewLoadSeq)
+  frame.dataset.loadTok = tok
+  fetch(url)
+    .then(r => r.text())
+    .then(text => { if (frame.dataset.loadTok === tok) frame.srcdoc = text })
+    .catch(() => { if (frame.dataset.loadTok === tok) frame.src = url })
+}
+
 // Cheap, stable content hash (djb2). Used to detect when a file actually changed
 // — keying the rebuild on content LENGTH alone misses same-length edits (e.g.
 // swapping one word for another of equal length), leaving a stale preview.
@@ -352,7 +365,7 @@ export function PreviewPanel() {
       // from here. Start the startup grace window now — errors can be relayed
       // before 'load' fires — and restart it on load.
       loadedAt.current = Date.now()
-      iframeRef.current.src = html
+      loadPreviewFrame(iframeRef.current, html)
       const iframe = iframeRef.current
       const markLoaded = () => { loadedAt.current = Date.now() }
       iframe.addEventListener('load', markLoaded, { once: true })
@@ -481,7 +494,7 @@ export function PreviewPanel() {
 
   // Re-assign iframe src when view mode switches (new iframe element mounts)
   useEffect(() => {
-    if (iframeRef.current && html) iframeRef.current.src = html
+    if (iframeRef.current && html) loadPreviewFrame(iframeRef.current, html)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewMode])
 
@@ -831,7 +844,7 @@ Change requested: ${editInstruction.trim()}`
         <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '6px 12px', background: 'rgba(127,29,29,0.92)', borderBottom: '1px solid rgba(248,113,113,0.25)', fontSize: 12, color: '#fecaca' }}>
           <span>{t('hungPre')}<strong>{t('hungWord')}</strong>{t('hungPost')}</span>
           <button
-            onClick={() => { setHung(false); lastHeartbeat.current = Date.now(); if (iframeRef.current && html) iframeRef.current.src = html }}
+            onClick={() => { setHung(false); lastHeartbeat.current = Date.now(); if (iframeRef.current && html) loadPreviewFrame(iframeRef.current, html) }}
             style={{ background: '#ef4444', border: 'none', borderRadius: 6, color: '#03111c', cursor: 'pointer', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap', padding: '4px 12px' }}
           >{t('reloadPreviewBtn')}</button>
         </div>
