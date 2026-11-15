@@ -60,7 +60,7 @@ W13 NO NOTES TO THE OWNER ON THE PAGE: visitors see the site, not a to-do list. 
 
 W14 NAV LINKS LAND SOMEWHERE: every in-page link (href="#timings" and the like) must point at an element that exists. A section that is only rendered when an OWNER value is set (hours, address, phone) must have its nav and footer link rendered under the same condition, so an empty value never leaves a dead menu item.
 
-W15 NO INVENTED FACTS ABOUT THE BUSINESS: the owner gave you a one-line brief, not their staff list. Do not make up: a business name (when the prompt names none, call it by what it is and where, for example "Yoga studio in Pune"), a person (teacher, doctor, trainer, founder, "Dr. Name"), a timetable, prices, class or appointment lengths, years in business, or a number of anything. Add \`team: ""\` and \`timetable: ""\` to OWNER (plain strings, "Name, role; Name, role" for team) and render the people section, the timetable and prices ONLY when that value is filled, each with its menu link under the same condition. Describe what the business offers in plain general terms taken from the brief. When there is no way to enquire (W4 and W5 leave no button and no form), do not show "Book", "Demo class", "Free trial", "Enquire" or "Reserve" buttons that only scroll to another section: say what is offered and where the business is. The same goes for words: a privacy line, a heading or a paragraph may mention an enquiry, contact or booking form only inside the same condition that renders the form, and a promise like "we will get back to you" appears only beside a form or contact link that works.
+W15 NO INVENTED FACTS ABOUT THE BUSINESS: the owner gave you a one-line brief, not their staff list. Do not make up: a business name (when the prompt names none, leave OWNER.name empty and use only a plain description of what it is and where, for example "Yoga studio in Pune" or "JEE and NEET coaching", in the title, header, footer and JSON-LD; never coin a brand such as "Shikshan Path" or "Prana Yoga Studio"), a person (teacher, doctor, trainer, founder, "Dr. Name"), a timetable, prices, class or appointment lengths, years in business, or a number of anything. Add \`team: ""\` and \`timetable: ""\` to OWNER (plain strings, "Name, role; Name, role" for team) and render the people section, the timetable and prices ONLY when that value is filled, each with its menu link under the same condition. Describe what the business offers in plain general terms taken from the brief. When there is no way to enquire (W4 and W5 leave no button and no form), do not show "Book", "Demo class", "Free trial", "Enquire" or "Reserve" buttons that only scroll to another section: say what is offered and where the business is. The same goes for words: a privacy line, a heading or a paragraph may mention an enquiry, contact or booking form only inside the same condition that renders the form, and a promise like "we will get back to you" appears only beside a form or contact link that works.
 
 W12 DEFINITION OF DONE (confirm silently before the "Built:" line): owner-details file with empty strings where unknown, read at render time; no button, link or form that cannot work with the facts present; no notes to the owner on the page; every #anchor link has a target; sections match the archetype; contact path on every page; the form delivers or opens a pre-filled link; no invented claims, names, people, timetable or prices; title, description, canonical, one h1, alt text, JSON-LD from owner details, robots and sitemap; language toggle when Indian; privacy line beside the form.
 `
@@ -105,7 +105,8 @@ export function contactNudge(files: Record<string, FileVal>): string | null {
   if (val('whatsapp') || val('phone') || val('email')) return null
   const how = 'Add your WhatsApp number, phone and opening hours: in the Grow tab if you have it (0 credits), or just tell me in the chat and I will add them.'
   const people = /\bteam\s*:|\btimetable\s*:/.test(src) ? ' I also left out staff names, the timetable and prices because you did not give them; tell me who works there and when, and I will add them.' : ''
-  return `Your site is built, but visitors cannot reach you yet: no WhatsApp number, phone or email is set, so the contact button and enquiry form are left out. ${how}${people}`
+  const named = /\bname\s*:\s*(["'`])\s*\1/.test(src) ? ' Your business name is not set either, so the site is called by what it is and where; tell me the name and I will use it.' : ''
+  return `Your site is built, but visitors cannot reach you yet: no WhatsApp number, phone or email is set, so the contact button and enquiry form are left out. ${how}${people}${named}`
 }
 
 const ROLE_WORDS = /teacher|trainer|instructor|doctor|dentist|team|faculty|founder|therapist|stylist|chef|photographer|lawyer|accountant|surgeon|coach|mentor/i
@@ -170,6 +171,41 @@ export function formTextWithoutForm(code: string): boolean {
   return blocks.some(s => /["'`>][^"'`<\n]*\b(enquiry|contact|booking|demo class) form\b[^"'`<\n]*["'`<]/i.test(s))
 }
 
+const NAME_STOP = new Set(['and', 'in', 'for', 'of', 'the', 'at', 'a', 'to', 'with', 'by', 'near'])
+const NAME_GENERIC = new Set([
+  'studio', 'clinic', 'bakery', 'firm', 'shop', 'store', 'services', 'service', 'coaching', 'institute', 'centre', 'center', 'school',
+  'company', 'agency', 'consultant', 'consultants', 'consultancy', 'accountant', 'accountants', 'accountancy', 'chartered', 'photographer',
+  'photography', 'supplier', 'suppliers', 'exporter', 'exporters', 'broker', 'cleaning', 'dental', 'dentist', 'yoga', 'rice', 'steel',
+  'interior', 'interiors', 'designer', 'design', 'wedding', 'cake', 'cakes', 'classes', 'class', 'tutorials', 'real', 'estate', 'home',
+  'salon', 'gym', 'fitness', 'restaurant', 'cafe', 'kitchen', 'legal', 'law', 'lawyer', 'lawyers', 'medical', 'care', 'repair', 'repairs',
+  'trading', 'traders', 'export', 'import', 'packaging', 'education', 'tuition', 'portfolio', 'website', 'site', 'business', 'local',
+])
+
+function ownerValue(code: string, key: string): string {
+  const owner = code.split(/(?=\/\/ FILE )/).find(b => /^\/\/ FILE [^\n]*owner-details/i.test(b)) ?? ''
+  return (owner.match(new RegExp(`\\b${key}\\s*:\\s*(["'\`])((?:\\\\.|(?!\\1).)*)\\1`))?.[2] ?? '').trim()
+}
+
+/**
+ * A made-up brand name: the page title starts with a name made of words that are not generic business words,
+ * not the owner's city, and not an acronym, while OWNER.name is empty. Returns that name, or null.
+ */
+export function inventedBusinessName(code: string): string | null {
+  if (ownerValue(code, 'name')) return null
+  const title = code.match(/<title>([^<]{2,120})<\/title>/i)?.[1]
+  if (!title) return null
+  const first = title.split(/\s[|–—-]\s|:/)[0].trim()
+  const city = new Set(ownerValue(code, 'city').toLowerCase().split(/[\s,]+/).filter(Boolean))
+  const tokens = first.split(/[\s,&]+/).filter(Boolean)
+  const bad = tokens.filter(t => {
+    const w = t.toLowerCase().replace(/[^a-z0-9]/g, '')
+    if (!w || NAME_STOP.has(w) || NAME_GENERIC.has(w) || city.has(w)) return false
+    if (/^[A-Z0-9]{2,}$/.test(t.replace(/[^A-Za-z0-9]/g, ''))) return false
+    return true
+  })
+  return bad.length ? first : null
+}
+
 /** Static #anchors with no matching id in the same source. Dynamic hrefs are ignored. */
 export function deadAnchors(code: string): string[] {
   const ids = new Set<string>()
@@ -202,6 +238,9 @@ const CHECKS: Check[] = [
   { id: 'privacy-matches-form', label: 'Privacy text does not mention a form the site lacks',
     fix: 'Remove every mention of an enquiry, contact, booking or demo-class form from privacy and page text while the site has no form. Say the privacy line beside the form only when the form is rendered.',
     test: c => !formTextWithoutForm(c) },
+  { id: 'no-invented-name', label: 'No made-up business name',
+    fix: 'The owner did not name the business, so do not coin a brand name. Leave OWNER.name empty and call the business by what it is and where, for example "Yoga studio in Pune" or "JEE and NEET coaching", in the title, header, footer and JSON-LD. Use a real name only when OWNER.name is filled in.',
+    test: c => inventedBusinessName(c) === null },
   { id: 'anchors-resolve', label: 'Every in-page link has a target',
     fix: 'Every href="#something" needs an element with id="something". Render a nav or footer link only when the section it points to is rendered (for example hours, address).',
     applies: c => /href=["']#[A-Za-z][\w-]*["']/.test(c),

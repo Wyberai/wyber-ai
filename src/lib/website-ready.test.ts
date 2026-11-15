@@ -308,3 +308,33 @@ describe('no action promised without an action (15 Nov)', () => {
     expect(WEBSITE_LAUNCH_READY_CONTRACT).toMatch(/we will get back to you/)
   })
 })
+
+import { inventedBusinessName } from './website-ready'
+describe('no coined business name (15 Nov)', () => {
+  const owner = (name: string, city = '') => `// FILE src/owner-details.ts\nexport const OWNER = { name: "${name}", city: "${city}", whatsapp: "", phone: "", email: "" }\n`
+  const html = (t: string) => `// FILE index.html\n<title>${t}</title>\n`
+
+  it('flags the names the model coined on the yoga and coaching builds', () => {
+    expect(inventedBusinessName(owner('') + html('Shikshan Path | JEE and NEET coaching'))).toBe('Shikshan Path')
+    expect(inventedBusinessName(owner('', 'Pune') + html('Prana Yoga Studio, Pune'))).toBe('Prana Yoga Studio, Pune')
+    expect(inventedBusinessName(owner('') + html('Smile Dental Clinic | Dental clinic in Ahmedabad'))).toBe('Smile Dental Clinic')
+  })
+
+  it('allows plain descriptions, acronyms and the owner city', () => {
+    expect(inventedBusinessName(owner('', 'Pune') + html('Yoga studio in Pune | Classes'))).toBeNull()
+    expect(inventedBusinessName(owner('') + html('JEE & NEET Coaching'))).toBeNull()
+    expect(inventedBusinessName(owner('', 'Surat') + html('Bakery in Surat: custom cakes'))).toBeNull()
+  })
+
+  it('allows any title when the owner gave the name, and when there is no title', () => {
+    expect(inventedBusinessName(owner('Asha Dental') + html('Asha Dental | Ahmedabad'))).toBeNull()
+    expect(inventedBusinessName(owner('') + `// FILE src/App.tsx\n<h1>Hi</h1>`)).toBeNull()
+  })
+
+  it('is a launch-ready item with a fix, and the nudge asks for the name', () => {
+    const r = checkWebsiteReady({ 'src/owner-details.ts': owner(''), 'index.html': html('Shikshan Path | JEE coaching').replace('// FILE index.html\n', '') })
+    expect(r.items.find(i => i.id === 'no-invented-name')).toBeTruthy()
+    expect(WEBSITE_LAUNCH_READY_CONTRACT).toMatch(/never coin a brand such as/)
+    expect(contactNudge({ 'src/owner-details.ts': 'export const OWNER = { name: "", whatsapp: "", phone: "", email: "" }' })).toMatch(/business name is not set/)
+  })
+})
