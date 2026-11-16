@@ -4,7 +4,7 @@ import path from 'node:path'
 import { creditCost } from './credits'
 import {
   WEBSITE_LAUNCH_READY_CONTRACT, WEBSITE_MIN_TIER, checkWebsiteReady, floorWebsiteTier, isLaunchReadyWebsite,
-  websiteLaunchReadyCost, websiteLaunchReadyCostText, websiteReadyIssues, websiteReadySummary,
+  websiteLaunchReadyCost, websiteLaunchReadyCostText, websiteReadyIssues, websiteReadySummary, sectionCount, englishWordCount,
 } from './website-ready'
 import { UNSLOP_WEBSITE_RULES } from './unslop-website'
 import { runQaChecks } from './agents/qa-checks'
@@ -51,6 +51,9 @@ describe('contract and rules', () => {
   })
 })
 
+// About 800 words of distinct English sentences, as string literals the way a real site keeps its copy.
+const LONG_COPY = Array.from({ length: 70 }, (_, i) => `const line${i} = "Every visit starts with a calm conversation about what you need and what to expect, part ${i}."`).join('\n')
+
 const GOOD: Record<string, string> = {
   'src/owner-details.ts': `export const OWNER = { name: 'Asha Dental', city: 'Ahmedabad', phone: '', whatsapp: '919999999999' }`,
   'index.html': `<title>Asha Dental, Ahmedabad</title><meta name="description" content="x"/><link rel="canonical" href="https://ashadental.example/"/><script type="application/ld+json">{"@type":"LocalBusiness"}</script>`,
@@ -64,8 +67,37 @@ const GOOD: Record<string, string> = {
     <img src="a.jpg" alt="Clinic reception"/>
     <footer><a href="#privacy">Privacy</a> <a href="#terms">Terms</a> <button>हिन्दी</button> const translations = {}</footer>
     <section id="privacy"/><section id="terms"/>
+    <section id="services"><h2>Treatments</h2></section><section id="how"><h2>What to expect at your first visit</h2></section>
+    <section id="cares"><h2>What we care about</h2></section><section id="faq"><h2>Common questions</h2></section><section id="area"><h2>Where we are</h2></section>
+    <section id="visit"><h2>Book a visit</h2></section>
+    ${LONG_COPY}
   `,
 }
+
+describe('content depth (W16)', () => {
+  it('is in the contract and in the definition of done', () => {
+    expect(WEBSITE_LAUNCH_READY_CONTRACT).toMatch(/W16 CONTENT DEPTH THAT NEEDS NO FACTS/)
+    expect(WEBSITE_LAUNCH_READY_CONTRACT).toMatch(/PLUS the depth sections of W16/)
+    expect(WEBSITE_LAUNCH_READY_CONTRACT).toMatch(/it never overrides W6, W13, W14 or W15/)
+    expect(WEBSITE_LAUNCH_READY_CONTRACT).toMatch(/the W16 depth sections are all written/)
+  })
+  it('sends back a thin site: a hero, a short list of treatments and an about line', () => {
+    const thin = { ...GOOD, 'src/App.tsx': `<h1>Gentle dental care in Ahmedabad</h1><section id="services"><li>Check-ups</li><li>Cleaning</li></section><section id="about"><p>A short intro to the clinic.</p></section>` }
+    const failed = checkWebsiteReady(thin).items.filter(i => !i.ok).map(i => i.id)
+    for (const id of ['sections-depth', 'faq', 'how-it-works', 'copy-depth']) expect(failed).toContain(id)
+  })
+  it('counts content sections but not page chrome, and counts distinct English copy only', () => {
+    expect(sectionCount('<section id="top"/><section id="footer"/><section id="a"/><section id="b"/>')).toBe(2)
+    const copy = 'const a = "Every visit starts with a calm conversation about what you need."; const b = "Every visit starts with a calm conversation about what you need."; const c = "ગુજરાતી ભાષામાં લખેલી લાંબી લાઇન જે ગણતરીમાં ન આવવી જોઈએ."'
+    expect(englishWordCount(copy)).toBe(11)
+  })
+  it('turns missing depth into fix prompts the free fix lane can run', () => {
+    const thin = { ...GOOD, 'src/App.tsx': `<h1>Dental care</h1>` }
+    const issues = websiteReadyIssues(thin)
+    expect(issues.length).toBeGreaterThan(0)
+    expect(issues.length).toBeLessThanOrEqual(6)
+  })
+})
 
 describe('checkWebsiteReady', () => {
   it('passes a site that has everything', () => {

@@ -36,7 +36,7 @@ This site goes live for a real business the day it is published. Its job is to b
 
 W1 OWNER DETAILS: put every business fact in ONE file, src/owner-details.ts, as \`export const OWNER = { name: "", city: "", address: "", phone: "", whatsapp: "", email: "", hours: "", years: "", languages: "", team: "", timetable: "" }\`: every value is a plain string (languages as "en,hi,gu"), WhatsApp as digits with the country code and no plus sign. Fill only what the prompt states; leave the rest as empty strings. The editor can rewrite this file later (the owner types their phone, WhatsApp, address and hours), so read every value from OWNER at render time and never copy a value into another file. Components render a block (phone button, hours, address, map link) ONLY when its fact is present. Never invent a phone number, address, hours, founding year, team member or price.
 
-W2 STRUCTURE BY BUSINESS TYPE: pick ONE archetype from the prompt and say which in a [progress:] line: local service (clinic, salon, cleaner), practitioner or studio, shop or bakery, B2B supplier or exporter, portfolio, institute. Build only the sections that archetype needs. The persona chips, pricing toggle, logo strip, stat band and testimonial carousel from earlier rules apply ONLY when the owner supplied the content for them; otherwise omit them.
+W2 STRUCTURE BY BUSINESS TYPE: pick ONE archetype from the prompt and say which in a [progress:] line: local service (clinic, salon, cleaner), practitioner or studio, shop or bakery, B2B supplier or exporter, portfolio, institute. Build the sections that archetype needs PLUS the depth sections of W16 (a thin site is a failed site). The persona chips, pricing toggle, logo strip, stat band and testimonial carousel from earlier rules apply ONLY when the owner supplied the content for them; otherwise omit them.
 
 W3 FIRST SCREEN: one plain promise (what you do, for whom, where), one primary action, at most one secondary action. A real image or a clearly empty image slot, never filler. Nothing stacked under the buttons.
 
@@ -62,7 +62,9 @@ W14 NAV LINKS LAND SOMEWHERE: every in-page link (href="#timings" and the like) 
 
 W15 NO INVENTED FACTS ABOUT THE BUSINESS: the owner gave you a one-line brief, not their staff list. Do not make up: a business name (when the prompt names none, leave OWNER.name empty and use only a plain description of what it is and where, for example "Yoga studio in Pune" or "JEE and NEET coaching", in the title, header, footer and JSON-LD; never coin a brand such as "Shikshan Path" or "Prana Yoga Studio"), a person (teacher, doctor, trainer, founder, "Dr. Name"), a timetable, prices, class or appointment lengths, years in business, or a number of anything. Add \`team: ""\` and \`timetable: ""\` to OWNER (plain strings, "Name, role; Name, role" for team) and render the people section, the timetable and prices ONLY when that value is filled, each with its menu link under the same condition. Describe what the business offers in plain general terms taken from the brief. When there is no way to enquire (W4 and W5 leave no button and no form), do not show "Book", "Demo class", "Free trial", "Enquire" or "Reserve" buttons that only scroll to another section: say what is offered and where the business is. The same goes for words: a privacy line, a heading or a paragraph may mention an enquiry, contact or booking form only inside the same condition that renders the form, and a promise like "we will get back to you" appears only beside a form or contact link that works.
 
-W12 DEFINITION OF DONE (confirm silently before the "Built:" line): owner-details file with empty strings where unknown, read at render time; no button, link or form that cannot work with the facts present; no notes to the owner on the page; every #anchor link has a target; sections match the archetype; contact path on every page; the form delivers or opens a pre-filled link; no invented claims, names, people, timetable or prices; title, description, canonical, one h1, alt text, JSON-LD from owner details, robots and sitemap; language toggle when Indian; privacy line beside the form.
+W16 CONTENT DEPTH THAT NEEDS NO FACTS: a one-line brief must still produce a site that reads as finished and considered, like one a good agency wrote after a short call. Honesty (W6, W15) forbids invented facts; it does not forbid writing well. From your general knowledge of this kind of business, ALWAYS write: (a) a services section where EVERY service gets its own card with a heading and two plain sentences saying what it is, who it is for and what to expect, never a bare list of words; (b) a how-it-works or what-to-expect section of 3 to 4 steps for a typical visit or engagement, without durations, prices or promises; (c) a short section on what the business cares about, three statements in plain language that make no claim a visitor could check; (d) a FAQ of 5 to 6 real questions people ask this type of business, answered carefully and generally (no guarantees, no prices, no medical, legal or financial promises, and say "ask us" where the answer depends on the case); (e) an area line built only from OWNER.city (and OWNER.address when set), no invented street address; (f) a closing band with the contact path of W4 when one exists. Minimum: 6 sections between header and footer and about 700 words of visible English copy. Write copy specific to the business type and city, never filler such as lorem ipsum or generic marketing phrases. This depth is required in addition to W2; it never overrides W6, W13, W14 or W15.
+
+W12 DEFINITION OF DONE (confirm silently before the "Built:" line): owner-details file with empty strings where unknown, read at render time; no button, link or form that cannot work with the facts present; no notes to the owner on the page; every #anchor link has a target; sections match the archetype; the W16 depth sections are all written (services described, how it works, what we care about, FAQ, area, closing band); contact path on every page; the form delivers or opens a pre-filled link; no invented claims, names, people, timetable or prices; title, description, canonical, one h1, alt text, JSON-LD from owner details, robots and sitemap; language toggle when Indian; privacy line beside the form.
 `
 
 // ── The check ────────────────────────────────────────────────────────────────
@@ -215,7 +217,55 @@ export function deadAnchors(code: string): string[] {
   return [...dead]
 }
 
+/** Source with import lines and comments removed, for text searches. */
+function stripCode(code: string): string {
+  return code.split('\n').filter(l => !/^\s*(import |\/\/|\*|\/\*)/.test(l)).join('\n')
+}
+
+/** Distinct content sections: <section> tags other than page chrome. */
+export function sectionCount(code: string): number {
+  const ids = new Set<string>()
+  for (const m of code.matchAll(/<section\b[^>]*>/g)) {
+    const id = m[0].match(/\bid\s*=\s*["']([^"']+)["']/)?.[1]
+    ids.add(id ?? `anon-${m.index}`)
+  }
+  const chrome = new Set(['top', 'main', 'footer', 'header', 'nav'])
+  return [...ids].filter(i => !chrome.has(i)).length
+}
+
+/** Words of visible English copy: string literals and JSX text that are mostly Latin letters and longer than 25 characters, each counted once. */
+export function englishWordCount(code: string): number {
+  const seen = new Set<string>()
+  let words = 0
+  const add = (s: string) => {
+    const t = s.replace(/\s+/g, ' ').trim()
+    if (t.length < 25 || seen.has(t) || /^(https?:|\/|\.|#)/.test(t) || /[{}<>=;]/.test(t)) return
+    if ((t.match(/[A-Za-z]/g) ?? []).length / t.length < 0.7) return
+    seen.add(t)
+    words += t.split(' ').length
+  }
+  for (const block of code.split(/(?=\/\/ FILE )/)) {
+    if (/^\/\/ FILE [^\n]*(owner-details|\.css|robots|sitemap|index\.html)/i.test(block)) continue
+    const src = stripCode(block)
+    for (const m of src.matchAll(/(["'`])((?:\\.|(?!\1)[^\n])*)\1/g)) add(m[2])
+    for (const m of src.matchAll(/>([^<>{}\n][^<>{}]*)</g)) add(m[1])
+  }
+  return words
+}
+
 const CHECKS: Check[] = [
+  { id: 'sections-depth', label: 'At least six content sections',
+    fix: 'The site is too thin. Build at least six sections between header and footer: services (each with its own description), how it works, what we care about, FAQ, area and a closing contact band, all written from general knowledge of this kind of business with no invented facts.',
+    test: c => sectionCount(c) >= 6 },
+  { id: 'faq', label: 'A FAQ with real questions',
+    fix: 'Add a FAQ section with 5 to 6 questions people actually ask this kind of business, answered carefully and generally (no guarantees, no prices, no medical, legal or financial promises).',
+    test: c => /faq|frequently asked|common questions/i.test(stripCode(c)) },
+  { id: 'how-it-works', label: 'A how-it-works or what-to-expect section',
+    fix: 'Add a how-it-works or what-to-expect section of 3 to 4 steps for a typical visit or engagement, without durations, prices or promises.',
+    test: c => /(how (it|we) works?|what to expect|your (first )?(visit|appointment|session)|our process|how we (work|help))/i.test(stripCode(c)) },
+  { id: 'copy-depth', label: 'Enough written copy (about 700 words)',
+    fix: 'The copy is too short. Write a two-sentence description for every service plus the how-it-works, what-we-care-about and FAQ sections, specific to this business type and city, about 700 words of visible English in total.',
+    test: c => englishWordCount(c) >= 700 },
   { id: 'owner-details', label: 'Business facts kept in one owner-details file',
     fix: 'Create src/owner-details.ts with name, city, address, phone, whatsapp, email, hours (empty strings where unknown) and render phone, hours and address blocks only when present.',
     test: c => /\/\/ FILE [^\n]*owner-details/i.test(c) },
