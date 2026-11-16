@@ -103,6 +103,7 @@ export const TYPES = [
   { tag: 'WEB APP', title: 'Tools for your team', p: 'Trackers, approvals, invoices and dashboards that replace sheets and chat threads.' },
   { tag: 'MOBILE APP', title: 'An app people install', p: 'Orders, attendance or delivery proof on a phone, for your team or your customers.' },
   { tag: 'SAAS', title: 'A product you sell', p: 'Logins, a database and a link customers can sign up on. Ready to put in front of buyers.' },
+  { tag: 'REPLACE', title: 'Your own, in-house', p: 'Swap a SaaS you pay for with your own in-house version, built around the features you actually use.' },
 ]
 
 export const STEPS = [

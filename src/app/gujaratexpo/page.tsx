@@ -4,10 +4,10 @@ import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
 export const metadata: Metadata = {
   title: 'Build any digital product. Ship it in minutes.',
-  description: 'Bring your pain point to the WyberAi booth (S23) at Tech Expo Gujarat. We build it while you watch. Book 15 minutes.',
+  description: 'Most software has 100 features and you use 5. Tell us what you need and we build it live at the WyberAi booth (S23), Tech Expo Gujarat. Book 15 minutes.',
   openGraph: { images: DEFAULT_OG_IMAGES,
     title: 'Bring your pain point. We will build it live.',
-    description: 'Web app, mobile app, website or SaaS, built from plain words. Meet WyberAi at Tech Expo Gujarat, booth S23.',
+    description: 'Most software has 100 features and you use 5. Web app, website, mobile app, SaaS, or your own version of a tool you pay for, built from plain words. Meet WyberAi at Tech Expo Gujarat, booth S23.',
   },
 }
 
