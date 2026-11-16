@@ -502,6 +502,24 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
     }
     return out;
   }, [messages]);
+  // Watchdog for a "working" bubble nothing is working on. Individual paths have orphaned one more than once (the
+  // 'Working on your changes...' spinner, 16 Nov), and each was fixed by hand and came back. This is the backstop that
+  // does not depend on which path forgot: when no generation is running, an assistant bubble still 'streaming' is closed.
+  // Empty ones (the generic spinner) after 45 s; ones with text (e.g. the dropped-connection rescue, which really polls for
+  // up to 3 minutes) after 4.5 min. Chains dispatch their next pass within ~1 s, so this never fires mid-chain.
+  useEffect(() => {
+    if (isGenerating) return;
+    const stuck = messages.filter(m => m.role === 'assistant' && m.status === 'streaming');
+    if (stuck.length === 0) return;
+    const timers = stuck.map(m => setTimeout(() => {
+      if (useEditorStore.getState().isGenerating) return;
+      const cur = useEditorStore.getState().messages.find(x => x.id === m.id);
+      if (!cur || cur.status !== 'streaming') return;
+      if (!cur.content && !cur.filesChanged?.length) setMessages(prev => prev.filter(x => x.id !== m.id));
+      else updateMessage(m.id, { status: 'done', content: cur.filesChanged?.length ? cur.content : 'That step stopped without a result. Send your request again if something is missing.' });
+    }, m.content ? 270_000 : 45_000));
+    return () => timers.forEach(clearTimeout);
+  }, [isGenerating, messages, setMessages, updateMessage]);
   // The newest finished build (a message that changed files): the only one that offers next-step chips.
   const nextStepMsgId = useMemo(() => {
     for (let i = visibleMessages.length - 1; i >= 0; i--) {

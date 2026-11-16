@@ -4028,6 +4028,20 @@ export async function POST(req: NextRequest) {
           error: 'Auto-fix limit reached for this hour — please try again in a little while.',
         }), { status: 429 })
       }
+      // Daily ceiling on top of the hourly one: 60 an hour allowed up to 1,440 free (unbilled, real-cost) passes a day. The 16 Nov
+      // Anthropic balance scare came from free passes plus builds; a day of heavy building is ~100, so 150 never touches a real user.
+      const FREE_PASSES_PER_DAY = 150
+      const { count: dayCount } = await guardAdmin
+        .from('credit_usage')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('reason', 'free-pass')
+        .gte('created_at', new Date(Date.now() - 24 * 3600_000).toISOString())
+      if ((dayCount ?? 0) >= FREE_PASSES_PER_DAY) {
+        return new Response(JSON.stringify({
+          error: 'Auto-fix limit reached for today — your next paid edit or build still works.',
+        }), { status: 429 })
+      }
       await guardAdmin.from('credit_usage').insert({
         user_id: user.id, amount: 0, reason: 'free-pass',
         credits_before: 0, credits_after: 0,
