@@ -14,6 +14,7 @@ import { DATA_TABLE_FILES } from './data-table-infra'
 import { resolveDirectivesForPreview } from './image-directives'
 import { synthesizeAppTsx } from './synthesize-app'
 import { repairStringSeams } from './string-seam'
+import { repairBlankBrandPanel } from './auth-brand-panel'
 
 type FileVal = { content?: string; language?: string } | string
 
@@ -33,7 +34,9 @@ export function sanitizeFiles<T extends Record<string, FileVal>>(files: T, opts?
     const text = typeof val === 'string' ? val : val?.content
     if (typeof text === 'string' && /\.(tsx?|jsx?)$/i.test(p)) {
       const fixed = repairStringSeams(p, text)
-      out[p] = fixed.repaired === 0 ? val : (typeof val === 'string' ? fixed.content : { ...val, content: fixed.content })
+      // A sign-in screen whose brand panel lost its picture gets one back (see auth-brand-panel.ts).
+      const panel = repairBlankBrandPanel(p, fixed.content)
+      out[p] = fixed.repaired === 0 && panel.repaired === 0 ? val : (typeof val === 'string' ? panel.content : { ...val, content: panel.content })
       continue
     }
     out[p] = val
