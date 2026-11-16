@@ -248,7 +248,15 @@ describe('post-build check is wired without the agent team (15 Nov)', () => {
   const src = fs.readFileSync(path.join(process.cwd(), 'src/components/editor/ChatPanel.tsx'), 'utf8')
   it('runs on its own launch-ready gate, not only on AGENT_TEAM_ENABLED', () => {
     expect(src).toMatch(/const launchQaOn = isLaunchReadyApp\(projectType\)/)
-    expect(src).toMatch(/\(AGENT_TEAM_ENABLED \|\| launchQaOn\) && qaEligible/)
+    expect(src).toMatch(/\(AGENT_TEAM_ENABLED \|\| \(launchQaOn && qaFirstBuild\)\) && qaEligible/)
+  })
+  it('runs only after a first build, never after a later edit such as "add a settings page" (16 Nov)', () => {
+    expect(src).toMatch(/const qaFirstBuild = !hasGeneratedFiles \|\| \(opts\?\.stage === 'fill' && !!opts\?\.finalPass\)/)
+  })
+  it('a launch-ready fix pass names what it added; continuation passes never claim the build is complete (16 Nov)', () => {
+    expect(src).toMatch(/Added from the launch-ready check:/)
+    const dict = fs.readFileSync(path.join(process.cwd(), 'src/lib/i18n/dict/editor-chatpanel.ts'), 'utf8')
+    expect(dict).not.toMatch(/continuationDoneMsg: '[^']*build is complete/i)
   })
   it('with the agent team off it acts only on launch-ready findings, and shows results as chat messages', () => {
     expect(src).toMatch(/\.filter\(i => AGENT_TEAM_ENABLED \|\| i\.kind === 'launch-ready'\)/)

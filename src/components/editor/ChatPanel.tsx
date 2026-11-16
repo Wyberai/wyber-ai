@@ -681,6 +681,8 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
   // extended to buildSystemPrompt(), tiered edit pricing) ships.
   const MAX_TOTAL_REPAIR_PASSES = 2;
   const totalRepairPassesRef = useRef(0);
+  // What the launch-ready fix pass was asked to add; its closing message names these instead of a generic "done".
+  const qaSummaryRef = useRef('');
   // One-shot guard so an already-exhausted budget only ever posts its
   // loopStop/"budget reached" message once per turn, regardless of how many
   // separate mechanisms (ChatPanel's own retries, PreviewPanel's independent
@@ -2041,7 +2043,11 @@ const storeProjectId = useEditorStore.getState().project?.id;
       // normal chat message, and act only on their own findings (never on the older generic structural checks).
       const launchQaOn = isLaunchReadyApp(projectType) || isLaunchReadyWebsite(projectType) || isLaunchReadySaas(projectType)
         || isLaunchReadyMobile(projectType) || !!checkReplacement(updatedFiles)
-      if ((AGENT_TEAM_ENABLED || launchQaOn) && qaEligible && !fileCut && !editCut
+      // The launch-ready check and its fix pass belong to a FIRST build only. After that, a request such as "add a settings page"
+      // changes only what was asked: running the check there started an unrequested pass (found 16 Nov). `hasGeneratedFiles` is the value
+      // from before this pass; the final staged fill pass is part of the first build.
+      const qaFirstBuild = !hasGeneratedFiles || (opts?.stage === 'fill' && !!opts?.finalPass)
+      if ((AGENT_TEAM_ENABLED || (launchQaOn && qaFirstBuild)) && qaEligible && !fileCut && !editCut
           && (!opts?.stage || opts?.finalPass)
           && (newFiles.length > 0 || editBlocks.length > 0)) {
         const say = (text: string) => {
@@ -2082,6 +2088,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
           // talks changes nothing, which is what the first localhost test of this wiring produced).
           const combined = qaIssues.slice(0, 4).map(i => i.fixPrompt).join('\n')
             + '\nMake these changes now. Output each changed file as a COMPLETE <file> block (only files that change; keep every other behaviour and all owner facts as they are). AUTOMATED CONTINUATION: after the last </file> tag, write ZERO additional words.'
+          qaSummaryRef.current = qaIssues.slice(0, 4).map(i => i.detail.replace(/^(Replacement feature missing|Missing|Add):?\s*/i, '')).join('; ')
           setTimeout(() => {
             window.dispatchEvent(new CustomEvent('wyber-autofix', {
               detail: { continuation: true, qaFix: true, prompt: combined }
@@ -2395,6 +2402,8 @@ const storeProjectId = useEditorStore.getState().project?.id;
       let finalContent = cleanMessage(recapText, t('doneCheckPreviewMsg'));
       if (opts?.continuation && finalContent === t('doneCheckPreviewMsg')) {
         finalContent = t('continuationDoneMsg');
+        // A launch-ready fix pass says what it was asked to add, not a generic "done".
+        if (opts?.qaFix && qaSummaryRef.current) finalContent = `✓ Added from the launch-ready check: ${qaSummaryRef.current}.`;
       }
       // A cut stream means the turn ends mid-work — say so, or the preamble
       // reads as a finished summary ("…Let me look at App.tsx:") and the user
