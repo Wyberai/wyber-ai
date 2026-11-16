@@ -346,3 +346,11 @@ describe('no coined business name (15 Nov)', () => {
     expect(contactNudge({ 'src/owner-details.ts': 'export const OWNER = { name: "", whatsapp: "", phone: "", email: "" }' })).toMatch(/business name is not set/)
   })
 })
+
+describe('edit pass handing off to a follow-up pass (16 Nov)', () => {
+  it('closes its own bubble instead of leaving an orphaned "Working on your changes..." spinner', () => {
+    const src = fs.readFileSync(path.join(process.cwd(), 'src/components/editor/ChatPanel.tsx'), 'utf8')
+    expect(src).not.toMatch(/ownsBubble && completenessRetryFired\) \{\s*updateMessage\(assistantId, \{ status: 'streaming' \}\)/)
+    expect(src).toMatch(/finishing the rest now, a few more updates coming below/)
+  })
+})

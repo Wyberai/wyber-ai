@@ -2435,7 +2435,15 @@ const storeProjectId = useEditorStore.getState().project?.id;
       // continuation path used elsewhere) renders its own terminal "done" —
       // or the existing "still missing" message (4d) — once it resolves.
       if (ownsBubble && completenessRetryFired) {
-        updateMessage(assistantId, { status: 'streaming' });
+        // Leaving this bubble at 'streaming' was never resolved by the follow-up pass: it stayed as an orphaned
+        // "Working on your changes..." above the finished follow-up (seen again 16 Nov). Close it now and say honestly
+        // what landed in this pass and that the rest is still coming (same as the first-build path).
+        const partialPaths = [...new Set([...newFiles.map(f => f.path), ...editBlocks.map(e => e.path)])];
+        const partialMsg = partialPaths.length > 0
+          ? `${partialPaths.length} file${partialPaths.length === 1 ? '' : 's'} changed — finishing the rest now, a few more updates coming below.`
+          : 'Finishing the rest now — a few more updates coming below.';
+        updateMessage(assistantId, { content: partialMsg, status: 'done', filesChanged: partialPaths });
+        persistMessage('assistant', partialMsg, partialPaths);
       } else if (ownsBubble) {
         // Edit turns change files via <edit>/edit_file, not new <file>
         // blocks — list those too or an edit's receipt has no file chips.
