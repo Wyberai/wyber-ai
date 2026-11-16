@@ -6425,7 +6425,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
                   { role: 'assistant' as const, content: assistantSoFar },
                   {
                     role: 'user' as const,
-                    content: `Your previous response was cut off by the token limit. It ended with:\n\n"${cutoffTail}"\n\nContinue the raw output EXACTLY from that cut-off point. Do not repeat any text already written, do not add any preamble, acknowledgement, or explanation — resume mid-stream as if there had been no interruption, preserving the exact <file>/<edit> tag structure in progress.`,
+                    content: `Your previous response was cut off by the token limit. It ended with:\n\n"${cutoffTail}"\n\nContinue the raw output EXACTLY from that cut-off point. Do not repeat any text already written, do not add any preamble, acknowledgement, or explanation — resume mid-stream as if there had been no interruption, preserving the exact <file>/<edit> tag structure in progress. If the cut-off fell inside a quoted string, continue that string on the SAME line: begin with its next characters and do not start with a newline.`,
                   },
                 ]),
                 ...thinkingParam,

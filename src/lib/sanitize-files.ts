@@ -13,6 +13,7 @@ import { CONNECTOR_INFRA_FILES } from './connector-infra'
 import { DATA_TABLE_FILES } from './data-table-infra'
 import { resolveDirectivesForPreview } from './image-directives'
 import { synthesizeAppTsx } from './synthesize-app'
+import { repairStringSeams } from './string-seam'
 
 type FileVal = { content?: string; language?: string } | string
 
@@ -27,6 +28,14 @@ export function sanitizeFiles<T extends Record<string, FileVal>>(files: T, opts?
     const p = String(rawPath).trim().replace(/^\.?\/+/, '').replace(/\/+$/, '')
     // Drop empty, parent-traversal, or paths with empty segments ("a//b")
     if (!p || p.includes('..') || p.split('/').some(seg => seg.trim() === '')) continue
+    // A string split by a newline at a token-limit seam never compiles; rejoin it (see string-seam.ts). Heals files saved
+    // before this repair existed, at every preview build, publish and export.
+    const text = typeof val === 'string' ? val : val?.content
+    if (typeof text === 'string' && /\.(tsx?|jsx?)$/i.test(p)) {
+      const fixed = repairStringSeams(p, text)
+      out[p] = fixed.repaired === 0 ? val : (typeof val === 'string' ? fixed.content : { ...val, content: fixed.content })
+      continue
+    }
     out[p] = val
   }
 

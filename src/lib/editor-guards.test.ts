@@ -29,3 +29,14 @@ describe('stuck "working" bubble watchdog (16 Nov)', () => {
     expect(src).toMatch(/m\.content \? 270_000 : 45_000/)
   })
 })
+
+describe('string split by a newline at a token-limit seam is repaired (16 Nov)', () => {
+  it('is applied where the editor writes files, where the preview builds, and in sanitizeFiles', () => {
+    expect(read('src/components/editor/ChatPanel.tsx')).toMatch(/repairStringSeams\(path, rawContent\)\.content/)
+    expect(read('src/components/editor/PreviewPanel.tsx')).toMatch(/repairStringSeams\(path, content\)\.content/)
+    expect(read('src/lib/sanitize-files.ts')).toMatch(/repairStringSeams\(p, text\)/)
+  })
+  it('the continuation prompt tells the model not to open with a newline inside a string', () => {
+    expect(read('src/app/api/generate/route.ts')).toMatch(/continue that string on the SAME line/)
+  })
+})

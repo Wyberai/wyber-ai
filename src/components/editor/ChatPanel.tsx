@@ -1,4 +1,5 @@
 'use client'
+import { repairStringSeams } from '@/lib/string-seam'
 import { creditCost, type ActionType } from '@/lib/credits';
 import { track } from '@/lib/track';
 import { useEditorStore } from '@/store/editor';
@@ -1969,8 +1970,10 @@ const storeProjectId = useEditorStore.getState().project?.id;
       const langMap: Record<string,string> = { ts:'typescript', tsx:'typescript', js:'javascript', jsx:'javascript', css:'css', html:'html', json:'json', vue:'vue' };
       // 1. Apply full <file> blocks (new files or full rewrites)
       if (newFiles.length > 0) {
-        for (const { path, content } of newFiles) {
+        for (const { path, content: rawContent } of newFiles) {
           const ext = path.split('.').pop() ?? '';
+          // A string split by a newline where output was cut at the token limit and continued never compiles: rejoin it.
+          const content = repairStringSeams(path, rawContent).content;
           updatedFiles[path] = { path, content, language: langMap[ext] ?? 'plaintext' };
         }
       }

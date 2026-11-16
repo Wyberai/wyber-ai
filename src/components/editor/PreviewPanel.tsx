@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { useEditorStore } from '@/store/editor'
 import { Confetti } from '@/components/shared/Confetti'
 import { sanitizeFiles } from '@/lib/sanitize-files'
+import { repairStringSeams } from '@/lib/string-seam'
 import { isPlaceholderApp } from '@/lib/starter-templates'
 import { extractImageDirectives, replaceTokenInFiles } from '@/lib/image-directives'
 import { applyTextEdit, applyClassEdit, stepClass, setColorClass, type StepFamily } from '@/lib/visual-edit-apply'
@@ -196,7 +197,8 @@ export function PreviewPanel() {
         const fileMap: Record<string, string> = {}
         for (const [path, file] of Object.entries(buildFiles)) {
           const content = (file as { content?: string })?.content
-          if (content) fileMap[path] = content
+          // Rejoin a string split by a newline at a token-limit seam (string-seam.ts); heals projects saved with one.
+          if (content) fileMap[path] = repairStringSeams(path, content).content
         }
         const { js, css, error: bundleErr } = await bundleFiles(fileMap)
         if (js) builtHtml = generateHTML(js, css, project?.id || '')
