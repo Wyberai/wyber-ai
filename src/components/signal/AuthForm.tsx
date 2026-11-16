@@ -1,4 +1,5 @@
 'use client'
+import { EMAIL_CODE_LENGTH, EMAIL_CODE_MIN_LENGTH } from '@/lib/auth/otp-length';
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -10,13 +11,15 @@ import { readCtx, briefBelongsTo, type SignalCtx } from '@/lib/signal/handoff'
  * ?next= and ?ref= hand-offs, and the ?error=auth message. What changed: six code boxes with paste and auto-verify,
  * and a card that reminds a visitor what they were about to build.
  */
+const emptyDigits = () => Array<string>(EMAIL_CODE_LENGTH).fill('')
+
 export function AuthForm({ mode }: { mode: 'signup' | 'login' }) {
   const signup = mode === 'signup'
   const [email, setEmail] = useState('')
   const [sending, setSending] = useState(false)
   const [oauth, setOauth] = useState<'google' | 'github' | null>(null)
   const [sent, setSent] = useState(false)
-  const [digits, setDigits] = useState<string[]>(['', '', '', '', '', ''])
+  const [digits, setDigits] = useState<string[]>(() => emptyDigits())
   const [verifying, setVerifying] = useState(false)
   const [error, setError] = useState('')
   const [bad, setBad] = useState(false)
@@ -70,7 +73,7 @@ export function AuthForm({ mode }: { mode: 'signup' | 'login' }) {
     const { error: err } = await supabase.auth.verifyOtp({ email, token: code, type: 'email' })
     if (err) {
       setError(err.message); setBad(true); setVerifying(false)
-      setDigits(['', '', '', '', '', '']); boxes.current[0]?.focus()
+      setDigits(emptyDigits()); boxes.current[0]?.focus()
       return
     }
     const next = new URLSearchParams(window.location.search).get('next') || '/dashboard'
@@ -90,16 +93,16 @@ export function AuthForm({ mode }: { mode: 'signup' | 'login' }) {
     if (!d) { setDigits(a => a.map((x, k) => (k === i ? '' : x))); return }
     const next = [...digits]
     // A paste or an autofill lands many digits in one box: spread them across the rest.
-    d.slice(0, 6 - i).split('').forEach((c, k) => { next[i + k] = c })
+    d.slice(0, EMAIL_CODE_LENGTH - i).split('').forEach((c, k) => { next[i + k] = c })
     setDigits(next)
-    const last = Math.min(i + d.length, 5)
+    const last = Math.min(i + d.length, EMAIL_CODE_LENGTH - 1)
     boxes.current[last]?.focus()
     if (next.every(Boolean)) verify(next.join(''))
   }
   const key = (i: number, e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Backspace' && !digits[i] && i > 0) boxes.current[i - 1]?.focus()
     if (e.key === 'ArrowLeft' && i > 0) boxes.current[i - 1]?.focus()
-    if (e.key === 'ArrowRight' && i < 5) boxes.current[i + 1]?.focus()
+    if (e.key === 'ArrowRight' && i < EMAIL_CODE_LENGTH - 1) boxes.current[i + 1]?.focus()
   }
 
   const social = async (provider: 'google' | 'github') => {
@@ -136,19 +139,19 @@ export function AuthForm({ mode }: { mode: 'signup' | 'login' }) {
 
       <div className="sg-acard">
         {sent ? (
-          <form onSubmit={e => { e.preventDefault(); const c = digits.join(''); if (c.length === 6) verify(c) }}>
+          <form onSubmit={e => { e.preventDefault(); const c = digits.join(''); if (c.length >= EMAIL_CODE_MIN_LENGTH) verify(c) }}>
             <h1>Enter your code</h1>
-            <p className="sg-sub2">We sent a 6 digit code to <b>{email}</b>.</p>
-            <div className="sg-otps" role="group" aria-label="6 digit code">
+            <p className="sg-sub2">We sent your {EMAIL_CODE_LENGTH}-digit code to <b>{email}</b>.</p>
+            <div className="sg-otps" role="group" aria-label={`${EMAIL_CODE_LENGTH} digit code`}>
               {digits.map((d, i) => (
                 <input key={i} ref={el => { boxes.current[i] = el }} className={'sg-otp' + (bad ? ' sg-bad' : '')} inputMode="numeric" autoComplete={i === 0 ? 'one-time-code' : 'off'}
-                  maxLength={i === 0 ? 6 : 1} value={d} aria-label={`Digit ${i + 1}`} disabled={verifying}
+                  maxLength={i === 0 ? EMAIL_CODE_LENGTH : 1} value={d} aria-label={`Digit ${i + 1}`} disabled={verifying}
                   onChange={e => setAt(i, e.target.value)} onKeyDown={e => key(i, e)} onFocus={e => e.target.select()} />
               ))}
             </div>
             <p className="sg-ferr" role="alert">{error}</p>
-            <button className="sg-btn" type="submit" style={{ width: '100%' }} disabled={verifying || digits.some(x => !x)}>{verifying ? 'Checking…' : signup ? 'Verify and create account' : 'Verify and sign in'}</button>
-            <p className="sg-hint">Nothing after a minute? Check spam, or <button type="button" className="sg-linkbtn" onClick={() => { setSent(false); setDigits(['', '', '', '', '', '']); setError('') }}>use a different email</button>.</p>
+            <button className="sg-btn" type="submit" style={{ width: '100%' }} disabled={verifying || digits.join('').length < EMAIL_CODE_MIN_LENGTH}>{verifying ? 'Checking…' : signup ? 'Verify and create account' : 'Verify and sign in'}</button>
+            <p className="sg-hint">Nothing after a minute? Check spam, or <button type="button" className="sg-linkbtn" onClick={() => { setSent(false); setDigits(emptyDigits()); setError('') }}>use a different email</button>.</p>
           </form>
         ) : (
           <>
