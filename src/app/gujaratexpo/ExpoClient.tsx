@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 import Link from 'next/link'
 import s from './expo.module.css'
@@ -36,6 +36,48 @@ export function ExpoClient({ initial }: { initial?: string }) {
     window.addEventListener('scroll', update, { passive: true })
     update()
     return () => { window.removeEventListener('scroll', update); io?.disconnect() }
+  }, [])
+
+  // Auto-scroll: starts a moment after the page loads and stops for good the moment the visitor touches, scrolls,
+  // presses a key, clicks or focuses a field, or when the booking form comes into view. It never starts for visitors
+  // who asked their device for reduced motion, or who arrived on a #link or part-way down the page.
+  const [autoOn, setAutoOn] = useState(false)
+  const stopAutoRef = useRef<() => void>(() => {})
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    if (window.location.hash || window.scrollY > 200) return
+    const SPEED = 90 // px per second
+    const book = document.getElementById('book')
+    const events = ['wheel', 'touchstart', 'pointerdown', 'keydown'] as const
+    let raf = 0, timer = 0, running = false, pos = 0, last = 0
+    const stop = () => {
+      window.clearTimeout(timer)
+      cancelAnimationFrame(raf)
+      if (running) { running = false; setAutoOn(false) }
+      events.forEach(e => window.removeEventListener(e, stop))
+      document.removeEventListener('focusin', stop)
+    }
+    stopAutoRef.current = stop
+    const tick = (t: number) => {
+      if (!running) return
+      const dt = Math.min(64, t - last) / 1000
+      last = t
+      if (Math.abs(window.scrollY - pos) > 3) { stop(); return } // the visitor moved the page themselves (scrollbar, etc.)
+      if (book && book.getBoundingClientRect().top < window.innerHeight * 0.6) { stop(); return } // do not scroll through the form
+      pos += SPEED * dt
+      window.scrollTo({ top: pos, behavior: 'instant' })
+      raf = requestAnimationFrame(tick)
+    }
+    events.forEach(e => window.addEventListener(e, stop, { passive: true }))
+    document.addEventListener('focusin', stop)
+    timer = window.setTimeout(() => {
+      pos = window.scrollY
+      running = true
+      last = performance.now()
+      setAutoOn(true)
+      raf = requestAnimationFrame(tick)
+    }, 2500)
+    return stop
   }, [])
 
   const picker = (
@@ -176,6 +218,12 @@ export function ExpoClient({ initial }: { initial?: string }) {
 
         <footer className={s.footer}><span>wyberai.com</span><span>Describe it. Ship it.</span></footer>
       </div>
+
+      {autoOn && (
+        <button type="button" className={s.autoStop} onClick={() => stopAutoRef.current()}>
+          Stop auto-scroll
+        </button>
+      )}
 
       <div className={`${s.stickyBar} ${stickyOn ? s.stickyOn : ''}`}>
         <a href="#book" className={s.btn}>Book 15 minutes at booth S23</a>

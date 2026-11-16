@@ -288,6 +288,11 @@
 @media (max-width: 900px) { .types { grid-template-columns: repeat(2, 1fr); } .type:last-child { grid-column: 1 / -1; } }
 @media (max-width: 480px) { .types { grid-template-columns: 1fr; } }
 
+/* Shown only while the page is scrolling by itself */
+.autoStop { position: fixed; left: 16px; bottom: 20px; z-index: 60; padding: 10px 16px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.18); background: rgba(5,6,10,0.82); backdrop-filter: blur(8px); color: var(--text, #e6edf6); font: 700 12px/1 var(--mono, ui-monospace, monospace); letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; }
+.autoStop:hover { border-color: rgba(56,189,248,0.6); }
+@media (max-width: 700px) { .autoStop { bottom: 84px; } }
+
 /* First-screen booth promise and booking button, plus a sticky "Book" bar on phones */
 .boothLine { margin: 14px 0 0; font-size: clamp(14px, 1.5vw, 17px); font-weight: 700; color: var(--text, #e6edf6); max-width: 460px; line-height: 1.45; }
 .heroCta { margin-top: 16px; }
