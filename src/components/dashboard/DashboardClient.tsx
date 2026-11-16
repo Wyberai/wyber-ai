@@ -10,6 +10,8 @@ import { track } from '@/lib/track';
 import Link from 'next/link';
 import { ReferralCard } from '@/components/shared/ReferralCard';
 import { ProjectTypeChooser, type ProjectType } from '@/components/dashboard/ProjectTypeChooser';
+import { WebsiteFactsModal } from '@/components/dashboard/WebsiteFactsModal';
+import { factsSuffix, shouldAskWebsiteFacts } from '@/lib/website-facts';
 import { ImportModal } from '@/components/dashboard/ImportModal';
 import { DeleteProjectDialog } from '@/components/dashboard/DeleteProjectDialog';
 import { ProjectSecurityBadge, type ProjectSecurityInfo } from '@/components/dashboard/ProjectSecurityBadge';
@@ -154,6 +156,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
   const [pendingPrompt, setPendingPrompt] = useState<string | undefined>(undefined);
   // /websites upfront-credit gate (see WebsiteCreditGate).
   const [websiteGate, setWebsiteGate] = useState<{ go: () => void; name: string | null } | null>(null);
+  const [factsGate, setFactsGate] = useState<{ prompt: string; nameOverride?: string } | null>(null);
   const [promptInput, setPromptInput] = useState('');
   const [buildMode, setBuildMode] = useState<'app' | 'mobile' | 'website' | 'saas'>('app');
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
@@ -285,7 +288,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
       // /websites builds need the complete-website credits upfront (see
       // WebsiteCreditGate). Short → keep the plan stashed and open the gate.
       if (pendingSource === 'websites' && resolvedType === 'website') {
-        const go = () => { setWebsiteGate(null); startProject(pending!.trim(), 'website', pendingName || nameOverride); };
+        const go = () => { setWebsiteGate(null); startProject(pending!.trim(), 'website', pendingName || nameOverride, true); };
         if ((profile?.credits ?? 0) >= websiteLaunchEstimate().min) go();
         else {
           try {
@@ -395,8 +398,10 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
     if (!p) { openChooser(); return; }
     startProject(p, detectType(p));
   };
-  const startProject = async (prompt?: string, type: ProjectType = 'app', nameOverride?: string) => {
+  const startProject = async (prompt?: string, type: ProjectType = 'app', nameOverride?: string, skipFacts = false) => {
     if (!profile?.id || creating) return;
+    // A typed website brief with no business facts in it: ask once for the four that matter (optional, both buttons build).
+    if (!skipFacts && shouldAskWebsiteFacts(prompt, type)) { setFactsGate({ prompt: prompt as string, nameOverride }); return; }
     setCreating(true);
     setCreateError(null);
     try {
@@ -847,6 +852,15 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
           onCancel={() => { try { ['wyber-pending-prompt', 'wyber-pending-type', 'wyber-pending-source', 'wyber-pending-project-name'].forEach(k => localStorage.removeItem(k)); } catch { /* */ } setWebsiteGate(null); }}
         />
       )}
+      <WebsiteFactsModal
+        open={!!factsGate}
+        busy={creating}
+        onSkip={() => { const g = factsGate; setFactsGate(null); if (g) startProject(g.prompt, 'website', g.nameOverride, true); }}
+        onBuild={(facts) => {
+          const g = factsGate; setFactsGate(null);
+          if (g) startProject(g.prompt + factsSuffix(facts), 'website', facts.name.trim() ? facts.name.trim() : g.nameOverride, true);
+        }}
+      />
       <ProjectTypeChooser
         open={showTypePicker}
         onClose={() => setShowTypePicker(false)}
