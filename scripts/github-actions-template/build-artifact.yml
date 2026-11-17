@@ -215,11 +215,28 @@ jobs:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           EAS_BUILD_SKIP_LOCKFILE_CHECK: '1'
         run: |
+          # stdout (the JSON reply) and stderr (progress and warnings) go to SEPARATE files. They used to share one file (2>&1),
+          # so the parse below failed on the progress text, the build id came out empty and every build that Expo had actually
+          # started was reported to WyberAi as failed (seen 17 Nov: Expo built the APK in 19 minutes, the run still said failed).
           eas build --platform android --profile apk_download --non-interactive --no-wait \
-            --json > ../build_start.json 2>&1 || true
-          cat ../build_start.json
-          BUILD_ID=$(cat ../build_start.json | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d[0]["id"])' 2>/dev/null || echo "")
+            --json > ../build_start.json 2> ../build_start.err || true
+          echo "--- eas stdout ---"; cat ../build_start.json
+          echo "--- eas stderr ---"; cat ../build_start.err
+          # Read the id from the outermost JSON array or object in stdout, whatever else was printed around it.
+          BUILD_ID=$(node -e "
+          const raw = require('fs').readFileSync('../build_start.json', 'utf8');
+          for (const [o, c] of [['[', ']'], ['{', '}']]) {
+            const s = raw.indexOf(o), e = raw.lastIndexOf(c);
+            if (s !== -1 && e > s) {
+              try { let d = JSON.parse(raw.slice(s, e + 1)); d = Array.isArray(d) ? d[0] : d; console.log(d.id || ''); process.exit(0); } catch (_) {}
+            }
+          }
+          console.log('');
+          " 2>/dev/null || echo "")
           echo "EAS_BUILD_ID=$BUILD_ID" >> $GITHUB_ENV
+          if [ -z "$BUILD_ID" ]; then
+            echo "ERR_MSG=Could not start the Expo build. See the eas stderr in the Actions log." >> $GITHUB_ENV
+          fi
 
       - name: Wait for EAS build to complete
         working-directory: wyber_app
@@ -231,7 +248,8 @@ jobs:
             exit 0
           fi
           echo "Polling EAS build $EAS_BUILD_ID"
-          for i in $(seq 1 50); do
+          # 70 x 30 s = 35 minutes. A real build took 19 minutes on 17 Nov; the old limit of 25 minutes left little room.
+          for i in $(seq 1 70); do
             sleep 30
             STATUS=$(eas build:view "$EAS_BUILD_ID" --json 2>/dev/null | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("status",""))' 2>/dev/null || echo "")
             echo "  attempt $i — status: $STATUS"
@@ -243,9 +261,13 @@ jobs:
             fi
             if [ "$STATUS" = "ERRORED" ] || [ "$STATUS" = "CANCELED" ]; then
               echo "BUILD_FAILED=1" >> $GITHUB_ENV
+              echo "ERR_MSG=The Expo build ended with status $STATUS. Open the build on expo.dev to see its log." >> $GITHUB_ENV
               break
             fi
           done
+          if [ "$STATUS" != "FINISHED" ] && [ "$STATUS" != "ERRORED" ] && [ "$STATUS" != "CANCELED" ]; then
+            echo "ERR_MSG=The Expo build did not finish within 35 minutes." >> $GITHUB_ENV
+          fi
 
       - name: Notify WyberAi — success
         if: env.BUILD_OK == '1' && env.ARTIFACT_URL != ''
@@ -261,4 +283,4 @@ jobs:
           curl -sf -X POST "${{ github.event.inputs.callback_url }}" \
             -H "Content-Type: application/json" \
             -H "x-mobile-build-secret: ${{ secrets.MOBILE_BUILD_WEBHOOK_SECRET }}" \
-            -d "{\"buildId\":\"${{ github.event.inputs.build_id }}\",\"status\":\"error\",\"errorMessage\":\"Build failed — check GitHub Actions logs\"}" || true
+            -d "{\"buildId\":\"${{ github.event.inputs.build_id }}\",\"status\":\"error\",\"errorMessage\":\"${ERR_MSG:-Build failed. Check the GitHub Actions log.}\"}" || true
