@@ -1,5 +1,6 @@
 'use client'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { isPlaceholderApp } from '@/lib/starter-templates'
 import { useEditorStore } from '@/store/editor'
 import { websiteLaunchEstimate, WEBSITE_LAUNCH_PHOTOS } from '@/lib/credits'
 import { track } from '@/lib/track'
@@ -51,7 +52,9 @@ export function WebsiteLaunchChecklist({ projectId }: { projectId: string }) {
     const html = files?.['index.html']?.content ?? ''
     const has = (p: string) => Object.keys(files ?? {}).some(k => k === p || k.endsWith(`/${p}`))
     const seoReady = /name=["']description["']/i.test(html) && /application\/ld\+json/i.test(html) && has('llms.txt')
-    const built = Object.keys(files ?? {}).length >= 3
+    // The starter scaffold already has several files, so counting files ticked this before anything was built. Built means the app file is no longer the placeholder.
+    const appFile = Object.entries(files ?? {}).find(([k]) => /(^|\/)App\.(t|j)sx?$/.test(k))?.[1]?.content
+    const built = Object.keys(files ?? {}).length >= 3 && !!appFile && !isPlaceholderApp(appFile)
     return { photos, seoReady, built }
   }, [files])
 

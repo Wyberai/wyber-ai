@@ -51,3 +51,8 @@ Sources: QA run (E1-E24, see qa-run-2026-11-18.md), the owner's notes, and the o
 ## D. Smaller issues (from QA)
 
 Website build 3-8s no loader; "Build your website" pre-ticked; title stays "New Project"; wrong status line for websites; invented-person plan text; slow preview paint; balance not refreshing across tabs; SaaS "Too short" hint and unlabelled sample prices; IPA badge; unused AppointmentForm.tsx; Settings title. All TODO.
+
+## Smaller issues progress
+
+DONE: wrong "Coding your full app: auth, dashboard, settings" line in the build header (now neutral); "Build your website" pre-ticked (now needs a real App file); Settings page title ("Settings | WyberAi", not indexed).
+TODO: dashboard loader (3-8s), title stays "New Project", plan card invented-person text, slow preview paint, balance across tabs, SaaS "Too short" hint and unlabelled sample prices, IPA "50 cr" badge, unused AppointmentForm.tsx.
