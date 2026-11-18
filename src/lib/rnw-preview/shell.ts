@@ -18,6 +18,25 @@ export const RNW_VERSION = '0.19.13'
 const ESM = 'https://esm.sh'
 const RNW = `${ESM}/react-native-web@${RNW_VERSION}?external=react,react-dom`
 
+/**
+ * react-native-web is a web port, so it has no export for some native-only names that libraries import by name
+ * (`import { TurboModuleRegistry } from 'react-native'`). A named import of a missing export fails when the module is
+ * LINKED, so the whole preview showed "Preview unavailable" (seen on a habit tracker, 18 Nov 2026: "The requested module
+ * 'react-native-web' does not provide an export named 'TurboModuleRegistry'").
+ *
+ * This wrapper re-exports everything from the real react-native-web (same URL, so still ONE copy of it) and adds only the
+ * names it lacks. A local export wins over `export *`, so a name the library really has is never replaced. Both
+ * 'react-native' and 'react-native-web' point at it, so dependencies built with the alias see the same module.
+ */
+export const RNW_WRAPPER_SOURCE = [
+  `export * from ${JSON.stringify(RNW)};`,
+  // Looking up a native module on web finds nothing. get() returns null (callers treat that as "not available here").
+  // getEnforcing() is called at load time by some libraries, so it must not throw: it returns an object whose methods do nothing.
+  `const inert = new Proxy({}, { get: (_t, k) => (k === 'then' ? undefined : () => undefined) });`,
+  `export const TurboModuleRegistry = { get: () => null, getEnforcing: () => inert };`,
+].join('\n')
+const RNW_WRAPPED = `data:text/javascript;charset=utf-8,${encodeURIComponent(RNW_WRAPPER_SOURCE)}`
+
 export const IMPORT_MAP = {
   imports: {
     react: `${ESM}/react@${REACT_VERSION}`,
@@ -25,8 +44,8 @@ export const IMPORT_MAP = {
     'react-dom/client': `${ESM}/react-dom@${REACT_VERSION}/client?external=react`,
     'react/jsx-runtime': `${ESM}/react@${REACT_VERSION}/jsx-runtime`,
     'react/jsx-dev-runtime': `${ESM}/react@${REACT_VERSION}/jsx-dev-runtime`,
-    'react-native': RNW,
-    'react-native-web': RNW,
+    'react-native': RNW_WRAPPED,
+    'react-native-web': RNW_WRAPPED,
   },
 }
 
