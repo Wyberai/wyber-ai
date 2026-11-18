@@ -108,7 +108,8 @@ async function tableFront() {
     <div class="abs" style="left:${M}mm;top:170mm;font-weight:900;font-size:49mm;line-height:1.02;letter-spacing:-0.04em">Vibe coding gives you a base.<br><span class="sky">WyberAi gives you the whole app.</span></div>
     <div class="abs" style="left:${M}mm;top:282mm;font-size:21mm;font-weight:500;color:${MUTED}">Login, database and API come wired up. Then six checks run on it:</div>
     <div class="abs" style="left:${M}mm;top:392mm;width:${W - 2 * M}mm;display:flex;flex-wrap:wrap;gap:16mm">${pills}</div>
-    <div class="abs" style="left:${M}mm;top:590mm;${mono(20, INK, 'letter-spacing:.1em')}">YOUR CODE. YOUR GITHUB. YOUR DOMAIN.</div>
+    <div class="abs" style="left:${M}mm;top:588mm;font-weight:800;font-size:30mm;letter-spacing:-0.02em">Saves <span class="sky">hundreds of hours</span> of research and vibe coding.</div>
+    <div class="abs" style="left:${M}mm;top:652mm;${mono(18, MUTED, 'letter-spacing:.1em')}">YOUR CODE. YOUR GITHUB. YOUR DOMAIN.</div>
     <div class="abs" style="right:${M}mm;bottom:${M}mm;${mono(26, SKY, 'letter-spacing:.06em')}">wyberai.com</div>`)
 }
 
@@ -118,7 +119,8 @@ async function tableSide() {
   const W = 2.5 * FT, H = 2 * FT, M = 48
   return page(W, H, `
     <div class="abs" style="left:${M}mm;top:${M}mm">${logo(70, 54)}</div>
-    <div class="abs" style="left:${M}mm;top:215mm;font-weight:900;font-size:86mm;line-height:1;letter-spacing:-0.04em">Own your<br>software.<br><span class="sky">Stop renting it.</span></div>
+    <div class="abs" style="left:${M}mm;top:215mm;font-weight:900;font-size:72mm;line-height:1.02;letter-spacing:-0.04em;white-space:nowrap">Vibe coding<br>with <span class="sky">superpowers.</span></div>
+    <div class="abs" style="left:${M}mm;top:395mm;${mono(21, MUTED, 'letter-spacing:.1em')}">SAME YOU. SUPERPOWERS ADDED.</div>
     <div class="abs" style="left:${M}mm;bottom:${M}mm;${mono(22, SKY, 'letter-spacing:.06em')}">wyberai.com</div>`)
 }
 
