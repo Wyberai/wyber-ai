@@ -1,3 +1,5 @@
+import { freeCoverageClause } from '@/lib/pricing-facts'
+import { FREE_CREDITS } from '@/lib/signal/handoff'
 import { DoorView } from '@/components/signal/DoorView'
 import type { Metadata } from 'next'
 import { SignalFrame } from '@/components/signal/SignalFrame'
@@ -5,7 +7,6 @@ import { AgencyDesk } from '@/components/signal/AgencyDesk'
 import { Faq, FinalCta, Section } from '@/components/signal/sections'
 import { QuickPrompt } from '@/components/signal/QuickPrompt'
 import { AgencyStart } from '@/components/signal/AgencyStart'
-import { FREE_CREDITS } from '@/lib/signal/handoff'
 
 export const metadata: Metadata = {
   title: 'Agency mode: run the whole client job',
@@ -35,7 +36,7 @@ const PROMISES: Array<[string, string]> = [
 // Only things that are true of the product today, each tied to how it works. Pricing comes from the plan tables.
 const AGENCY_FAQS: Array<[string, string]> = [
   ['Does my client need an account?', 'No. They open one private link, see the work in your name, approve it or ask for changes, and accept a quote by typing their name. You can add a passcode to the link.'],
-  ['Who pays for the builds?', `You do, from your own credits. A free account has ${FREE_CREDITS} credits, which cover one small first build. Your client is never charged by WyberAi.`],
+  ['Who pays for the builds?', `You do, from your own credits. A free account has ${FREE_CREDITS} credits, which ${freeCoverageClause()}. Your client is never charged by WyberAi.`],
   ['Can I put the site on my client’s own domain?', 'Yes. Connecting a domain your client already owns needs a paid plan, and you get a short DNS note to hand to their IT person. A domain bought through WyberAi works on any plan and is billed to you.'],
   ['Can clients see each other’s work?', 'No. Every client page is a separate private link, and each freelancer or agency only sees their own clients, projects, quotes and feedback.'],
   ['Does WyberAi take payment from my client?', 'Not today. Quotes and invoices are for you to send. You collect payment your own way and mark it paid.'],

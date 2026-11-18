@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { matchesFixedPlan, sketchFor, type Door, type Sketch } from '@/lib/signal/guide'
 import { doorEvent } from '@/lib/door-track'
-import { buildCosts } from '@/lib/pricing-facts'
+import { buildCosts, freeCreditsSentence } from '@/lib/pricing-facts'
 import { FREE_CREDITS, composeGuidePrompt, projectTypeFor, saveCtx, stashPending, type ProjectType } from '@/lib/signal/handoff'
 import { startPath } from './goStart'
 
@@ -146,7 +146,7 @@ export function AnswerHero({ door, eyebrow, title, lede, placeholder, video, pos
                   </div>
                 </fieldset>
               ))}
-              <p style={{ marginTop: 18, color: 'var(--sg-ink3)', fontSize: 13 }}>Your {FREE_CREDITS} free credits cover one small first build. Bigger builds cost {COSTS.medium} to {COSTS.xl} credits, and you see the cost before anything starts.</p>
+              <p style={{ marginTop: 18, color: 'var(--sg-ink3)', fontSize: 13 }}>{freeCreditsSentence()} Bigger builds cost {COSTS.medium} to {COSTS.xl} credits, and you see the cost before anything starts.</p>
               <div style={{ marginTop: 14, display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
                 <button type="button" className="sg-btn" onClick={build} disabled={busy}>{busy ? 'One moment…' : <>Build this, free <span aria-hidden="true">→</span></>}</button>
                 <button type="button" className="sg-chip" onClick={() => { setSketch(null); box.current?.focus() }}>Describe it differently</button>

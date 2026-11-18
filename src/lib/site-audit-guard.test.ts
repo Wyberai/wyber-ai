@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import fs from 'node:fs'
 import path from 'node:path'
 import { editCost } from './pricing-facts'
+import { GENERATION_PRICE_FACTOR } from './credits'
 
 const walk = (d: string): string[] => fs.readdirSync(d, { withFileTypes: true }).flatMap(e => e.isDirectory() ? walk(path.join(d, e.name)) : [path.join(d, e.name)])
 
@@ -24,7 +25,7 @@ describe('things the public-site audit found, kept fixed', () => {
   })
 
   it('no page quotes an edit price other than the cost table', () => {
-    expect(editCost()).toBe(4)
+    expect(editCost()).toBe(4 * GENERATION_PRICE_FACTOR)
     for (const f of walk('src').filter(f => /\.(ts|tsx)$/.test(f) && !f.endsWith('.test.ts'))) {
       expect(fs.readFileSync(f, 'utf8'), f).not.toMatch(/edits? costs? 2 credits/i)
     }

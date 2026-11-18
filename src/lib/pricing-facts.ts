@@ -17,6 +17,20 @@ export function buildCosts(): { small: number; medium: number; large: number; xl
   }
 }
 
+/**
+ * The one true sentence about what the free credits buy. It is built from the live prices, so it can never keep saying "cover one
+ * small build" after a price change makes it false (build prices doubled on 18 Nov 2026 while the free credits stayed at 30).
+ */
+export function freeCoverageClause(): string {
+  const small = buildCosts().small
+  return PLAN_FACTS.free.credits >= small
+    ? `cover one small first build`
+    : `do not cover a whole build (a small one is ${small} credits), so a first build needs a top-up or a plan`
+}
+export function freeCreditsSentence(): string {
+  const free = PLAN_FACTS.free.credits
+  return buildCosts().small <= free ? `The ${free} free credits cover one small build.` : `The ${free} free credits ${freeCoverageClause()}. They do cover small edits.`
+}
 export const editCost = (): number => creditCost('small-edit', 'fast')
 export const planCost = (): number => creditCost('plan', 'fast')
 export const imageCost = (): number => creditCost('image-gen', 'fast')
@@ -73,6 +87,6 @@ export function estimateRubric(): string {
     `- A small build (a few screens, one simple database, such as a landing page, a portfolio or a single-tool app): about ${b.small} credits`,
     `- A medium build (sign-in, a database, several screens, such as a booking system or a small CRM): about ${b.medium} credits`,
     `- A large build (several roles, payments or many screens, such as a full SaaS or a marketplace): about ${b.large} to ${b.xl} credits`,
-    `Add about ${editCost()} credits for each later change. The ${n(PLAN_FACTS.free.credits)} free credits cover one small build.`,
+    `Add about ${editCost()} credits for each later change. ${freeCreditsSentence()}`,
   ].join('\n')
 }

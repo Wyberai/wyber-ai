@@ -149,16 +149,31 @@ export const MODEL_META: Record<ModelTier, {
 }
 
 /**
+ * Generation (coding) charges are the figures below times this factor. Set to 2 on 18 Nov 2026 (owner decision): free and plan
+ * credits had already been tripled, so what a build or an edit costs in credits doubled to keep the margin. It applies ONLY to
+ * the coding actions (builds, edits, components). Scans, images, audio, agents, workflows, previews and the rest are unchanged.
+ * Change it here and every price, the launch-ready floors and the displayed estimates move together.
+ */
+export const GENERATION_PRICE_FACTOR = 2
+const gen = (n: number): number => n * GENERATION_PRICE_FACTOR
+const genTable = (t: Record<BuildSizeTier, { fast: number; default: number }>): Record<BuildSizeTier, { fast: number; default: number }> => ({
+  small:  { fast: gen(t.small.fast),  default: gen(t.small.default) },
+  medium: { fast: gen(t.medium.fast), default: gen(t.medium.default) },
+  large:  { fast: gen(t.large.fast),  default: gen(t.large.default) },
+  xl:     { fast: gen(t.xl.fast),     default: gen(t.xl.default) },
+})
+
+/**
  * Base credit costs at sonnet multiplier (1.0).
  * Multiply by MODEL_MULTIPLIERS[tier] and round.
  */
 const BASE_COSTS: Record<ActionType, number> = {
-  'small-edit':         2,
-  'component':          8,
-  'web-build':         30,
-  'mobile-build':      30,
-  'website-build':     30,
-  'saas-build':        30,
+  'small-edit':         gen(2),
+  'component':          gen(8),
+  'web-build':         gen(30),
+  'mobile-build':      gen(30),
+  'website-build':     gen(30),
+  'saas-build':        gen(30),
   'plan':               5,
   // "Beast" scans — comprehensive deterministic checklists (16 security
   // checks / 18 SEO+AI-search checks) run against the project's real files,
@@ -251,12 +266,12 @@ const BUILD_ACTIONS: ActionType[] = ['web-build', 'mobile-build', 'website-build
 // instead of a loss. A real fix would price continuously within each tier
 // instead of as a step function; this buys margin back immediately without
 // that larger rework.
-const BUILD_TIER_COSTS: Record<BuildSizeTier, { fast: number; default: number }> = {
+const BUILD_TIER_COSTS: Record<BuildSizeTier, { fast: number; default: number }> = genTable({
   small:  { fast: 30, default: 50 },
   medium: { fast: 50, default: 90 },
   large:  { fast: 80, default: 160 },
   xl:     { fast: 120, default: 260 },
-}
+})
 
 /**
  * Buckets a build into a BuildSizeTier from signals already computed BEFORE
@@ -425,12 +440,12 @@ export function computeOverageCharge(opts: {
 // the heavier end exceeded what that price covered. Confirmed live: a
 // single Spark customer's edit turns this session ran real cost up to $0.59
 // while settling at the same 10 credits as turns costing a third of that.
-const EDIT_TIER_COSTS: Record<BuildSizeTier, { fast: number; default: number }> = {
+const EDIT_TIER_COSTS: Record<BuildSizeTier, { fast: number; default: number }> = genTable({
   small:  { fast: 4,  default: 10 },
   medium: { fast: 20, default: 36 },
   large:  { fast: 44, default: 80 },
   xl:     { fast: 90, default: 170 },
-}
+})
 
 // Same thresholds BUILD_TIER_TOKEN_BUDGET already uses — comparable output
 // volume implies comparable real cost regardless of whether it arrived via
@@ -479,7 +494,7 @@ export function creditCost(action: ActionType, tier: ModelTier = 'default', buil
   // Edits are priced explicitly, not by multiplier. Same pricing for all users.
   // Small edits: 4cr (fast) or 10cr (default) — matches EDIT_TIER_COSTS.small
   // so a genuinely small edit is charged once upfront with no settlement top-up.
-  if (action === 'small-edit') return tier === 'fast' ? 4 : 10
+  if (action === 'small-edit') return tier === 'fast' ? gen(4) : gen(10)
   // Tiered build pricing (see BUILD_TIER_COSTS above) — only applies when the
   // caller actually resolved a size tier; omitting buildTier (an older client,
   // or a call site not yet updated) falls through to the flat price below so
