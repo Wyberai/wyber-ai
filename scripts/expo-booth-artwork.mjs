@@ -49,10 +49,10 @@ async function backdrop() {
   // Key content sits in the top 60%: the table stands in front of the lower part of the backdrop.
   // What we build: the four service tiles on the Xpro page, in the wording of xpro-product-and-services-copy.md (shortened).
   const WHAT = [
-    ['Website', 'Your shop, clinic or firm, live by tonight with a WhatsApp button.'],
-    ['Web app', 'Trackers, approvals and invoices that replace sheets and chat threads.'],
-    ['Mobile app', 'Orders, attendance or delivery proof, on a phone.'],
-    ['SaaS', 'Logins, a database and a link customers can sign up on.'],
+    ['Billing', 'Quotes and invoices with only the fields you actually fill.'],
+    ['Stock', 'Know what is on the shelf without a 40-column sheet.'],
+    ['Attendance', 'Who came and who did not, on a phone.'],
+    ['Follow-ups', 'Every lead and the next call, in one place.'],
   ]
   const tw = (1609 - 3 * 28) / 4
   const tiles = WHAT.map(([t, d], i) => `<div style="width:${tw}mm;height:296mm;border-radius:20mm;background:#0e131c;border:2mm solid #1b2230;padding:28mm;box-sizing:border-box;position:relative"><div style="position:absolute;left:28mm;top:0;width:60mm;height:6mm;background:${SKY};border-radius:0 0 3mm 3mm"></div><div style="font-weight:900;font-size:50mm;letter-spacing:-0.03em;margin-top:6mm">${t}</div><div style="font-size:28mm;line-height:1.36;color:${MUTED};margin-top:12mm">${d}</div></div>`).join('')
@@ -64,7 +64,7 @@ async function backdrop() {
     <div class="abs" style="left:${M}mm;top:440mm;font-weight:900;font-size:165mm;line-height:.98;letter-spacing:-0.045em">Your software<br>has 100 features.<br>You use <span class="sky">5.</span></div>
     <div class="abs" style="left:${M}mm;top:985mm;font-size:66mm;font-weight:500;color:${MUTED};letter-spacing:-0.01em">And the one you need isn&rsquo;t there.</div>
     <div class="abs" style="left:${M}mm;top:1115mm;font-weight:900;font-size:90mm;line-height:1.02;letter-spacing:-0.035em">Tell us your pain points.<br><span class="sky">Build your own software.</span></div>
-    <div class="abs" style="left:${M}mm;top:1340mm;${mono(30, SKY, 'letter-spacing:.1em')}">DESCRIBE IT &rarr; WATCH IT BUILD &rarr; OWN THE CODE</div>
+    <div class="abs" style="left:${M}mm;top:1340mm;${mono(30, SKY, 'letter-spacing:.1em')}">KEEP THE 5 YOU USE. SKIP THE OTHER 95.</div>
     <div class="abs" style="left:${M}mm;top:1410mm;width:1609mm;display:flex;gap:28mm">${tiles}</div>
     <div class="abs" style="left:${M}mm;top:1742mm;${mono(34, DIM)}">DESCRIBE IT. SHIP IT.</div>`)
 }
@@ -95,9 +95,8 @@ async function tableFront() {
     <div class="abs" style="left:${M}mm;top:${M}mm">${logo(86, 66)}</div>
     <div class="abs" style="right:${M}mm;top:${M}mm;width:292mm">${qrPlate(292, qr)}
       <div style="${mono(18, MUTED, 'margin-top:12mm;text-align:center')}">SCAN QR TO VIEW STALL DETAILS</div></div>
-    <div class="abs" style="left:${M}mm;top:250mm;font-weight:900;font-size:102mm;line-height:.99;letter-spacing:-0.04em">Build your own<br><span class="sky">software.</span></div>
-    <div class="abs" style="left:${M}mm;top:505mm;font-size:46mm;font-weight:500;color:${MUTED}">Tell us your pain points.</div>
-    <div class="abs" style="left:${M}mm;top:585mm;${mono(26, SKY)}">DESCRIBE IT. SHIP IT.</div>
+    <div class="abs" style="left:${M}mm;top:290mm;font-weight:900;font-size:94mm;line-height:.99;letter-spacing:-0.04em">Your software<br>has 100 features.<br>You use <span class="sky">5.</span></div>
+    <div class="abs" style="left:${M}mm;top:604mm;font-size:42mm;font-weight:500;color:${MUTED}">Tell us the one you need.</div>
     <div class="abs" style="left:${M}mm;bottom:${M}mm;${mono(26, SKY, 'letter-spacing:.06em')}">wyberai.com</div>`)
 }
 
@@ -106,7 +105,7 @@ async function tableSide() {
   const W = 2.5 * FT, H = 2 * FT, M = 48
   return page(W, H, `
     <div class="abs" style="left:${M}mm;top:${M}mm">${logo(70, 54)}</div>
-    <div class="abs" style="left:${M}mm;top:215mm;font-weight:900;font-size:74mm;line-height:1;letter-spacing:-0.04em">Build your<br>own <span class="sky">software.</span></div>
+    <div class="abs" style="left:${M}mm;top:200mm;font-weight:900;font-size:80mm;line-height:1;letter-spacing:-0.04em">Tell us your<br><span class="sky">pain points.</span></div>
     <div class="abs" style="left:${M}mm;bottom:${M}mm;${mono(22, SKY, 'letter-spacing:.06em')}">wyberai.com</div>
     <div class="abs" style="right:${M}mm;bottom:${M}mm;${mono(18, DIM)}">DESCRIBE IT. SHIP IT.</div>`)
 }
