@@ -44,6 +44,21 @@ export function IDELayout({ initialProject, initialProfile, indiaFeatures = fals
   const [isNarrow, setIsNarrow] = useState(false);
   const [mobileView, setMobileView] = useState<'preview' | 'chat'>('chat');
   const { isGenerating, hasGeneratedFiles } = useEditorStore();
+  // The balance is read once when the page loads, so a second open tab kept showing the old number after credits were spent or added elsewhere.
+  // Re-read it whenever the tab becomes visible again (the same endpoint the chat panel uses after a build).
+  useEffect(() => {
+    const refresh = () => {
+      if (document.visibilityState !== 'visible') return;
+      fetch('/api/credits/deduct', { method: 'GET' })
+        .then(r => r.json())
+        .then(d => { if (typeof d?.credits === 'number') setCredits(d.credits); })
+        .catch(() => {});
+    };
+    document.addEventListener('visibilitychange', refresh);
+    window.addEventListener('focus', refresh);
+    return () => { document.removeEventListener('visibilitychange', refresh); window.removeEventListener('focus', refresh); };
+  }, [setCredits]);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const mq = window.matchMedia('(max-width: 820px)');
