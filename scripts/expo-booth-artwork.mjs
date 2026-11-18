@@ -55,7 +55,7 @@ async function backdrop() {
     <div class="abs" style="right:${M}mm;top:${M}mm;width:330mm">${qrPlate(330, qr)}
       <div style="${mono(24, MUTED, 'margin-top:20mm;line-height:1.45;text-align:center')}">SCAN QR TO VIEW<br>STALL DETAILS</div>
       <div style="${mono(30, SKY, 'margin-top:14mm;text-align:center;letter-spacing:.05em')}">wyberai.com</div></div>
-    <div class="abs" style="left:${M}mm;top:440mm;font-weight:900;font-size:176mm;line-height:.98;letter-spacing:-0.045em">Your CRM has<br>100 features.<br>You use <span class="sky">5.</span></div>
+    <div class="abs" style="left:${M}mm;top:440mm;font-weight:900;font-size:165mm;line-height:.98;letter-spacing:-0.045em">Your software<br>has 100 features.<br>You use <span class="sky">5.</span></div>
     <div class="abs" style="left:${M}mm;top:985mm;font-size:66mm;font-weight:500;color:${MUTED};letter-spacing:-0.01em">And the one you need isn&rsquo;t there.</div>
     <div class="abs" style="left:${M}mm;top:1115mm;font-weight:900;font-size:90mm;line-height:1.02;letter-spacing:-0.035em">Tell us your pain points.<br><span class="sky">Build your own software.</span></div>
     <div class="abs" style="left:${M}mm;top:1375mm;width:1609mm;display:grid;grid-template-columns:repeat(10,${cell}mm);gap:18mm">${grid}</div>
@@ -140,7 +140,7 @@ try {
     .far{display:flex;gap:40px;padding:36px 50px 50px;align-items:flex-end}.far div{flex:1}
     .far img{width:190px;display:block;border:1px solid #c5ccd8}.far span{font-size:17px;color:#4a5568;display:block;margin-top:8px}
   </style></head><body>
-  <div class="row"><div class="col"><h2>A. The problem</h2><p>"Your CRM has 100 features. You use 5." then "Build your own software."</p><img class="big" src="${A}"></div>
+  <div class="row"><div class="col"><h2>A. The problem</h2><p>"Your software has 100 features. You use 5." then "Build your own software."</p><img class="big" src="${A}"></div>
   <div class="col"><h2>B. What it does</h2><p>"Build any digital product. Ship it in minutes." (the Xpro portal wording)</p><img class="big" src="${B}"></div></div>
   <div class="far"><div><img src="${A}"><span>A from far away (a 6 ft backdrop seen from about 8 m)</span></div><div><img src="${B}"><span>B from far away</span></div></div>
   </body></html>`
