@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { rateLimit } from '@/lib/rate-limit'
-import { normalizeUrl } from '@/lib/safe-url'
+import { normalizeUrl, safeFetch } from '@/lib/safe-url'
 import { gradeVisibility, type Fetched } from '@/lib/ai-visibility'
 
 // PUBLIC, no-auth AI visibility check. Fetches the page the way an AI crawler does (no JavaScript, an AI crawler's user
@@ -13,7 +13,7 @@ async function get(url: string, ms: number, maxBytes: number): Promise<Fetched> 
   const ctrl = new AbortController()
   const timer = setTimeout(() => ctrl.abort(), ms)
   try {
-    const res = await fetch(url, { signal: ctrl.signal, redirect: 'follow', headers: { 'User-Agent': UA, Accept: 'text/html,text/plain,*/*' } })
+    const res = await safeFetch(url, { signal: ctrl.signal, headers: { 'User-Agent': UA, Accept: 'text/html,text/plain,*/*' } })
     const buf = new Uint8Array(await res.arrayBuffer())
     const text = new TextDecoder().decode(buf.length > maxBytes ? buf.slice(0, maxBytes) : buf)
     return { ok: res.ok, status: res.status, text }

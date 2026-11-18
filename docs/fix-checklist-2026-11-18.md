@@ -65,3 +65,7 @@ CODE: website contract now has a hero rule (generated or supplied photo is the h
 ## AI visibility (new, not yet monetised)
 
 CODE: src/lib/ai-visibility.ts grades what a non-JS AI crawler receives (page loads, AI crawlers allowed in robots.txt, title and description in HTML, text readable without JS (weight 40), h1, JSON-LD, llms.txt, sitemap). No model call, deterministic, 7 tests. Public endpoint POST /api/tools/ai-visibility (rate limited, SSRF-guarded via src/lib/safe-url.ts). TODO before it is sold: UI on /tools, a per-project panel, a verified fix path for sites that score low, and check it against our own published sites after the snapshot fix is live.
+
+## Security hardening (found while building AI visibility)
+
+DONE: public tools (/api/tools/seo-audit, /api/tools/ai-visibility) now follow redirects by hand and check every hop (src/lib/safe-url.ts safeFetch), so a public address cannot bounce the request to an internal one. normalizeUrl also refuses ftp:// and file:// instead of turning them into an https address with a strange host. 8 tests.
