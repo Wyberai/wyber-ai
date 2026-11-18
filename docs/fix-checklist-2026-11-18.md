@@ -84,3 +84,15 @@ VERIFIED LIVE on the dental test site (re-published in Chrome):
 - Website checklist "Build your website" ticks only once built (brief unticked flash while the project loads).
 
 NOT YET RE-TESTED: palette variety across new builds, mobile preview crash fix, APK build on a digit-leading id, long-brief rules (LR13/LR14), website hero + Ask-us, security scan false positives, free-database chip, Marketing Beast.
+
+## Build re-test on production, 18 Nov 2026 (second half)
+
+Four fresh builds in Chrome from the dashboard, charged exactly as quoted:
+- Website, law firm, Pune (50 cr): ink-and-green look, real hero photo, floating "Ask us" assistant that answers from the page's own text (asked a fee: it gave the matching service text and invented no price), no invented staff/prices (summary lists what the owner must supply), project named from the brief, neutral build header. Facts form skipped on purpose.
+- Web app, hardware shop (80 cr): "StockBook", cool grey and teal, honest first-run setup screen.
+- SaaS, yoga studios (160 cr): sage and deep green, hero photo, real copy (timetable, bookings, plans), no invented staff on the public page.
+- Mobile, reminders (80 cr): preview works in the iPhone frame ("Preview ready"), the old TurboModuleRegistry crash is gone; APK tab badge "50 cr", IPA tab "Soon" and honest.
+- Free-database chip: opens the WyberCloud Database tab (E20 verified).
+- Palette variety: no cream-and-orange in 4 of 4, but green/teal accents recur in 4 of 4. Variety improved; it is not yet wide.
+- Mobile editor header kept showing the old balance after the build finished (3,862 vs the real 3,782). The focus-refresh fix covers the web editor only. TODO.
+- Not run: Security Beast scan (100 cr; the false-positive fix is covered by unit tests), long-brief rerun, Marketing Beast.
