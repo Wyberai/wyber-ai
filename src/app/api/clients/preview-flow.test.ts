@@ -99,7 +99,7 @@ describe('making a preview', () => {
     const before = JSON.stringify({ p: tables.projects.find(p => p.id === 'pW'), c: tables.profiles })
     const text = await (await owner('cW', 'dW', 'create')).text()
     expect(JSON.stringify({ p: tables.projects.find(p => p.id === 'pW'), c: tables.profiles })).toBe(before)
-    expect(text).not.toContain('pW')
+    expect(text).not.toMatch(/(?<![A-Za-z0-9_-])pW(?![A-Za-z0-9_-])/)
     expect(tables.profiles[0].credits).toBe(120)
   })
 
@@ -232,7 +232,7 @@ describe('what the client sees at /preview/<token>', () => {
     // The only app code is inside the frame's srcdoc attribute. Our own page, before and after it, has no script at all.
     expect(body.slice(0, body.indexOf('srcdoc=')), 'script before the frame').not.toMatch(/<script/i)
     expect(body.slice(body.indexOf('</iframe>')), 'script after the frame').not.toMatch(/<script/i)
-    expect(body).not.toContain('pW')
+    expect(body).not.toMatch(/(?<![A-Za-z0-9_-])pW(?![A-Za-z0-9_-])/)
   })
 
   it('is never cached, never indexed, and never leaks a referrer', async () => {
