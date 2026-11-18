@@ -47,9 +47,15 @@ async function backdrop() {
   const W = 6 * FT, M = 110
   const qr = await qrSvg()
   // Key content sits in the top 60%: the table stands in front of the lower part of the backdrop.
-  const cell = (1609 - 9 * 18) / 10
-  const lit = new Set([3, 7, 12, 18])
-  const grid = Array.from({ length: 20 }, (_, i) => `<div style="width:${cell}mm;height:${cell}mm;border-radius:14mm;background:${lit.has(i) ? SKY : '#121722'};border:2mm solid ${lit.has(i) ? SKY : '#1b2230'}"></div>`).join('')
+  // What we build: the four service tiles on the Xpro page, in the wording of xpro-product-and-services-copy.md (shortened).
+  const WHAT = [
+    ['Website', 'Your shop, clinic or firm, live by tonight with a WhatsApp button.'],
+    ['Web app', 'Trackers, approvals and invoices that replace sheets and chat threads.'],
+    ['Mobile app', 'Orders, attendance or delivery proof, on a phone.'],
+    ['SaaS', 'Logins, a database and a link customers can sign up on.'],
+  ]
+  const tw = (1609 - 3 * 28) / 4
+  const tiles = WHAT.map(([t, d], i) => `<div style="width:${tw}mm;height:296mm;border-radius:20mm;background:#0e131c;border:2mm solid #1b2230;padding:28mm;box-sizing:border-box;position:relative"><div style="position:absolute;left:28mm;top:0;width:60mm;height:6mm;background:${SKY};border-radius:0 0 3mm 3mm"></div><div style="font-weight:900;font-size:50mm;letter-spacing:-0.03em;margin-top:6mm">${t}</div><div style="font-size:28mm;line-height:1.36;color:${MUTED};margin-top:12mm">${d}</div></div>`).join('')
   return page(W, W, `
     <div class="abs" style="left:${M}mm;top:${M}mm">${logo(150, 118)}</div>
     <div class="abs" style="right:${M}mm;top:${M}mm;width:330mm">${qrPlate(330, qr)}
@@ -58,8 +64,9 @@ async function backdrop() {
     <div class="abs" style="left:${M}mm;top:440mm;font-weight:900;font-size:165mm;line-height:.98;letter-spacing:-0.045em">Your software<br>has 100 features.<br>You use <span class="sky">5.</span></div>
     <div class="abs" style="left:${M}mm;top:985mm;font-size:66mm;font-weight:500;color:${MUTED};letter-spacing:-0.01em">And the one you need isn&rsquo;t there.</div>
     <div class="abs" style="left:${M}mm;top:1115mm;font-weight:900;font-size:90mm;line-height:1.02;letter-spacing:-0.035em">Tell us your pain points.<br><span class="sky">Build your own software.</span></div>
-    <div class="abs" style="left:${M}mm;top:1375mm;width:1609mm;display:grid;grid-template-columns:repeat(10,${cell}mm);gap:18mm">${grid}</div>
-    <div class="abs" style="left:${M}mm;top:1728mm;${mono(34, DIM)}">DESCRIBE IT. SHIP IT.</div>`)
+    <div class="abs" style="left:${M}mm;top:1340mm;${mono(30, SKY, 'letter-spacing:.1em')}">DESCRIBE IT &rarr; WATCH IT BUILD &rarr; OWN THE CODE</div>
+    <div class="abs" style="left:${M}mm;top:1410mm;width:1609mm;display:flex;gap:28mm">${tiles}</div>
+    <div class="abs" style="left:${M}mm;top:1742mm;${mono(34, DIM)}">DESCRIBE IT. SHIP IT.</div>`)
 }
 
 // ---------- Backdrop B (alternative): lead with what WyberAi does, in the words on the Xpro portal ----------
