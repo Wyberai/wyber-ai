@@ -110,6 +110,43 @@ describe('structured data and llms.txt', () => {
     }
   })
 
+  it('every blog post is in the sitemap, and the sitemap lists only posts that exist', () => {
+    const dir = path.join(process.cwd(), 'src/app/blog')
+    const dirs = fs.readdirSync(dir).filter(d => fs.existsSync(path.join(dir, d, 'page.tsx')))
+    const listed = [...read('src/lib/blog/posts.ts').matchAll(/slug: '([a-z0-9-]+)'/g)].map(m => m[1])
+    expect([...listed].sort()).toEqual([...dirs].sort())
+    expect(read('src/app/sitemap.ts')).toContain('SIGNAL_POSTS.map')
+  })
+
+  it('retired blog posts redirect to a post that exists', () => {
+    const cfg = read('next.config.js')
+    for (const [from, to] of [['nextjs-app-in-one-hour', 'seo-for-ai-built-websites'], ['build-saas-without-code', 'build-saas-mvp-with-ai-2026']]) {
+      expect(cfg).toContain(`source: '/blog/${from}', destination: '/blog/${to}', permanent: true`)
+      expect(fs.existsSync(path.join(process.cwd(), 'src/app/blog', to, 'page.tsx')), to).toBe(true)
+      expect(fs.existsSync(path.join(process.cwd(), 'src/app/blog', from)), from + ' should be gone').toBe(false)
+    }
+  })
+
+  it('blog posts do not repeat claims the product cannot back (all fixed on 2026-11-18)', () => {
+    const dir = path.join(process.cwd(), 'src/app/blog')
+    const banned = [
+      /Next\.js is the default/i, // generated apps are React with Vite
+      /catches 90%/i,
+      /\$15,000/, /\$50,000/, // invented agency prices
+      /Each user only sees their own data by default/i, // RLS is not automatic
+      /thousands of concurrent users/i,
+      /100x on cost/i,
+      /Retool and Appsmith/i,
+      /—/, // no em dashes in post copy
+    ]
+    for (const d of fs.readdirSync(dir)) {
+      const f = path.join(dir, d, 'page.tsx')
+      if (!fs.existsSync(f)) continue
+      const text = fs.readFileSync(f, 'utf8')
+      for (const re of banned) expect(text, d + ' ' + re).not.toMatch(re)
+    }
+  })
+
   it('llms.txt quotes the same plan credits and prices as the plan file (assistants repeat this text)', async () => {
     const { PLAN_FACTS, TOPUP_PACKS } = await import('./plans')
     const llms = read('public/llms.txt')

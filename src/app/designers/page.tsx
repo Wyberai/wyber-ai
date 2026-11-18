@@ -21,7 +21,7 @@ export default function DesignersPage() {
         <p style={{ fontSize:17, color:'var(--text2)', maxWidth:520, lineHeight:1.75, marginBottom:36 }}>Turn your Figma designs into production code. Generate UI from descriptions. Ship real apps — not just mockups.</p>
         <div style={{ display:'flex', gap:12, flexWrap:'wrap', marginBottom:56 }}>
           <Link href="/signup" className="wy-btn-primary">Start building free →</Link>
-          <Link href="/blog/build-saas-without-code" className="wy-btn-ghost">Read the guide</Link>
+          <Link href="/blog/build-saas-mvp-with-ai-2026" className="wy-btn-ghost">Read the guide</Link>
         </div>
       </div>
       <div className="wy-section" style={{ paddingTop:32 }}>

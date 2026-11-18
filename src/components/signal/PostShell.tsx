@@ -13,12 +13,12 @@ export function PostShell({ post, dek, cta, children }: {
   const url = `https://wyberai.com/blog/${post.slug}`
   return (
     <SignalFrame>
-      <ArticleJsonLd headline={post.title} description={post.excerpt} url={url} datePublished={post.iso} dateModified={post.iso} />
+      <ArticleJsonLd headline={post.title} description={post.excerpt} url={url} datePublished={post.iso} dateModified={post.modified ?? post.iso} />
       <article className="sg-post">
         <Link href="/blog" className="sg-post-back">&larr; All posts</Link>
         <div className="sg-post-meta">
           <span className="sg-post-tag">{post.tag}</span>
-          <span className="sg-mono">{post.date} &middot; {post.readTime}</span>
+          <span className="sg-mono">{post.date} &middot; {post.readTime}{post.updated ? <> &middot; Updated {post.updated}</> : null}</span>
         </div>
         <h1>{post.title}</h1>
         <p className="sg-post-dek">{dek}</p>
@@ -30,7 +30,7 @@ export function PostShell({ post, dek, cta, children }: {
           {cta.second && <Link href={cta.second.href} className="sg-btn sg-ghost">{cta.second.label}</Link>}
         </section>
         <p className="sg-post-note">
-          Found something wrong or out of date? Write to <a href="mailto:hello@wyberai.com">hello@wyberai.com</a> and we will fix it and say so here. Rules, fees and rates mentioned in our posts change, and this one was last checked on {post.date}.
+          Found something wrong or out of date? Write to <a href="mailto:hello@wyberai.com">hello@wyberai.com</a> and we will fix it and say so here. Rules, fees and rates mentioned in our posts change, and this one was last checked on {post.updated ?? post.date}.
         </p>
       </article>
     </SignalFrame>

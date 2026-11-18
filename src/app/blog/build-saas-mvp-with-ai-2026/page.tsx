@@ -1,70 +1,46 @@
-import type { Metadata } from 'next'
-import Link from 'next/link'
-import { WyberLogo } from '@/components/shared/WyberLogo'
-import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
+import { PostShell } from '@/components/signal/PostShell'
+import { getPost, postMetadata } from '@/lib/blog/meta'
 
-export const metadata: Metadata = {
-  title: 'How to build a SaaS MVP with AI in 2026',
-  description: 'A step-by-step guide to going from idea to live SaaS product in under an hour using AI app builders. No coding required.',
-  alternates: { canonical: 'https://wyberai.com/blog/build-saas-mvp-with-ai-2026' },
-  openGraph: { images: DEFAULT_OG_IMAGES, title: 'How to build a SaaS MVP with AI in 2026', url: 'https://wyberai.com/blog/build-saas-mvp-with-ai-2026', type: 'article' },
-}
+const post = getPost('build-saas-mvp-with-ai-2026')
+export const metadata = postMetadata(post)
 
-const s = { bg: '#05080d', card: '#0d141e', border: 'rgba(255,255,255,0.07)', text: '#fafafa', muted: '#8797ab', dim: '#8797ab', sky: '#0EA5E9' }
-
-export default function Post() {
+export default function Page() {
   return (
-    <div style={{ minHeight: '100vh', background: s.bg, color: s.text, fontFamily: 'var(--font-display)' }}>
-      <nav style={{ padding: '0 clamp(16px,4vw,48px)', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${s.border}`, position: 'sticky', top: 0, zIndex: 100, background: 'rgba(9,9,11,0.9)', backdropFilter: 'blur(16px)' }}>
-        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none', color: 'inherit' }}><WyberLogo markSize={24} wordmarkSize={14} /></Link>
-        <Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: s.sky, color: '#03111c', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Start free →</Link>
-      </nav>
-      <article style={{ maxWidth: 680, margin: '0 auto', padding: 'clamp(40px,6vw,80px) clamp(16px,4vw,48px)' }}>
-        <Link href="/blog" style={{ fontSize: 13, color: s.muted, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 5, marginBottom: 32 }}>← Back to blog</Link>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
-          <span style={{ padding: '3px 10px', borderRadius: 20, background: s.sky + '15', border: `1px solid ${s.sky}30`, fontSize: 11, fontWeight: 700, color: s.sky }}>Guide</span>
-          <span style={{ fontSize: 12, color: s.dim }}>May 29, 2026 · 7 min read</span>
-        </div>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(26px,4vw,42px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.12, marginBottom: 28 }}>
-          How to build a SaaS MVP with AI in 2026 — no coding required
-        </h1>
-        <div style={{ fontSize: 16, color: s.muted, lineHeight: 1.75 }}>
-          <p>The fastest SaaS MVPs in 2026 aren't built by full-stack developers working for three months. They're built by founders who describe their product in a paragraph and iterate in real time. Here's the exact process.</p>
+    <PostShell
+      post={post}
+      dek="You can get from a paragraph to a working product with sign-in, a database and billing in an afternoon. Here is what the builder does, which parts only you can do, and what to leave out."
+      cta={{
+        title: 'Write your paragraph and see the first version',
+        body: 'Describe who it is for, what it stores and the one action that matters. Read the estimate, then build.',
+        href: '/create',
+        label: 'Describe your product',
+        second: { href: '/signup', label: 'Start free' },
+      }}
+    >
+      <p>Most of the old advice on building a software product assumed the hard part was writing code. That part is now fast. What is still slow is knowing who you are building for and what they will pay for, and no tool shortens that. So the honest version of “build a SaaS in an afternoon” is: get a real first version in an afternoon, then spend the rest of the week finding out if anyone wants it.</p>
 
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>What "MVP" actually means now</h2>
-          <p>Minimum Viable Product used to mean the smallest thing you could build to validate a hypothesis. In 2026, an AI-generated MVP can include a dashboard, auth, a database, and a working UI — in under an hour. The bar for "viable" has shifted upward. Users expect real software, not a landing page with a waitlist.</p>
+      <h2>Write one paragraph first</h2>
+      <p>Before you open any tool, write a paragraph that says who it is for, what data it manages, and the one action they will do most. Vague briefs produce generic apps. Here is one that works:</p>
+      <pre><code>{`Build a CRM for freelancers with a client list, a project pipeline
+(Prospect, Active, Invoiced, Paid), an invoice tracker, and a
+dashboard showing monthly revenue, active clients and overdue invoices.`}</code></pre>
+      <p>Every noun is a record, and “Prospect, Active, Invoiced, Paid” is a status that runs through the pipeline. If you want the long version of why that wording matters, see <a href="/blog/prompting-a-data-app-tables-roles-states">how to describe a data app</a>.</p>
 
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>Step 1: Write the one-paragraph description</h2>
-          <p>Before opening any tool, write a single paragraph that describes your SaaS: who it's for, what data it manages, and what the primary action is. Specificity is leverage — vague prompts produce generic apps.</p>
-          <div style={{ background: s.card, borderRadius: 10, padding: '16px 20px', border: `1px solid ${s.border}`, fontFamily: 'monospace', fontSize: 14, color: '#e2e8f0', lineHeight: 1.7, margin: '16px 0' }}>
-            Build a CRM for freelancers with a client list, a project pipeline (Prospect → Active → Invoiced → Paid), an invoice tracker, and a dashboard showing monthly revenue, active clients, and overdue invoices.
-          </div>
+      <h2>Generate, then use it for ten minutes</h2>
+      <p>Paste it into WyberAi, choose Web App, and read the estimate before you confirm. You get a working React project with the screens and data wired up. Then click through it as if you were the customer. You will spot three things that are wrong in the first ten minutes, which is far more useful than reading the code.</p>
 
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>Step 2: Generate the app</h2>
-          <p>Paste that prompt into WyberAi and pick <strong style={{ color: s.text }}>Web App</strong>. Generation takes in a few minutes. You get a complete React + Vite project: routing, components, data tables, stat cards, charts, and realistic seed data. No scaffolding, no boilerplate, no blank screens.</p>
+      <h2>What needs your decision, not the builder’s</h2>
+      <p><strong>Your pricing.</strong> The builder can build a pricing page and gate features by plan, but it will not decide what you charge or what is in each tier, and it should not invent them. Write the plans down before you ask for them.</p>
+      <p><strong>Payments.</strong> Taking money means a Stripe account of your own, connected to the app. Stripe is the route we support for payments. In India, check which payment methods your Stripe account can accept before you promise UPI to a customer, and for any country decide up front what you will do about refunds.</p>
+      <p><strong>Tax.</strong> If you invoice, you collect tax. GST in India and sales tax in the US work very differently, and <a href="/blog/gst-invoice-data-model">this post</a> covers how to store it. Talk to an accountant before your first paying customer.</p>
+      <p><strong>Legal pages.</strong> A product that takes sign-ups needs a privacy policy and terms. India’s data protection law and US state privacy laws both expect you to say what you collect and why. Use a real policy written for your situation, not a placeholder.</p>
 
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>Step 3: Connect a real database</h2>
-          <p>The generated app works with local state by default. To make it production-ready, connect a Supabase project in Settings → Connectors. WyberAi rewrites the app to use a live Postgres database with Row Level Security — each user only sees their own data. Auth (sign-up, login, password reset) is included automatically.</p>
+      <h2>The database and your own domain</h2>
+      <p>The generated app starts with example data. For real users, connect a database: that is Supabase, on the Builder plan and above, which also includes your own domain. Connect it, then protect it with row-level security before anyone signs up. The next two posts to read are <a href="/blog/row-level-security-patterns-for-small-apps">the security patterns</a> and <a href="/blog/how-to-deploy-ai-generated-app">the deploy checklist</a>.</p>
 
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>Step 4: Deploy to a live URL</h2>
-          <p>Click <strong style={{ color: s.text }}>Deploy</strong> and the app publishes to Vercel in minutes. You get a live URL at <code style={{ fontSize: 13, background: 'rgba(255,255,255,0.06)', padding: '2px 6px', borderRadius: 4 }}>wyberai.com/app/yourapp</code>. Share it with your first five users the same day you had the idea.</p>
-
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>Step 5: Iterate based on feedback</h2>
-          <p>Every change is a chat message. "Add an export to CSV button on the invoices table." "Show a red badge on the sidebar when there are overdue invoices." "Add a notes field to each client record." Small edits start at 4 credits and take a few minutes.</p>
-
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>The full stack you get</h2>
-          <ul style={{ paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {['React + Vite frontend', 'Supabase Postgres with RLS', 'Auth (sign-up, login, password reset)', 'Free hosting at wyberai.com/app/your-app', 'Full source code export — you own it completely'].map(i => <li key={i}>{i}</li>)}
-          </ul>
-
-          <div style={{ marginTop: 36, padding: '24px 28px', background: `${s.sky}10`, border: `1px solid ${s.sky}25`, borderRadius: 12 }}>
-            <div style={{ fontSize: 16, fontWeight: 700, color: s.text, marginBottom: 8 }}>Build your SaaS MVP today — free</div>
-            <p style={{ fontSize: 14, margin: '0 0 16px' }}>30 free credits to start. First app in minutes. No credit card required.</p>
-            <Link href="/dashboard?new=app" style={{ display: 'inline-block', padding: '10px 22px', borderRadius: 8, background: s.sky, color: '#03111c', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>Start building free →</Link>
-          </div>
-        </div>
-      </article>
-
-    </div>
+      <h2>Cut more than you think</h2>
+      <p>An MVP should do one thing well enough that someone will use it twice. Leave out roles, teams, analytics, integrations and notifications until a customer asks. Each of those is easy to add as a change once you know it matters, and each is a distraction when you do not. A smaller first build is also cheaper, and it is quicker to put in front of five people.</p>
+      <p>Give those five people the live link the same day, watch what they do, and write down what confused them. The next version should fix that, not anything you thought of on your own.</p>
+    </PostShell>
   )
 }

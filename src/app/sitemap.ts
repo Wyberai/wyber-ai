@@ -2,6 +2,7 @@ import { MetadataRoute } from 'next'
 import { DOC_NAV } from '@/app/docs/_nav'
 import { BUILD_PAGES } from './build/data'
 import { LIBRARY_TOOLS } from '@/lib/byos/slug'
+import { SIGNAL_POSTS } from '@/lib/blog/posts'
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = 'https://wyberai.com'
@@ -74,13 +75,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // (/login, /signup) are intentionally excluded — they redirect crawlers to
     // login and get marked "not indexed", which drags down sitemap quality.
     { url: `${base}/blog`, lastModified: UPDATED, changeFrequency: 'weekly', priority: 0.7 },
-    { url: `${base}/blog/build-saas-mvp-with-ai-2026`, lastModified: UPDATED, changeFrequency: 'monthly', priority: 0.7 },
-    { url: `${base}/blog/build-saas-without-code`, lastModified: UPDATED, changeFrequency: 'monthly', priority: 0.7 },
-    { url: `${base}/blog/nextjs-app-in-one-hour`, lastModified: UPDATED, changeFrequency: 'monthly', priority: 0.7 },
-    { url: `${base}/blog/ai-app-builder-for-startups`, lastModified: UPDATED, changeFrequency: 'monthly', priority: 0.7 },
-    { url: `${base}/blog/no-code-vs-ai-code-generation`, lastModified: UPDATED, changeFrequency: 'monthly', priority: 0.7 },
-    { url: `${base}/blog/how-to-deploy-ai-generated-app`, lastModified: UPDATED, changeFrequency: 'monthly', priority: 0.7 },
-    { url: `${base}/blog/build-internal-tools-with-ai`, lastModified: UPDATED, changeFrequency: 'monthly', priority: 0.7 },
+    // One list drives the index, the pages and this sitemap, so a new post cannot be left out.
+    ...SIGNAL_POSTS.map(p => ({ url: `${base}/blog/${p.slug}`, lastModified: new Date(p.modified ?? p.iso), changeFrequency: 'monthly' as const, priority: 0.7 })),
     { url: `${base}/docs`, lastModified: UPDATED, changeFrequency: 'weekly', priority: 0.7 },
     ...DOC_NAV.flatMap(section => section.links).map(link => ({ url: `${base}${link.href}`, lastModified: UPDATED, changeFrequency: 'monthly' as const, priority: 0.6 })),
     { url: `${base}/privacy`, lastModified: UPDATED, changeFrequency: 'yearly', priority: 0.3 },

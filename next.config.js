@@ -36,6 +36,9 @@ const nextConfig = {
       { source: '/blog/built-lovable-competitor-6-weeks', destination: '/blog', permanent: true },
       { source: '/blog/why-we-charge-less-than-lovable', destination: '/blog', permanent: true },
       { source: '/blog/wyber-vs-lovable', destination: '/lovable-alternatives', permanent: true },
+      // Two old posts were rewritten into one each: the Next.js tutorial claimed a default framework the builder does not use, and the second SaaS guide duplicated the first.
+      { source: '/blog/nextjs-app-in-one-hour', destination: '/blog/seo-for-ai-built-websites', permanent: true },
+      { source: '/blog/build-saas-without-code', destination: '/blog/build-saas-mvp-with-ai-2026', permanent: true },
       { source: '/app', destination: '/dashboard', permanent: false },
       { source: '/community', destination: '/gallery', permanent: true },
       // NOTE: the old `/build → /dashboard` vanity alias was removed Jul 2026:
