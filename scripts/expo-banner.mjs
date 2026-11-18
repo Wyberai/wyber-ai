@@ -20,7 +20,7 @@ const html = `<!doctype html><html><head><meta charset="utf-8"><link href="https
 .m{position:absolute;left:64px;bottom:30px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:17px;letter-spacing:.14em;color:#6b7488}
 </style></head><body><div class="glow"></div>
 <div class="logo">${mark}<div>Wyber<span style="color:${SKY}">Ai</span></div></div>
-<div class="h">Stop renting<br><span style="color:${SKY}">small software.</span></div>
+<div class="h">Own your software.<br><span style="color:${SKY}">Stop renting it.</span></div>
 <div class="s">Tell us your pain points. Build your own software.</div>
 <div class="t">${tiles.map(([a, b]) => `<div class="c"><b>${a}</b><span>${b}</span></div>`).join('')}</div>
 <div class="m">YOU PAY FOR 100 FEATURES. YOU USE 5.</div>
