@@ -6,12 +6,13 @@ import { track } from '@/lib/track'
 import type { RlsScanReport } from '@/lib/rls-scan'
 import type { SeoReport } from '@/lib/seo-audit'
 import type { VisibilityReport } from '@/lib/ai-visibility'
+import type { SlopReport } from '@/lib/slop-scan'
 
 const SKY = '#0EA5E9'
 const sevColor = (s: string) =>
   s === 'critical' ? '#EF4444' : s === 'high' ? '#F59E0B' : s === 'medium' ? '#EAB308' : '#10B981'
 
-type Tab = 'security' | 'seo' | 'ai'
+type Tab = 'security' | 'seo' | 'ai' | 'slop'
 
 export default function ToolsClient() {
   const [tab, setTab] = useState<Tab>('security')
@@ -44,15 +45,15 @@ export default function ToolsClient() {
 
           {/* Tabs */}
           <div style={{ display: 'flex', gap: 8, background: 'rgba(255,255,255,0.04)', padding: 5, borderRadius: 14, marginBottom: 20 }}>
-            {(['security', 'seo', 'ai'] as Tab[]).map((t) => (
+            {(['security', 'seo', 'ai', 'slop'] as Tab[]).map((t) => (
               <button key={t} onClick={() => setTab(t)}
                 style={{ flex: 1, padding: '11px 12px', borderRadius: 10, border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 700, color: tab === t ? '#05080d' : '#9aa8bb', background: tab === t ? SKY : 'transparent', transition: 'all .15s' }}>
-                {t === 'security' ? '🛡️ Security Scan' : t === 'seo' ? '🔍 SEO Audit' : '🤖 AI Visibility'}
+                {t === 'security' ? '🛡️ Security Scan' : t === 'seo' ? '🔍 SEO Audit' : t === 'ai' ? '🤖 AI Visibility' : '🧼 Anti-Slop'}
               </button>
             ))}
           </div>
 
-          {tab === 'security' ? <SecurityTool /> : tab === 'seo' ? <SeoTool /> : <AiVisibilityTool />}
+          {tab === 'security' ? <SecurityTool /> : tab === 'seo' ? <SeoTool /> : tab === 'ai' ? <AiVisibilityTool /> : <SlopTool />}
 
           {/* Funnel CTA */}
           <div style={{ marginTop: 40, padding: 24, borderRadius: 16, background: 'rgba(14,165,233,0.06)', border: '1px solid rgba(14,165,233,0.2)', textAlign: 'center' }}>
@@ -141,6 +142,62 @@ function AiVisibilityTool() {
               {c.fix && <p style={{ margin: '4px 0 0', fontSize: 12, color: SKY }}>Fix: {c.fix}</p>}
             </div>
           ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function SlopTool() {
+  const [url, setUrl] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+  const [report, setReport] = useState<SlopReport | null>(null)
+
+  const run = async () => {
+    setLoading(true); setErr(null); setReport(null)
+    track('tools_slop_scan')
+    try {
+      const res = await fetch('/api/tools/slop-scan', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setErr(data.error || 'Scan failed.'); return }
+      setReport(data)
+    } catch { setErr('Network error. Try again.') } finally { setLoading(false) }
+  }
+  const color = (st: string) => (st === 'pass' ? '#22C55E' : st === 'warn' ? '#F59E0B' : '#EF4444')
+
+  return (
+    <div style={cardStyle}>
+      <p style={{ margin: '0 0 4px', fontWeight: 700, fontSize: 15 }}>Does your site read as written for you, or generated on autopilot?</p>
+      <p style={{ margin: '0 0 16px', color: '#9aa8bb', fontSize: 13, lineHeight: 1.6 }}>
+        We read your live page and count the habits that mark AI-made sites: stock phrases, placeholder text, invented proof, emoji standing in for icons, and the default purple-gradient and cream-and-orange looks. Every finding quotes what we found, so you can check it by eye.
+      </p>
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        <input style={{ ...inputStyle, flex: 1, minWidth: 200 }} placeholder="yourcompany.com" value={url} onChange={(e) => setUrl(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && run()} />
+        <button style={{ ...btnStyle, opacity: loading ? 0.6 : 1 }} disabled={loading} onClick={run}>
+          {loading ? 'Scanning…' : 'Scan for slop'}
+        </button>
+      </div>
+      {err && <p style={{ color: '#EF4444', fontSize: 13, marginTop: 12 }}>{err}</p>}
+      {report && (
+        <div style={{ marginTop: 20 }}>
+          {report.checks.length > 0 && <div style={{ marginBottom: 6 }}><ScoreDial score={report.score} /></div>}
+          <p style={{ margin: '0 0 14px', fontSize: 13, color: '#d4d4d8' }}>{report.verdict}</p>
+          {report.checks.map((c) => (
+            <div key={c.id} style={{ padding: 14, borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', marginBottom: 10, borderLeft: `3px solid ${color(c.status)}` }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <span style={{ fontSize: 13 }}>{c.status === 'pass' ? '✓' : c.status === 'warn' ? '!' : '✕'}</span>
+                <span style={{ fontSize: 13, fontWeight: 700 }}>{c.label}</span>
+              </div>
+              <p style={{ margin: '6px 0 0', fontSize: 13, color: '#d4d4d8', lineHeight: 1.5 }}>{c.detail}</p>
+              {c.found && c.found.length > 0 && <p style={{ margin: '4px 0 0', fontSize: 12, color: '#9aa8bb' }}>Found: {c.found.join(', ')}</p>}
+              {c.fix && <p style={{ margin: '4px 0 0', fontSize: 12, color: SKY }}>Fix: {c.fix}</p>}
+            </div>
+          ))}
+          <p style={{ margin: '12px 0 0', fontSize: 11, color: '#6b7a8f' }}>The idea of naming concrete signs of slop follows unslop by Damir Sokolovsky (CC BY 4.0).</p>
         </div>
       )}
     </div>
