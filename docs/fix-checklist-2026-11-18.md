@@ -71,3 +71,16 @@ CODE: src/lib/ai-visibility.ts grades what a non-JS AI crawler receives (page lo
 DONE: public tools (/api/tools/seo-audit, /api/tools/ai-visibility) now follow redirects by hand and check every hop (src/lib/safe-url.ts safeFetch), so a public address cannot bounce the request to an internal one. normalizeUrl also refuses ftp:// and file:// instead of turning them into an https address with a strange host. 8 tests.
 
 UI DONE: /tools has an "AI Visibility" tab. Run locally against the live dental test site: scored 54/100 (page text 11 words without JS, no h1, no llms.txt), which is the missing-snapshot problem, so it should rise after the snapshot fix is live. Found and fixed a flaw in the check itself: llms.txt and sitemap were looked up at the domain root and credited the platform's own files to sites hosted under /app/<slug>; they are now looked up at the site's own path (robots.txt stays at the root, where crawlers read it).
+
+## Production re-test, 18 Nov 2026 (after promote)
+
+VERIFIED LIVE on the dental test site (re-published in Chrome):
+- E3 crawler snapshot: llms.txt now returns real content; the page has readable text for non-JS crawlers.
+- AI visibility score for the site: 54 -> 100 (all 8 checks pass).
+- E4 public SEO scanner on the same site: 36 -> 100 (12/12). Title and metadata now arrive in the head for crawler user agents.
+- E6/E22: no placeholder example domain in the served page; per-app sitemap.xml returns 200.
+- E18 /solve: the tailoring example now gets a "Tailoring Order Tracker" written for the words, not the delivery plan.
+- E17 History tab: lists the saves the top bar makes (it said "No snapshots yet" before); preview loads files on demand and renders. Restore not exercised on purpose.
+- Website checklist "Build your website" ticks only once built (brief unticked flash while the project loads).
+
+NOT YET RE-TESTED: palette variety across new builds, mobile preview crash fix, APK build on a digit-leading id, long-brief rules (LR13/LR14), website hero + Ask-us, security scan false positives, free-database chip, Marketing Beast.
