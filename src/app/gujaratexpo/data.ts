@@ -124,7 +124,7 @@ export const POWERS = [
   { n: '03', a: 'Security ', b: 'armour.', p: 'Run a full security checklist from the editor at any time, against the files WyberAi actually wrote.' },
   { n: '04', a: 'Be ', b: 'seen.', p: 'On websites, an SEO pass with automatic fixes and an AI-readable copy of every page. A site that only loads through JavaScript can look empty to ChatGPT and Perplexity.' },
   { n: '05', a: 'Anti-slop ', b: 'radar.', p: 'A scanner counts the signs of an autopilot, made-by-AI site and quotes every one it finds. Paste any web address at wyberai.com/tools, free and without signing up.' },
-  { n: '06', a: 'Two ', b: 'forms.', p: 'Describe it once. Get a website and a mobile app from the same prompt.' },
+  { n: '06', a: 'Not a ', b: 'template.', p: 'A design direction chosen for your kind of business, so what you get does not look like anyone else’s. Fresh code every time.' },
 ]
 
 export const WHY = [
@@ -137,17 +137,17 @@ export const WHY = [
 
 export const STORY_COPY: Record<AudienceId, { head: string; sub: string; chat: string }> = {
   software: {
-    head: 'Vibe coding. Plus superpowers.',
+    head: "Vibe coding doesn't have to be boring or vulnerable.",
     sub: 'Timesheets. Chat threads. A status sheet nobody trusts. Say what is broken. Get software.',
     chat: 'Show the rupee value next to every invoice.',
   },
   business: {
-    head: 'Vibe coding. Plus superpowers.',
+    head: "Vibe coding doesn't have to be boring or vulnerable.",
     sub: 'Challans. Cheques. GST printouts. A ledger only one can read. Say what is broken. Get software.',
     chat: 'Make anything close to the one-year limit red.',
   },
   student: {
-    head: 'Vibe coding. Plus superpowers.',
+    head: "Vibe coding doesn't have to be boring or vulnerable.",
     sub: 'A timetable. Sticky notes. Placement notices. Six reminder apps. Say what you need. Get software.',
     chat: 'Add a prep notes section for every company.',
   },
