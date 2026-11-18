@@ -3882,6 +3882,9 @@ export async function POST(req: NextRequest) {
   let deductedCost = 0
   let creditsSettled = false
   let refundUserId = ''
+  // Which pass and project a refund belongs to, appended to the ledger reason so a refund can be traced afterwards (18 Nov 2026:
+  // refunds were showing next to builds that finished, and the ledger row said only "refund:empty-generation").
+  let refundContext = ''
   // Real token usage across every model call this request makes (one or more
   // — the tool-use/sequential loops can run several iterations, claude-
   // parallel dispatches several pages). Purely for the generation_usage_log
@@ -3894,7 +3897,8 @@ export async function POST(req: NextRequest) {
   const settleRefund = async (reason: string) => {
     if (creditsSettled || deductedCost <= 0) return
     creditsSettled = true
-    await refundCredits(refundUserId, deductedCost, reason)
+    console.warn(`[refund] ${reason}${refundContext} amount=${deductedCost} elapsedMs=${Date.now() - requestStartTime} outTokens=${totalOutputTokens}`)
+    await refundCredits(refundUserId, deductedCost, `${reason}${refundContext}`)
   }
   try {
     const body = await req.json()
@@ -4544,6 +4548,7 @@ export async function POST(req: NextRequest) {
       // Record what we took so any failure/empty path can refund it.
       deductedCost = cost
       refundUserId = user.id
+      refundContext = `|${stage}|${actionType}|p=${String(projectId || '').slice(0, 8)}`
 
       // Log usage (fire-and-forget)
       admin.from('credit_usage').insert({

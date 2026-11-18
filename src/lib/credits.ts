@@ -194,7 +194,7 @@ const BASE_COSTS: Record<ActionType, number> = {
   // price (image-gen calls OpenAI, not an Anthropic model, so the usual
   // MODEL_MULTIPLIERS tier scaling doesn't apply — always cost this at the
   // 'default' tier regardless of the user's selected Claude model).
-  'hero-image-gen':    20,
+  'hero-image-gen':    60, // was 20; raised 18 Nov 2026 (owner: a hero image is a premium upsell). Real cost is about $0.19, roughly 3 credits.
   // Voiceover/narration generation (ElevenLabs primary, OpenAI TTS fallback —
   // src/lib/audio-gen.ts). Flat, tier-agnostic price like hero-image-gen,
   // same reasoning: this calls a TTS provider, not an Anthropic model, so the

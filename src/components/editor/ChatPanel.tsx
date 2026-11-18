@@ -1,6 +1,9 @@
 'use client'
 import { repairStringSeams } from '@/lib/string-seam'
 import { creditCost, type ActionType } from '@/lib/credits';
+import { findHeroImage, heroPrompt } from '@/lib/hero-upsell';
+import { replaceTokenInFiles } from '@/lib/image-directives';
+import { persistProjectFiles } from '@/lib/persist-project';
 import { track } from '@/lib/track';
 import { useEditorStore } from '@/store/editor';
 import { useRef, useEffect, useState, useCallback, memo, useMemo, type ReactNode } from 'react';
@@ -532,6 +535,34 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
     return null;
   }, [visibleMessages]);
   useEffect(() => { setDismissedNext(false); }, [nextStepMsgId]);
+
+  // Paid upsell after a build: swap the generated first-screen picture for an art-directed, high-quality one. Two clicks, so a
+  // stray click never spends credits: the first shows the price, the second generates.
+  const [heroStage, setHeroStage] = useState<'idle' | 'confirm' | 'busy'>('idle');
+  const [heroNote, setHeroNote] = useState('');
+  const heroImageUrl = useMemo(() => findHeroImage(files as Record<string, { content?: string }>), [files]);
+  const heroCost = creditCost('hero-image-gen');
+  const upgradeHero = async () => {
+    if (!resolvedProjectId || !heroImageUrl || heroStage === 'busy') return;
+    setHeroStage('busy'); setHeroNote('');
+    try {
+      const res = await fetch('/api/images/regenerate', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId: resolvedProjectId, prompt: heroPrompt(files as Record<string, { content?: string }>, project?.name), ratio: '1792x1024', quality: 'high' }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.url) { setHeroNote(data.error || 'That did not work and you were not charged.'); setHeroStage('idle'); return; }
+      const updated = replaceTokenInFiles(files as Record<string, { content?: string }>, heroImageUrl, data.url) as typeof files;
+      setFiles(updated);
+      void persistProjectFiles(resolvedProjectId, updated, resolvedUserId);
+      if (typeof data.credits === 'number') useEditorStore.getState().setCredits(data.credits);
+      track('hero_upgrade_done', { projectType: projectType || 'unknown' });
+      setHeroNote('New hero image is in. Check the preview.');
+      setHeroStage('idle');
+    } catch {
+      setHeroNote('Network error. You were not charged.'); setHeroStage('idle');
+    }
+  };
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState('');
   const [elapsed, setElapsed] = useState(0);
@@ -4197,6 +4228,14 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
                           }}
                           style={{ fontSize:12, fontWeight:700, padding:'6px 14px', borderRadius:999, border:'none', background:'#0EA5E9', color:'#03111c', cursor:'pointer', fontFamily:'var(--font-sans)' }}>{label} →</button>
                       ))}
+                      {projectType !== 'mobile' && heroImageUrl && (
+                        <button type="button" disabled={heroStage === 'busy'}
+                          onClick={() => { if (heroStage === 'confirm') void upgradeHero(); else { setHeroStage('confirm'); track('hero_upgrade_offer_clicked', { projectType: projectType || 'unknown' }); } }}
+                          style={{ fontSize:12, fontWeight:700, padding:'6px 14px', borderRadius:999, border:'1px solid #0EA5E9', background: heroStage === 'confirm' ? '#0EA5E9' : 'transparent', color: heroStage === 'confirm' ? '#03111c' : '#0EA5E9', cursor: heroStage === 'busy' ? 'wait' : 'pointer', fontFamily:'var(--font-sans)' }}>
+                          {heroStage === 'busy' ? 'Creating your hero…' : heroStage === 'confirm' ? `Confirm: spend ${heroCost} credits` : `✨ Premium hero image · ${heroCost} credits`}
+                        </button>
+                      )}
+                      {heroNote && <span role="status" style={{ fontSize:12, color:'var(--ide-text3)' }}>{heroNote}</span>}
                       <button type="button" className="wy-tap" aria-label="Hide suggestions" onClick={() => setDismissedNext(true)}
                         style={{ background:'none', border:'none', color:'var(--ide-text3)', cursor:'pointer', fontSize:14, lineHeight:1, padding:0 }}>×</button>
                     </div>
