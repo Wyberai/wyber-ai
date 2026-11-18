@@ -23,7 +23,7 @@ const html = `<!doctype html><html><head><meta charset="utf-8"><link href="https
 <div class="h">Stop renting<br><span style="color:${SKY}">small software.</span></div>
 <div class="s">Tell us your pain points. Build your own software.</div>
 <div class="t">${tiles.map(([a, b]) => `<div class="c"><b>${a}</b><span>${b}</span></div>`).join('')}</div>
-<div class="m">BUILT ONCE. YOURS TO KEEP.</div>
+<div class="m">YOU PAY FOR 100 FEATURES. YOU USE 5.</div>
 </body></html>`
 
 const browser = await puppeteer.launch({ executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe', headless: true, args: ['--no-sandbox'] })

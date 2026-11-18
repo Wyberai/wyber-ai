@@ -62,8 +62,8 @@ async function backdrop() {
       <div style="${mono(24, MUTED, 'margin-top:20mm;line-height:1.45;text-align:center')}">SCAN QR TO VIEW<br>STALL DETAILS</div>
       <div style="${mono(30, SKY, 'margin-top:14mm;text-align:center;letter-spacing:.05em')}">wyberai.com</div></div>
     <div class="abs" style="left:${M}mm;top:440mm;font-weight:900;font-size:190mm;line-height:.98;letter-spacing:-0.045em">Stop renting<br><span class="sky">small software.</span></div>
-    <div class="abs" style="left:${M}mm;top:870mm;font-size:66mm;font-weight:700;color:${INK};letter-spacing:-0.01em">Timesheets. CRM. Attendance. Leave.</div>
-    <div class="abs" style="left:${M}mm;top:965mm;font-size:52mm;font-weight:500;color:${MUTED};letter-spacing:-0.01em">Paying every month for features you never open?</div>
+    <div class="abs" style="left:${M}mm;top:870mm;font-size:66mm;font-weight:700;color:${INK};letter-spacing:-0.01em">You pay for 100 features. You use <span class="sky">5.</span></div>
+    <div class="abs" style="left:${M}mm;top:965mm;font-size:52mm;font-weight:500;color:${MUTED};letter-spacing:-0.01em">Build the 5 you use, and keep it.</div>
     <div class="abs" style="left:${M}mm;top:1115mm;font-weight:900;font-size:90mm;line-height:1.02;letter-spacing:-0.035em">Tell us your pain points.<br><span class="sky">Build your own software.</span></div>
     <div class="abs" style="left:${M}mm;top:1340mm;${mono(30, SKY, 'letter-spacing:.1em')}">BUILT ONCE. YOURS TO KEEP.</div>
     <div class="abs" style="left:${M}mm;top:1410mm;width:1609mm;display:flex;gap:28mm">${tiles}</div>
@@ -97,7 +97,7 @@ async function tableFront() {
     <div class="abs" style="right:${M}mm;top:${M}mm;width:292mm">${qrPlate(292, qr)}
       <div style="${mono(18, MUTED, 'margin-top:12mm;text-align:center')}">SCAN QR TO VIEW STALL DETAILS</div></div>
     <div class="abs" style="left:${M}mm;top:290mm;font-weight:900;font-size:118mm;line-height:.99;letter-spacing:-0.04em">Stop renting<br><span class="sky">small software.</span></div>
-    <div class="abs" style="left:${M}mm;top:604mm;font-size:42mm;font-weight:500;color:${MUTED}">Build your own. Timesheets, CRM, attendance.</div>
+    <div class="abs" style="left:${M}mm;top:604mm;font-size:42mm;font-weight:500;color:${MUTED}">You pay for 100 features. You use 5.</div>
     <div class="abs" style="left:${M}mm;bottom:${M}mm;${mono(26, SKY, 'letter-spacing:.06em')}">wyberai.com</div>`)
 }
 
