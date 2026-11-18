@@ -32,4 +32,19 @@ describe('light mode', () => {
   it('the wordmark uses a darker sky for "Ai" on a light page', () => {
     expect(read('src/components/shared/WyberLogo.tsx')).toMatch(/theme === 'onLight' \? '#0369a1'/)
   })
+
+  it('the Signal header and footer logo follow the page theme (the footer wordmark was white on light on 2026-11-18)', () => {
+    for (const f of ['src/components/signal/SignalNav.tsx', 'src/components/signal/SignalFooter.tsx']) {
+      expect(read(f)).toMatch(/<WyberLogo[^>]*theme="auto"/)
+    }
+    const logo = read('src/components/shared/WyberLogo.tsx')
+    expect(logo).toContain("'var(--sg-ink, #f4f4f5)'")
+    expect(logo).toContain("'var(--sg-hot, #0EA5E9)'")
+  })
+
+  it('every page built on the Signal shell uses the shell logo, never a hard-coded white wordmark', () => {
+    const post = read('src/components/signal/PostShell.tsx')
+    expect(post).toContain('SignalFrame')
+    expect(post).not.toContain('WyberLogo')
+  })
 })

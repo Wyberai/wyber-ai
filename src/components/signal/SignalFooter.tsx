@@ -16,10 +16,10 @@ export function SignalFooter({ locale = DEFAULT_LOCALE }: { locale?: Locale } = 
       <div className="sg-wrap">
         <div className="sg-fcols">
           <div>
-            <Link href={localePath('/', locale)} aria-label="WyberAi home" style={{ display: 'inline-flex', marginBottom: 14 }}><WyberLogo markSize={26} wordmarkSize={16} /></Link>
+            <Link href={localePath('/', locale)} aria-label="WyberAi home" style={{ display: 'inline-flex', marginBottom: 14 }}><WyberLogo markSize={26} wordmarkSize={16} theme="auto" /></Link>
             <p>Turn plain English into full-stack apps. Build, preview, and deploy before lunch.</p>
             <p style={{ marginTop: 12 }}>A product by SignalPulse Technologies<br />Wyoming, USA · hello@wyberai.com</p>
-            <p className="sg-soc">{[['X', 'https://twitter.com/wyberai'], ['GitHub', 'https://github.com/Wyberai'], ['Discord', 'https://discord.gg/A5KsFv2P']].map(([l, h]) => <a key={l} href={h} target="_blank" rel="noreferrer">{l}</a>)}</p>
+            <p className="sg-soc">{[['X', 'https://twitter.com/wyberai'], ['GitHub', 'https://github.com/Wyberai']].map(([l, h]) => <a key={l} href={h} target="_blank" rel="noreferrer">{l}</a>)}</p>
           </div>
           {COLS.map(c => (
             <div key={c.heading}>

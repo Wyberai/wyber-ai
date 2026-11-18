@@ -3,6 +3,7 @@ import "./globals.css";
 import "@/styles/brand.css";
 import "@/styles/editor.css";
 import "@/styles/signal.css";
+import "@/styles/blog.css";
 import "@/styles/motion.css";
 import "@/styles/tokens.css";
 import { ThemeProvider } from '@/lib/theme';

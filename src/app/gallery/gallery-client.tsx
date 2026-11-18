@@ -5,6 +5,20 @@ import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 
 const ACCENT = '#0EA5E9'
+
+/** Category colours come from each template and some are too dark to read as text on the dark card (#52525b was 2.5:1). Lift only the text use, until it reaches 4.5:1 against the card. */
+function readableOnDark(hex: string): string {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim())
+  if (!m) return hex
+  const n = parseInt(m[1], 16)
+  let r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255
+  const lin = (v: number) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4) }
+  const lum = () => 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
+  // Card is about #0d1020 (luminance ~0.006); 4.5:1 needs text luminance of about 0.28 or more.
+  for (let i = 0; i < 10 && lum() < 0.28; i++) { r += (255 - r) * 0.2; g += (255 - g) * 0.2; b += (255 - b) * 0.2 }
+  const h = (v: number) => Math.round(v).toString(16).padStart(2, '0')
+  return '#' + h(r) + h(g) + h(b)
+}
 const PER_PAGE = 24
 
 // SaaS-bucket categories carry no prefix — everything else is grouped by
@@ -198,7 +212,7 @@ export default function GalleryPage() {
                             <div style={{ width: 32, height: 32, borderRadius: 8, background: color + '18', border: `1px solid ${color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>
                               {isMobile ? '📱' : '🌐'}
                             </div>
-                            <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: color + '15', color, border: `1px solid ${color}25`, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                            <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: color + '15', color: readableOnDark(color), border: `1px solid ${color}25`, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                               {app.category?.replace(/^(Mobile|Website|WebApp)-/, '')}
                             </span>
                           </div>
@@ -209,7 +223,7 @@ export default function GalleryPage() {
                           </div>
 
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
-                            <span style={{ fontSize: 11, color: color, fontWeight: 600 }}>Use template →</span>
+                            <span style={{ fontSize: 11, color: readableOnDark(color), fontWeight: 600 }}>Use template →</span>
                             <span style={{ fontSize: 11, color: '#8797ab' }}>0 credits</span>
                           </div>
                         </div>

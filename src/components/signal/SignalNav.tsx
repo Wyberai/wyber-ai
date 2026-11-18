@@ -49,7 +49,7 @@ export function SignalNav({ bare = false }: { bare?: boolean }) {
   return (
     <header className="sg-nav">
       <div className="sg-wrap">
-        <Link href="/" className="sg-logo" aria-label="WyberAi home"><WyberLogo markSize={30} wordmarkSize={18} theme={theme === 'light' ? 'onLight' : 'onDark'} /></Link>
+        <Link href="/" className="sg-logo" aria-label="WyberAi home"><WyberLogo markSize={30} wordmarkSize={18} theme="auto" /></Link>
         {!bare && (
           <nav className="sg-links" aria-label="Main">
             <div className="sg-build" ref={buildRef}>

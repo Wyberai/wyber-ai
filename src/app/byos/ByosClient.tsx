@@ -210,7 +210,7 @@ export function ByosClient() {
       <div style={{ maxWidth: 880, margin: '0 auto', padding: 'clamp(32px,6vw,72px) clamp(16px,4vw,32px) 96px' }}>
         {step === 'url' && (
           <>
-            <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: s.accent, margin: '0 0 14px' }}>2027 is the year of custom software</p>
+            <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--sg-hot)', margin: '0 0 14px' }}>2027 is the year of custom software</p>
             <h1 ref={headingRef} tabIndex={-1} style={{ fontSize: 'clamp(32px,6vw,60px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.05, margin: '0 0 18px', outline: 'none' }}>
               You pay for 100 features.<br />You use 5.
             </h1>
@@ -245,7 +245,7 @@ export function ByosClient() {
                     style={{ padding: '6px 12px', borderRadius: 999, border: `1px solid ${s.border}`, background: 'transparent', color: s.muted, fontSize: 13, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>{c.product}</button>
                 ))}
                 {LIBRARY.length > featured.length && (
-                  <button onClick={() => setShowAll(v => !v)} aria-expanded={showAll} style={{ background: 'none', border: 'none', color: s.accent, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>
+                  <button onClick={() => setShowAll(v => !v)} aria-expanded={showAll} style={{ background: 'none', border: 'none', color: 'var(--sg-hot)', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>
                     {showAll ? 'Hide' : `All ${LIBRARY.length} tools`}
                   </button>
                 )}
