@@ -13,14 +13,14 @@ Sources: QA run (E1-E24, see qa-run-2026-11-18.md), the owner's notes, and the o
 | E5 | Editor SEO scan says robots/sitemap present | DONE: wording now says robots.txt only takes effect on your own domain |
 | E6 | Placeholder domain in generated index.html | PARTIAL: fixed at serve time; source fix TODO |
 | E7 | Vite 5.4.21 vulnerabilities in generated stack | TODO |
-| E8/E9 | Privacy/Terms stubs and owner note shown to visitors | TODO |
+| E8/E9 | Privacy/Terms stubs and owner note shown to visitors | PARTIAL: prompt no longer puts an owner note on the page; stubs still short |
 | E10 | Security scan false positives (JSON-LD, Next-only check) | DONE, with tests |
 | E11 | Store listing limits | DONE |
 | E12 | "TODO: binary build" in publish guide | DONE |
 | E13 | Plans & Billing "0/50 used" vs balance | TODO |
-| E14 | Price tables do not match charges | TODO (display only; credit policy frozen) |
-| E15 | /api/security/rls-scan 400 | TODO |
-| E16 | /api/github?userId 401 | TODO |
+| E14 | Price tables do not match charges | PARTIAL: footnote now says complete builds are priced by what they include; no price changes |
+| E15 | /api/security/rls-scan 400 | DONE: post-publish check is silent when no database |
+| E16 | /api/github?userId 401 | DONE: 200 not-connected, no user id in URL |
 | E17 | Two histories disagree | TODO |
 | E18 | /solve ignores user words | TODO |
 | E19 | Blog Calendly numbers vs /byos | TODO |

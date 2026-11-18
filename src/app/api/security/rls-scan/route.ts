@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
   const { allowed } = rateLimit(`rls-scan:${user.id}`, 15, 600_000)
   if (!allowed) return NextResponse.json({ error: 'Too many scans in a short time. Please wait a few minutes.' }, { status: 429 })
 
-  const { projectId, action = 'scan', tables } = await req.json().catch(() => ({}))
+  const { projectId, action = 'scan', tables, silent = false } = await req.json().catch(() => ({}))
   if (!projectId) return NextResponse.json({ error: 'projectId required' }, { status: 400 })
 
   // ── Auto-fix path ──────────────────────────────────────────────────────────
@@ -60,6 +60,8 @@ export async function POST(req: NextRequest) {
     const { connected, blockedRef, report } = await runProjectRlsScan(supabase, projectId, user.id)
     if (blockedRef) return NextResponse.json({ error: 'That project cannot be scanned.' }, { status: 403 })
     if (!connected) {
+      // The automatic check after publishing is not a user action; "no database connected" is a normal answer there, not an error.
+      if (silent) return NextResponse.json({ connected: false })
       return NextResponse.json(
         { error: 'Supabase is not connected for this project. Connect it to run a security scan.' },
         { status: 400 },

@@ -292,7 +292,7 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
         setPostPublishScan(null);
         fetch('/api/security/rls-scan', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ projectId }),
+          body: JSON.stringify({ projectId, silent: true }),
         }).then(r => r.ok ? r.json() : null).then((d: { score?: number; findings?: Array<{ severity?: string }> } | null) => {
           if (!d || !Array.isArray(d.findings)) return; // no Supabase connected / scan unavailable
           const criticals = d.findings.filter(f => f.severity === 'critical').length;

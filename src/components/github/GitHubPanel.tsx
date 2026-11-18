@@ -23,7 +23,7 @@ export function GitHubPanel({ userId, projectId, githubRepo, lastCommitSha }: Pr
   }, [userId]);
 
   const fetchRepos = async () => {
-    const res = await fetch(`/api/github?userId=${userId}`);
+    const res = await fetch('/api/github'); // the server identifies the user from the session; no id in the URL
     const data = await res.json();
     if (data.repos) { setRepos(data.repos); setConnected(true); }
   };

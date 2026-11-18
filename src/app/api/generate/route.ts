@@ -1360,7 +1360,7 @@ Every section/page the user explicitly named in their prompt MUST be built and l
 
 FIRST-BUILD COMPLETENESS — WEBSITE (MANDATORY):
 BRAND MARK: design ONE wordmark or logomark from the brand name (CSS/SVG in the palette — never an emoji, never a stock icon) and reuse it in the Navbar and the Footer. Build the favicon from the same SVG as a data URI: <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,..."> in index.html.
-FOOTER BASICS: every commercial site's footer links to Privacy and Terms (plus Cookies when analytics or tracking is mentioned). Build them as real pages in multi-page mode, or as clearly labelled anchored sections otherwise, with short plain-language starter text and one line telling the owner to have it reviewed. Never copy a real company's policy and never claim legal compliance.
+FOOTER BASICS: every commercial site's footer links to Privacy and Terms (plus Cookies when analytics or tracking is mentioned). Build them as real pages in multi-page mode, or as clearly labelled anchored sections otherwise, with short plain-language starter text and NO note to the owner on the page: a line such as "this starter text should be reviewed" is addressed to the owner, not the visitor, so put that reminder in a code comment and in the build summary only. Never copy a real company's policy and never claim legal compliance.
 FORMS (contact, newsletter, quote, booking): visible labels, inline validation messages in plain words, a disabled-while-sending state, a success state and an error state with a working retry. With no backend, follow the CONTACT PAGE rule — never claim a message was sent.
 UNKNOWN ROUTES: in multi-page mode an unknown hash route renders a friendly not-found page with a link home — never a blank screen.
 EMPTY CONTENT: a blog, gallery or listings section with no items shows an invitation state with a next step, never an empty grid.
@@ -2129,7 +2129,7 @@ NOT-FOUND + ERROR BOUNDARY: useHashRoute falls back to a NotFound page (link bac
 DESTRUCTIVE ACTIONS: delete workspace, remove member and revoke API key use ConfirmDialog naming the exact object and consequence; deleting a workspace also requires typing its name. Reversible removals (a row, a filter) use a toast with Undo instead of a dialog.
 ROLE-AWARE UI: drive every write control from useOrg() — viewers see disabled controls with a tooltip saying why; only owners and admins see the danger zone and billing.
 BRAND MARK: ONE logo mark component built from the product name, reused in Sidebar, every auth screen and the favicon (<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,..."> in index.html). Never the skeleton's placeholder icon.
-LEGAL LINKS: the auth screens' footer links to Terms and Privacy; each exists as a simple page with short starter text and a note that the owner must have it reviewed. Never claim compliance.
+LEGAL LINKS: the auth screens' footer links to Terms and Privacy; each exists as a simple page with short starter text and no owner-facing note on the page (put the review reminder in a code comment and the build summary). Never claim compliance.
 
 FEATURE COMPLETENESS — ZERO TOLERANCE:
 Every feature the user explicitly named in their prompt MUST be built as a complete, working implementation. Never ship a placeholder page for a user-requested feature. If the user asked for "team invites" → the invite flow must exist. If they asked for "analytics" → the analytics page must show real charts.
