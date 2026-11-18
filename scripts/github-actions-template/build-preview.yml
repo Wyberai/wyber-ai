@@ -138,6 +138,10 @@ jobs:
           # without it (confirmed by an actual failed build during setup).
           PROJECT_ID="${{ github.event.inputs.project_id }}"
           BUNDLE_SUFFIX=$(echo "$PROJECT_ID" | tr -dc 'a-z0-9' | head -c 16)
+          # An Android package segment must start with a letter. Project ids are UUIDs, so about 10 in 16 start with a digit,
+          # and Expo then treats the package as unset ('android.package is required', 18 Nov 2026). Prefix only those, so ids that
+          # already built keep their package name and installed apps still update.
+          case "$BUNDLE_SUFFIX" in [0-9]*) PKG_SUFFIX="p$BUNDLE_SUFFIX" ;; *) PKG_SUFFIX="$BUNDLE_SUFFIX" ;; esac
           cat > app.json << JSON_EOF
           {
             "expo": {
@@ -146,7 +150,7 @@ jobs:
               "version": "1.0.0",
               "orientation": "portrait",
               "android": {
-                "package": "com.wyberai.preview.${BUNDLE_SUFFIX}",
+                "package": "com.wyberai.preview.${PKG_SUFFIX}",
                 "adaptiveIcon": { "backgroundColor": "#09090b" }
               },
               "sdkVersion": "54.0.0",
@@ -215,16 +219,33 @@ jobs:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           EAS_BUILD_SKIP_LOCKFILE_CHECK: '1'
         run: |
+          # stdout (the JSON reply) and stderr (progress and warnings) go to SEPARATE files. They used to share one file (2>&1),
+          # so the parse failed on the progress text and the build id came out empty (see build-artifact.yml, 17 Nov).
           eas build --platform android --profile preview --non-interactive --no-wait \
-            --json > ../build_start.json 2>&1 || true
-          cat ../build_start.json
-          BUILD_ID=$(cat ../build_start.json | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d[0]["id"])' 2>/dev/null || echo "")
+            --json > ../build_start.json 2> ../build_start.err || true
+          echo "--- eas stdout ---"; cat ../build_start.json
+          echo "--- eas stderr ---"; cat ../build_start.err
+          # Read the id from the outermost JSON array or object in stdout, whatever else was printed around it.
+          BUILD_ID=$(node -e "
+          const raw = require('fs').readFileSync('../build_start.json', 'utf8');
+          for (const [o, c] of [['[', ']'], ['{', '}']]) {
+            const s = raw.indexOf(o), e = raw.lastIndexOf(c);
+            if (s !== -1 && e > s) {
+              try { let d = JSON.parse(raw.slice(s, e + 1)); d = Array.isArray(d) ? d[0] : d; console.log(d.id || ''); process.exit(0); } catch (_) {}
+            }
+          }
+          console.log('');
+          " 2>/dev/null || echo "")
           echo "EAS_BUILD_ID=$BUILD_ID" >> $GITHUB_ENV
 
       - name: Wait for EAS build to complete
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
+          if [ -z "$EAS_BUILD_ID" ]; then
+            echo "Could not read the EAS build id. See the eas stderr above."
+            exit 0
+          fi
           echo "Polling EAS build $EAS_BUILD_ID"
           for i in $(seq 1 40); do
             sleep 30

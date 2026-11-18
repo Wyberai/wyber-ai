@@ -1,4 +1,5 @@
 import { createServiceClient } from '@/lib/supabase/server'
+import { fixPlaceholderDomains } from '@/lib/seo/placeholder-domains'
 import { headers } from 'next/headers'
 import { logDemoEvent } from '@/lib/gtm/events'
 import { Metadata } from 'next'
@@ -100,7 +101,7 @@ async function loadHtmlInner(slug: string): Promise<{ id: string; name: string; 
     const { data: snap } = await supabase.storage.from('published-apps').download(`${project.id}/snapshot.html`)
     if (snap) snapshot = await snap.text()
   } catch { /* none yet */ }
-  return { id: project.id, name: project.name, html: await fileData.text(), ownerPlan, isDemo: !!project.is_demo, snapshot }
+  return { id: project.id, name: project.name, html: fixPlaceholderDomains(await fileData.text(), slug), ownerPlan, isDemo: !!project.is_demo, snapshot }
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

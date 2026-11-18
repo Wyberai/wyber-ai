@@ -14,7 +14,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ slug: strin
   const { slug, pwa } = await ctx.params
   const file = pwa.join('/')
 
-  if (!['manifest.webmanifest', 'pwa-icon-192.png', 'pwa-icon-512.png', 'llms.txt'].includes(file)) {
+  if (!['manifest.webmanifest', 'pwa-icon-192.png', 'pwa-icon-512.png', 'llms.txt', 'sitemap.xml'].includes(file)) {
     return new NextResponse('Not found', { status: 404 })
   }
 
@@ -27,6 +27,15 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ slug: strin
     .eq('is_public', true)
     .single()
   if (!project) return new NextResponse('Not found', { status: 404 })
+
+  // sitemap.xml: valid for the URLs at or below /app/{slug}/, and owners can submit it in Search Console. robots.txt is
+  // deliberately NOT served here: crawlers only read robots.txt at the root of a host, so one under /app/{slug}/ would be
+  // ignored. On a custom domain the owner's own host serves it.
+  if (file === 'sitemap.xml') {
+    const loc = `https://wyberai.com/app/${slug}`
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>${loc}</loc></url>\n</urlset>\n`
+    return new NextResponse(xml, { headers: { 'Content-Type': 'application/xml; charset=utf-8', 'Cache-Control': 'public, max-age=3600' } })
+  }
 
   // llms.txt — a Markdown summary AI assistants can read directly, built from
   // the publish-time snapshot (Website projects; see lib/seo/static-snapshot).

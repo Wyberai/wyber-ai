@@ -3,6 +3,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { createAnthropic } from '@/lib/ai-usage'
 import { createClient } from '@/lib/supabase/server'
 import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
+import { clampStoreListing } from '@/lib/store-listing-limits'
 
 const client = createAnthropic('app/api/store-listing', { apiKey: process.env.ANTHROPIC_API_KEY! })
 
@@ -57,7 +58,7 @@ Return ONLY valid JSON with exactly this shape (no prose, no markdown fences):
     const text = (msg.content[0] as { text: string }).text.trim()
     // Strip markdown fences if model added them
     const clean = text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '')
-    const listing = JSON.parse(clean)
+    const listing = clampStoreListing(JSON.parse(clean))
 
     return NextResponse.json(listing)
   } catch (err) {

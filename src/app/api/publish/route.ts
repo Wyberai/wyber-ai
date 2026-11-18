@@ -350,6 +350,9 @@ export async function POST(req: NextRequest) {
           }
         } catch (e) {
           console.error('[publish] snapshot failed:', e)
+          // Leave a readable reason where the snapshot would be, so a missing snapshot can be diagnosed (none of four live sites had one).
+          const reason = `${new Date().toISOString()}\n${e instanceof Error ? (e.stack || e.message) : String(e)}`.slice(0, 4000)
+          await admin.storage.from('published-apps').upload(`${projectId}/snapshot.error.txt`, reason, { contentType: 'text/plain', upsert: true }).catch(() => {})
         }
       })
     }
