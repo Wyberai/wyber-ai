@@ -521,8 +521,8 @@ export default function SettingsPage({ isIndia }: { isIndia?: boolean }) {
               </div>
               <a href="/pricing" style={{ padding: '9px 20px', borderRadius: 8, border: 'none', background: '#0EA5E9', color: '#03111c', fontSize: 13, fontWeight: 700, cursor: 'pointer', textDecoration: 'none' }}>{t('upgradePlanBtn')}</a>
             </div>
-            {/* Credit bar */}
-            <div style={{ marginTop: 14 }}>
+            {/* Credit bar: used = plan allowance minus balance, which is only meaningful while the balance is within the allowance. Top-ups and bonus credits push the balance above it, and the bar then read 0 used after hundreds were spent. */}
+            {(profile?.credits ?? 0) <= (plans.find(p => p.id === (profile?.plan || 'free'))?.credits || 50) && (<div style={{ marginTop: 14 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#8797ab', marginBottom: 5 }}>
                 <span>{t('creditsUsedThisMonth')}</span>
                 <span>{Math.max(0, (plans.find(p => p.id === (profile?.plan || 'free'))?.credits || 50) - (profile?.credits || 0))} / {plans.find(p => p.id === (profile?.plan || 'free'))?.credits || 50}</span>
@@ -531,7 +531,7 @@ export default function SettingsPage({ isIndia }: { isIndia?: boolean }) {
                 <div style={{ height: '100%', borderRadius: 9999, background: '#0EA5E9', width: Math.min(100, ((plans.find(p => p.id === (profile?.plan || 'free'))?.credits || 50) - (profile?.credits || 0)) / (plans.find(p => p.id === (profile?.plan || 'free'))?.credits || 50) * 100) + '%', transition: 'width 0.5s ease' }} />
               </div>
               <div style={{ fontSize: 11, color: '#8797ab', marginTop: 4 }}>{t('resetsOnFirst')}</div>
-            </div>
+            </div>)}
           </div>
 
           {/* Plan cards */}

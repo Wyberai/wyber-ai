@@ -19,6 +19,7 @@ export default function Page() {
       <p>The monthly price of a scheduling tool covers far more than a booking link and a reminder email. So we went through Calendly feature by feature to see how much of it can be rebuilt, and how much would be a bluff.</p>
       <p>We read only the public website, so anything behind a login or paywall we cannot see is not counted. The same exercise runs for 44 tools on our <a href="/byos">Replace your SaaS</a> page. Take what follows as a map, not a promise.</p>
       <p>Of 24 features, 16 are buildable, 7 only in a simpler form, and 1 we will not fake.</p>
+      <p>If you check this against the <a href="/byos">Replace your SaaS</a> page, you will see different numbers there: 10 need nothing from you, 11 need an outside service, 2 are simplified with nothing extra, and 1 cannot be built. It is the same 24 features counted a different way. That page groups by what you have to bring, so five of the &ldquo;simpler form&rdquo; features below, which also need an outside account, move into its &ldquo;outside service&rdquo; group. This post groups by how much of the feature we can deliver.</p>
 
       <h2>The 16 we can build</h2>
       <p>Ten need nothing from you: booking links and event types, availability rules, reschedule and cancel, meeting polls, website embeds, lead routing forms, spreading meetings across a team, contact records with meeting history, team roles and permissions, and analytics dashboards.</p>

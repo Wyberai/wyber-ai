@@ -4388,7 +4388,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
                   key={s.label}
                   onClick={() => {
                     if (isWyberCloud) {
-                      window.dispatchEvent(new CustomEvent('wyber-open-panel-tab', { detail: 'cloud' }));
+                      window.dispatchEvent(new CustomEvent('wyber-open-panel-tab', { detail: 'database' })); // 'database' is WyberCloud (free); 'cloud' is the bring-your-own Supabase form
                     } else if ('prompt' in s) {
                       setInput(s.prompt);
                       textareaRef.current?.focus();

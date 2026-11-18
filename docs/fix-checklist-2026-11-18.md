@@ -12,19 +12,19 @@ Sources: QA run (E1-E24, see qa-run-2026-11-18.md), the owner's notes, and the o
 | E4 | /tools SEO scanner scores our own site 36/100 | CODE: Next streamed title/meta into body for non-bot agents; htmlLimitedBots widened + scanner reads body fallback; verify after deploy |
 | E5 | Editor SEO scan says robots/sitemap present | DONE: wording now says robots.txt only takes effect on your own domain |
 | E6 | Placeholder domain in generated index.html | PARTIAL: fixed at serve time; source fix TODO |
-| E7 | Vite 5.4.21 vulnerabilities in generated stack | TODO |
+| E7 | Vite 5.4.21 vulnerabilities in generated stack | DEFERRED: 5.4.21 is the last 5.x; fixes need Vite 6+ and a tested export build (starter-templates.ts, sanitize-files.ts, deploy route). Do not bump blind |
 | E8/E9 | Privacy/Terms stubs and owner note shown to visitors | PARTIAL: prompt no longer puts an owner note on the page; stubs still short |
 | E10 | Security scan false positives (JSON-LD, Next-only check) | DONE, with tests |
 | E11 | Store listing limits | DONE |
 | E12 | "TODO: binary build" in publish guide | DONE |
-| E13 | Plans & Billing "0/50 used" vs balance | TODO |
+| E13 | Plans & Billing "0/50 used" vs balance | DONE: bar hidden when the balance is above the plan allowance |
 | E14 | Price tables do not match charges | PARTIAL: footnote now says complete builds are priced by what they include; no price changes |
 | E15 | /api/security/rls-scan 400 | DONE: post-publish check is silent when no database |
 | E16 | /api/github?userId 401 | DONE: 200 not-connected, no user id in URL |
 | E17 | Two histories disagree | TODO |
 | E18 | /solve ignores user words | TODO |
-| E19 | Blog Calendly numbers vs /byos | TODO |
-| E20 | "Add free database" chip opens Supabase form | TODO |
+| E19 | Blog Calendly numbers vs /byos | DONE: post explains the two groupings |
+| E20 | "Add free database" chip opens Supabase form | DONE: opens the WyberCloud Database tab |
 | E21 | Banner "resets on page refresh" wrong | DONE: hidden when the app uses localStorage or IndexedDB |
 | E22 | Marketing Beast files not served | PARTIAL: sitemap.xml served; robots deliberately not (crawlers only read host root) |
 | E23/E24 | Long brief: last instruction ignored, invented physios | TODO |
