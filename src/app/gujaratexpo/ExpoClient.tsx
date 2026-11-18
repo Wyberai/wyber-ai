@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 import Link from 'next/link'
 import s from './expo.module.css'
-import { AUDIENCES, USE_CASES, STEPS, WHY, TYPES, CASE_IMAGE, type AudienceId } from './data'
+import { AUDIENCES, USE_CASES, STEPS, WHY, POWERS, TYPES, CASE_IMAGE, type AudienceId } from './data'
 import { ExpoForm } from './ExpoForm'
 import { ExpoStory } from './ExpoStory'
 import { ExpoStoryCss } from './ExpoStoryCss'
@@ -193,9 +193,25 @@ export function ExpoClient({ initial }: { initial?: string }) {
           </div>
         </section>
 
+        {/* SUPERPOWERS: what WyberAi does on top of plain vibe coding */}
+        <section id="powers" className={`${s.section} ${s.sectionLine}`}>
+          <div className={s.eyebrow}>■ SUPERPOWERS</div>
+          <h2 className={s.h2}>Vibe coding.<br /><em>Plus superpowers.</em></h2>
+          <p className={s.lede}>Anyone can describe an app to an AI. These are the checks WyberAi adds so what you get is worth launching.</p>
+          <div className={s.why}>
+            {POWERS.map(w => (
+              <div key={w.n} className={s.wr}>
+                <span className={s.n}>{w.n}</span>
+                <h3>{w.a}<em>{w.b}</em></h3>
+                <p>{w.p}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
         {/* WHY WYBERAI */}
         <section className={`${s.section} ${s.sectionLine}`}>
-          <div className={s.eyebrow}>■ WHY WYBERAI</div>
+          <div className={s.eyebrow}>■ AND THE BASICS</div>
           <h2 className={s.h2}>Real code.<br /><em>Yours to keep.</em></h2>
           <div className={s.why}>
             {WHY.map(w => (
