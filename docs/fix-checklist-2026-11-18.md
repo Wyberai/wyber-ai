@@ -119,3 +119,11 @@ Plain Claude (subagent, no rules, one 28 KB index.html, ~80 s) vs WyberAi (50 cr
 ## Generation prices doubled (owner decision, 18 Nov 2026)
 
 Free credits stay at 30 on purpose, "so people buy some credits then get the rewards". Generation charges (builds, edits, components) are twice the old figures via GENERATION_PRICE_FACTOR = 2. Everything quoting a price now reads it from src/lib/pricing-facts.ts (blogs, FAQs, docs, emails, /solve, agencies), and every sentence that said the free credits cover a first build now says they do not. Not changed: scans, images, agents, plan allotments, top-up packs. Consultation brief (src/lib/consultation-brief.ts) still lists old internal figures (40 / 80 credits); it was already out of date and is not user-facing pricing.
+
+## APK builds: the real cause (found 18 Nov, evening)
+
+My earlier statement that the APK build "succeeds" was WRONG: the GitHub workflow finished green while Expo's own build had ERRORED, and I read the green run as a success. Real cause, found by making the workflow print Expo's log: "Unable to resolve module ../App from /build/App.tsx" in the Bundle JavaScript phase. A mobile project can carry the web starter's files (index.html, vite.config.ts, src/main.tsx, src/App.tsx, src/index.css); the workflow stripped a leading "src/" from every path, so the stray src/App.tsx overwrote the real root App.tsx. Fix: native build workflows (APK and preview) skip the web-only files and a root file beats its src/ twin. The workflow also now reports Expo's error code and message to the owner instead of "see expo.dev". Lesson recorded: a green workflow run is not a build result; check the Expo status or the downloadable APK.
+
+Also found and repaired in the same session: a bad edit of mine made GitHub reject build-artifact.yml for about ten minutes (every APK start would have failed). Now every workflow edit is validated with a YAML parser before it is pushed.
+
+Stress test: six edits in a row on a mobile project, no crash, balance reconciled to the credit, preview still interactive and showing every change. Mobile tabs (In-App, WyberAi Go, Cloud Device, Store Listing, Publish Guide, IPA/APK) all respond.
