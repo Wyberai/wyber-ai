@@ -43,43 +43,35 @@ html,body{margin:0;padding:0;width:${wMM}mm;height:${hMM}mm;background:${BG};col
 }
 
 // ---------- Backdrop 6 x 6 ft = 1828.8 mm square ----------
+// The six powers, held to what the code does (see src/app/gujaratexpo/data.ts POWERS): the database test runs right after a publish.
+const POWERS = ['X-ray vision', 'Key lock', 'Security armour', 'Anti-slop radar', 'Not a template', 'Be seen']
+const ICON = {
+  'X-ray vision': '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  'Key lock': '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+  'Security armour': '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/>',
+  'Be seen': '<circle cx="11" cy="11" r="6"/><path d="M16 16l5 5"/>',
+  'Anti-slop radar': '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><path d="M12 12L19 5"/>',
+  'Not a template': '<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="5" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><rect x="3" y="14" width="8" height="7" rx="1.5"/>',
+}
+const icon = (t, size) => `<svg width="${size}mm" height="${size}mm" viewBox="0 0 24 24" fill="none" stroke="${SKY}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display:block;flex:none">${ICON[t]}</svg>`
+const CHIPS = ['WEBSITES', 'WEB APPS', 'MOBILE APPS', 'SAAS', 'REPLACE YOUR SAAS']
+const chipRow = (size, gap, padV, padH, border) => CHIPS.map((c, i) => i === CHIPS.length - 1
+  ? `<div style="background:${SKY};border-radius:60mm;padding:${padV + border}mm ${padH + 1}mm;${mono(size, '#03111c', 'letter-spacing:.1em')}">${c}</div>`
+  : `<div style="border:${border}mm solid #2a3650;border-radius:60mm;padding:${padV}mm ${padH}mm;${mono(size, INK, 'letter-spacing:.1em')}">${c}</div>`).join('')
+
+// The table stands in front of the lower part of this wall (organiser's reference photo), so everything that matters sits in the top
+// 1000 mm of 1829 mm: logo, QR (at eye level), headline, what we build, and the call to action. The six powers live on the table front.
 async function backdrop() {
   const W = 6 * FT, M = 110
   const qr = await qrSvg()
-  // The top 60% carries the message (headline, what we build, QR); the table stands in front of the lower part, which holds supporting powers only.
-  // Powers are held to what the code does (see src/app/gujaratexpo/data.ts POWERS): the database test runs right after a publish.
-  const WHAT = [
-    ['X-ray vision', 'We probe your database right after you publish.'],
-    ['Key lock', 'An exposed secret key stops a publish.'],
-    ['Security armour', 'A full security checklist, any time.'],
-    ['Anti-slop radar', 'Flags the made-by-AI look.'],
-    ['Not a template', 'A design direction for your kind of business.'],
-    ['Be seen', 'Readable by Google and by AI assistants.'],
-  ]
-  const ICON = {
-    'X-ray vision': '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
-    'Key lock': '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
-    'Security armour': '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/>',
-    'Be seen': '<circle cx="11" cy="11" r="6"/><path d="M16 16l5 5"/>',
-    'Anti-slop radar': '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><path d="M12 12L19 5"/>',
-    'Not a template': '<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="5" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><rect x="3" y="14" width="8" height="7" rx="1.5"/>',
-  }
-  const icon = (t, size) => `<svg width="${size}mm" height="${size}mm" viewBox="0 0 24 24" fill="none" stroke="${SKY}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block">${ICON[t]}</svg>`
-  const tw = (1609 - 2 * 28) / 3
-  const tiles = WHAT.map(([t, d]) => `<div style="width:${tw}mm;height:262mm;border-radius:20mm;background:#0e131c;border:2mm solid #1d2638;padding:24mm 28mm;box-sizing:border-box">${icon(t, 54)}<div style="font-weight:900;font-size:48mm;letter-spacing:-0.03em;margin-top:10mm">${t}</div><div style="font-size:28mm;line-height:1.32;color:${MUTED};margin-top:6mm">${d}</div></div>`).join('')
-  const CHIPS = ['WEBSITES', 'WEB APPS', 'MOBILE APPS', 'SAAS', 'REPLACE YOUR SAAS']
-  const chips = CHIPS.map((c, i) => i === CHIPS.length - 1
-    ? `<div style="background:${SKY};border-radius:50mm;padding:15mm 30mm;${mono(28, '#03111c', 'letter-spacing:.1em')}">${c}</div>`
-    : `<div style="border:2mm solid #2a3650;border-radius:50mm;padding:13mm 28mm;${mono(28, INK, 'letter-spacing:.1em')}">${c}</div>`).join('')
   return page(W, W, `
     <div class="abs" style="left:${M}mm;top:${M}mm">${logo(150, 118)}</div>
     <div class="abs" style="right:${M}mm;top:${M}mm;width:330mm">${qrPlate(330, qr)}
       <div style="${mono(24, MUTED, 'margin-top:20mm;line-height:1.45;text-align:center')}">SCAN QR TO VIEW<br>STALL DETAILS</div>
       <div style="${mono(30, SKY, 'margin-top:14mm;text-align:center;letter-spacing:.05em')}">wyberai.com</div></div>
-    <div class="abs" style="left:${M}mm;top:440mm;font-weight:900;font-size:136mm;line-height:.99;letter-spacing:-0.045em">Vibe coding<br>doesn&rsquo;t have to be<br><span class="sky">boring or vulnerable.</span></div>
-    <div class="abs" style="left:${M}mm;top:905mm;display:flex;flex-wrap:wrap;gap:16mm;width:1609mm">${chips}</div>
-    <div class="abs" style="left:${M}mm;top:1075mm;width:1609mm;display:flex;flex-wrap:wrap;gap:28mm">${tiles}</div>
-    <div class="abs" style="left:${M}mm;top:1665mm;background:${SKY};color:#03111c;border-radius:60mm;padding:20mm 54mm;${mono(38, '#03111c', 'letter-spacing:.08em')}">TELL US YOUR PAIN POINTS</div>`)
+    <div class="abs" style="left:${M}mm;top:405mm;font-weight:900;font-size:134mm;line-height:.99;letter-spacing:-0.045em">Vibe coding<br>doesn&rsquo;t have to be<br><span class="sky">boring or vulnerable.</span></div>
+    <div class="abs" style="left:${M}mm;top:868mm;display:flex;flex-wrap:wrap;gap:16mm;width:1609mm">${chipRow(28, 16, 13, 28, 2)}</div>
+    <div class="abs" style="left:${M}mm;top:992mm;background:${SKY};color:#03111c;border-radius:60mm;padding:15mm 44mm;${mono(32, '#03111c', 'letter-spacing:.08em')}">TELL US YOUR PAIN POINTS</div>`)
 }
 
 // ---------- Backdrop B (alternative): lead with what WyberAi does, in the words on the Xpro portal ----------
@@ -101,21 +93,21 @@ async function backdropB() {
 }
 
 // ---------- Table front 4 x 2.6 ft = 1219.2 x 792.5 mm ----------
+// Seen close up and head-on, so it carries the detail: the six powers, the QR and the call to action.
 async function tableFront() {
-  const W = 4 * FT, H = 2.6 * FT, M = 62
+  const W = 4 * FT, H = 2.6 * FT, M = 56
   const qr = await qrSvg()
-  const CHIPS = ['WEBSITES', 'WEB APPS', 'MOBILE APPS', 'SAAS', 'REPLACE YOUR SAAS']
-  const chips = CHIPS.map((c, i) => i === CHIPS.length - 1
-    ? `<div style="background:${SKY};border-radius:40mm;padding:8mm 18mm;${mono(17, '#03111c', 'letter-spacing:.08em')}">${c}</div>`
-    : `<div style="border:1.4mm solid #2a3650;border-radius:40mm;padding:7mm 16mm;${mono(17, INK, 'letter-spacing:.08em')}">${c}</div>`).join('')
+  const gw = (W - 2 * M - 2 * 16) / 3
+  const pills = POWERS.map(t => `<div style="width:${gw}mm;height:72mm;border:1.4mm solid #2a3650;border-radius:16mm;background:#0e131c;display:flex;align-items:center;gap:12mm;padding:0 16mm;box-sizing:border-box">${icon(t, 28)}<div style="font-weight:800;font-size:23mm;letter-spacing:-0.02em;white-space:nowrap">${t}</div></div>`).join('')
   return page(W, H, `
-    <div class="abs" style="left:${M}mm;top:${M}mm">${logo(86, 66)}</div>
-    <div class="abs" style="right:${M}mm;top:${M}mm;width:292mm">${qrPlate(292, qr)}
-      <div style="${mono(18, MUTED, 'margin-top:12mm;text-align:center')}">SCAN QR TO VIEW STALL DETAILS</div></div>
-    <div class="abs" style="left:${M}mm;top:272mm;font-weight:900;font-size:84mm;line-height:.99;letter-spacing:-0.04em">Vibe coding<br>doesn&rsquo;t have to be<br><span class="sky">boring or vulnerable.</span></div>
-    <div class="abs" style="left:${M}mm;top:572mm;display:flex;flex-wrap:wrap;gap:11mm;width:${W - 2 * M}mm">${chips}</div>
-    <div class="abs" style="left:${M}mm;bottom:${M}mm;background:${SKY};color:#03111c;border-radius:40mm;padding:12mm 32mm;${mono(22, '#03111c', 'letter-spacing:.08em')}">TELL US YOUR PAIN POINT</div>
-    <div class="abs" style="right:${M}mm;bottom:${M + 8}mm;${mono(26, SKY, 'letter-spacing:.06em')}">wyberai.com</div>`)
+    <div class="abs" style="left:${M}mm;top:${M}mm">${logo(78, 60)}</div>
+    <div class="abs" style="right:${M}mm;top:${M}mm;width:260mm">${qrPlate(260, qr)}
+      <div style="${mono(16, MUTED, 'margin-top:10mm;text-align:center')}">SCAN QR TO VIEW STALL DETAILS</div></div>
+    <div class="abs" style="left:${M}mm;top:176mm;font-weight:900;font-size:58mm;line-height:1;letter-spacing:-0.04em">Vibe coding doesn&rsquo;t have to be<br><span class="sky">boring or vulnerable.</span></div>
+    <div class="abs" style="left:${M}mm;top:330mm;width:${W - 2 * M}mm;display:flex;flex-wrap:wrap;gap:16mm">${pills}</div>
+    <div class="abs" style="left:${M}mm;top:530mm;display:flex;flex-wrap:wrap;gap:9mm;width:${W - 2 * M}mm">${chipRow(15, 9, 5, 12, 1.2)}</div>
+    <div class="abs" style="left:${M}mm;bottom:${M}mm;background:${SKY};color:#03111c;border-radius:40mm;padding:11mm 30mm;${mono(21, '#03111c', 'letter-spacing:.08em')}">TELL US YOUR PAIN POINT</div>
+    <div class="abs" style="right:${M}mm;bottom:${M + 7}mm;${mono(24, SKY, 'letter-spacing:.06em')}">wyberai.com</div>`)
 }
 
 // ---------- Table side (x2) 2.5 x 2 ft = 762 x 609.6 mm ----------
