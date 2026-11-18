@@ -98,7 +98,16 @@ describe('structured data and llms.txt', () => {
     const dir = path.join(process.cwd(), 'src/app/blog')
     const posts = fs.readdirSync(dir).filter(d => fs.existsSync(path.join(dir, d, 'page.tsx')))
     expect(posts.length).toBeGreaterThan(5)
-    for (const p of posts) expect(fs.existsSync(path.join(dir, p, 'layout.tsx')), p).toBe(true)
+    // Older posts get it from their own layout.tsx. Posts built on PostShell get it from the shell, so the markup is
+    // emitted once; adding a layout as well would print the Article block twice.
+    const shell = read('src/components/signal/PostShell.tsx')
+    expect(shell).toContain('<ArticleJsonLd')
+    for (const p of posts) {
+      const hasLayout = fs.existsSync(path.join(dir, p, 'layout.tsx'))
+      const usesShell = fs.readFileSync(path.join(dir, p, 'page.tsx'), 'utf8').includes('<PostShell')
+      expect(hasLayout || usesShell, p).toBe(true)
+      expect(hasLayout && usesShell, `${p} would emit Article markup twice`).toBe(false)
+    }
   })
 
   it('llms.txt quotes the same plan credits and prices as the plan file (assistants repeat this text)', async () => {
