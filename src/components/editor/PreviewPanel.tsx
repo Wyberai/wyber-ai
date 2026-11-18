@@ -872,7 +872,7 @@ Change requested: ${editInstruction.trim()}`
         // wyber-store is the platform's local-first persistence: data survives
         // a refresh, so "resets on page refresh" would be false (live: a todo
         // build kept its tasks across reload while showing this banner).
-        const hasBackend = allContent.includes('supabase') || allContent.includes('createClient') || allContent.includes('firebase') || allContent.includes('/api/public/cloud-insert') || allContent.includes('wyber-store')
+        const hasBackend = allContent.includes('supabase') || allContent.includes('createClient') || allContent.includes('firebase') || allContent.includes('/api/public/cloud-insert') || allContent.includes('wyber-store') || /\blocalStorage\b|\bindexedDB\b|\bidb\b|persist\(/.test(allContent)
         if (!hasData || hasBackend) return null
         return (
           <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '6px 12px', background: 'rgba(120,53,15,0.9)', borderBottom: '1px solid rgba(251,191,36,0.2)', fontSize: 12, color: '#fef3c7' }}>
