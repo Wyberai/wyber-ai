@@ -19,6 +19,8 @@ export function MobileLayout({ initialProject, initialProfile }: Props) {
   const t = useT(EDITOR_MOBILE_STRINGS)
   const tc = useT(COMMON_STRINGS)
   const { hydrateProject, resetForProject, setCredits, setConnectors, setProject } = useEditorStore()
+  const liveCredits = useEditorStore(s => s.credits)
+  const generating = useEditorStore(s => s.isGenerating)
   const [editingName, setEditingName] = useState(false)
   const [nameInput, setNameInput] = useState('')
   const [displayName, setDisplayName] = useState(initialProject?.name || t('defaultMobileAppName'))
@@ -94,6 +96,21 @@ export function MobileLayout({ initialProject, initialProfile }: Props) {
 
   // Tell the page-level hydration watchdog React is alive (see project/[id]/page.tsx).
   useEffect(() => { (window as unknown as { __wyber_hydrated?: boolean }).__wyber_hydrated = true }, [])
+  // The balance was printed from the page-load value, so it stayed stale after builds. Show the live balance and re-read it when the tab is visible again.
+  useEffect(() => {
+    const refresh = () => {
+      if (document.visibilityState !== 'visible') return
+      fetch('/api/credits/deduct', { method: 'GET' }).then(r => r.json()).then(d => { if (typeof d?.credits === 'number') setCredits(d.credits) }).catch(() => {})
+    }
+    document.addEventListener('visibilitychange', refresh)
+    window.addEventListener('focus', refresh)
+    return () => { document.removeEventListener('visibilitychange', refresh); window.removeEventListener('focus', refresh) }
+  }, [setCredits])
+  // A build charges while it runs; read the balance again the moment it ends.
+  useEffect(() => {
+    if (generating) return
+    fetch('/api/credits/deduct', { method: 'GET' }).then(r => r.json()).then(d => { if (typeof d?.credits === 'number') setCredits(d.credits) }).catch(() => {})
+  }, [generating, setCredits])
 
   useEffect(() => {
     if (!initialProject?.id) return
@@ -198,7 +215,7 @@ export function MobileLayout({ initialProject, initialProfile }: Props) {
           </button>
           {!isNarrow && <span style={{ fontSize: 12, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: 'rgba(14,165,233,0.12)', color: '#0EA5E9', letterSpacing: '0.04em' }}>MOBILE</span>}
           {initialProfile && (
-            <span style={{ fontSize: 12, color: '#8391a7', whiteSpace: 'nowrap' }}>{initialProfile.credits} cr</span>
+            <span style={{ fontSize: 12, color: '#8391a7', whiteSpace: 'nowrap' }}>{liveCredits} cr</span>
           )}
         </div>
       </div>

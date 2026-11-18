@@ -193,6 +193,25 @@ export function MobilePreviewPanel({ projectId }: Props) {
     } catch { /* ignore network blips */ }
   }, [stopApkPoll, stopIpaPoll])
 
+  // Pick up the latest APK build for this project when the panel opens. The state above lives only in this page, so a build
+  // that finished while the page was closed (or after a reload) looked as if it had never happened and the Build button
+  // came back, with the download link nowhere to be found. Only a finished or still-running build is restored; an old
+  // failure is not shown again.
+  useEffect(() => {
+    if (!projectId) return
+    let cancelled = false
+    fetch(`/api/mobile/status?projectId=${encodeURIComponent(projectId)}&platform=apk`)
+      .then(r => (r.ok ? r.json() : null))
+      .then((d: { build?: { id: string; status: BuildStatus; buildUrl?: string } | null } | null) => {
+        const b = d?.build
+        if (cancelled || !b) return
+        if (b.status === 'ready' && b.buildUrl) { setApkBuildId(b.id); setApkUrl(b.buildUrl); setApkStatus('ready') }
+        else if (b.status === 'queued' || b.status === 'building') { setApkBuildId(b.id); setApkStatus(b.status) }
+      })
+      .catch(() => { /* nothing to restore */ })
+    return () => { cancelled = true }
+  }, [projectId])
+
   // Polling setup for APK
   useEffect(() => {
     if (mode !== 'apk') { stopApkPoll(); return }

@@ -96,3 +96,7 @@ Four fresh builds in Chrome from the dashboard, charged exactly as quoted:
 - Palette variety: no cream-and-orange in 4 of 4, but green/teal accents recur in 4 of 4. Variety improved; it is not yet wide.
 - Mobile editor header kept showing the old balance after the build finished (3,862 vs the real 3,782). The focus-refresh fix covers the web editor only. TODO.
 - Not run: Security Beast scan (100 cr; the false-positive fix is covered by unit tests), long-brief rerun, Marketing Beast.
+
+## Leftovers from the build re-test
+
+CODE: (1) three new non-green palettes (Plum Studio, Trade Blue, Calm Ocean) for wellness, hardware/trade and medical/care domains; the recurring green came from domain-matched palettes and the website directions, not from a bug. (2) Mobile editor header printed the page-load balance (initialProfile.credits) so it never changed; it now shows the live store balance, refreshes on focus and when a build ends. (3) APK panel now restores the latest build for the project on load (new GET /api/mobile/status?projectId=&platform=): a finished build shows its download link again, a running one resumes polling. Verify after promote: open the mobile project that built an APK and look for the download link. If the link is missing, the webhook may not be writing build_url.
