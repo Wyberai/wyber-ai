@@ -62,6 +62,24 @@ async function backdrop() {
     <div class="abs" style="left:${M}mm;top:1757mm;${mono(26, DIM)}">STARTUP BOOTH &middot; S23 &middot; TECH EXPO GUJARAT &middot; 27&ndash;29 NOV 2026 &middot; DESCRIBE IT. SHIP IT.</div>`)
 }
 
+// ---------- Backdrop B (alternative): lead with what WyberAi does, in the words on the Xpro portal ----------
+async function backdropB() {
+  const W = 6 * FT, M = 110
+  const qr = await qrSvg()
+  const tiles = ['Website', 'Web app', 'Mobile app', 'SaaS']
+  const tw = (1609 - 3 * 30) / 4
+  const tileHtml = tiles.map((t, i) => `<div style="width:${tw}mm;height:250mm;border-radius:22mm;background:${i === 0 ? SKY : '#121722'};border:2mm solid ${i === 0 ? SKY : '#1b2230'};display:flex;align-items:flex-end;padding:30mm;box-sizing:border-box"><div style="font-weight:900;font-size:50mm;letter-spacing:-0.03em;color:${i === 0 ? '#04121c' : INK}">${t}</div></div>`).join('')
+  return page(W, W, `
+    <div class="abs" style="left:${M}mm;top:${M}mm">${logo(150, 118)}</div>
+    <div class="abs" style="right:${M}mm;top:${M}mm;width:330mm">${qrPlate(330, qr)}
+      <div style="${mono(24, MUTED, 'margin-top:20mm;line-height:1.45;text-align:center')}">SCAN QR TO VIEW<br>STALL DETAILS</div>
+      <div style="${mono(30, SKY, 'margin-top:14mm;text-align:center;letter-spacing:.05em')}">wyberai.com</div></div>
+    <div class="abs" style="left:${M}mm;top:440mm;font-weight:900;font-size:168mm;line-height:.98;letter-spacing:-0.045em">Build any<br>digital product.<br><span class="sky">Ship it<br>in minutes.</span></div>
+    <div class="abs" style="left:${M}mm;top:1130mm;width:1400mm;font-size:52mm;line-height:1.32;font-weight:500;color:${MUTED}">Describe what you need in plain words. WyberAi builds the website, web app, mobile app or SaaS.</div>
+    <div class="abs" style="left:${M}mm;top:1440mm;width:1609mm;display:flex;gap:30mm">${tileHtml}</div>
+    <div class="abs" style="left:${M}mm;top:1757mm;${mono(26, DIM)}">STARTUP BOOTH &middot; S23 &middot; TECH EXPO GUJARAT &middot; 27&ndash;29 NOV 2026 &middot; DESCRIBE IT. SHIP IT.</div>`)
+}
+
 // ---------- Table front 4 x 2.6 ft = 1219.2 x 792.5 mm ----------
 async function tableFront() {
   const W = 4 * FT, H = 2.6 * FT, M = 62
@@ -89,6 +107,7 @@ async function tableSide() {
 
 const PIECES = [
   ['01-backdrop-6x6ft', 6 * FT, 6 * FT, backdrop],
+  ['01b-backdrop-6x6ft-ALT-capability', 6 * FT, 6 * FT, backdropB],
   ['02-table-front-4x2.6ft', 4 * FT, 2.6 * FT, tableFront],
   ['03-table-side-2.5x2ft', 2.5 * FT, 2 * FT, tableSide],
 ]
@@ -111,4 +130,25 @@ try {
     await pg.close()
     console.log('wrote', name)
   }
+  // Comparison sheet (not for print).
+  const b64 = f => 'data:image/png;base64,' + fs.readFileSync(path.join(OUT, f)).toString('base64')
+  const A = b64('01-backdrop-6x6ft-preview.png'), B = b64('01b-backdrop-6x6ft-ALT-capability-preview.png')
+  const sheet = `<!doctype html><html><head><meta charset="utf-8"><style>
+    body{margin:0;background:#e9edf3;font-family:Inter,Arial,sans-serif;color:#10151f;width:1700px}
+    .row{display:flex;gap:40px;padding:40px 50px 0}.col{flex:1}
+    h2{margin:0 0 6px;font-size:30px}p{margin:0 0 16px;font-size:19px;color:#4a5568}
+    img.big{width:100%;display:block;border:1px solid #c5ccd8}
+    .far{display:flex;gap:40px;padding:36px 50px 50px;align-items:flex-end}.far div{flex:1}
+    .far img{width:190px;display:block;border:1px solid #c5ccd8}.far span{font-size:17px;color:#4a5568;display:block;margin-top:8px}
+  </style></head><body>
+  <div class="row"><div class="col"><h2>A. The problem</h2><p>"Your CRM has 100 features. You use 5." then "Build your own software."</p><img class="big" src="${A}"></div>
+  <div class="col"><h2>B. What it does</h2><p>"Build any digital product. Ship it in minutes." (the Xpro portal wording)</p><img class="big" src="${B}"></div></div>
+  <div class="far"><div><img src="${A}"><span>A from far away (a 6 ft backdrop seen from about 8 m)</span></div><div><img src="${B}"><span>B from far away</span></div></div>
+  </body></html>`
+  const pg = await browser.newPage()
+  await pg.setViewport({ width: 1700, height: 1300 })
+  await pg.setContent(sheet, { waitUntil: 'load' })
+  await pg.screenshot({ path: path.join(OUT, 'COMPARE-A-vs-B.png'), fullPage: true })
+  await pg.close()
+  console.log('wrote COMPARE-A-vs-B.png')
 } finally { await browser.close() }
