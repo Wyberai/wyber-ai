@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { GENERATION_PRICE_FACTOR } from '../credits'
 import { isPrivateAddress, normalizeDomain } from './domain'
 import { liveMatch } from './integrations'
 import { featureFit, productVerdict, requiredInfra } from './infra'
@@ -29,13 +30,15 @@ describe('isPrivateAddress', () => {
 describe('quoteBuild', () => {
   it('prices with the existing saas-build size tiers', () => {
     // The shared shell alone is 4 files, so even a single pick starts at medium.
-    expect(quoteBuild(1, 0)).toMatchObject({ tier: 'medium', credits: 50 })
-    expect(quoteBuild(3, 0)).toMatchObject({ tier: 'medium', credits: 50 })
-    expect(quoteBuild(5, 2)).toMatchObject({ tier: 'large', credits: 80 })
-    expect(quoteBuild(9, 3)).toMatchObject({ tier: 'xl', credits: 120 })
-    expect(quoteBuild(1, 0)).toMatchObject({ credits: 50, maxCredits: 90, typical: null })
-    expect(quoteBuild(5, 2)).toMatchObject({ typical: 160 })
-    expect(quoteBuild(9, 3)).toMatchObject({ credits: 120, maxCredits: 260 })
+    // Documented tier prices times the generation factor (2 since 18 Nov 2026).
+    const F = GENERATION_PRICE_FACTOR
+    expect(quoteBuild(1, 0)).toMatchObject({ tier: 'medium', credits: 50 * F })
+    expect(quoteBuild(3, 0)).toMatchObject({ tier: 'medium', credits: 50 * F })
+    expect(quoteBuild(5, 2)).toMatchObject({ tier: 'large', credits: 80 * F })
+    expect(quoteBuild(9, 3)).toMatchObject({ tier: 'xl', credits: 120 * F })
+    expect(quoteBuild(1, 0)).toMatchObject({ credits: 50 * F, maxCredits: 90 * F, typical: null })
+    expect(quoteBuild(5, 2)).toMatchObject({ typical: 160 * F })
+    expect(quoteBuild(9, 3)).toMatchObject({ credits: 120 * F, maxCredits: 260 * F })
   })
 })
 

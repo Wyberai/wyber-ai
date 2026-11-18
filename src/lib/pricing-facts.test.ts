@@ -36,11 +36,15 @@ describe('pricing facts for the assistants', () => {
     expect(block).toContain(`about ${editCost()} credits`)
   })
 
-  it('builds get dearer with size, and the free credits cover exactly one small build', () => {
+  it('builds get dearer with size, and the free-credit sentence matches what the free credits really buy', () => {
     const b = buildCosts()
     expect(b.small).toBeLessThan(b.medium); expect(b.medium).toBeLessThan(b.large); expect(b.large).toBeLessThan(b.xl)
-    expect(PLAN_FACTS.free.credits).toBeGreaterThanOrEqual(b.small)
-    expect(estimateRubric()).toContain(`The ${PLAN_FACTS.free.credits} free credits cover one small build`)
+    // Never claim the free credits cover a build when they do not (builds doubled on 18 Nov 2026; free credits did not).
+    if (PLAN_FACTS.free.credits >= b.small) expect(estimateRubric()).toContain('free credits cover one small build')
+    else {
+      expect(estimateRubric()).not.toContain('cover one small build')
+      expect(estimateRubric()).toContain('do not cover a whole build')
+    }
   })
 
   it('says top-ups never expire, and that plan credits roll over only while subscribed', () => {
