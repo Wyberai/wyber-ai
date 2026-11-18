@@ -58,8 +58,8 @@ async function backdrop() {
     <div class="abs" style="left:${M}mm;top:440mm;font-weight:900;font-size:176mm;line-height:.98;letter-spacing:-0.045em">Your CRM has<br>100 features.<br>You use <span class="sky">5.</span></div>
     <div class="abs" style="left:${M}mm;top:985mm;font-size:66mm;font-weight:500;color:${MUTED};letter-spacing:-0.01em">And the one you need isn&rsquo;t there.</div>
     <div class="abs" style="left:${M}mm;top:1115mm;font-weight:900;font-size:90mm;line-height:1.02;letter-spacing:-0.035em">Tell us your pain points.<br><span class="sky">Build your own software.</span></div>
-    <div class="abs" style="left:${M}mm;top:1420mm;width:1609mm;display:grid;grid-template-columns:repeat(10,${cell}mm);gap:18mm">${grid}</div>
-    <div class="abs" style="left:${M}mm;top:1757mm;${mono(26, DIM)}">STARTUP BOOTH &middot; S23 &middot; TECH EXPO GUJARAT &middot; 27&ndash;29 NOV 2026 &middot; DESCRIBE IT. SHIP IT.</div>`)
+    <div class="abs" style="left:${M}mm;top:1375mm;width:1609mm;display:grid;grid-template-columns:repeat(10,${cell}mm);gap:18mm">${grid}</div>
+    <div class="abs" style="left:${M}mm;top:1728mm;${mono(34, DIM)}">DESCRIBE IT. SHIP IT.</div>`)
 }
 
 // ---------- Backdrop B (alternative): lead with what WyberAi does, in the words on the Xpro portal ----------
@@ -77,7 +77,7 @@ async function backdropB() {
     <div class="abs" style="left:${M}mm;top:440mm;font-weight:900;font-size:168mm;line-height:.98;letter-spacing:-0.045em">Build any<br>digital product.<br><span class="sky">Ship it<br>in minutes.</span></div>
     <div class="abs" style="left:${M}mm;top:1130mm;width:1400mm;font-size:52mm;line-height:1.32;font-weight:500;color:${MUTED}">Describe what you need in plain words. WyberAi builds the website, web app, mobile app or SaaS.</div>
     <div class="abs" style="left:${M}mm;top:1440mm;width:1609mm;display:flex;gap:30mm">${tileHtml}</div>
-    <div class="abs" style="left:${M}mm;top:1757mm;${mono(26, DIM)}">STARTUP BOOTH &middot; S23 &middot; TECH EXPO GUJARAT &middot; 27&ndash;29 NOV 2026 &middot; DESCRIBE IT. SHIP IT.</div>`)
+    <div class="abs" style="left:${M}mm;top:1728mm;${mono(34, DIM)}">DESCRIBE IT. SHIP IT.</div>`)
 }
 
 // ---------- Table front 4 x 2.6 ft = 1219.2 x 792.5 mm ----------
@@ -91,8 +91,7 @@ async function tableFront() {
     <div class="abs" style="left:${M}mm;top:250mm;font-weight:900;font-size:102mm;line-height:.99;letter-spacing:-0.04em">Build your own<br><span class="sky">software.</span></div>
     <div class="abs" style="left:${M}mm;top:505mm;font-size:46mm;font-weight:500;color:${MUTED}">Tell us your pain points.</div>
     <div class="abs" style="left:${M}mm;top:585mm;${mono(26, SKY)}">DESCRIBE IT. SHIP IT.</div>
-    <div class="abs" style="left:${M}mm;bottom:${M}mm;${mono(26, SKY, 'letter-spacing:.06em')}">wyberai.com</div>
-    <div class="abs" style="right:${M}mm;bottom:${M}mm;${mono(22, DIM)}">STARTUP BOOTH &middot; S23</div>`)
+    <div class="abs" style="left:${M}mm;bottom:${M}mm;${mono(26, SKY, 'letter-spacing:.06em')}">wyberai.com</div>`)
 }
 
 // ---------- Table side (x2) 2.5 x 2 ft = 762 x 609.6 mm ----------
@@ -102,7 +101,7 @@ async function tableSide() {
     <div class="abs" style="left:${M}mm;top:${M}mm">${logo(70, 54)}</div>
     <div class="abs" style="left:${M}mm;top:215mm;font-weight:900;font-size:74mm;line-height:1;letter-spacing:-0.04em">Build your<br>own <span class="sky">software.</span></div>
     <div class="abs" style="left:${M}mm;bottom:${M}mm;${mono(22, SKY, 'letter-spacing:.06em')}">wyberai.com</div>
-    <div class="abs" style="right:${M}mm;bottom:${M}mm;${mono(18, DIM)}">STARTUP BOOTH &middot; S23</div>`)
+    <div class="abs" style="right:${M}mm;bottom:${M}mm;${mono(18, DIM)}">DESCRIBE IT. SHIP IT.</div>`)
 }
 
 const PIECES = [
