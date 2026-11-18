@@ -817,7 +817,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
                 else openChooser();
               }} disabled={creating}
                 style={{ padding: '9px 20px', borderRadius: 8, border: 'none', background: BRAND, color: '#03111c', fontSize: 13, fontWeight: 700, cursor: creating ? 'wait' : 'pointer', fontFamily: 'inherit' }}>
-                {view === 'mobile' ? t('buildMobileAppBtn') : view === 'website' ? 'Build a Website' : view === 'saas' ? 'Build a SaaS' : view === 'app' ? 'Build a Web App' : t('newProjectBtn')}
+                {creating ? 'Creating your project…' : view === 'mobile' ? t('buildMobileAppBtn') : view === 'website' ? 'Build a Website' : view === 'saas' ? 'Build a SaaS' : view === 'app' ? 'Build a Web App' : t('newProjectBtn')}
               </button>
             </div>
           ) : (

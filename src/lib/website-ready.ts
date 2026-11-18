@@ -66,6 +66,8 @@ W16 CONTENT DEPTH THAT NEEDS NO FACTS: a one-line brief must still produce a sit
 
 W17 ASK-US ASSISTANT (small, honest, no AI call): add one floating "Ask us" button that opens a small panel. It answers only from what the page already knows: OWNER details (hours, address, phone), the services list and the FAQ, by matching the visitor's words to those entries. For anything it cannot answer it says so and offers WhatsApp (wa.me with the question prefilled) or the enquiry form. It never invents prices, availability or advice, never says "AI", never stores what was typed, and works without JavaScript errors when OWNER values are empty (it then hides the entries it has no facts for). Keyboard reachable, labelled, closes with Escape, and does not cover the primary action on a phone.
 
+W18 NO UNUSED FILES: every component you write is imported and rendered. Do not leave a form, widget or page file that nothing uses (an unused AppointmentForm makes the site look like it collects phone numbers when it does not).
+
 W12 DEFINITION OF DONE (confirm silently before the "Built:" line): owner-details file with empty strings where unknown, read at render time; no button, link or form that cannot work with the facts present; no notes to the owner on the page; every #anchor link has a target; sections match the archetype; the W16 depth sections are all written (services described, how it works, what we care about, FAQ, area, closing band); contact path on every page; the form delivers or opens a pre-filled link; no invented claims, names, people, timetable or prices; title, description, canonical, one h1, alt text, JSON-LD from owner details, robots and sitemap; language toggle when Indian; privacy line beside the form.
 `
 
