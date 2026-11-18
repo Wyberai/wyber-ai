@@ -21,13 +21,14 @@ const openPublish = () => window.dispatchEvent(new Event('wyber-open-publish'))
 export function WebsiteLaunchChecklist({ projectId }: { projectId: string }) {
   const files = useEditorStore(s => s.files)
   const [status, setStatus] = useState<Status | null>(null)
-  const [open, setOpen] = useState(true)
+  // Closed by default, and it opens UPWARD over the chat. Pinned open above the conversation it pushed the chat out of view (owner, 18 Nov 2026).
+  const [open, setOpen] = useState(false)
   const est = useMemo(() => websiteLaunchEstimate(), [])
   const credits = (key: string) => est.steps.find(s => s.key === key)?.credits
 
   // Collapsed/expanded is remembered per project.
   const KEY = `wyber-launch-checklist:${projectId}`
-  useEffect(() => { try { if (localStorage.getItem(KEY) === 'closed') setOpen(false) } catch { /* */ } }, [KEY])
+  useEffect(() => { try { if (localStorage.getItem(KEY) === 'open') setOpen(true) } catch { /* */ } }, [KEY])
   const toggle = () => { setOpen(o => { try { localStorage.setItem(KEY, o ? 'closed' : 'open') } catch { /* */ } return !o }) }
 
   const loadStatus = useCallback(async () => {
@@ -89,13 +90,13 @@ export function WebsiteLaunchChecklist({ projectId }: { projectId: string }) {
       <button onClick={toggle} style={headBtn} aria-expanded={open}>
         <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--ide-text)' }}>Launch your website</span>
         <span style={{ fontSize: 11, color: doneCount === steps.length ? '#22c55e' : 'var(--ide-text3)', marginLeft: 'auto' }}>{doneCount}/{steps.length}</span>
-        <span style={{ fontSize: 11, color: 'var(--ide-text3)', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .15s' }}>▾</span>
+        <span style={{ fontSize: 11, color: 'var(--ide-text3)', transform: open ? 'none' : 'rotate(180deg)', transition: 'transform .15s' }}>▾</span>
       </button>
       <div style={{ height: 3, borderRadius: 3, background: 'var(--ide-border)', overflow: 'hidden', margin: '0 12px' }}>
         <div style={{ width: `${(doneCount / steps.length) * 100}%`, height: '100%', background: '#0EA5E9', transition: 'width .3s' }} />
       </div>
       {open && (
-        <ol style={{ listStyle: 'none', margin: 0, padding: '8px 12px 10px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <ol style={{ listStyle: 'none', margin: 0, padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 6, position: 'absolute', left: 0, right: 0, bottom: 'calc(100% + 6px)', maxHeight: '55vh', overflowY: 'auto', zIndex: 30, borderRadius: 10, border: '1px solid var(--ide-border)', background: 'var(--bg-base, #0b0f14)', boxShadow: '0 -10px 30px rgba(0,0,0,0.45)' }}>
           {steps.map(s => {
             const isNext = s === next
             return (
@@ -122,5 +123,5 @@ export function WebsiteLaunchChecklist({ projectId }: { projectId: string }) {
   )
 }
 
-const wrap: React.CSSProperties = { margin: '8px 12px 0', borderRadius: 10, border: '1px solid var(--ide-border)', background: 'var(--bg-elevated, rgba(255,255,255,0.02))' }
+const wrap: React.CSSProperties = { position: 'relative', margin: '6px 10px 0', borderRadius: 10, border: '1px solid var(--ide-border)', background: 'var(--bg-elevated, rgba(255,255,255,0.02))' }
 const headBtn: React.CSSProperties = { width: '100%', display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', padding: '9px 12px 7px', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }

@@ -3970,11 +3970,6 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
           <LiveErrorsBanner projectId={resolvedProjectId} />
         </AgentFeedBoundary>
       )}
-      {resolvedProjectId && projectType === 'website' && (
-        <AgentFeedBoundary>
-          <WebsiteLaunchChecklist projectId={resolvedProjectId} />
-        </AgentFeedBoundary>
-      )}
       <div style={{ flex:1, minHeight:0, position:'relative', display:'flex', flexDirection:'column' }}>
       <div ref={listRef} onScroll={onListScroll} role="log" aria-label="Conversation" aria-relevant="additions" aria-busy={isGenerating || chatThinking} tabIndex={0} className="wy-chat-list" style={{ flex:1, overflow:'auto', padding:'8px 0', scrollbarWidth:'thin', overscrollBehavior:'contain' }}>
         {visibleMessages.map(msg => (
@@ -4409,6 +4404,11 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
               }}
               onClose={() => setMentionQuery(null)}
             />
+          )}
+          {resolvedProjectId && projectType === 'website' && (
+            <AgentFeedBoundary>
+              <WebsiteLaunchChecklist projectId={resolvedProjectId} />
+            </AgentFeedBoundary>
           )}
           {/* Smart prompt suggestions — show contextual chips when input is empty */}
           {!input && !isGenerating && !pendingGenArgs && !pendingPlan && !pendingPlanOffer && credits > 0 && messages.length > 0 && (

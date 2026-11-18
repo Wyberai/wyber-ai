@@ -80,7 +80,7 @@ describe('pickDirectionSmart', () => {
   it('falls back to the keyword deal when the classifier fails, and always returns a real direction', async () => {
     const r = await pickDirectionSmart('A law firm in Ahmedabad', { apiKey: 'k', fetchImpl: reply('', false, 503) as never, rnd: seeded(3) })
     expect(r.source).toBe('keywords')
-    expect(r.direction.id).toBe('lg-wordmark')
+    expect(r.direction.id).toBe('ps-counsel')
     const none = await pickDirectionSmart('whatever', { apiKey: '', rnd: seeded(2) })
     expect(DIRECTION_IDS).toContain(none.direction.id)
   })

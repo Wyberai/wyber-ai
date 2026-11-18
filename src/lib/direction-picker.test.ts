@@ -106,7 +106,7 @@ describe('filler options for a picker', () => {
     const picks = new Set<string>()
     for (let s = 1; s <= 80; s++) picks.add(pickerOptions('a business website', 1, { enabled: true, rnd: seeded(s) }).options[0].id)
     for (const id of picks) expect(getDirectionById(id)!.generalist, id).toBe(true)
-    expect(picks.size).toBeGreaterThanOrEqual(4)
+    expect(picks.size).toBeGreaterThanOrEqual(3)
   })
 })
 

@@ -59,6 +59,21 @@ function shuffle<T>(arr: T[], rnd: () => number): T[] {
 }
 
 /**
+ * Does the brief actually NAME the business? Deliberately strict: a place ("in Pune") or a trade ("law firm") is not a name. A name
+ * is signalled by quotes, "called/named", a "Business name:" line from the facts form, "X & Y" partners, a legal suffix, or a domain.
+ * Name-led directions (a giant wordmark) are only dealt when this is true; with no name they enlarge a stand-in and look like a
+ * school poster (a law-firm brief with no firm name was dealt Giant wordmark and shipped a 300px "LEGAL", 18 Nov 2026).
+ */
+export function hasBusinessName(prompt: string): boolean {
+  const p = prompt || ''
+  return /["“”']\s*[A-Z][^"“”']{1,40}["“”']/.test(p)
+    || /\b(called|named|name is|business name\s*[:\-]|firm name\s*[:\-])/i.test(p)
+    || /\b[A-Z][a-z]+ (&|and) [A-Z][a-z]+\b(?! (Law|Family|Property))/.test(p) && /\b(LLP|Associates|Advocates|Partners|& Co)\b/.test(p)
+    || /\b(LLP|Pvt\.? Ltd|Associates|Advocates|& Co\.?)\b/.test(p)
+    || /\b[a-z0-9-]+\.(com|in|co|io|org|law)\b/i.test(p)
+}
+
+/**
  * Up to `n` distinct directions. Prompt-fit first (highest score), then diversity: prefer a group and a
  * light/dark mode not already picked, so the options genuinely look different side by side.
  */
@@ -69,7 +84,8 @@ export function dealDirections(
 ): Direction[] {
   const rnd = opts.rnd ?? Math.random
   const surface = surfaceFor(opts.projectType)
-  const pool = DIRECTIONS.filter(d => d.surfaces.includes(surface))
+  const named = hasBusinessName(prompt)
+  const pool = DIRECTIONS.filter(d => d.surfaces.includes(surface) && (named || !d.needsName))
   const scored = shuffle(pool, rnd).map(d => ({ d, s: score(d, prompt) })).sort((a, b) => b.s - a.s)
   const picked: Direction[] = []
   const hasSignal = (scored[0]?.s ?? 0) >= MIN_EVIDENCE

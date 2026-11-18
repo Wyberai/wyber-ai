@@ -9,22 +9,22 @@
 // timeout, HTTP error, bad JSON, an id that does not exist — returns null and the caller uses the keyword deal.
 
 import { DIRECTIONS, getDirectionById, type Direction } from './design-directions'
-import { pickDirection, surfaceFor, type ProjectSurface } from './direction-brief'
+import { pickDirection, surfaceFor, hasBusinessName, type ProjectSurface } from './direction-brief'
 
 /** Haiku 5.5: the platform's light-work model (see the two-model policy). */
 export const CLASSIFIER_MODEL = 'claude-haiku-5-5'
 
-const candidatesFor = (surface: ProjectSurface): Direction[] => DIRECTIONS.filter(d => d.surfaces.includes(surface))
+const candidatesFor = (surface: ProjectSurface, named = true): Direction[] => DIRECTIONS.filter(d => d.surfaces.includes(surface) && (named || !d.needsName))
 
-export function buildClassifierSystem(surface: ProjectSurface): string {
-  const lines = candidatesFor(surface).map(d => `${d.id} | ${d.name} | best for: ${d.fits.slice(0, 12).join(', ')} | not for: ${d.notFor}`)
+export function buildClassifierSystem(surface: ProjectSurface, named = true): string {
+  const lines = candidatesFor(surface, named).map(d => `${d.id} | ${d.name} | best for: ${d.fits.slice(0, 12).join(', ')} | not for: ${d.notFor}`)
   return `You choose the best visual design direction for a new ${surface === 'app' ? 'web application' : 'website'}.
 Read the business or product description and pick the ONE direction whose category and feel fit it best.
 Rules:
 - Judge the REAL business (what it sells, who it serves), not stray words. "booking form" does not make a law firm a marketplace.
 - A direction's "not for" list is a hard exclusion.
 - DARK directions (dk-studio, dk-instrument, mono-dev, tn-cultural) need a real reason: developers or technical buyers, a creative studio or portfolio, a cinema, venue or museum, or a brief that asks for dark. Ordinary business software and sites (schools, clinics, shops, agents, finance or operations staff, CRM, inventory, billing) must get a LIGHT direction.
-- If nothing fits well, choose a general-purpose direction: ${candidatesFor(surface).filter(d => (surface === 'app' ? d.appDefault : d.generalist)).map(d => d.id).join(', ')}.
+- If nothing fits well, choose a general-purpose direction: ${candidatesFor(surface, named).filter(d => (surface === 'app' ? d.appDefault : d.generalist)).map(d => d.id).join(', ')}.
 Reply with ONLY compact JSON: {"id":"<direction id>"}
 
 Directions:
@@ -70,7 +70,7 @@ export async function classifyDirection(prompt: string, opts: ClassifyOptions = 
         max_tokens: 60,
         thinking: { type: 'disabled' },
         output_config: { effort: 'low' },
-        system: buildClassifierSystem(surface),
+        system: buildClassifierSystem(surface, hasBusinessName(prompt)),
         messages: [{ role: 'user', content: prompt.slice(0, 1500) }],
       }),
       signal: ctrl?.signal,

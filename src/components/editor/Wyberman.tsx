@@ -444,7 +444,8 @@ function WybermanInner() {
           // tab bar) — this floating launcher was covering it. Left side on
           // narrow screens is clear; desktop's 3-column layout has no composer
           // there, so it keeps its original right-side spot.
-          position: 'fixed', bottom: isNarrow ? 72 : 24, ...(isNarrow ? { left: 20 } : { right: 20 }), zIndex: 400,
+          // Bottom-LEFT on every layout: on desktop the bottom-right is where the chat's send button is, and the bubble sat on top of it.
+          position: 'fixed', bottom: isNarrow ? 72 : 24, left: 20, zIndex: 400,
           width: 50, height: 50, borderRadius: '50%',
           background: 'var(--bg-elevated, #18181F)', border: '1px solid var(--ide-border, #2A2A35)',
           cursor: 'pointer', boxShadow: previewError && previewHealFailed ? '0 0 0 4px rgba(239,68,68,0.15), 0 4px 20px rgba(0,0,0,0.4)' : '0 4px 20px rgba(0,0,0,0.4)',
@@ -488,7 +489,7 @@ function WybermanInner() {
 
       {open && !compactAsking && (
         <div style={{
-          position: 'fixed', bottom: (isNarrow ? 72 : 24) + 62, ...(isNarrow ? { left: 20 } : { right: 20 }), zIndex: 399,
+          position: 'fixed', bottom: (isNarrow ? 72 : 24) + 62, left: 20, zIndex: 399,
           width: 360, maxWidth: 'calc(100vw - 40px)', height: 500, maxHeight: 'calc(100vh - 160px)',
           background: 'var(--bg-surface, #111116)', border: '1px solid var(--ide-border, #2A2A35)',
           borderRadius: 14, display: 'flex', flexDirection: 'column',

@@ -52,6 +52,8 @@ export interface Direction {
   fits: string[]
   notFor: string
   pitfall: string
+  /** The composition enlarges the business's NAME (a wordmark). Only dealt when the brief actually names the business. */
+  needsName?: boolean
   /** Works for almost any business: preferred as a filler option when few directions fit the prompt. */
   generalist: boolean
   /** Neutral enough to be the default for an APP (webapp/saas) when the prompt gives no signal. */
@@ -124,7 +126,7 @@ interface DirSpec extends TokenSpec {
   fits: string[]
   composition: string; moves: string[]; motion: string; imageBrief: string
   rules: DirectionRules
-  notFor: string; pitfall: string
+  notFor: string; pitfall: string; needsName?: boolean
   generalist?: boolean
   appDefault?: boolean
 }
@@ -141,6 +143,7 @@ function dir(s: DirSpec): Direction {
     },
     fonts: s.fonts, composition: s.composition, moves: s.moves, motion: s.motion,
     imageBrief: s.imageBrief, rules: s.rules, fits: s.fits, notFor: s.notFor, pitfall: s.pitfall,
+    needsName: s.needsName,
     generalist: s.generalist ?? false,
     appDefault: s.appDefault ?? false,
   }
@@ -300,7 +303,7 @@ export const DIRECTIONS: Direction[] = [
   // ───────────── brand block
   dir({
     generalist: true,
-    id: 'br-saturated', name: 'Saturated brand block', group: 'brand-block',
+    id: 'br-saturated', name: 'Saturated brand block', group: 'brand-block', needsName: true,
     anchors: [A('kodeclubs.com', 'SOTD', 'white ground, indigo rgb(28,34,140) + hot pink rgb(245,3,89), 160px extended wordmark')],
     vibe: 'White ground, a huge extended wordmark in one saturated brand colour, one hot accent',
     bg: [0, 0, 100], fg: [237, 67, 22], primary: [339, 98, 45], radius: '0.25rem',
@@ -498,7 +501,7 @@ export const DIRECTIONS: Direction[] = [
     pitfall: 'A gradient in many hues is just a rainbow — keep to one hue family.',
   }),
   dir({
-    id: 'lg-wordmark', name: 'Giant wordmark', group: 'human',
+    id: 'lg-wordmark', name: 'Giant wordmark', group: 'human', needsName: true,
     anchors: [A('ario.law', 'HM', '300px wordmark, one custom sans, blue gradient field, black/white only')],
     vibe: 'A colossal wordmark on one deep field, a single sans, black and white only',
     bg: [0, 0, 100], fg: [0, 0, 5], primary: [208, 88, 30], primaryFg: [0, 0, 100], radius: '0rem',
@@ -511,6 +514,22 @@ export const DIRECTIONS: Direction[] = [
     rules: { glow: false, gradientBudget: 1, heroMedia: 'type', displayRatio: 12, tintedInk: false },
     notFor: 'Playful consumer brands.',
     pitfall: 'A long firm name will not fit at this scale — use the short form.',
+  }),
+  dir({
+    id: 'ps-counsel', name: 'Counsel editorial', group: 'editorial',
+    anchors: [A('ario.law', 'HM', 'numbered practice areas in plain text, one confident sentence, a direct contact block; here the hero is a calm serif promise instead of a wordmark')],
+    vibe: 'Quiet, exact professional practice: cool paper ground, one serif promise, hairline rules, a brass detail',
+    bg: [210, 22, 98], fg: [222, 38, 12], primary: [222, 62, 26], accent: [38, 58, 46], primaryFg: [210, 22, 98],
+    radius: '0.125rem',
+    fonts: { display: 'Newsreader', body: 'Hanken Grotesk', mono: 'DM Mono', displayWeight: 400, displayTracking: '-0.015em' },
+    fits: ['law firm', 'lawyer', 'advocate', 'property law', 'family law', 'legal', 'attorney', 'notary', 'chartered accountant', 'ca firm', 'accountant', 'audit', 'tax', 'consultancy', 'consulting', 'advisory', 'compliance'],
+    composition: 'Headline-led and works WITHOUT a business name. A quiet top bar: the practice named by what it is and where (or its name, if the owner gave one), three links, one contact button. Hero: on the left two thirds ONE calm serif promise (three to six words, never more than two lines at desktop) over the paper ground, one supporting sentence in the grotesk, one primary action and a phone or WhatsApp line if supplied. On the right a tall quiet photograph of an object or a place; with no photograph, a hairline-framed panel titled "Your first conversation" with three plain steps. Below: practice areas as a numbered list in groups by kind of matter, with hairline rules and mono numerals; "How we work" in three steps; a short FAQ; a direct contact block. Twelve-column grid, 96px+ vertical rhythm, no cards.',
+    moves: ['One serif promise headline, big but calm (clamp 48-88px, weight 400), two lines at most on desktop', 'Numbered practice areas with mono numerals and hairline rules, grouped by kind of matter', 'A hairline-framed "Your first conversation" panel in three plain steps', 'Brass accent only on the primary action and the numerals'],
+    motion: 'Almost none: one gentle fade and an 8px rise on load. No parallax, no marquee, no looping effects.',
+    imageBrief: 'Quiet objects and places, never people: a lamp on a ledger, a stairwell, stone and timber detail, folded documents, window light. Muted real-world palette, shallow depth of field. No gavels, scales, handshakes or stock-office scenes.',
+    rules: { glow: false, gradientBudget: 0, heroMedia: 'photo', displayRatio: 5, tintedInk: true },
+    notFor: 'Consumer brands, playful or youthful businesses, anything that sells a product on a shelf.',
+    pitfall: 'Without a photograph the right side looks empty: use the framed three-step panel, never decoration or a stand-in word.',
   }),
   dir({
     id: 'ngo-human-donate', name: 'Human photograph + inline giving', group: 'human',
