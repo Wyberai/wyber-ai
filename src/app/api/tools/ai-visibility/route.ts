@@ -34,11 +34,15 @@ export async function POST(req: NextRequest) {
   if (!u) return NextResponse.json({ error: 'Enter a public website address (for example yourcompany.com).' }, { status: 400 })
 
   const origin = `${u.protocol}//${u.host}`
+  // robots.txt is only ever read at the root of a host. llms.txt and the sitemap belong to the site being checked, which
+  // for an app published under /app/<name> lives at that path: looking at the domain root would credit the platform's own
+  // files to the site (found when the check passed a site that had neither).
+  const base = origin + u.pathname.replace(/\/+$/, '')
   const [page, robots, llms, sitemap] = await Promise.all([
     get(u.toString(), 8000, 1_500_000),
     get(`${origin}/robots.txt`, 4000, 100_000),
-    get(`${origin}/llms.txt`, 4000, 200_000),
-    get(`${origin}/sitemap.xml`, 4000, 500_000),
+    get(`${base}/llms.txt`, 4000, 200_000),
+    get(`${base}/sitemap.xml`, 4000, 500_000),
   ])
   if (!page.ok && page.status === 0) return NextResponse.json({ error: 'Could not load that page. Check the address is public and reachable.' }, { status: 502 })
 

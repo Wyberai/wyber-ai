@@ -5,12 +5,13 @@ import { WyberLogo } from '@/components/shared/WyberLogo'
 import { track } from '@/lib/track'
 import type { RlsScanReport } from '@/lib/rls-scan'
 import type { SeoReport } from '@/lib/seo-audit'
+import type { VisibilityReport } from '@/lib/ai-visibility'
 
 const SKY = '#0EA5E9'
 const sevColor = (s: string) =>
   s === 'critical' ? '#EF4444' : s === 'high' ? '#F59E0B' : s === 'medium' ? '#EAB308' : '#10B981'
 
-type Tab = 'security' | 'seo'
+type Tab = 'security' | 'seo' | 'ai'
 
 export default function ToolsClient() {
   const [tab, setTab] = useState<Tab>('security')
@@ -43,15 +44,15 @@ export default function ToolsClient() {
 
           {/* Tabs */}
           <div style={{ display: 'flex', gap: 8, background: 'rgba(255,255,255,0.04)', padding: 5, borderRadius: 14, marginBottom: 20 }}>
-            {(['security', 'seo'] as Tab[]).map((t) => (
+            {(['security', 'seo', 'ai'] as Tab[]).map((t) => (
               <button key={t} onClick={() => setTab(t)}
                 style={{ flex: 1, padding: '11px 12px', borderRadius: 10, border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 700, color: tab === t ? '#05080d' : '#9aa8bb', background: tab === t ? SKY : 'transparent', transition: 'all .15s' }}>
-                {t === 'security' ? '🛡️ Security Scan' : '🔍 SEO Audit'}
+                {t === 'security' ? '🛡️ Security Scan' : t === 'seo' ? '🔍 SEO Audit' : '🤖 AI Visibility'}
               </button>
             ))}
           </div>
 
-          {tab === 'security' ? <SecurityTool /> : <SeoTool />}
+          {tab === 'security' ? <SecurityTool /> : tab === 'seo' ? <SeoTool /> : <AiVisibilityTool />}
 
           {/* Funnel CTA */}
           <div style={{ marginTop: 40, padding: 24, borderRadius: 16, background: 'rgba(14,165,233,0.06)', border: '1px solid rgba(14,165,233,0.2)', textAlign: 'center' }}>
@@ -93,6 +94,59 @@ function worstSev(list: string[]): string | undefined {
 // Lead magnet: after a scan, let the visitor get the full report by email. This
 // honours the "email me the report" promise AND drops them into the funnel — the
 // capture posts to /api/tools/lead, which stores the lead + emails the report.
+function AiVisibilityTool() {
+  const [url, setUrl] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+  const [report, setReport] = useState<VisibilityReport | null>(null)
+
+  const run = async () => {
+    setLoading(true); setErr(null); setReport(null)
+    track('tools_ai_visibility')
+    try {
+      const res = await fetch('/api/tools/ai-visibility', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setErr(data.error || 'Check failed.'); return }
+      setReport(data)
+    } catch { setErr('Network error. Try again.') } finally { setLoading(false) }
+  }
+  const color = (st: string) => (st === 'pass' ? '#22C55E' : st === 'warn' ? '#F59E0B' : '#EF4444')
+
+  return (
+    <div style={cardStyle}>
+      <p style={{ margin: '0 0 4px', fontWeight: 700, fontSize: 15 }}>Can ChatGPT, Claude and Perplexity read your site?</p>
+      <p style={{ margin: '0 0 16px', color: '#9aa8bb', fontSize: 13, lineHeight: 1.6 }}>
+        Most AI assistants do not run JavaScript. We fetch your page the way they do and show what they actually receive: the text, the title, the structured data, and whether your robots.txt lets them in.
+      </p>
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        <input style={{ ...inputStyle, flex: 1, minWidth: 200 }} placeholder="yourcompany.com" value={url} onChange={(e) => setUrl(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && run()} />
+        <button style={{ ...btnStyle, opacity: loading ? 0.6 : 1 }} disabled={loading} onClick={run}>
+          {loading ? 'Checking…' : 'Check visibility'}
+        </button>
+      </div>
+      {err && <p style={{ color: '#EF4444', fontSize: 13, marginTop: 12 }}>{err}</p>}
+      {report && (
+        <div style={{ marginTop: 20 }}>
+          <div style={{ marginBottom: 14 }}><ScoreDial score={report.score} /></div>
+          {report.checks.map((c) => (
+            <div key={c.id} style={{ padding: 14, borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', marginBottom: 10, borderLeft: `3px solid ${color(c.status)}` }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <span style={{ fontSize: 13 }}>{c.status === 'pass' ? '✓' : c.status === 'warn' ? '!' : '✕'}</span>
+                <span style={{ fontSize: 13, fontWeight: 700 }}>{c.label}</span>
+              </div>
+              <p style={{ margin: '6px 0 0', fontSize: 13, color: '#d4d4d8', lineHeight: 1.5 }}>{c.detail}</p>
+              {c.fix && <p style={{ margin: '4px 0 0', fontSize: 12, color: SKY }}>Fix: {c.fix}</p>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function LeadCapture(props: { tool: Tab; url: string; score: number; findingsCount: number; topSeverity?: string }) {
   const [email, setEmail] = useState('')
   const [state, setState] = useState<'idle' | 'sending' | 'done' | 'error'>('idle')

@@ -69,3 +69,5 @@ CODE: src/lib/ai-visibility.ts grades what a non-JS AI crawler receives (page lo
 ## Security hardening (found while building AI visibility)
 
 DONE: public tools (/api/tools/seo-audit, /api/tools/ai-visibility) now follow redirects by hand and check every hop (src/lib/safe-url.ts safeFetch), so a public address cannot bounce the request to an internal one. normalizeUrl also refuses ftp:// and file:// instead of turning them into an https address with a strange host. 8 tests.
+
+UI DONE: /tools has an "AI Visibility" tab. Run locally against the live dental test site: scored 54/100 (page text 11 words without JS, no h1, no llms.txt), which is the missing-snapshot problem, so it should rise after the snapshot fix is live. Found and fixed a flaw in the check itself: llms.txt and sitemap were looked up at the domain root and credited the platform's own files to sites hosted under /app/<slug>; they are now looked up at the site's own path (robots.txt stays at the root, where crawlers read it).
