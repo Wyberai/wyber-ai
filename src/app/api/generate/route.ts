@@ -5200,7 +5200,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
     // MOBILE DESIGN DIRECTIONS (same flag as web, default OFF): a direction dealt by fit (src/lib/mobile-directions.ts)
     // replaces the random DESIGN SEED and LAYOUT SEED below, because it carries exact theme.ts values and structure.
     let mobileDirectionApplied = false
-    if (!hasExisting && projectType === 'mobile' && stage !== 'plan' && (await import('@/lib/direction-flag')).directionsEnabled()) {
+    if (isNewBuild && (stage === 'full' || stage === 'scaffold') && projectType === 'mobile' && (await import('@/lib/direction-flag')).directionsEnabled()) {
       try {
         const { renderMobileBrief, pickMobileDirectionSmart } = await import('@/lib/mobile-directions')
         const { direction, source } = await pickMobileDirectionSmart(prompt, { id: typeof paletteId === 'string' ? paletteId : null })
@@ -5211,7 +5211,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
         console.warn('[design-direction] mobile failed, using random seeds:', err)
       }
     }
-    if (!hasExisting && projectType === 'mobile' && stage !== 'plan' && !mobileDirectionApplied) {
+    if (isNewBuild && (stage === 'full' || stage === 'scaffold') && projectType === 'mobile' && !mobileDirectionApplied) {
       const MOBILE_DIRECTIONS = [
         "Cash App-bold: near-black base, ONE vivid accent (lime/green or electric blue), huge numbers, minimal chrome.",
         "Headspace-calm: warm light base (cream/off-white), soft rounded cards, a gentle accent (coral/peach or teal), lots of breathing room.",
@@ -5243,7 +5243,12 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
       const mobileLayoutSeed = MOBILE_LAYOUT_SEEDS[Math.floor(Math.random() * MOBILE_LAYOUT_SEEDS.length)]
       perRequestParts.push(`\n\n━━━ LAYOUT SEED (fresh build — structural freshness) ━━━\nUnless the user asked for a specific navigation or home-screen layout, take THIS as your structural starting point: ${mobileLayoutSeed}`)
     }
-    if (!hasExisting && projectType !== 'mobile' && stage !== 'plan') {
+    // isNewBuild, not !hasExisting: every new project is auto-seeded with a starter scaffold, so fileContext is never small and the length
+    // heuristic (hasExisting) is true on the very first message. Guarding the design layer with it meant the palette brief, the design
+    // directions and the layout seeds never ran on a first web build (found 18 Nov 2026 from production logs: no [design-direction] line).
+    // Only the passes that set the design (a one-shot build or the scaffold), so a staged build's fill and wire passes do not re-deal
+    // a different random palette.
+    if (isNewBuild && (stage === 'full' || stage === 'scaffold') && projectType !== 'mobile') {
       // Inject a complete, hand-tuned, domain-matched HSL token palette as a
       // concrete DESIGN BRIEF (not vague adjectives). Guarantees every fresh
       // build starts from a beautiful, accessible, distinct palette; freshness
