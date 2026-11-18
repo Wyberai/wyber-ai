@@ -64,14 +64,16 @@ const chipRow = (size, gap, padV, padH, border) => CHIPS.map((c, i) => i === CHI
 async function backdrop() {
   const W = 6 * FT, M = 110
   const qr = await qrSvg()
+  const TYPES = ['WEBSITES', 'WEB APPS', 'MOBILE APPS', 'SAAS']
+  const types = TYPES.map(t => `<div style="border:2mm solid #2a3650;border-radius:60mm;padding:13mm 28mm;${mono(28, INK, 'letter-spacing:.1em')}">${t}</div>`).join('')
   return page(W, W, `
     <div class="abs" style="left:${M}mm;top:${M}mm">${logo(150, 118)}</div>
     <div class="abs" style="right:${M}mm;top:${M}mm;width:330mm">${qrPlate(330, qr)}
       <div style="${mono(24, MUTED, 'margin-top:20mm;line-height:1.45;text-align:center')}">SCAN QR TO VIEW<br>STALL DETAILS</div>
       <div style="${mono(30, SKY, 'margin-top:14mm;text-align:center;letter-spacing:.05em')}">wyberai.com</div></div>
-    <div class="abs" style="left:${M}mm;top:405mm;font-weight:900;font-size:134mm;line-height:.99;letter-spacing:-0.045em">Vibe coding<br>doesn&rsquo;t have to be<br><span class="sky">boring or vulnerable.</span></div>
-    <div class="abs" style="left:${M}mm;top:868mm;display:flex;flex-wrap:wrap;gap:16mm;width:1609mm">${chipRow(28, 16, 13, 28, 2)}</div>
-    <div class="abs" style="left:${M}mm;top:992mm;background:${SKY};color:#03111c;border-radius:60mm;padding:15mm 44mm;${mono(32, '#03111c', 'letter-spacing:.08em')}">TELL US YOUR PAIN POINTS</div>`)
+    <div class="abs" style="left:${M}mm;top:410mm;font-weight:900;font-size:118mm;line-height:.99;letter-spacing:-0.045em">Build the next SaaS.<br><span class="sky">Or replace the<br>one you rent.</span></div>
+    <div class="abs" style="left:${M}mm;top:808mm;font-size:52mm;font-weight:600;color:${MUTED};letter-spacing:-0.01em">Vibe coding, plus the checks it skips.</div>
+    <div class="abs" style="left:${M}mm;top:925mm;display:flex;flex-wrap:wrap;gap:16mm;width:1609mm">${types}</div>`)
 }
 
 // ---------- Backdrop B (alternative): lead with what WyberAi does, in the words on the Xpro portal ----------
@@ -93,7 +95,7 @@ async function backdropB() {
 }
 
 // ---------- Table front 4 x 2.6 ft = 1219.2 x 792.5 mm ----------
-// Seen close up and head-on, so it carries the detail: the six powers, the QR and the call to action.
+// Seen close up and head-on, so it carries the detail: the whole-app message, the six checks and the QR.
 async function tableFront() {
   const W = 4 * FT, H = 2.6 * FT, M = 56
   const qr = await qrSvg()
@@ -103,22 +105,21 @@ async function tableFront() {
     <div class="abs" style="left:${M}mm;top:${M}mm">${logo(78, 60)}</div>
     <div class="abs" style="right:${M}mm;top:${M}mm;width:260mm">${qrPlate(260, qr)}
       <div style="${mono(16, MUTED, 'margin-top:10mm;text-align:center')}">SCAN QR TO VIEW STALL DETAILS</div></div>
-    <div class="abs" style="left:${M}mm;top:176mm;font-weight:900;font-size:58mm;line-height:1;letter-spacing:-0.04em">Vibe coding doesn&rsquo;t have to be<br><span class="sky">boring or vulnerable.</span></div>
-    <div class="abs" style="left:${M}mm;top:330mm;width:${W - 2 * M}mm;display:flex;flex-wrap:wrap;gap:16mm">${pills}</div>
-    <div class="abs" style="left:${M}mm;top:530mm;display:flex;flex-wrap:wrap;gap:9mm;width:${W - 2 * M}mm">${chipRow(15, 9, 5, 12, 1.2)}</div>
-    <div class="abs" style="left:${M}mm;bottom:${M}mm;background:${SKY};color:#03111c;border-radius:40mm;padding:11mm 30mm;${mono(21, '#03111c', 'letter-spacing:.08em')}">TELL US YOUR PAIN POINT</div>
-    <div class="abs" style="right:${M}mm;bottom:${M + 7}mm;${mono(24, SKY, 'letter-spacing:.06em')}">wyberai.com</div>`)
+    <div class="abs" style="left:${M}mm;top:170mm;font-weight:900;font-size:49mm;line-height:1.02;letter-spacing:-0.04em">Vibe coding gives you a base.<br><span class="sky">WyberAi gives you the whole app.</span></div>
+    <div class="abs" style="left:${M}mm;top:282mm;font-size:21mm;font-weight:500;color:${MUTED}">Login, database and API come wired up. Then six checks run on it:</div>
+    <div class="abs" style="left:${M}mm;top:392mm;width:${W - 2 * M}mm;display:flex;flex-wrap:wrap;gap:16mm">${pills}</div>
+    <div class="abs" style="left:${M}mm;top:590mm;${mono(20, INK, 'letter-spacing:.1em')}">YOUR CODE. YOUR GITHUB. YOUR DOMAIN.</div>
+    <div class="abs" style="right:${M}mm;bottom:${M}mm;${mono(26, SKY, 'letter-spacing:.06em')}">wyberai.com</div>`)
 }
 
 // ---------- Table side (x2) 2.5 x 2 ft = 762 x 609.6 mm ----------
+// Glanced at from the aisle: one short line.
 async function tableSide() {
   const W = 2.5 * FT, H = 2 * FT, M = 48
   return page(W, H, `
     <div class="abs" style="left:${M}mm;top:${M}mm">${logo(70, 54)}</div>
-    <div class="abs" style="left:${M}mm;top:185mm;font-weight:900;font-size:58mm;line-height:1;letter-spacing:-0.04em">Vibe coding<br>doesn&rsquo;t have to be<br><span class="sky">boring or vulnerable.</span></div>
-    <div class="abs" style="left:${M}mm;top:400mm;${mono(16, MUTED, 'letter-spacing:.1em;line-height:1.7')}">WEBSITES · WEB APPS · MOBILE APPS<br>SAAS · REPLACE YOUR SAAS</div>
-    <div class="abs" style="left:${M}mm;bottom:${M}mm;background:${SKY};color:#03111c;border-radius:30mm;padding:9mm 24mm;${mono(18, '#03111c', 'letter-spacing:.08em')}">TELL US YOUR PAIN POINT</div>
-    <div class="abs" style="right:${M}mm;bottom:${M + 5}mm;${mono(20, SKY, 'letter-spacing:.06em')}">wyberai.com</div>`)
+    <div class="abs" style="left:${M}mm;top:215mm;font-weight:900;font-size:86mm;line-height:1;letter-spacing:-0.04em">Own your<br>software.<br><span class="sky">Stop renting it.</span></div>
+    <div class="abs" style="left:${M}mm;bottom:${M}mm;${mono(22, SKY, 'letter-spacing:.06em')}">wyberai.com</div>`)
 }
 
 const PIECES = [
