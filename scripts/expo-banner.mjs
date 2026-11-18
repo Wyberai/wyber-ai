@@ -4,7 +4,7 @@ import path from 'node:path'
 import os from 'node:os'
 import fs from 'node:fs'
 
-const OUT = path.join(os.homedir(), 'OneDrive', 'Desktop', 'Wyber Ai', 'Gujarat Tech Expo', 'booth-artwork', 'xpro-banner-1600x400.png')
+const OUT = path.join(os.homedir(), 'OneDrive', 'Desktop', 'Wyber Ai', 'Gujarat Tech Expo', 'booth-artwork', '2-UPLOAD-TO-XPRO', 'xpro-banner-1600x400.png')
 const SKY = '#0ea5e9'
 const mark = `<svg width="64" height="64" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="${SKY}"/><path d="M20 7L11 16L20 25" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M23 11L28 16L23 21" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.4"/></svg>`
 const tiles = [['Timesheets', 'who worked on what'], ['CRM', 'every lead, one place'], ['Attendance', 'on a phone'], ['Leave', 'approvals, not chats']]
