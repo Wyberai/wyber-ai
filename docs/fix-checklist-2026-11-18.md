@@ -61,3 +61,7 @@ DONE: balance refreshes when a tab regains focus. TODO: dashboard loader (3-8s; 
 ## Owner note: sites lack modern features
 
 CODE: website contract now has a hero rule (generated or supplied photo is the hero, readable over it) and W17, a small "Ask us" assistant that answers only from the page's own facts and FAQ, no AI call, hands off to WhatsApp. W10 no longer asks for an owner note on the page (it contradicted W13). Not added as a hard check, so it costs no extra fix pass. Verify on a real website build.
+
+## AI visibility (new, not yet monetised)
+
+CODE: src/lib/ai-visibility.ts grades what a non-JS AI crawler receives (page loads, AI crawlers allowed in robots.txt, title and description in HTML, text readable without JS (weight 40), h1, JSON-LD, llms.txt, sitemap). No model call, deterministic, 7 tests. Public endpoint POST /api/tools/ai-visibility (rate limited, SSRF-guarded via src/lib/safe-url.ts). TODO before it is sold: UI on /tools, a per-project panel, a verified fix path for sites that score low, and check it against our own published sites after the snapshot fix is live.
