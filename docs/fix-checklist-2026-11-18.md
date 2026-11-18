@@ -57,3 +57,7 @@ Website build 3-8s no loader; "Build your website" pre-ticked; title stays "New 
 DONE: wrong "Coding your full app: auth, dashboard, settings" line in the build header (now neutral); "Build your website" pre-ticked (now needs a real App file); Settings page title ("Settings | WyberAi", not indexed).
 DONE: IPA/APK "50 cr" badge only when the build exists (else "Soon"); plan prompt no longer invents people or credentials; SaaS rule S15 (hints, sample labels, currency).
 DONE: balance refreshes when a tab regains focus. TODO: dashboard loader (3-8s; needs a look in a browser), "New Project" title (auto-name already updates the store; check the no-prompt Build a Website path), slow preview paint, unused AppointmentForm.tsx.
+
+## Owner note: sites lack modern features
+
+CODE: website contract now has a hero rule (generated or supplied photo is the hero, readable over it) and W17, a small "Ask us" assistant that answers only from the page's own facts and FAQ, no AI call, hands off to WhatsApp. W10 no longer asks for an owner note on the page (it contradicted W13). Not added as a hard check, so it costs no extra fix pass. Verify on a real website build.
