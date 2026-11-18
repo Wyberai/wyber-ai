@@ -75,6 +75,10 @@ LR10 METADATA: set a real document title and description for this app.
 LR11 EDITS: when changing an existing app, change only what was asked and keep every item in this contract working.
 
 LR12 DEFINITION OF DONE (confirm silently before the "Built:" line): empty first run with labelled demo data; db.ts persistence with honest storage wording; CSV import with preview and errors; CSV export; print view; change history; Privacy and Data page with export and delete; responsive navigation; labels, aria-labels and focus rings; Undo for deletes; document title set; no fake sync or invented claims.
+
+LR13 SAMPLE PEOPLE: sample data covers people on the owner's side too (doctors, physios, stylists, staff, drivers), not only customers. Mark every sample person as demo in the app (for example "Demo: Dr A. Sample") and load them only with the sample data button; the default state has no invented names. Do not invent real-sounding professionals.
+
+LR14 THE LAST INSTRUCTION COUNTS: if the brief asks for a closing statement (for example which items could not be completed, or what the owner must still do), write exactly that in the "Built:" summary, item by item, and say plainly when an item is only partly done. A generic "all items present" line never replaces a statement the brief asked for.
 `
 
 // ── The check ────────────────────────────────────────────────────────────────

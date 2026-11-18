@@ -21,13 +21,13 @@ Sources: QA run (E1-E24, see qa-run-2026-11-18.md), the owner's notes, and the o
 | E14 | Price tables do not match charges | PARTIAL: footnote now says complete builds are priced by what they include; no price changes |
 | E15 | /api/security/rls-scan 400 | DONE: post-publish check is silent when no database |
 | E16 | /api/github?userId 401 | DONE: 200 not-connected, no user id in URL |
-| E17 | Two histories disagree | TODO |
-| E18 | /solve ignores user words | TODO |
+| E17 | Two histories disagree | DEFERRED: two tables (project_snapshots from the top bar, project_versions from the rail). Needs a decision on which one to keep; merging touches restore paths |
+| E18 | /solve ignores user words | DONE: "notebook" matched the "book" booking word; topic words now whole-word, loose words removed; tests |
 | E19 | Blog Calendly numbers vs /byos | DONE: post explains the two groupings |
 | E20 | "Add free database" chip opens Supabase form | DONE: opens the WyberCloud Database tab |
 | E21 | Banner "resets on page refresh" wrong | DONE: hidden when the app uses localStorage or IndexedDB |
 | E22 | Marketing Beast files not served | PARTIAL: sitemap.xml served; robots deliberately not (crawlers only read host root) |
-| E23/E24 | Long brief: last instruction ignored, invented physios | TODO |
+| E23/E24 | Long brief: last instruction ignored, invented physios | CODE: prompt rules LR13 (sample people labelled demo) and LR14 (closing statement the brief asks for); verify with a real long-brief build |
 
 ## B. Owner's notes
 

@@ -22,7 +22,7 @@ interface Topic extends Sketch { match: RegExp }
 
 export const TOPICS: Topic[] = [
   {
-    match: /invoice|bill\b|bills\b|receipt|gst|payment|owe|credit|ledger|udhaar|collect/i,
+    match: /invoice|bill\b|bills\b|receipt|gst|payment|\bowe\b|ledger|udhaar|collect (the )?(payment|money|dues)|credit (sale|book|given)/i,
     title: 'Invoice and payment tracker', kind: 'Web app',
     why: 'You will mostly work with this at a desk, and it will also work on a phone for quick checks.',
     screens: [['Dashboard', 'Unpaid, overdue and paid at a glance'], ['Invoices', 'Every invoice with its status, amount and due date'], ['Add invoice', 'Customer, items, tax and due date in one form'], ['Customers', 'Who you bill and what each one owes'], ['Follow-ups', 'Who to chase today']],
@@ -30,7 +30,7 @@ export const TOPICS: Topic[] = [
     qs: [['How do invoices reach you today?', ['Paper copies', 'WhatsApp or email', 'A mix of both', 'Another tool']], ['What do you need to know first?', ['Which are unpaid', 'Who owes me how much', 'Which are overdue', 'Monthly totals']], ['Who else will use it?', ['Just me', 'My accountant', 'My team', 'My customers']]],
   },
   {
-    match: /stock|inventory|warehouse|expiry|batch|goods|material/i,
+    match: /stock|inventory|warehouse|expiry|batch|raw material/i,
     title: 'Stock and inventory tracker', kind: 'Web app',
     why: 'Stock is checked and updated from a desk or a counter, so a web app fits first.',
     screens: [['Dashboard', 'Low stock and nearly-expired items'], ['Items', 'Every item with quantity and location'], ['Stock in and out', 'Record what came in and what left'], ['Suppliers', 'Who you buy from and what is on order']],
@@ -38,7 +38,7 @@ export const TOPICS: Topic[] = [
     qs: [['What do you track?', ['Products for sale', 'Raw materials', 'Spare parts', 'Medicines or food']], ['What goes wrong most?', ['Running out', 'Items expiring', 'Counts not matching', 'Not knowing where things are']], ['Where do you count stock?', ['One shop', 'A warehouse', 'Several places', 'On the road']]],
   },
   {
-    match: /order|deliver|dispatch|shipment|proof|courier|driver|route|transport/i,
+    match: /deliver|dispatch|shipment|courier|driver|delivery route|transport|proof of (delivery|receipt)|orders? (to|for) (deliver|ship|send)/i,
     title: 'Order and delivery tracker', kind: 'Web app with a phone view',
     why: 'The office tracks orders on a computer, and drivers update status from their phones.',
     screens: [['Dashboard', 'Orders waiting, on the way and delivered'], ['Orders', 'Every order with customer, status and driver'], ['Delivery proof', 'Photo or signature captured on the phone'], ['Customers', 'Who ordered what, and their history']],
@@ -46,7 +46,7 @@ export const TOPICS: Topic[] = [
     qs: [['How do orders arrive?', ['WhatsApp', 'Phone calls', 'A website', 'Sales visits']], ['Who needs to update status?', ['Just me', 'Drivers', 'My team in the office', 'Everyone']], ['What is hardest to track today?', ['Where an order is', 'Missing proof of delivery', 'Who is late', 'Payments after delivery']]],
   },
   {
-    match: /appoint|booking|book\b|slot|clinic|salon|class|schedule/i,
+    match: /appoint|bookings?\b|\bbook\b|\bslots?\b|clinic|salon|\bclass(es)?\b|schedule/i,
     title: 'Booking and appointments manager', kind: 'Web app',
     why: 'Customers book on a page and you manage the day from one calendar.',
     screens: [['Calendar', 'Today and the week at a glance'], ['Booking page', 'Customers pick a time themselves'], ['Customers', 'History and notes for each person'], ['Reminders', 'Fewer no-shows']],
@@ -54,7 +54,7 @@ export const TOPICS: Topic[] = [
     qs: [['How do people book today?', ['Phone', 'WhatsApp', 'Walk-ins', 'Another tool']], ['What is a booking?', ['A visit', 'A class', 'A table', 'A service at their place']], ['Should customers pay when booking?', ['Yes', 'Not yet', 'Only a deposit']]],
   },
   {
-    match: /lead|enquir|inquir|follow.?up|crm|sales|prospect/i,
+    match: /\bleads?\b|enquir|inquir|follow.?up|crm|prospect/i,
     title: 'Leads and follow-up tracker', kind: 'Web app',
     why: 'A shared list of leads is easiest to work on a computer, with a phone view for notes on the move.',
     screens: [['Pipeline', 'Leads by stage, from new to won'], ['Leads', 'Every lead with contact and next step'], ['Follow-ups', 'Who to call today'], ['Reports', 'What is won, lost and stuck']],
@@ -62,7 +62,7 @@ export const TOPICS: Topic[] = [
     qs: [['Where do leads come from?', ['WhatsApp', 'Website or ads', 'Calls and walk-ins', 'Referrals']], ['Who works on them?', ['Just me', 'A small sales team', 'Several teams']], ['What do you lose most?', ['Follow-ups I forget', 'Who said what', 'Which stage a lead is in']]],
   },
   {
-    match: /staff|attendance|employee|payroll|shift|leave|worker/i,
+    match: /staff|attendance|employee|payroll|shift|leave (balance|request)|workers?/i,
     title: 'Staff and attendance manager', kind: 'Web app with a phone view',
     why: 'Managers review on a computer, and staff can mark attendance from a phone.',
     screens: [['Dashboard', 'Who is in, absent or on leave today'], ['Attendance', 'Daily check-in with times'], ['Staff', 'People, roles and contact details'], ['Leave', 'Requests and approvals']],
