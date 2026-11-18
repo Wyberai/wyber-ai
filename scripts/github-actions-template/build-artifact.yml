@@ -86,14 +86,26 @@ jobs:
 
           files = data.get('files', {})
 
-          for path, value in files.items():
-              content = value.get('content', '') if isinstance(value, dict) else (value or '')
-              if path.startswith('src/'):
-                  path = path[4:]
-              full_path = pathlib.Path(path)
+          # A mobile project can carry the web starter's files (index.html, vite.config.ts, src/main.tsx, src/App.tsx, src/index.css).
+          # They are not part of a native app, and because the next step strips a leading 'src/', a stray src/App.tsx used to
+          # overwrite the real root App.tsx and break the bundle ("Unable to resolve module ../App", 18 Nov 2026). Skip them, and
+          # when a file exists both at the root and under src/, the root file wins.
+          WEB_ONLY = {'index.html', 'vite.config.ts', 'vite.config.js', 'src/main.tsx', 'src/main.jsx',
+                      'src/App.tsx', 'src/App.jsx', 'src/index.css', 'src/app.css'}
+          def content_of(value):
+              return value.get('content', '') if isinstance(value, dict) else (value or '')
+          wrote = set()
+          items = [(p, v) for p, v in files.items() if p not in WEB_ONLY]
+          for path, value in sorted(items, key=lambda kv: kv[0].startswith('src/')):
+              target = path[4:] if path.startswith('src/') else path
+              if target in wrote:
+                  print(f'  skipped {path} (root copy wins)')
+                  continue
+              full_path = pathlib.Path(target)
               full_path.parent.mkdir(parents=True, exist_ok=True)
-              full_path.write_text(content)
-              print(f'  wrote {path}')
+              full_path.write_text(content_of(value))
+              wrote.add(target)
+              print(f'  wrote {target}')
           PYEOF
 
           cat > package.json << 'JSON'
@@ -265,7 +277,26 @@ jobs:
             fi
             if [ "$STATUS" = "ERRORED" ] || [ "$STATUS" = "CANCELED" ]; then
               echo "BUILD_FAILED=1" >> $GITHUB_ENV
-              echo "ERR_MSG=The Expo build ended with status $STATUS. Open the build on expo.dev to see its log." >> $GITHUB_ENV
+              # Say WHY it failed. Until 18 Nov 2026 the only message was "see expo.dev", so a failed build could not be diagnosed
+              # from here. Expo's own error code and message go to the owner (short, quote-free so the JSON below stays valid), and
+              # the error lines of the build log go to this Actions log.
+              VIEW=$(eas build:view "$EAS_BUILD_ID" --json 2>/dev/null || echo "{}")
+              DETAIL=$(echo "$VIEW" | python3 -c 'import json,sys; d=json.load(sys.stdin); e=d.get("error") or {}; print((str(e.get("errorCode",""))+" "+str(e.get("message",""))).strip())' 2>/dev/null | tr -d '"\\\r' | tr '\n' ' ' | head -c 180)
+              LOGURL=$(echo "$VIEW" | python3 -c 'import json,sys; d=json.load(sys.stdin); l=d.get("logFiles") or [""]; print(l[-1])' 2>/dev/null)
+              if [ -n "$LOGURL" ]; then
+                echo "---- Expo build log, error lines ----"
+                curl -s --compressed -D /tmp/eas.hdr "$LOGURL" -o /tmp/eas.raw || true
+                echo "log headers:"; grep -iE "^HTTP|content-type|content-encoding" /tmp/eas.hdr || true
+                echo "log magic bytes: $(head -c 4 /tmp/eas.raw | od -An -tx1)"
+                # The log is gzip-compressed; decompress it and keep printable characters only.
+                (gunzip -c /tmp/eas.raw 2>/dev/null || cat /tmp/eas.raw) | tr -cd '[:print:]\n' > /tmp/eas.log
+                echo "log bytes: $(wc -c < /tmp/eas.log 2>/dev/null || echo 0)"
+                grep -n -iE "Bundle JavaScript|Unable to resolve|SyntaxError|TransformError|error:|Error:|Cannot find|not found" /tmp/eas.log | head -30 || true
+                echo "---- last 40 lines ----"
+                tail -40 /tmp/eas.log || true
+                echo "-------------------------------------"
+              fi
+              echo "ERR_MSG=The Expo build ended with status $STATUS. ${DETAIL:-Open the build on expo.dev to see its log.}" >> $GITHUB_ENV
               break
             fi
           done

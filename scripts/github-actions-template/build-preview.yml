@@ -77,20 +77,26 @@ jobs:
           project_name = data.get('projectName', 'WyberAi App')
           files = data.get('files', {})
 
-          for path, value in files.items():
+          # Same as the APK workflow: skip the web starter's files and let a root file win over its src/ twin (a stray
+          # src/App.tsx used to overwrite the real App.tsx once the leading src/ was stripped).
+          WEB_ONLY = {'index.html', 'vite.config.ts', 'vite.config.js', 'src/main.tsx', 'src/main.jsx',
+                      'src/App.tsx', 'src/App.jsx', 'src/index.css', 'src/app.css'}
+          def content_of(value):
               # value may be a string or a dict {content: "...", ...}
-              if isinstance(value, dict):
-                  content = value.get('content', '')
-              else:
-                  content = value or ''
+              return value.get('content', '') if isinstance(value, dict) else (value or '')
+          wrote = set()
+          items = [(p, v) for p, v in files.items() if p not in WEB_ONLY]
+          for path, value in sorted(items, key=lambda kv: kv[0].startswith('src/')):
               # Strip leading src/ (RN apps don't use src/ layout)
-              if path.startswith('src/'):
-                  path = path[4:]
-              # Write file
-              full_path = pathlib.Path(path)
+              target = path[4:] if path.startswith('src/') else path
+              if target in wrote:
+                  print(f'  skipped {path} (root copy wins)')
+                  continue
+              full_path = pathlib.Path(target)
               full_path.parent.mkdir(parents=True, exist_ok=True)
-              full_path.write_text(content)
-              print(f'  wrote {path}')
+              full_path.write_text(content_of(value))
+              wrote.add(target)
+              print(f'  wrote {target}')
           PYEOF
 
           # Write package.json with pinned Expo SDK 54 deps
