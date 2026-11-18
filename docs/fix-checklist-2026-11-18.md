@@ -8,8 +8,8 @@ Sources: QA run (E1-E24, see qa-run-2026-11-18.md), the owner's notes, and the o
 |---|---|---|
 | E1 | APK build fails | CODE: digit-leading project id broke android.package; fixed in both workflow files. Manual: paste both into Wyberai/mobile-builds .github/workflows |
 | E2 | Mobile preview crash (TurboModuleRegistry) | DONE, verified locally; verify on prod |
-| E3 | Crawler snapshot / llms.txt missing | TODO: cause unknown; snapshot.error.txt now written on failure, read it after next publish |
-| E4 | /tools SEO scanner scores our own site 36/100 | TODO |
+| E3 | Crawler snapshot / llms.txt missing | CODE: root cause found in Vercel logs (chromium bin folder not in the function); fixed via outputFileTracingIncludes; verify after next publish |
+| E4 | /tools SEO scanner scores our own site 36/100 | CODE: Next streamed title/meta into body for non-bot agents; htmlLimitedBots widened + scanner reads body fallback; verify after deploy |
 | E5 | Editor SEO scan says robots/sitemap present | DONE: wording now says robots.txt only takes effect on your own domain |
 | E6 | Placeholder domain in generated index.html | PARTIAL: fixed at serve time; source fix TODO |
 | E7 | Vite 5.4.21 vulnerabilities in generated stack | TODO |

@@ -347,6 +347,9 @@ export async function POST(req: NextRequest) {
           const snapshot = await renderStaticSnapshot(htmlForSnapshot)
           if (snapshot) {
             await admin.storage.from('published-apps').upload(`${projectId}/snapshot.html`, snapshot, { contentType: 'text/html', upsert: true })
+          } else {
+            // Rendered, but with too little text to be useful: say so instead of leaving nothing to read.
+            console.error('[publish] snapshot empty: page rendered fewer than 80 characters of text')
           }
         } catch (e) {
           console.error('[publish] snapshot failed:', e)

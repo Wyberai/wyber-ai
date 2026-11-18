@@ -10,6 +10,22 @@ const nextConfig = {
   // folder, and bundling it leaves that folder out of the function, so executablePath() fails. The publish-time
   // crawler snapshot (src/lib/seo/static-snapshot.ts) and screenshots need it. Four live websites had no snapshot.
   serverExternalPackages: ['esbuild', 'googleapis', 'google-auth-library', '@sparticuz/chromium', 'puppeteer-core'],
+  // Next streams <title>, meta and canonical into the BODY for any user agent it does not recognise as a limited bot, so
+  // crawlers and AI readers that do not run JavaScript (GPTBot, ClaudeBot, PerplexityBot, SEO scanners, curl) saw a head with
+  // no title or description (live, 18 Nov: our own /tools scanner scored a published site 36/100). Keep Next's own list
+  // (search engines and link previewers) and add the non-browser agents so they get a blocking render with metadata in <head>.
+  htmlLimitedBots: new RegExp(
+    require('next/dist/shared/lib/router/utils/html-bots').HTML_LIMITED_BOT_UA_RE.source +
+      '|bot\\b|crawl|spider|scan|audit|seo|lighthouse|preview|fetch|curl|wget|python|go-http|java\\/|axios|node-|okhttp|GPT|Claude|Perplexity|Anthropic|OpenAI|Gemini|Bytespider|Amazonbot|ahrefs|semrush|screaming|^$',
+    'i',
+  ),
+  // The browser is shipped as .br files that nothing imports, so file tracing leaves them out of the function and
+  // executablePath() fails with "input directory .../@sparticuz/chromium/bin does not exist" (Vercel runtime log,
+  // 18 Nov 2026, every publish: no crawler snapshot, no llms.txt). Include them for every route that launches Chrome.
+  outputFileTracingIncludes: {
+    '/api/publish': ['./node_modules/@sparticuz/chromium/bin/**'],
+    '/api/**': ['./node_modules/@sparticuz/chromium/bin/**'],
+  },
   productionBrowserSourceMaps: false,
   typescript: {
     ignoreBuildErrors: true,
