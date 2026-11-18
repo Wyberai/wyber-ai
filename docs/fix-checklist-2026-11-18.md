@@ -111,3 +111,7 @@ CODE: src/lib/slop-scan.ts (9 checks: stock phrases, placeholder text, invented 
 2. Build messages: one plain line, one recommended button, what is still missing. DONE on the promote branch: shared readyMessage ("Nothing missing from our launch list. Checked in the code only; we have not run the app." / "Still missing: ... Adding it now."), "Finished the rest.", "Added what was missing: ...", and a single "Recommended next" button that sends on one click.
 3. Domain margin: $1 universal above the reseller price (replaces the earlier Rs 10 and Rs 50 / $0.50 figures).
 4. Post: show what Claude creates next to what WyberAi creates, same briefs, scored, raw outputs shown.
+
+## Claude vs WyberAi, first run (law firm, same one-line brief)
+
+Plain Claude (subagent, no rules, one 28 KB index.html, ~80 s) vs WyberAi (50 cr, ~3 min, published). Same graders (scripts/score-site.mjs): SEO 46 vs 100; AI visibility 85 vs 100; anti-slop 97 vs 85 (our scanner flags our honest "Contact details coming soon"); Claude invented a firm name, two partners, a phone and an address and shows them as real; WyberAi invented nothing. Claude's design is more confident. Found on our side: a first visit to a freshly published site showed a blank dark screen for ~20 s (warm reload under 3 s). TODO: find and fix the cold-start blank. Write-up: private artifact "Same Brief, Two Sites". Not claimed anywhere: "a month ahead", "8 months of learning", "daily model updates".
