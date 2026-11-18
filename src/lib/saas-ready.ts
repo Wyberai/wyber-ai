@@ -52,6 +52,7 @@ S11 ACTIVATION: a first-run checklist (create a workspace, invite a teammate, do
 S12 PUBLIC PAGES: a landing page and a pricing page generated from src/plans.ts and src/owner-details.ts, following the website rules: one primary action, no invented logos, statistics, testimonials or customer counts.
 S13 TRUTH: no certification, uptime or security claim, no "AI-powered", no "trusted by" unless it is built or the owner stated it.
 S14 DEFINITION OF DONE (confirm silently before the "Built:" line): demo banner; plans.ts is the only source of prices and limits; checkout and webhook functions; billing page reads stored state; Setup screen and status function; limits enforced; legal pages and consent; export and delete; first-run checklist; no invented claims or prices.
+S15 FORM HINTS AND SAMPLE DATA: a field hint such as "too short" appears only after the person has typed or left the field, never on an empty form. Sample people, prices and plans shown outside the demo (stylists, doctors, a price list on a public booking page) carry a visible "Sample" label, and prices use the owner's currency, not USD by default.
 `
 
 // ── The check ────────────────────────────────────────────────────────────────

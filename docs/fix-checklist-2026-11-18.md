@@ -55,4 +55,5 @@ Website build 3-8s no loader; "Build your website" pre-ticked; title stays "New 
 ## Smaller issues progress
 
 DONE: wrong "Coding your full app: auth, dashboard, settings" line in the build header (now neutral); "Build your website" pre-ticked (now needs a real App file); Settings page title ("Settings | WyberAi", not indexed).
-TODO: dashboard loader (3-8s), title stays "New Project", plan card invented-person text, slow preview paint, balance across tabs, SaaS "Too short" hint and unlabelled sample prices, IPA "50 cr" badge, unused AppointmentForm.tsx.
+DONE: IPA/APK "50 cr" badge only when the build exists (else "Soon"); plan prompt no longer invents people or credentials; SaaS rule S15 (hints, sample labels, currency).
+TODO: dashboard loader (3-8s), title stays "New Project", slow preview paint, balance across tabs, unused AppointmentForm.tsx.

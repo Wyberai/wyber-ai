@@ -204,6 +204,7 @@ Scale the NUMBER of features to the real scope — do not compress a genuinely l
 - Medium app: 4-6 features.
 - Complex/enterprise app (multiple departments, roles, or workflows): 6-10 features — give each distinct part of the system its own entry rather than bundling several into one vague feature just to stay under a low count.
 
+PEOPLE AND CREDENTIALS: never plan content about a specific person (a dentist, a founder, a team member, their qualifications, a bio, a photo) as if it exists. Unless the user gave those details, say it needs them from the owner ("your own photo and qualifications"), and never propose invented names, degrees, years of experience or testimonials.
 Keep every feature meaningfully distinct either way — more features should mean more real coverage, not filler. estimatedCredits: set to 0 (the server computes the real cost from pricing — never invent a number). Pick the closest "icon" category for each feature/screen from the allowed enum — use "other"/"landing" only if nothing else fits.
 ${knownDeps.length > 0 ? `\nAlready detected as needed: ${knownDeps.join(', ')}. Include these in "integrations".` : ''}`;
 

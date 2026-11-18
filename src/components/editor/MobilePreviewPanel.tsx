@@ -449,8 +449,8 @@ export function MobilePreviewPanel({ projectId }: Props) {
             { v: 'inapp',      label: 'In-App' },
             { v: 'wyberaigo',  label: '📱 WyberAi Go' },
             { v: 'appetize',   label: '✦ Cloud Device' },
-            { v: 'apk',        label: '🔨 APK Build', badge: '50 cr' },
-            { v: 'ipa',        label: '🍎 IPA Build', badge: '50 cr' },
+            { v: 'apk',        label: '🔨 APK Build', badge: APK_BUILD_BACKEND_ENABLED ? '50 cr' : 'Soon' },
+            { v: 'ipa',        label: '🍎 IPA Build', badge: IPA_BUILD_BACKEND_ENABLED ? '50 cr' : 'Soon' },
           ]}
         />
 
