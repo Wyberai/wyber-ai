@@ -47,26 +47,26 @@ async function backdrop() {
   const W = 6 * FT, M = 110
   const qr = await qrSvg()
   // Key content sits in the top 60%: the table stands in front of the lower part of the backdrop.
-  // What we build: the four service tiles on the Xpro page, in the wording of xpro-product-and-services-copy.md (shortened).
+  // Six superpowers, each held to what the code does (see src/app/gujaratexpo/data.ts POWERS).
   const WHAT = [
-    ['Timesheets', 'Who worked on what, and for how long.'],
-    ['CRM', 'Every lead and the next call, in one place.'],
-    ['Attendance', 'Who came and who did not, on a phone.'],
-    ['Leave', 'Requests and approvals, not chat threads.'],
+    ['X-ray vision', 'We probe your live database like an attacker, right after you publish.'],
+    ['Key lock', 'An exposed secret key stops a publish.'],
+    ['Security armour', 'A full security checklist, any time.'],
+    ['Be seen', 'Readable by Google and by AI assistants.'],
+    ['Anti-slop radar', 'Flags the made-by-AI look.'],
+    ['Two forms', 'A website and a mobile app from one prompt.'],
   ]
-  const tw = (1609 - 3 * 28) / 4
-  const tiles = WHAT.map(([t, d], i) => `<div style="width:${tw}mm;height:296mm;border-radius:20mm;background:#0e131c;border:2mm solid #1b2230;padding:28mm;box-sizing:border-box;position:relative"><div style="position:absolute;left:28mm;top:0;width:60mm;height:6mm;background:${SKY};border-radius:0 0 3mm 3mm"></div><div style="font-weight:900;font-size:50mm;letter-spacing:-0.03em;margin-top:6mm">${t}</div><div style="font-size:28mm;line-height:1.36;color:${MUTED};margin-top:12mm">${d}</div></div>`).join('')
+  const tw = (1609 - 2 * 28) / 3
+  const tiles = WHAT.map(([t, d]) => `<div style="width:${tw}mm;height:300mm;border-radius:20mm;background:#0e131c;border:2mm solid #1b2230;padding:28mm;box-sizing:border-box;position:relative"><div style="position:absolute;left:28mm;top:0;width:60mm;height:6mm;background:${SKY};border-radius:0 0 3mm 3mm"></div><div style="font-weight:900;font-size:50mm;letter-spacing:-0.03em;margin-top:6mm">${t}</div><div style="font-size:30mm;line-height:1.34;color:${MUTED};margin-top:12mm">${d}</div></div>`).join('')
   return page(W, W, `
     <div class="abs" style="left:${M}mm;top:${M}mm">${logo(150, 118)}</div>
     <div class="abs" style="right:${M}mm;top:${M}mm;width:330mm">${qrPlate(330, qr)}
       <div style="${mono(24, MUTED, 'margin-top:20mm;line-height:1.45;text-align:center')}">SCAN QR TO VIEW<br>STALL DETAILS</div>
       <div style="${mono(30, SKY, 'margin-top:14mm;text-align:center;letter-spacing:.05em')}">wyberai.com</div></div>
-    <div class="abs" style="left:${M}mm;top:610mm;font-weight:900;font-size:165mm;line-height:.98;letter-spacing:-0.045em">Own your software.<br><span class="sky">Stop renting it.</span></div>
-    <div class="abs" style="left:${M}mm;top:985mm;font-size:66mm;font-weight:700;color:${INK};letter-spacing:-0.01em">You pay for 100 features. You use <span class="sky">5.</span></div>
-    <div class="abs" style="left:${M}mm;top:1130mm;font-weight:900;font-size:90mm;line-height:1.02;letter-spacing:-0.035em">Tell us your pain points.<br><span class="sky">Build your own software.</span></div>
-    <div class="abs" style="left:${M}mm;top:1340mm;${mono(30, SKY, 'letter-spacing:.1em')}">BUILT ONCE. YOURS TO KEEP.</div>
-    <div class="abs" style="left:${M}mm;top:1410mm;width:1609mm;display:flex;gap:28mm">${tiles}</div>
-    <div class="abs" style="left:${M}mm;top:1742mm;${mono(34, DIM)}">DESCRIBE IT. SHIP IT.</div>`)
+    <div class="abs" style="left:${M}mm;top:470mm;font-weight:900;font-size:172mm;line-height:.98;letter-spacing:-0.045em">Vibe coding.<br><span class="sky">Plus superpowers.</span></div>
+    <div class="abs" style="left:${M}mm;top:860mm;font-size:62mm;font-weight:600;color:${MUTED};letter-spacing:-0.01em">The checks plain vibe coding skips.</div>
+    <div class="abs" style="left:${M}mm;top:1000mm;width:1609mm;display:flex;flex-wrap:wrap;gap:28mm">${tiles}</div>
+    <div class="abs" style="left:${M}mm;top:1720mm;${mono(36, SKY, 'letter-spacing:.1em')}">TELL US YOUR PAIN POINTS.</div>`)
 }
 
 // ---------- Backdrop B (alternative): lead with what WyberAi does, in the words on the Xpro portal ----------
@@ -95,8 +95,8 @@ async function tableFront() {
     <div class="abs" style="left:${M}mm;top:${M}mm">${logo(86, 66)}</div>
     <div class="abs" style="right:${M}mm;top:${M}mm;width:292mm">${qrPlate(292, qr)}
       <div style="${mono(18, MUTED, 'margin-top:12mm;text-align:center')}">SCAN QR TO VIEW STALL DETAILS</div></div>
-    <div class="abs" style="left:${M}mm;top:420mm;font-weight:900;font-size:100mm;line-height:.99;letter-spacing:-0.04em">Own your software.<br><span class="sky">Stop renting it.</span></div>
-    <div class="abs" style="left:${M}mm;top:640mm;font-size:40mm;font-weight:500;color:${MUTED}">You pay for 100 features. You use 5.</div>
+    <div class="abs" style="left:${M}mm;top:420mm;font-weight:900;font-size:108mm;line-height:.99;letter-spacing:-0.04em">Vibe coding.<br><span class="sky">Plus superpowers.</span></div>
+    <div class="abs" style="left:${M}mm;top:640mm;font-size:40mm;font-weight:500;color:${MUTED}">Tell us your pain point.</div>
     <div class="abs" style="left:${M}mm;bottom:${M}mm;${mono(26, SKY, 'letter-spacing:.06em')}">wyberai.com</div>`)
 }
 
