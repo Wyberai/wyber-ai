@@ -29,7 +29,7 @@ export const SIGNAL_POSTS: SignalPost[] = [
   {
     slug: 'what-30-free-credits-build',
     title: 'What 30 free credits actually buy',
-    excerpt: 'How credits are spent, what to expect from a first build, and two real sample builds from our own testing, with their checks.',
+    excerpt: 'What the free credits pay for, what a first build costs, and two real sample builds from our own testing, with their checks.',
     tag: 'Guide',
     date: '18 November 2026',
     iso: '2026-11-18',

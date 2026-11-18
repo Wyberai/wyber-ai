@@ -1,5 +1,6 @@
 import { DocsPage, DocSection, Note } from '@/components/docs/DocsPage'
 import Link from 'next/link'
+import { buildCosts, editCost } from '@/lib/pricing-facts'
 
 export const metadata = { title: 'How Credits Work — Docs', description: "Credits are the unit of usage on WyberAi. Each generation spends credits; everything else — editing, previewing, navigating — is free." }
 
@@ -20,8 +21,8 @@ export default function Page() {
           </thead>
           <tbody>
             {[
-              ['Web/mobile app build', '15–130 (by project size)'],
-              ['App edit', '2'],
+              ['Web/mobile app build', `${buildCosts().small}–${buildCosts().xl} (by project size)`],
+              ['App edit', `from ${editCost()}`],
               ['AI Agent run', '5'],
               ['AI Employee run', '5'],
               ['Workflow run', '2'],

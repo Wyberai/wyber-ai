@@ -1,5 +1,6 @@
 import { DocsPage, DocSection, Steps, Step, ScreenshotPlaceholder, Note } from '@/components/docs/DocsPage'
 import Link from 'next/link'
+import { buildCosts, editCost } from '@/lib/pricing-facts'
 
 export const metadata = { title: 'Your First Build — Docs', description: "From sign-up to a live, shareable web app — this walkthrough covers the exact steps." }
 
@@ -36,7 +37,7 @@ export default function Page() {
               Build a CRM dashboard with a contacts table, a deal pipeline board with drag-and-drop stages, and a sidebar nav. Use a dark theme with blue accents.
             </div>
             <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7, marginTop: 8 }}>
-              A credit estimate is shown before you generate — 30 credits for a standard web app build. Click <strong>Generate</strong> when you're ready.
+              A credit estimate is shown before you generate — from {buildCosts().small} credits for a small web app build. Click <strong>Generate</strong> when you're ready.
             </p>
             <ScreenshotPlaceholder label="Prompt input + credit estimate" />
           </Step>

@@ -1,5 +1,6 @@
 import { PostShell } from '@/components/signal/PostShell'
 import { getPost, postMetadata } from '@/lib/blog/meta'
+import { buildCosts, editCost } from '@/lib/pricing-facts'
 
 const post = getPost('ai-app-builder-for-startups')
 export const metadata = postMetadata(post)
@@ -25,7 +26,7 @@ export default function Page() {
 
       <h2>What a builder covers</h2>
       <p>You describe the product and WyberAi writes a working React app, with screens, data and navigation. The code is yours, and GitHub export is included on every plan. That is a real first version, not a mockup, and it is the right thing to put in front of five potential customers before you commit to anything larger. Changes are a chat message instead of a change order.</p>
-      <p>The arithmetic on our own plans, so you can check it: a small build starts at 30 credits and a small edit is 4. Starter is $29 a month, or ₹1,499 in India (₹1,199 on annual billing), and includes 450 credits, which is about fifteen small builds. India also has Spark, ₹499 a month or ₹399 on annual billing, with 150 credits.</p>
+      <p>The arithmetic on our own plans, so you can check it: a small build starts at {buildCosts().small} credits and a small edit is {editCost()}. Starter is $29 a month, or ₹1,499 in India (₹1,199 on annual billing), and includes 450 credits, which is about {Math.floor(450 / buildCosts().small)} small builds. India also has Spark, ₹499 a month or ₹399 on annual billing, with 150 credits.</p>
       <p>There is one catch that matters for a product with logins. The database connection and your own domain start at the Builder plan, $79 a month or ₹3,999 in India, according to the pricing page. A first version that only needs to be seen and clicked through does not need either. One that stores customers’ data does.</p>
 
       <h2>The middle route</h2>

@@ -1,5 +1,6 @@
 import { PostShell } from '@/components/signal/PostShell'
 import { getPost, postMetadata } from '@/lib/blog/meta'
+import { buildCosts, editCost } from '@/lib/pricing-facts'
 
 const post = getPost('build-mobile-app-with-ai-2026')
 export const metadata = postMetadata(post)
@@ -40,7 +41,7 @@ with total workouts and current streak. Bottom tab navigation.`}</code></pre>
       <p>Look at your first customers’ phones. In India Android is the large majority of devices, so an Android release is the natural first step and you can hand early users an installable file directly. In the US the iPhone has the larger share, so an Android-only release would miss many of the people you are trying to reach. If you cannot tell, ask twenty of them what they carry.</p>
 
       <h2>What it costs</h2>
-      <p>You start with 30 free credits and no card. A small build is 30 credits and a small edit starts at 4. Starter is $29 a month in the US (₹1,499 in India, ₹1,199 on annual billing) with 450 credits, and India also has the Spark plan from ₹499. Plans and top-ups are on the <a href="/pricing">pricing page</a>.</p>
+      <p>You start with 30 free credits and no card. A small build is {buildCosts().small} credits and a small edit starts at {editCost()}, so the free credits cover a few edits and part of a first build; buy a pack or a plan to finish one. Starter is $29 a month in the US (₹1,499 in India, ₹1,199 on annual billing) with 450 credits, and India also has the Spark plan from ₹499. Plans and top-ups are on the <a href="/pricing">pricing page</a>.</p>
     </PostShell>
   )
 }

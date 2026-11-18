@@ -2,6 +2,7 @@ import { PLAN_FACTS, TOPUP_PACKS } from '@/lib/plans'
 import { readableOn } from '@/lib/color-contrast'
 import { unsubscribeUrl } from './unsubscribe'
 import { sendEmail } from './transport'
+import { buildCosts, editCost } from './../pricing-facts'
 
 // Time-based lifecycle sequence: one short, specific "did you know" email per
 // step, sent by signup age whether or not the person has built anything. Modelled
@@ -45,7 +46,7 @@ export const LIFECYCLE_STEPS: LifecycleStep[] = [
     subject: 'You see the cost before every build',
     headline: 'No surprise charges.',
     body: [
-      'Before a build starts, the builder shows how many credits it will use. A small build is about 30 credits.',
+      `Before a build starts, the builder shows how many credits it will use. A small build is about ${buildCosts().small} credits.`,
       'Fixing a broken build is free, and so is publishing. You only spend credits on new work you chose to start.',
     ],
     cta: { label: 'Open the builder', path: '/dashboard' },

@@ -5,6 +5,7 @@ import { StartBuildButton } from '../build/StartBuildButton'
 import { ExampleDashboard } from './ExampleDashboard'
 import { WidgetPicker } from './WidgetPicker'
 import { CsvDashboardPreview } from './CsvDashboardPreview'
+import { buildCosts, editCost } from '@/lib/pricing-facts'
 
 // Standalone ad/outbound landing page — distinct from the /build/ecommerce-seller-dashboard
 // pSEO page. That page targets organic search; this one is built for paid traffic and cold
@@ -35,7 +36,7 @@ const FAQS = [
   { q: 'What file formats can I upload?', a: '.csv, .xlsx, and .xls — export your orders from Amazon Seller Central, Shopify, Etsy, or any spreadsheet and drop it in.' },
   { q: 'Is my sales data safe?', a: 'The upload preview is parsed entirely in your browser using client-side JavaScript — the file is never sent to a server or stored anywhere.' },
   { q: 'Does the real dashboard connect live to Amazon or Shopify?', a: 'Not out of the box — it\'s built around your export files or manual entry, which avoids depending on marketplace APIs that can change or get revoked. A bulk-import screen can always be added once you\'re building.' },
-  { q: 'What does it cost to build?', a: 'The 30 free signup credits cover a small first build (30 credits; larger apps cost more); small edits after that start at 4 credits. No card required to start.' },
+  { q: 'What does it cost to build?', a: `The 30 free signup credits do not cover a whole build (a small one is ${buildCosts().small} credits; larger apps cost more), so a first build needs a credit pack or a plan. Small edits start at ${editCost()} credits. No card required to start.` },
 ]
 
 export default function EcommerceDashboardLanding() {

@@ -10,6 +10,7 @@ import { unsubscribeUrl } from './unsubscribe'
 // [email-transport] and posts to ALERT_WEBHOOK_URL. Every function below calls
 // sendMail({from, to, subject, html}), so call sites are unchanged.
 import { sendEmail } from './transport'
+import { buildCosts, editCost } from '../pricing-facts'
 
 async function sendMail(opts: { from: string; to: string; subject: string; html: string }): Promise<{ id: string | null }> {
   return sendEmail(opts)
@@ -142,7 +143,7 @@ export async function sendWelcomeEmail(to: string, name?: string, source: Welcom
     </div>
     ${p('Three things worth knowing:')}
     <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px">
-      <tr><td style="padding:8px 0;font-size:15px;color:#8888a0;border-bottom:1px solid #2e2e38"><strong style="color:#f0f0f4">You see the cost first.</strong> A small build is about 30 credits.</td></tr>
+      <tr><td style="padding:8px 0;font-size:15px;color:#8888a0;border-bottom:1px solid #2e2e38"><strong style="color:#f0f0f4">You see the cost first.</strong> A small build is about ${buildCosts().small} credits.</td></tr>
       <tr><td style="padding:8px 0;font-size:15px;color:#8888a0;border-bottom:1px solid #2e2e38"><strong style="color:#f0f0f4">Fixing a broken build is free.</strong> So is publishing.</td></tr>
       <tr><td style="padding:8px 0;font-size:15px;color:#8888a0"><strong style="color:#f0f0f4">The code is yours.</strong> Push it to your own GitHub any time.</td></tr>
     </table>
