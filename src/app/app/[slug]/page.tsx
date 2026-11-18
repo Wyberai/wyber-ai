@@ -121,7 +121,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const ogImage = seo.ogImage || `https://wyberai.com/api/og/app/${encodeURIComponent(slug)}`
 
   return {
-    title,
+    // absolute: the root layout's template would add " | WyberAi" to every customer's title. That pushed titles past 60
+    // characters (57 to 69 on four live sites) and put our name in front of their customers in search results.
+    title: { absolute: title },
     description,
     // Campaign demos are ~100 near-duplicate pages carrying real company names
     // with placeholder data — must never be indexed (thin/duplicate content +

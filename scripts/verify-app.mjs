@@ -1,3 +1,4 @@
+// Waits for the page 'load' event, not network idle: published apps keep a request open (analytics, storage sync), so network idle never arrived and the check timed out (18 Nov 2026).
 // Real-browser check of a published WyberAi app. Opens the public page in installed Chrome, finds the sandboxed app frame, and
 // measures what a person would meet: console errors, horizontal overflow at three widths, accessibility violations (axe-core,
 // WCAG 2.x A and AA), a walk through the navigation, whether launch-ready signals are on screen, and design-slop signs in the
@@ -138,7 +139,7 @@ async function openApp(viewport) {
   page.on('pageerror', e => errors.push('pageerror: ' + String(e.message).slice(0, 160)))
   page.on('console', m => { if (m.type() === 'error' && !NOISE.test(m.text())) errors.push('console: ' + m.text().slice(0, 160)) })
   page.on('requestfailed', r => { const u = r.url(); const why = r.failure()?.errorText || ''; if (/ERR_ABORTED/.test(why) || NOISE.test(u)) return; errors.push('requestfailed: ' + u.slice(0, 120) + ' ' + why) })
-  await page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 })
+  await page.goto(url, { waitUntil: 'load', timeout: 90000 })
   await sleep(1500)
   const frames = page.frames().filter(f => f !== page.mainFrame())
   let frame = null
@@ -231,7 +232,7 @@ try {
       }
       report.nav = steps
       const keysAfter = await frame.evaluate(() => { try { return Object.keys(localStorage).length } catch { return -1 } })
-      await page.reload({ waitUntil: 'networkidle2' }); await sleep(1200)
+      await page.reload({ waitUntil: 'load', timeout: 90000 }); await sleep(1200)
       let keysReload = -2
       for (const f of page.frames().filter(f => f !== page.mainFrame())) { try { keysReload = await f.evaluate(() => Object.keys(localStorage).length); break } catch { /* ignore */ } }
       report.persistence = { keysBeforeReload: keysAfter, keysAfterReload: keysReload }
@@ -280,7 +281,7 @@ try {
       // A confirmation only counts if it was not already on the page before we submitted.
       const confirm = text.toLowerCase().match(/thank you|thanks for|received|message sent|we.ll (be in touch|get back)|saved|added|booked|request sent/)
       flow.confirmation = !!(confirm && !textBefore.includes(confirm[0]))
-      await page.reload({ waitUntil: 'networkidle2' }); await sleep(1500)
+      await page.reload({ waitUntil: 'load', timeout: 90000 }); await sleep(1500)
       let after = ''
       for (const f of page.frames().filter(f => f !== page.mainFrame())) { try { after = await f.evaluate(() => document.body?.innerText || ''); if (after) break } catch { /* ignore */ } }
       flow.persisted = after.includes(MARK)

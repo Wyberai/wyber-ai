@@ -6,7 +6,10 @@ const nextConfig = {
   // manifest (App Router routes 404 unpredictably even though the files
   // exist — reproduced with src/app/auth/callback/route.ts).
   turbopack: { root: __dirname },
-  serverExternalPackages: ['esbuild', 'googleapis', 'google-auth-library'],
+  // @sparticuz/chromium and puppeteer-core must stay external: the package ships a compressed browser in its own bin
+  // folder, and bundling it leaves that folder out of the function, so executablePath() fails. The publish-time
+  // crawler snapshot (src/lib/seo/static-snapshot.ts) and screenshots need it. Four live websites had no snapshot.
+  serverExternalPackages: ['esbuild', 'googleapis', 'google-auth-library', '@sparticuz/chromium', 'puppeteer-core'],
   productionBrowserSourceMaps: false,
   typescript: {
     ignoreBuildErrors: true,

@@ -127,6 +127,18 @@ describe('structured data and llms.txt', () => {
     }
   })
 
+  it('a published app keeps its own title: no " | WyberAi" suffix from the root template (it made four live titles 57 to 69 characters)', () => {
+    const page = read('src/app/app/[slug]/page.tsx')
+    expect(page).toContain('title: { absolute: title }')
+    expect(read('src/app/layout.tsx')).toContain("template: '%s | WyberAi'") // the template still applies to our own pages
+  })
+
+  it('the browser used for the publish-time crawler snapshot stays an external package so its binary ships with the function', () => {
+    const cfg = read('next.config.js')
+    expect(cfg).toContain("'@sparticuz/chromium'")
+    expect(cfg).toContain("'puppeteer-core'")
+  })
+
   it('blog posts do not repeat claims the product cannot back (all fixed on 2026-11-18)', () => {
     const dir = path.join(process.cwd(), 'src/app/blog')
     const banned = [
