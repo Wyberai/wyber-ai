@@ -1,3 +1,4 @@
+import { readyMessage } from './ready-message'
 // Launch-ready websites: the contract, the price floor and a source check. Off unless NEXT_PUBLIC_WEBSITE_LAUNCH_READY=true.
 // Same pattern as launch-ready.ts (web apps). A website exists to bring in enquiries and to be trusted, so the contract is about:
 // facts that are true, a contact path that works, forms that really deliver, search basics, speed and language.
@@ -364,8 +365,7 @@ export function checkWebsiteReady(files: Record<string, FileVal>): WebsiteResult
 
 export function websiteReadySummary(r: WebsiteResult): string {
   const missing = r.items.filter(i => !i.ok)
-  if (missing.length === 0) return `Launch-ready check: all ${r.total} items are present in the code. This reads the source; it does not open the site in a browser.`
-  return `Launch-ready check: ${r.passed} of ${r.total} items present. Adding: ${missing.map(m => m.label.toLowerCase()).join('; ')}.`
+  return readyMessage(missing.map(m => m.label.toLowerCase()), 'opened the site in a browser')
 }
 
 /** Failing items as fix prompts (at most four), then the top design items (at most two). Same shape as the web-app checks. */

@@ -80,8 +80,8 @@ describe('check', () => {
     const r = checkLaunchReady(GOOD)
     expect(r.items.filter(i => !i.ok).map(i => i.id)).toEqual([])
     expect(r.passed).toBe(r.total)
-    expect(launchReadySummary(r)).toMatch(/all \d+ items are present/)
-    expect(launchReadySummary(r)).toMatch(/does not run the app in a browser/)
+    expect(launchReadySummary(r)).toMatch(/Nothing missing/)
+    expect(launchReadySummary(r)).toMatch(/not run the app in a browser/)
   })
 
   it('flags a typical demo build: seed data, fake sync, no import, no privacy page', () => {
@@ -92,7 +92,7 @@ describe('check', () => {
     for (const id of ['persist', 'honest-storage', 'demo-labelled', 'no-fake-sync', 'import-csv', 'export-csv', 'privacy', 'no-invented-claims']) {
       expect(failed).toContain(id)
     }
-    expect(launchReadySummary(r)).toMatch(/items present\. Adding:/)
+    expect(launchReadySummary(r)).toMatch(/Still missing: .*Adding it now/)
   })
 
   it('skips checks that do not apply (no PIN, no reminders) instead of failing them', () => {

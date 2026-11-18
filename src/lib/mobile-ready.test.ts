@@ -82,8 +82,8 @@ describe('checkMobileReady', () => {
   it('passes an app that has everything', () => {
     const r = checkMobileReady(GOOD)
     expect(r.items.filter(i => !i.ok).map(i => i.id)).toEqual([])
-    expect(mobileReadySummary(r)).toMatch(/all \d+ items are present/)
-    expect(mobileReadySummary(r)).toMatch(/does not run the app on a device/)
+    expect(mobileReadySummary(r)).toMatch(/Nothing missing/)
+    expect(mobileReadySummary(r)).toMatch(/not run the app on a device/)
   })
   it('flags invented insights, fake sign-in, swipe-only actions and denied permissions without a path', () => {
     const r = checkMobileReady({

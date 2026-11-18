@@ -1,3 +1,4 @@
+import { readyMessage } from './ready-message'
 // Launch-ready SaaS products: the contract, the price floor and a source check. Off unless NEXT_PUBLIC_SAAS_LAUNCH_READY=true.
 // A SaaS the owner can put in front of paying customers needs the plumbing people forget: honest demo mode, owner-set plans, a real
 // payment path (checkout plus an idempotent webhook), sign-in, limits, email, a Setup screen that never fakes a service, legal pages,
@@ -137,8 +138,7 @@ export function checkSaasReady(files: Record<string, FileVal>): SaasResult {
 
 export function saasReadySummary(r: SaasResult): string {
   const missing = r.items.filter(i => !i.ok)
-  if (missing.length === 0) return `Launch-ready check: all ${r.total} items are present in the code. This reads the source; it does not run the app or take a test payment.`
-  return `Launch-ready check: ${r.passed} of ${r.total} items present. Adding: ${missing.map(m => m.label.toLowerCase()).join('; ')}.`
+  return readyMessage(missing.map(m => m.label.toLowerCase()), 'run the app or taken a test payment')
 }
 
 export function saasReadyIssues(files: Record<string, FileVal>): { kind: 'launch-ready'; detail: string; fixPrompt: string }[] {

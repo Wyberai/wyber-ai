@@ -1,3 +1,4 @@
+import { readyMessage } from './ready-message'
 // Launch-ready web apps: the contract the model must follow, the price shown and charged, and a static check of what was built.
 //
 // Everything here is OFF unless NEXT_PUBLIC_WEBAPP_LAUNCH_READY=true (read on both the client and the server, same pattern as the
@@ -173,8 +174,7 @@ export function checkLaunchReady(files: Record<string, FileVal>): LaunchReadyRes
 /** What the owner sees. Says "present", never "works": this is a source check, not a browser run. */
 export function launchReadySummary(r: LaunchReadyResult): string {
   const missing = r.items.filter(i => !i.ok)
-  if (missing.length === 0) return `Launch-ready check: all ${r.total} items are present in the code. This reads the source; it does not run the app in a browser.`
-  return `Launch-ready check: ${r.passed} of ${r.total} items present. Adding: ${missing.map(m => m.label.toLowerCase()).join('; ')}.`
+  return readyMessage(missing.map(m => m.label.toLowerCase()), 'run the app in a browser')
 }
 
 /** Failing items as fix prompts for the free self-heal lane (at most four per pass, like the structural checks). */

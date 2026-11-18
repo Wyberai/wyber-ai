@@ -1,3 +1,4 @@
+import { readyMessage } from './ready-message'
 // Launch-ready mobile apps: the contract, the price floor, a source check and the store pack. Off unless NEXT_PUBLIC_MOBILE_LAUNCH_READY=true.
 // The existing mobile prompt already has a strong first-build block (four states, destructive confirms, brand moment, app identity,
 // account deletion, accessibility). This adds what was missing: nothing fake (no invented "AI insights"), real data paths, store readiness,
@@ -122,8 +123,7 @@ export function checkMobileReady(files: Record<string, FileVal>): MobileResult {
 
 export function mobileReadySummary(r: MobileResult): string {
   const missing = r.items.filter(i => !i.ok)
-  if (missing.length === 0) return `Launch-ready check: all ${r.total} items are present in the code. This reads the source; it does not run the app on a device.`
-  return `Launch-ready check: ${r.passed} of ${r.total} items present. Adding: ${missing.map(m => m.label.toLowerCase()).join('; ')}.`
+  return readyMessage(missing.map(m => m.label.toLowerCase()), 'run the app on a device')
 }
 
 export function mobileReadyIssues(files: Record<string, FileVal>): { kind: 'launch-ready'; detail: string; fixPrompt: string }[] {

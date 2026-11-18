@@ -401,8 +401,9 @@ const isTextFile = (f: File) => f.type.startsWith('text/') || f.type === 'applic
 const isPdfFile = (f: File) => f.type === 'application/pdf' || /\.pdf$/i.test(f.name);
 const isSpreadsheetFile = (f: File) => /\.xlsx?$/i.test(f.name);
 const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
-// Next-step prompts offered under the latest finished build. They only fill the input box (never send, never spend
-// credits) and are the same for everyone of that project type, so nothing here claims to know the user's project.
+// Next-step prompts for the latest finished build. The first one is shown as the single recommended step and runs on one
+// click (owner decision, 18 Nov 2026: one line, one button). The list is the same for everyone of that project type, so
+// nothing here claims to know the user's project.
 function nextStepsFor(projectType?: string): string[] {
   switch (projectType) {
     case 'website': return ['Add a contact form', 'Add a pricing section', 'Improve it for search (SEO)'];
@@ -2424,7 +2425,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
       if (opts?.continuation && finalContent === t('doneCheckPreviewMsg')) {
         finalContent = t('continuationDoneMsg');
         // A launch-ready fix pass says what it was asked to add, not a generic "done".
-        if (opts?.qaFix && qaSummaryRef.current) finalContent = `✓ Added from the launch-ready check: ${qaSummaryRef.current}.`;
+        if (opts?.qaFix && qaSummaryRef.current) finalContent = `✓ Added what was missing: ${qaSummaryRef.current}.`;
       }
       // A cut stream means the turn ends mid-work — say so, or the preamble
       // reads as a finished summary ("…Let me look at App.tsx:") and the user
@@ -4185,10 +4186,16 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
                   )}
                   {msg.id === nextStepMsgId && !isGenerating && !dismissedNext && (
                     <div style={{ marginTop:8, display:'flex', flexWrap:'wrap', gap:6, alignItems:'center' }} role="group" aria-label="Suggested next steps">
-                      <span style={{ fontSize:12, color:'var(--ide-text3)' }}>Next:</span>
-                      {nextStepsFor(projectType).map(label => (
-                        <button key={label} type="button" onClick={() => { setInput(label); textareaRef.current?.focus(); track('chat_next_step_picked', { label, projectType: projectType || 'unknown' }); }}
-                          style={{ fontSize:12, padding:'5px 11px', borderRadius:999, border:'1px solid var(--ide-border2)', background:'transparent', color:'var(--ide-text2)', cursor:'pointer', fontFamily:'var(--font-sans)' }}>{label}</button>
+                      <span style={{ fontSize:12, color:'var(--ide-text3)' }}>Recommended next:</span>
+                      {/* One recommended step, one click: it sends straight away. The edit price is shown before it runs, as for any change. */}
+                      {nextStepsFor(projectType).slice(0, 1).map(label => (
+                        <button key={label} type="button" onClick={() => {
+                            track('chat_next_step_picked', { label, projectType: projectType || 'unknown' });
+                            setInput(label);
+                            setDismissedNext(true);
+                            setTimeout(() => (document.querySelector('[data-send-button]') as HTMLButtonElement | null)?.click(), 120);
+                          }}
+                          style={{ fontSize:12, fontWeight:700, padding:'6px 14px', borderRadius:999, border:'none', background:'#0EA5E9', color:'#03111c', cursor:'pointer', fontFamily:'var(--font-sans)' }}>{label} →</button>
                       ))}
                       <button type="button" className="wy-tap" aria-label="Hide suggestions" onClick={() => setDismissedNext(true)}
                         style={{ background:'none', border:'none', color:'var(--ide-text3)', cursor:'pointer', fontSize:14, lineHeight:1, padding:0 }}>×</button>

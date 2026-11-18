@@ -103,8 +103,8 @@ describe('checkWebsiteReady', () => {
   it('passes a site that has everything', () => {
     const r = checkWebsiteReady(GOOD)
     expect(r.items.filter(i => !i.ok).map(i => i.id)).toEqual([])
-    expect(websiteReadySummary(r)).toMatch(/all \d+ items are present/)
-    expect(websiteReadySummary(r)).toMatch(/does not open the site in a browser/)
+    expect(websiteReadySummary(r)).toMatch(/Nothing missing/)
+    expect(websiteReadySummary(r)).toMatch(/not opened the site in a browser/)
   })
 
   it('flags the classic failures: fake compliance, fake success, no contact path, no owner file', () => {
@@ -286,7 +286,7 @@ describe('post-build check is wired without the agent team (15 Nov)', () => {
     expect(src).toMatch(/const qaFirstBuild = !hasGeneratedFiles \|\| \(opts\?\.stage === 'fill' && !!opts\?\.finalPass\)/)
   })
   it('a launch-ready fix pass names what it added; continuation passes never claim the build is complete (16 Nov)', () => {
-    expect(src).toMatch(/Added from the launch-ready check:/)
+    expect(src).toMatch(/Added what was missing:/)
     const dict = fs.readFileSync(path.join(process.cwd(), 'src/lib/i18n/dict/editor-chatpanel.ts'), 'utf8')
     expect(dict).not.toMatch(/continuationDoneMsg: '[^']*build is complete/i)
   })

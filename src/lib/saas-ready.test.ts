@@ -73,8 +73,8 @@ describe('checkSaasReady', () => {
   it('passes a build that has everything', () => {
     const r = checkSaasReady(GOOD)
     expect(r.items.filter(i => !i.ok).map(i => i.id)).toEqual([])
-    expect(saasReadySummary(r)).toMatch(/all \d+ items are present/)
-    expect(saasReadySummary(r)).toMatch(/does not run the app or take a test payment/)
+    expect(saasReadySummary(r)).toMatch(/Nothing missing/)
+    expect(saasReadySummary(r)).toMatch(/not run the app or taken a test payment/)
   })
 
   it('flags a typical demo SaaS: invented price, mocked billing, fake Google button, fake claims', () => {

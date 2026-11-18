@@ -104,3 +104,10 @@ CODE: (1) three new non-green palettes (Plum Studio, Trade Blue, Calm Ocean) for
 ## Anti-AI-slop scanner (new)
 
 CODE: src/lib/slop-scan.ts (9 checks: stock phrases, placeholder text, invented proof, exclamation marks, em dashes, emoji as icons, indigo/violet gradient, cream-with-orange, stock fonts; every finding quotes what it found; refuses to judge an empty shell). Public endpoint POST /api/tools/slop-scan (same guardrails as the other tools) and an "Anti-Slop" tab on /tools beside Security, SEO and AI Visibility. 7 tests. Run locally against live sites: dental test site 100; wyberai.com 90 (its own stylesheet contains a purple gradient, which is a true finding). A first version read the platform shell's stylesheet for published apps and gave every app the platform's purple; fixed by judging only the app's own document. Security tab needs a Supabase URL and key, so it was not run.
+
+## Owner decisions, 18 Nov 2026
+
+1. Credits: charge TWICE as many credits for generations only (builds, edits, components); scans, images, agents etc. unchanged; plan and free credits unchanged. Built on branch pricing/generation-x2 (GENERATION_PRICE_FACTOR = 2), NOT on the promote branch, because (a) the free 30 credits no longer cover even a small build (small = 60 on the fast model), (b) about fifteen pages, blogs, docs and emails state the old prices ("a small build is 30 credits", a post titled "What 30 free credits build"). Needs a decision on free credits and a copy sweep before it goes live.
+2. Build messages: one plain line, one recommended button, what is still missing. DONE on the promote branch: shared readyMessage ("Nothing missing from our launch list. Checked in the code only; we have not run the app." / "Still missing: ... Adding it now."), "Finished the rest.", "Added what was missing: ...", and a single "Recommended next" button that sends on one click.
+3. Domain margin: $1 universal above the reseller price (replaces the earlier Rs 10 and Rs 50 / $0.50 figures).
+4. Post: show what Claude creates next to what WyberAi creates, same briefs, scored, raw outputs shown.
