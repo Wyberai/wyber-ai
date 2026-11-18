@@ -21,7 +21,7 @@ Sources: QA run (E1-E24, see qa-run-2026-11-18.md), the owner's notes, and the o
 | E14 | Price tables do not match charges | PARTIAL: footnote now says complete builds are priced by what they include; no price changes |
 | E15 | /api/security/rls-scan 400 | DONE: post-publish check is silent when no database |
 | E16 | /api/github?userId 401 | DONE: 200 not-connected, no user id in URL |
-| E17 | Two histories disagree | DEFERRED: two tables (project_snapshots from the top bar, project_versions from the rail). Needs a decision on which one to keep; merging touches restore paths |
+| E17 | Two histories disagree | CODE: History tab now lists snapshots (top bar) and older versions together, loads files on demand, and saves to snapshots. Not run in a browser: verify save in the top bar then see it in the tab, preview and restore both kinds |
 | E18 | /solve ignores user words | DONE: "notebook" matched the "book" booking word; topic words now whole-word, loose words removed; tests |
 | E19 | Blog Calendly numbers vs /byos | DONE: post explains the two groupings |
 | E20 | "Add free database" chip opens Supabase form | DONE: opens the WyberCloud Database tab |
