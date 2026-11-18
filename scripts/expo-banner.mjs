@@ -7,7 +7,7 @@ import fs from 'node:fs'
 const OUT = path.join(os.homedir(), 'OneDrive', 'Desktop', 'Wyber Ai', 'Gujarat Tech Expo', 'booth-artwork', 'xpro-banner-1600x400.png')
 const SKY = '#0ea5e9'
 const mark = `<svg width="64" height="64" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="${SKY}"/><path d="M20 7L11 16L20 25" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M23 11L28 16L23 21" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.4"/></svg>`
-const tiles = [['Billing', 'only the fields you fill'], ['Stock', 'no 40-column sheet'], ['Attendance', 'on a phone'], ['Follow-ups', 'the next call, in one place']]
+const tiles = [['Timesheets', 'who worked on what'], ['CRM', 'every lead, one place'], ['Attendance', 'on a phone'], ['Leave', 'approvals, not chats']]
 const html = `<!doctype html><html><head><meta charset="utf-8"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
 <style>*{box-sizing:border-box}html,body{margin:0;width:1600px;height:400px;background:#05060a;color:#f2f4f8;font-family:Inter,sans-serif;overflow:hidden}
 .glow{position:absolute;right:-120px;top:-160px;width:620px;height:620px;border-radius:50%;background:radial-gradient(closest-side,rgba(14,165,233,.28),transparent)}
@@ -20,10 +20,10 @@ const html = `<!doctype html><html><head><meta charset="utf-8"><link href="https
 .m{position:absolute;left:64px;bottom:30px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:17px;letter-spacing:.14em;color:#6b7488}
 </style></head><body><div class="glow"></div>
 <div class="logo">${mark}<div>Wyber<span style="color:${SKY}">Ai</span></div></div>
-<div class="h">Your software<br>has 100 features. You use <span style="color:${SKY}">5.</span></div>
+<div class="h">Stop renting<br><span style="color:${SKY}">small software.</span></div>
 <div class="s">Tell us your pain points. Build your own software.</div>
 <div class="t">${tiles.map(([a, b]) => `<div class="c"><b>${a}</b><span>${b}</span></div>`).join('')}</div>
-<div class="m">KEEP THE 5 YOU USE. SKIP THE OTHER 95.</div>
+<div class="m">BUILT ONCE. YOURS TO KEEP.</div>
 </body></html>`
 
 const browser = await puppeteer.launch({ executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe', headless: true, args: ['--no-sandbox'] })
