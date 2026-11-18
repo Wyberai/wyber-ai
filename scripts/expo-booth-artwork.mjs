@@ -66,9 +66,8 @@ async function backdrop() {
   }
   const icon = (t, size) => `<svg width="${size}mm" height="${size}mm" viewBox="0 0 24 24" fill="none" stroke="${SKY}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block">${ICON[t]}</svg>`
   const tw = (1609 - 2 * 28) / 3
-  const tiles = WHAT.map(([t, d]) => `<div style="width:${tw}mm;height:314mm;border-radius:20mm;background:linear-gradient(160deg,#101826,#0b0f17);border:2mm solid #1d2638;padding:26mm 28mm;box-sizing:border-box;position:relative">${icon(t, 64)}<div style="font-weight:900;font-size:50mm;letter-spacing:-0.03em;margin-top:14mm">${t}</div><div style="font-size:30mm;line-height:1.34;color:${MUTED};margin-top:8mm">${d}</div></div>`).join('')
+  const tiles = WHAT.map(([t, d]) => `<div style="width:${tw}mm;height:314mm;border-radius:20mm;background:#0e131c;border:2mm solid #1d2638;padding:26mm 28mm;box-sizing:border-box;position:relative">${icon(t, 64)}<div style="font-weight:900;font-size:50mm;letter-spacing:-0.03em;margin-top:14mm">${t}</div><div style="font-size:30mm;line-height:1.34;color:${MUTED};margin-top:8mm">${d}</div></div>`).join('')
   return page(W, W, `
-    <div class="abs" style="right:-380mm;top:-380mm;width:1500mm;height:1500mm;border-radius:50%;background:radial-gradient(closest-side,rgba(14,165,233,.2),transparent)"></div>
     <div class="abs" style="left:${M}mm;top:${M}mm">${logo(150, 118)}</div>
     <div class="abs" style="right:${M}mm;top:${M}mm;width:330mm">${qrPlate(330, qr)}
       <div style="${mono(24, MUTED, 'margin-top:20mm;line-height:1.45;text-align:center')}">SCAN QR TO VIEW<br>STALL DETAILS</div>
@@ -102,7 +101,6 @@ async function tableFront() {
   const W = 4 * FT, H = 2.6 * FT, M = 62
   const qr = await qrSvg()
   return page(W, H, `
-    <div class="abs" style="right:-260mm;top:-260mm;width:900mm;height:900mm;border-radius:50%;background:radial-gradient(closest-side,rgba(14,165,233,.2),transparent)"></div>
     <div class="abs" style="left:${M}mm;top:${M}mm">${logo(86, 66)}</div>
     <div class="abs" style="right:${M}mm;top:${M}mm;width:292mm">${qrPlate(292, qr)}
       <div style="${mono(18, MUTED, 'margin-top:12mm;text-align:center')}">SCAN QR TO VIEW STALL DETAILS</div></div>
@@ -115,7 +113,6 @@ async function tableFront() {
 async function tableSide() {
   const W = 2.5 * FT, H = 2 * FT, M = 48
   return page(W, H, `
-    <div class="abs" style="right:-220mm;top:-220mm;width:700mm;height:700mm;border-radius:50%;background:radial-gradient(closest-side,rgba(14,165,233,.2),transparent)"></div>
     <div class="abs" style="left:${M}mm;top:${M}mm">${logo(70, 54)}</div>
     <div class="abs" style="left:${M}mm;top:215mm;font-weight:900;font-size:72mm;line-height:1;letter-spacing:-0.04em">Vibe coding.<br><span class="sky">Plus superpowers.</span></div>
     <div class="abs" style="left:${M}mm;bottom:${M}mm;background:${SKY};color:#03111c;border-radius:30mm;padding:9mm 24mm;${mono(18, '#03111c', 'letter-spacing:.08em')}">TELL US YOUR PAIN POINT</div>
