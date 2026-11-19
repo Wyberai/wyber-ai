@@ -56,6 +56,7 @@ describe('contract', () => {
 })
 
 const GOOD: Record<string, string> = {
+  'src/Shell.tsx': `import { Button, Card, Dialog } from './wyber-ui'`,
   'src/lib/db.ts': `const KEY='shop:v1'; export function list(){ try { return JSON.parse(localStorage.getItem(KEY) ?? '[]') } catch { return [] } }`,
   'src/App.tsx': `
     document.title = 'Dukaan Khata | Billing';

@@ -8,6 +8,7 @@ import { readyMessage } from './ready-message'
 import { creditCost, type BuildSizeTier } from './credits'
 import { settingsForNeeds } from './go-live'
 import { scanSlopSource } from './unslop'
+import { kitImportCount } from './kit-imports'
 
 export const SAAS_MIN_TIER: BuildSizeTier = 'large'
 const TIER_ORDER: BuildSizeTier[] = ['small', 'medium', 'large', 'xl']
@@ -75,6 +76,9 @@ function strayPrices(code: string): boolean {
 }
 
 const CHECKS: Check[] = [
+  { id: 'uses-kit', label: 'Built from the Wyber UI kit',
+    fix: "Replace hand-written buttons, inputs, cards, dialogs, tabs, tables, toasts and empty states with the Wyber UI kit's components: import { Button, Input, Card, Badge, Dialog, Tabs, DataTable, Toast } from './wyber-ui' (only the ones this app needs; check the kit reference for exact names) and delete the hand-written copies. Do not add gradients, glow or blur.",
+    test: c => kitImportCount(c) >= 3 },
   { id: 'demo-banner', label: 'Demo-mode line while services are not connected',
     fix: 'Show "Demo mode: nothing is charged, sent or stored on a server." while services are not connected, and label sample data as demo.',
     test: c => /demo mode/i.test(c) },

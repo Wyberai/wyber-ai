@@ -1,4 +1,5 @@
 import { readyMessage } from './ready-message'
+import { kitImportCount } from './kit-imports'
 // Launch-ready web apps: the contract the model must follow, the price shown and charged, and a static check of what was built.
 //
 // Everything here is OFF unless NEXT_PUBLIC_WEBAPP_LAUNCH_READY=true (read on both the client and the server, same pattern as the
@@ -103,6 +104,9 @@ interface Check {
 const count = (re: RegExp, s: string) => (s.match(re) ?? []).length
 
 const CHECKS: Check[] = [
+  { id: 'uses-kit', label: 'Built from the Wyber UI kit',
+    fix: "Replace hand-written buttons, inputs, cards, dialogs, tabs, tables, toasts and empty states with the Wyber UI kit's components: import { Button, Input, Card, Badge, Dialog, Tabs, Toast } from './wyber-ui' (only the ones this app needs; check the kit reference for exact names) and delete the hand-written copies. Do not add gradients, glow or blur.",
+    test: c => kitImportCount(c) >= 3 },
   { id: 'persist', label: 'Data saved through a db module',
     fix: 'Create src/lib/db.ts with list/get/create/update/remove functions over localStorage (try/catch, schema version) and use it for every entity instead of plain useState seed data.',
     test: c => /localStorage/.test(c) && /JSON\.parse/.test(c) && /\/\/ FILE [^\n]*\bdb\b/i.test(c) },

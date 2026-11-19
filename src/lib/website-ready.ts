@@ -6,6 +6,7 @@ import { readyMessage } from './ready-message'
 
 import { creditCost, type BuildSizeTier } from './credits'
 import { scanSlopSource } from './unslop'
+import { kitImportCount } from './kit-imports'
 
 export const WEBSITE_MIN_TIER: BuildSizeTier = 'medium'
 const TIER_ORDER: BuildSizeTier[] = ['small', 'medium', 'large', 'xl']
@@ -258,14 +259,7 @@ export function englishWordCount(code: string): number {
   return words
 }
 
-/** Distinct names imported from the Wyber UI kit across the site's files (import { A, B as C } from './wyber-ui'). */
-export function kitImportCount(code: string): number {
-  const names = new Set<string>()
-  for (const m of code.matchAll(/import\s*\{([^}]+)\}\s*from\s*['"][./]*\/?wyber-ui['"]/g)) {
-    for (const part of m[1].split(',')) { const n = part.trim().split(/\s+as\s+/)[0].trim(); if (n) names.add(n) }
-  }
-  return names.size
-}
+export { kitImportCount }
 
 const CHECKS: Check[] = [
   { id: 'sections-depth', label: 'At least six content sections',

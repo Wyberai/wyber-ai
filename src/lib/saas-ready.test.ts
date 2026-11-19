@@ -52,6 +52,7 @@ describe('contract', () => {
 })
 
 const GOOD: Record<string, string> = {
+  'src/Shell.tsx': `import { Button, Card, Dialog } from './wyber-ui'`,
   'src/plans.ts': `export const PLANS = [{ id: 'free', price: null, limit: 3 }, { id: 'pro', price: 999, limit: 50 }]`,
   'src/owner-details.ts': `export const OWNER = { company: '' }`,
   'api/checkout.ts': `const key = process.env.STRIPE_SECRET_KEY; export default async function handler(){}`,

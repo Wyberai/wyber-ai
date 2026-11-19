@@ -57,3 +57,13 @@ describe('quiet prompt trim', () => {
     expect(route).toMatch(/if \(!on\) return base/)
   })
 })
+
+describe('kit-import check for saas and web app', () => {
+  it('both checks exist and fail a build that imports nothing from the kit', async () => {
+    const { checkSaasReady } = await import('./saas-ready')
+    const { checkLaunchReady } = await import('./launch-ready')
+    const none = { 'src/App.tsx': 'export default function App(){ return <div/> }' }
+    expect(checkSaasReady(none).items.find(i => i.id === 'uses-kit')?.ok).toBe(false)
+    expect(checkLaunchReady(none).items.find(i => i.id === 'uses-kit')?.ok).toBe(false)
+  })
+})
