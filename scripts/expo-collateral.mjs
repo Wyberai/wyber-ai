@@ -161,7 +161,7 @@ await page.setViewport({ width: 1200, height: 1200, deviceScaleFactor: 1 })
 await load(await cardSquare()); await page.screenshot({ path: path.join(OUT, 'wyberai-visiting-card-1x1.png') }); console.log('png card square')
 }
 await page.setViewport({ width: 1000, height: 1000, deviceScaleFactor: 1 })
-if (!process.env.ONLY || process.env.ONLY === 'brochure') await load(thumb()); await page.screenshot({ path: path.join(OUT, 'wyberai-brochure-thumbnail-1x1.png') }); console.log('png thumb')
+if (!process.env.ONLY || process.env.ONLY === 'brochure') { await load(thumb()); await page.screenshot({ path: path.join(OUT, 'wyberai-brochure-thumbnail-1x1.png') }); console.log('png thumb') }
 await page.setViewport({ width: 1000, height: 1000, deviceScaleFactor: 1 })
 if (!process.env.ONLY) for (const t of TYPES) { await load(tile(t)); const n = t.tag.toLowerCase().replace(/\s+/g, '-'); await page.screenshot({ path: path.join(OUT, `tile-${n}.png`) }); console.log('png tile', n) }
 fs.rmSync(tmp, { force: true })
