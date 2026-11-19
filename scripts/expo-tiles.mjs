@@ -4,16 +4,16 @@ import path from 'node:path'
 import os from 'node:os'
 import fs from 'node:fs'
 
-const OUT = path.join(os.homedir(), 'OneDrive', 'Desktop', 'Wyber Ai', 'Gujarat Tech Expo', 'booth-artwork', '2-UPLOAD-TO-XPRO', 'service-tiles')
-fs.mkdirSync(OUT, { recursive: true })
+const OUT = path.join(os.homedir(), 'OneDrive', 'Desktop', 'Wyber Ai', 'Gujarat Tech Expo', 'booth-artwork', '2-UPLOAD-TO-XPRO')
+for (const d of ["products", "services"]) fs.mkdirSync(path.join(OUT, d), { recursive: true })
 const SKY = '#0ea5e9'
 const mark = `<svg width="84" height="84" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="${SKY}"/><path d="M20 7L11 16L20 25" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M23 11L28 16L23 21" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.4"/></svg>`
 const SERVICES = [
-  ['service-website', 'Website', 'Your business, online. A shop, clinic, studio or firm, live by tonight with a WhatsApp enquiry button.'],
-  ['service-web-app', 'Web app', 'Tools for your team. Trackers, approvals, invoices and dashboards that replace sheets and chat threads.'],
-  ['service-mobile-app', 'Mobile app', 'An app people install. Orders, attendance or delivery proof on a phone, for your team or your customers.'],
-  ['service-saas', 'SaaS', 'A product you sell. Logins, a database and a link customers can sign up on.'],
-  ['service-replace-your-saas', 'Replace your SaaS', 'Your own, in-house. Swap a SaaS you pay for with your own version, built around the features you use.'],
+  ['product-website', 'Website', 'Your business, online. A shop, clinic, studio or firm, live by tonight with a WhatsApp enquiry button.'],
+  ['product-web-app', 'Web app', 'Tools for your team. Trackers, approvals, invoices and dashboards that replace sheets and chat threads.'],
+  ['product-mobile-app', 'Mobile app', 'An app people install. Orders, attendance or delivery proof on a phone, for your team or your customers.'],
+  ['product-saas', 'SaaS', 'A product you sell. Logins, a database and a link customers can sign up on.'],
+  ['product-replace-your-saas', 'Replace your SaaS', 'Your own, in-house. Swap a SaaS you pay for with your own version, built around the features you use.'],
 ]
 const POWERS = [
   ['power-data-leak-test', 'Data leak test', 'We probe your live database like an attacker, right after you publish.'],
@@ -41,7 +41,7 @@ for (const [file, t, d] of TILES) {
   await pg.setViewport({ width: 1000, height: 1000, deviceScaleFactor: 1 })
   await pg.setContent(html(t, d), { waitUntil: 'networkidle2', timeout: 90000 })
   await pg.evaluate(() => document.fonts.ready)
-  await pg.screenshot({ path: path.join(OUT, file + '.png') })
+  await pg.screenshot({ path: path.join(OUT, file.startsWith('power-') ? 'services' : 'products', file + '.png') })
   await pg.close()
   console.log('wrote', file)
 }
