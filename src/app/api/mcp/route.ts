@@ -7,6 +7,9 @@ import { getProjectSupabase } from '@/lib/mcp/project-db'
 import { runSql } from '@/lib/supabase-management'
 import { runProjectRlsScan } from '@/lib/rls-scan-project'
 import { creditCost, resolveBuildTier, type ActionType, type ModelTier, type BuildSizeTier } from '@/lib/credits'
+import { floorTierForProjectType } from '@/lib/mcp/pricing'
+import { pickerOptions } from '@/lib/direction-picker'
+import { directionsEnabled } from '@/lib/direction-flag'
 import { PLAN_FACTS } from '@/lib/plans'
 import { currencyForCountry } from '@/lib/currency'
 import { Composio } from '@composio/core'
@@ -224,7 +227,7 @@ const handler = createMcpHandler(
 
     server.tool(
       'get_palette_options',
-      'Get 3 design palette options for the build. User picks one or "Surprise me".',
+      'Get 3 design options for the build: our own researched design directions for websites, SaaS and web apps (palettes for mobile). Pass the chosen id as palette_id to start_build, or skip it and the builder chooses.',
       {
         prompt: z.string().describe('User description/prompt for the build'),
         project_type: z.enum(['web-app', 'mobile', 'website', 'saas']).describe('Type of project'),
@@ -237,7 +240,8 @@ const handler = createMcpHandler(
         try {
           // Import pickPaletteOptions from lib/design-palettes at runtime
           const { pickPaletteOptions } = await import('@/lib/design-palettes')
-          const palettes = pickPaletteOptions(args.prompt, 3)
+          const picked = pickerOptions(args.prompt, 3, { enabled: directionsEnabled(), projectType: args.project_type })
+          const palettes = picked.directions && args.project_type !== 'mobile' ? picked.options : pickPaletteOptions(args.prompt, 3)
 
           return jsonResult({
             palettes: palettes.map(p => ({
@@ -246,7 +250,7 @@ const handler = createMcpHandler(
               vibe: p.vibe,
               mode: p.mode,
             })),
-            message: 'Pick a design direction or click "Surprise me" for a random palette.',
+            message: 'Pick one and pass its id as palette_id to start_build, or skip it and the builder chooses the direction that fits the brief.',
           })
         } catch (err) {
           // Fallback if pickPaletteOptions unavailable
@@ -315,7 +319,7 @@ const handler = createMcpHandler(
         let actionType: ActionType
         if (isFirstBuild) {
           const estimatedFiles = args.estimated_files ?? 15
-          buildTier = resolveBuildTier({ totalPlannedFiles: estimatedFiles })
+          buildTier = floorTierForProjectType(args.project_type, resolveBuildTier({ totalPlannedFiles: estimatedFiles }))
           actionType = actionTypeMap[args.project_type]
         } else {
           actionType = 'small-edit'
@@ -352,7 +356,7 @@ const handler = createMcpHandler(
 
     server.tool(
       'start_build',
-      'Queue a build with type and palette selected. 8-10 minute build time. Returns message_id and live progress URL.',
+      'Queue a build. palette_id may be a design direction id from get_palette_options. Usually takes 2 to 5 minutes, longer for large builds. Returns message_id and a live progress URL; poll get_message_status.',
       {
         project_id: z.string().describe('Project ID'),
         message: z.string().describe('What to build (user description)'),
@@ -403,7 +407,7 @@ const handler = createMcpHandler(
         let estimatedFiles: number | undefined
         if (isFirstBuild) {
           estimatedFiles = args.estimated_files ?? 15
-          buildTier = resolveBuildTier({ totalPlannedFiles: estimatedFiles })
+          buildTier = floorTierForProjectType(args.project_type, resolveBuildTier({ totalPlannedFiles: estimatedFiles }))
           actionType = actionTypeMap[args.project_type]
         } else {
           actionType = 'small-edit'
@@ -442,7 +446,7 @@ const handler = createMcpHandler(
           build_tier: buildTier,
           model_tier: modelTier,
           status_url: statusUrl,
-          message: `🏗️ Building your ${args.project_type}...\n⏱️ Estimated time: 8-10 minutes\n\n📊 Live Progress: ${statusUrl}\n\nI'll let you know when it's done!`,
+          message: `🏗️ Building your ${args.project_type}...\n⏱️ Usually 2 to 5 minutes (large builds take longer)\n\n📊 Live Progress: ${statusUrl}\n\nI'll let you know when it's done!`,
         })
       },
     )
@@ -473,7 +477,7 @@ const handler = createMcpHandler(
         let emoji = '⏳'
         let progressMsg = ''
         if (data.status === 'queued') {
-          progressMsg = `⏳ Queued for ${elapsedMin}m ${elapsedSec}s. Builds typically take 8-10 minutes total.`
+          progressMsg = `⏳ Queued for ${elapsedMin}m ${elapsedSec}s. Builds usually take 2 to 5 minutes; large ones take longer.`
         } else if (data.status === 'processing') {
           emoji = '🔨'
           progressMsg = `🔨 Building for ${elapsedMin}m ${elapsedSec}s. This is normal — generation takes time.`
@@ -516,7 +520,7 @@ const handler = createMcpHandler(
 
     server.tool(
       'publish_to_web',
-      'Publish project to live URL. Includes RLS security check. Shows share options after.',
+      'Publish the project to a live URL. An exposed secret key blocks the publish. The database (RLS) scan runs right after publishing and warns at once if it finds a leak. Returns the live URL.',
       { project_id: z.string().describe('Project ID') },
       { title: 'Publish to web', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: true },
       async (args, extra) => {
@@ -1368,7 +1372,7 @@ const handler = createMcpHandler(
       },
     )
   },
-  { serverInfo: { name: 'wyber-ai', version: '2.4.0' } },
+  { serverInfo: { name: 'wyber-ai', version: '2.5.0' } },
   {
     // The handler matches the request path against this endpoint. Our route
     // lives at /api/mcp, so the full path must be configured here (basePath
