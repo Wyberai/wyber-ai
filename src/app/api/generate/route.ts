@@ -5691,6 +5691,67 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
         }
       }
 
+      // ── Spec-driven web app build (flag WEBAPP_SPEC_BUILD=on, default OFF) ───────────────────────────────────────
+      // Same recipe for web apps (src/lib/app-spec): the model writes the DOMAIN MODEL (entities, fields, sample rows, metrics) as JSON,
+      // a fixed, tested runtime renders every screen, so the launch-ready contract is met by construction. Any failure falls through.
+      if (!handledBySpec && isNewBuild && stage === 'full' && !selfHeal && projectType !== 'mobile' && projectType !== 'website' && projectType !== 'saas' && isLaunchReadyApp(projectType) && (await import('@/lib/app-spec/flag')).webappSpecEnabled()) {
+        try {
+          const { generateApp } = await import('@/lib/app-spec')
+          const APP_SPEC_TIMEOUT_MS = Number(process.env.WEBAPP_SPEC_TIMEOUT_MS) || 150000
+          let appTimer: ReturnType<typeof setTimeout> | undefined
+          const appResult = await Promise.race([
+            generateApp(
+              { prompt, seed: String(projectId ?? buildId ?? prompt) },
+              {
+                writeModel: async (system, user) => {
+                  const m = await client.messages.create({ model, max_tokens: 10000, system, messages: [{ role: 'user', content: user }] })
+                  const text = m.content.map(b => (b.type === 'text' ? b.text : '')).join('')
+                  return { text, inputTokens: m.usage.input_tokens ?? 0, outputTokens: m.usage.output_tokens ?? 0 }
+                },
+              },
+            ),
+            new Promise<never>((_, reject) => { appTimer = setTimeout(() => reject(new Error(`app-spec exceeded ${APP_SPEC_TIMEOUT_MS}ms`)), APP_SPEC_TIMEOUT_MS) }),
+          ]).finally(() => { if (appTimer) clearTimeout(appTimer) })
+          totalInputTokens += appResult.usage.inputTokens
+          totalOutputTokens += appResult.usage.outputTokens
+          if (appResult.ok) {
+            const appText = `[progress: Planning your app (${appResult.spec.brief.intent}, ${appResult.spec.direction.name})]\n` + appResult.text
+            const appFiles = parseGenerationOutput(appText).files
+            const appVetoes = appFiles.flatMap(f => reviewEmittedFile(f.path, f.content, '', { nextId: createFindingIdGenerator() })).filter(vetoEligible)
+            if (appVetoes.length) {
+              console.log(`[app-spec] security review blocked the rendered app (${appVetoes.map(v => v.ruleId).join(', ')}), falling back to the free-form build`)
+            } else {
+              generatedText = appText
+              let i = 0
+              const appChunk = 400
+              readable = new ReadableStream<Uint8Array>({
+                start(c) {
+                  emitAgent(c, { agent: 'coder', status: 'start', detail: 'rendering your app from the plan' })
+                  emitAgent(c, { agent: 'security', status: 'start', detail: 'reviewing every file as it lands' })
+                  for (const f of appFiles) sentinelReview(c, f.path, f.content)
+                },
+                pull(c) {
+                  if (i >= appText.length) {
+                    emitAgent(c, { agent: 'coder', status: 'done' })
+                    sentinelDone(c)
+                    c.close()
+                    return
+                  }
+                  c.enqueue(encoder.encode(appText.slice(i, i + appChunk)))
+                  i += appChunk
+                },
+              })
+              handledBySpec = true
+              console.log(`[app-spec] ok buildId=${buildId ?? ''} intent=${appResult.spec.brief.intent} direction=${appResult.spec.direction.id} entities=${appResult.model.entities.length} files=${appResult.paths.length} output=${appResult.usage.outputTokens} elapsed_ms=${Date.now() - requestStartTime}`)
+            }
+          } else {
+            console.log(`[app-spec] falling back to the free-form build: ${appResult.reason.slice(0, 300)}`)
+          }
+        } catch (appErr) {
+          console.log('[app-spec] threw, falling back to the free-form build:', String(appErr))
+        }
+      }
+
       let handledByParallel = handledBySpec
       if (!handledBySpec && useToolUse && isNewBuild && newBuildComplexity !== true && process.env.CLAUDE_PARALLEL_BUILD !== 'off') {
         try {

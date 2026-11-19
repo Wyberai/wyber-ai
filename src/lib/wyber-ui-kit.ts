@@ -675,7 +675,7 @@ export function StatBlock({ value, label, delta, prefix = '', suffix = '', decim
           : value}
       </div>
       <div className="flex items-center gap-2">
-        <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</span>
+        <span className="text-sm text-muted-foreground">{label}</span>
         {typeof delta === 'number' && (
           <span className={cn('inline-flex items-center gap-0.5 text-xs font-semibold', delta >= 0 ? 'text-primary' : 'text-destructive')}>
             {delta >= 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
@@ -2208,7 +2208,7 @@ export function BottomTabBar({ items, active, onChange, className }: {
   className?: string
 }) {
   return (
-    <nav className={cn('fixed inset-x-0 bottom-0 z-50 border-t border-border bg-background/90 backdrop-blur-xl', className)}>
+    <nav className={cn('fixed inset-x-0 bottom-0 z-50 border-t border-border bg-background', className)}>
       <div className="mx-auto flex max-w-lg items-stretch justify-around">
         {items.map(item => {
           const isActive = item.id === active
