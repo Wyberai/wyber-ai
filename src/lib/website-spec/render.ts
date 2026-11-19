@@ -13,7 +13,17 @@ const q = (s: string) => s.replace(/["{}|]/g, ' ').replace(/\s+/g, ' ').trim()
 
 /** The directive parser only knows 1:1, 9:16 and 16:9; anything else falls back to wide. CSS crops to the slot ratio. */
 export function directiveRatio(ratio: string): string { return ratio === '4/5' || ratio === '9/16' ? '9:16' : ratio === '1/1' ? '1:1' : '16:9' }
-export function imageDirective(slot: ImageSlot): string { return `{{wyber-image: ${q(slot.brief)} | ${directiveRatio(slot.ratio)}}}` }
+/** Added to every image prompt: an image model paints any lettering it is given, and a live build once showed a made-up phone number on a sign. */
+export const IMAGE_HYGIENE = 'Photographic, natural light. No text, no signage, no lettering, no logos, no phone numbers, no watermarks.'
+export function imageDirective(slot: ImageSlot, subject: string): string {
+  return `{{wyber-image: ${q(`${subject} Style: ${slot.brief} ${IMAGE_HYGIENE}`)} | ${directiveRatio(slot.ratio)}}}`
+}
+function subjectFor(spec: BuildSpec, copy: SiteCopy, slot: ImageSlot): string {
+  const written = slot.id === 'hero' ? copy.hero.imageBrief : copy.sections.about?.imageBrief
+  if (written) return written.replace(/\s+/g, ' ').trim()
+  const f = spec.brief.facts
+  return `A ${spec.brief.industry}${f.city ? ' in ' + f.city : ''}, an everyday scene of the place and its people.`
+}
 
 export function renderIndexCss(spec: BuildSpec): string {
   const d = getDirectionById(spec.direction.id)
@@ -75,7 +85,7 @@ export const OWNER = {
 
 // ---------- sections ----------------------------------------------------------------------------------------------
 
-type Ctx = { spec: BuildSpec; used: Set<string>; wrap: (jsx: string) => string }
+type Ctx = { spec: BuildSpec; copy: SiteCopy; used: Set<string>; wrap: (jsx: string) => string }
 const U = (c: Ctx, ...names: string[]) => names.forEach(n => c.used.add(n))
 const cp = (id: string) => `COPY.sections[${JSON.stringify(id)}]`
 const two = (i: number) => (i + 1 < 10 ? '0' : '') + (i + 1)
@@ -83,7 +93,7 @@ const two = (i: number) => (i + 1 < 10 ? '0' : '') + (i + 1)
 function heroMedia(c: Ctx, slot: ImageSlot | undefined, extra = ''): string {
   if (!slot) return ''
   U(c, 'MediaFrame')
-  return `<MediaFrame src="${imageDirective(slot)}" alt={COPY.hero.imageAlt} ratio="${slot.ratio}"${extra} />`
+  return `<MediaFrame src="${imageDirective(slot, subjectFor(c.spec, c.copy, slot))}" alt={COPY.hero.imageAlt} ratio="${slot.ratio}"${extra} />`
 }
 
 function hero(c: Ctx): string {
@@ -214,7 +224,7 @@ function about(c: Ctx, s: PlannedSection): string {
             <div className="md:col-span-${slot ? '6' : '5'}">${heading(c, s, 'left')}</div>
             <div className="space-y-5 text-lg leading-relaxed text-muted-foreground md:col-span-${slot ? '6' : '7'}">
               {${k}.paragraphs!.map((p, i) => <Reveal key={i}><p>{p}</p></Reveal>)}
-              ${slot ? `<MediaFrame src="${imageDirective(slot)}" alt={${k}.imageAlt ?? ''} ratio="${slot.ratio}" className="mt-8 max-w-sm" />` : ''}
+              ${slot ? `<MediaFrame src="${imageDirective(slot, subjectFor(c.spec, c.copy, slot))}" alt={${k}.imageAlt ?? ''} ratio="${slot.ratio}" className="mt-8 max-w-sm" />` : ''}
             </div>
           </div>`
 }
@@ -272,7 +282,7 @@ function sectionBody(c: Ctx, s: PlannedSection, copy: SiteCopy): string {
 
 export function renderApp(spec: BuildSpec, copy: SiteCopy): string {
   const used = new Set<string>(['Footer', 'Input', 'Textarea', 'Button', 'Card', spec.header === 'condensing' ? 'CondensingNavbar' : 'Navbar'])
-  const c: Ctx = { spec, used, wrap: j => j }
+  const c: Ctx = { spec, copy, used, wrap: j => j }
   const bodies = spec.sections.map((s, i) => {
     const inner = sectionBody(c, s, copy)
     const tone = i % 2 === 1 ? ' bg-card' : ''

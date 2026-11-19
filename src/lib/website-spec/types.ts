@@ -3,7 +3,7 @@
 
 export type IntentId =
   | 'local-service' | 'food' | 'catalogue' | 'store' | 'portfolio' | 'firm'
-  | 'education' | 'event' | 'community' | 'listings' | 'product' | 'publication'
+  | 'education' | 'event' | 'community' | 'listings' | 'product' | 'publication' | 'stay'
 
 /** Cross-cutting capabilities an intent switches on by default. The prompt can add or remove them. */
 export type ModuleId = 'enquiry' | 'whatsapp' | 'language' | 'map' | 'catalogue' | 'checkout' | 'booking' | 'newsletter'
@@ -64,6 +64,7 @@ export type ServicesVariant = 'cards' | 'list' | 'bento'
 
 export interface ImageSlot {
   id: string
+  /** Style only (from the design direction). The subject comes from the copy writer, see SiteCopy imageBrief. */
   brief: string
   ratio: string
   eager: boolean
@@ -110,11 +111,12 @@ export interface SectionCopy {
   paragraphs?: string[]
   button?: string
   imageAlt?: string
+  imageBrief?: string
 }
 
 export interface SiteCopy {
   brand: string
   seo: { title: string; description: string }
-  hero: { eyebrow?: string; headline: string; sub: string; cta: string; secondary: string; imageAlt: string }
+  hero: { eyebrow?: string; headline: string; sub: string; cta: string; secondary: string; imageAlt: string; imageBrief?: string }
   sections: Record<string, SectionCopy>
 }

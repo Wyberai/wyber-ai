@@ -41,6 +41,42 @@ describe('intent classifier', () => {
   })
 })
 
+describe('stay intent and feel (from the live Haveli Khamma build)', () => {
+  const haveli = 'Website for Haveli Khamma, a nine-room family-run heritage homestay in the old blue city of Jodhpur. Rooms: the Courtyard Room, the Jharokha Suite, the Rooftop Room. Home-cooked Marwari thali, a lane walk, airport pickup, a cooking lesson. The feel I want: warm, editorial and photo-led, like a travel magazine and not like a booking portal.'
+  it('a homestay is a stay, not an unclear local business', () => {
+    const b = classifyIntent(haveli)
+    expect(b.intent).toBe('stay')
+    expect(b.confidence).toBeGreaterThanOrEqual(0.5)
+    expect(BLUEPRINTS.stay.schemaType).toBe('LodgingBusiness')
+  })
+  it('the stated feel steers the direction: editorial, photo-led and not dark', () => {
+    for (const seed of ['a', 'b', 'c', 'd', 'e', 'f']) {
+      const s = planWebsite(haveli, { seed, facts: { city: 'Jodhpur' } })
+      expect(s.direction.mode, seed).toBe('light')
+      expect(['editorial', 'type-led', 'human', 'physical'], seed).toContain(s.direction.group)
+    }
+  })
+  it('image prompts never carry the goal action, digits or lettering, and always carry the hygiene line', () => {
+    const d = DEMOS[1]
+    const spec = planWebsite(d.prompt, { seed: d.seed, facts: d.facts })
+    const app = renderWebsite(spec, d.copy).files['src/App.tsx']
+    const prompt = app.match(/\{\{wyber-image: ([^|}]+)\|/)![1]
+    expect(prompt).toContain('No text, no signage')
+    expect(prompt).not.toMatch(/WhatsApp|enquire|call, /i)
+    expect(prompt).toContain('long-grain white rice')
+  })
+  it('copy without an image brief, or with contact wording or digits in it, is rejected', () => {
+    const d = DEMOS[1]
+    const spec = planWebsite(d.prompt, { seed: d.seed, facts: d.facts })
+    const none = structuredClone(d.copy); delete none.hero.imageBrief
+    expect(validateCopy(spec, none).map(i => i.path)).toContain('hero.imageBrief')
+    for (const bad of ['A shopfront with a board that says call now for a quote on rice from the warehouse.', 'A warehouse with 500 sacks of long-grain rice stacked in warm light from above.']) {
+      const c = structuredClone(d.copy); c.hero.imageBrief = bad
+      expect(validateCopy(spec, c).map(i => i.path), bad).toContain('hero.imageBrief')
+    }
+  })
+})
+
 describe('plan', () => {
   const prompt = DEMOS[0].prompt
   it('is deterministic for a seed and varies across seeds', () => {
@@ -145,7 +181,7 @@ describe('generate (model injected)', () => {
 
   it('plans, asks for copy once, validates, renders and returns <file> blocks with the entry file last', async () => {
     let calls = 0
-    const r = await generateWebsite({ prompt: d.prompt, seed: 's1', facts: d.facts }, { writeCopy: async () => { calls++; return reply(d.copy) } })
+    const r = await generateWebsite({ prompt: d.prompt, seed: d.seed, facts: d.facts }, { writeCopy: async () => { calls++; return reply(d.copy) } })
     expect(calls).toBe(1)
     expect(r.ok).toBe(true)
     if (!r.ok) return
@@ -159,7 +195,7 @@ describe('generate (model injected)', () => {
     const bad = structuredClone(d.copy)
     bad.hero.headline = 'The best clinic in the city!'
     const asked: string[] = []
-    const r = await generateWebsite({ prompt: d.prompt, seed: 's1', facts: d.facts }, {
+    const r = await generateWebsite({ prompt: d.prompt, seed: d.seed, facts: d.facts }, {
       writeCopy: async (_s, u) => { asked.push(u); return reply(asked.length === 1 ? bad : d.copy) },
     })
     expect(r.ok).toBe(true)
@@ -168,13 +204,13 @@ describe('generate (model injected)', () => {
   })
 
   it('gives up after two bad replies so the free-form build can take over', async () => {
-    const r = await generateWebsite({ prompt: d.prompt, seed: 's1', facts: d.facts }, { writeCopy: async () => ({ text: 'sorry, I cannot', inputTokens: 5, outputTokens: 5 }) })
+    const r = await generateWebsite({ prompt: d.prompt, seed: d.seed, facts: d.facts }, { writeCopy: async () => ({ text: 'sorry, I cannot', inputTokens: 5, outputTokens: 5 }) })
     expect(r.ok).toBe(false)
     if (!r.ok) { expect(r.reason).toMatch(/^copy:/); expect(r.usage.inputTokens).toBe(10) }
   })
 
   it('a thrown model error is a clean failure, not an exception', async () => {
-    const r = await generateWebsite({ prompt: d.prompt, seed: 's1', facts: d.facts }, { writeCopy: async () => { throw new Error('overloaded') } })
+    const r = await generateWebsite({ prompt: d.prompt, seed: d.seed, facts: d.facts }, { writeCopy: async () => { throw new Error('overloaded') } })
     expect(r.ok).toBe(false)
   })
 

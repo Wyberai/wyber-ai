@@ -4,6 +4,9 @@ import type { BuildSpec, SiteCopy } from './types'
 export const BANNED_CLAIMS =
   /(\bbest\b|#1|\bnumber one\b|\bleading\b|\bworld-class\b|\bpremier\b|award[- ]winning|\bcertified\b|\bguarantee[sd]?\b|\bmoney-back\b|\btrusted by\b|\b\d{2,}\+?\s*(years|clients|customers|patients|students|happy|projects)\b|\bover \d+\b|!)/i
 
+/** Words and digits that must never reach an image prompt. */
+export const IMAGE_BRIEF_BANNED = /(\d|\bwhatsapp\b|\bphone\b|\bcall\b|\bbook(?:ing)?\b|\benquir\w*\b|\bsigns?\b|\bsignage\b|\bposters?\b|\blogos?\b|\bbanners?\b|\bbrand name\b|\bwatermark\b|\bcaption\b|\bwritten\b|\bwords?\b|\btext\b)/i
+
 export interface CopyIssue { path: string; message: string }
 
 export function validateCopy(spec: BuildSpec, copy: SiteCopy): CopyIssue[] {
@@ -17,6 +20,16 @@ export function validateCopy(spec: BuildSpec, copy: SiteCopy): CopyIssue[] {
     }
   }
 
+  // An image prompt is painted by an image model: anything that reads like wording can end up on a sign (a live build showed
+  // "Call +91 ... WhatsApp Book" on a wall because the goal action leaked into the prompt), so the subject is words about a
+  // scene only, never contact wording, numbers or lettering.
+  const imageBrief = (path: string, v: unknown) => {
+    if (typeof v !== 'string' || v.trim().length < 50) return add(path, 'missing or too short (50 to 320 characters): one concrete photographable scene of this business')
+    if (v.length > 320) add(path, `too long (${v.length} > 320)`)
+    const bad = v.match(IMAGE_BRIEF_BANNED)?.[0]
+    if (bad) add(path, `describe the scene only, not "${bad}" (no numbers, contact wording, signs, logos or lettering)`)
+  }
+
   text('brand', copy.brand, 2, 60)
   text('seo.title', copy.seo?.title, 20, spec.seo.titleMax)
   text('seo.description', copy.seo?.description, spec.seo.descMin, spec.seo.descMax)
@@ -24,7 +37,10 @@ export function validateCopy(spec: BuildSpec, copy: SiteCopy): CopyIssue[] {
   text('hero.sub', copy.hero?.sub, 40, 220)
   text('hero.cta', copy.hero?.cta, 2, 28)
   text('hero.secondary', copy.hero?.secondary, 2, 28)
-  if (spec.images.some(i => i.altFrom === 'hero')) text('hero.imageAlt', copy.hero?.imageAlt, 20, 140)
+  if (spec.images.some(i => i.altFrom === 'hero')) {
+    text('hero.imageAlt', copy.hero?.imageAlt, 20, 140)
+    imageBrief('hero.imageBrief', copy.hero?.imageBrief)
+  }
 
   for (const s of spec.sections) {
     const c = copy.sections?.[s.id]
@@ -46,7 +62,7 @@ export function validateCopy(spec: BuildSpec, copy: SiteCopy): CopyIssue[] {
     if (s.kind === 'about') {
       if (!c.paragraphs?.length || c.paragraphs.length > 2) add(`${p}.paragraphs`, 'needs 1 or 2 paragraphs')
       c.paragraphs?.forEach((t, i) => text(`${p}.paragraphs[${i}]`, t, 40, 420))
-      if (spec.images.some(i => i.altFrom === 'about')) text(`${p}.imageAlt`, c.imageAlt, 20, 140)
+      if (spec.images.some(i => i.altFrom === 'about')) { text(`${p}.imageAlt`, c.imageAlt, 20, 140); imageBrief(`${p}.imageBrief`, c.imageBrief) }
     }
     if (s.kind === 'contact' || s.kind === 'cta') text(`${p}.button`, c.button, 2, 28)
   }
@@ -73,7 +89,9 @@ export function buildCopyPrompt(spec: BuildSpec, businessPrompt: string): { syst
     `Intent: ${spec.brief.intent}. Goal action: ${spec.brief.goalAction}. Industry: ${spec.brief.industry}.`,
     `Owner facts: ${JSON.stringify(f)}`,
     'Return JSON with: brand (a plain descriptor if no name is given), seo {title (max ' + spec.seo.titleMax + ' chars), description (' + spec.seo.descMin + ' to ' + spec.seo.descMax + ' chars)},',
-    'hero {eyebrow?, headline, sub, cta, secondary, imageAlt}, sections {<id>: {title, description?, items? [{title,text,meta?}], faq? [{question,answer}], paragraphs? [..], button?, imageAlt?}}.',
+    'hero {eyebrow?, headline, sub, cta, secondary, imageAlt, imageBrief}, sections {<id>: {title, description?, items? [{title,text,meta?}], faq? [{question,answer}], paragraphs? [..], button?, imageAlt?, imageBrief?}}.',
+    'imageBrief (where an image slot is listed below): 50 to 320 characters describing ONE concrete photographable scene of THIS business drawn from the owner brief (the place, the objects, the light). Scene only: no digits, no contact wording, no signs, posters, logos or lettering of any kind. imageAlt describes that same scene.',
+    spec.images.length ? 'Image slots: ' + spec.images.map(i => (i.altFrom === 'hero' ? 'hero' : `sections.${i.altFrom}`) + ` (${i.ratio})`).join(', ') + '.' : 'There are no image slots: omit imageBrief and imageAlt.',
     'Sections to write:',
     lines,
   ].join('\n')

@@ -151,6 +151,20 @@ export const BLUEPRINTS: Record<IntentId, Blueprint> = {
     faqSeeds: ['Who is it for?', 'How do I start?', 'Is my data private?'],
     proof: 'pricing from one plans file; no invented customers',
   },
+  stay: {
+    id: 'stay', label: 'Stay and travel', goalAction: 'enquire about dates', schemaType: 'LodgingBusiness',
+    defaultModules: ['enquiry', 'whatsapp', 'map'],
+    sections: [
+      S('rooms', 'rows', 'The room types, one line each: what each is like and who it suits, using only the rooms the owner named', 'Rooms'),
+      S('experiences', 'services', 'What is on offer around the stay (meals, walks, pickups, lessons), only what the owner named', 'Experiences'),
+      S('how', 'steps', 'How it works from first message to arrival', 'How it works'),
+      FAQ_SECTION,
+      S('visit', 'visit', 'Where the stay is and when the reception is open', 'Visit'),
+      CONTACT,
+    ],
+    faqSeeds: ['When is the best time to visit?', 'What time is check-in?', 'Is vegetarian food available?', 'Can children stay?', 'Can you arrange a pickup?'],
+    proof: 'rooms and offers are only what the owner named; enquiry reaches the owner',
+  },
   publication: {
     id: 'publication', label: 'Publication', goalAction: 'read or subscribe', schemaType: 'Blog',
     defaultModules: ['newsletter'],
@@ -166,6 +180,7 @@ export const BLUEPRINTS: Record<IntentId, Blueprint> = {
 
 // Keyword evidence per intent. Order matters only for ties. Words are matched as whole words, case-insensitive.
 const RULES: { id: IntentId; w: [RegExp, number][] }[] = [
+  { id: 'stay', w: [[/\b(homestay|home stay|guest ?house|hotel|resort|haveli|villa|lodge|bed and breakfast|hostel|b&b)\b/, 5], [/\b(rooms? types?|check-in|check in|guests? stay|nine-room|rooms? and suites?)\b/, 2]] },
   { id: 'food', w: [[/\b(bakery|cafe|café|restaurant|kitchen|menu|sourdough|cakes?|catering|dhaba|tiffin|sweets?|mithai|brunch|bistro|bar)\b/, 3], [/\b(food|chef|dessert|pizza|coffee)\b/, 2]] },
   { id: 'local-service', w: [[/\b(clinic|dentist|dental|salon|spa|physio|physiotherapist|doctor|repair|plumber|electrician|laundry|tutor|gym|studio|mechanic|vet|pharmacy)\b/, 3], [/\b(appointments?|booking|book)\b/, 1]] },
   { id: 'catalogue', w: [[/\b(wholesale|manufacturer|exporter|export|supplier|catalogue|catalog|steel|rice|textiles?|fabrics?|bulk|trader|distributor|industrial)\b/, 3], [/\b(quote|enquiry|inquiry|moq)\b/, 2]] },
@@ -180,7 +195,7 @@ const RULES: { id: IntentId; w: [RegExp, number][] }[] = [
   { id: 'publication', w: [[/\b(blog|magazine|newsletter|news|publication|articles?|podcast)\b/, 3]] },
 ]
 
-const INDUSTRY_WORDS = /\b(dental|dentist|clinic|bakery|sourdough|cafe|café|restaurant|salon|spa|physio\w*|gym|steel|rice|textiles?|coaching|tuition|law|lawyer|architect|photograph\w*|real estate|property|ngo|temple|jee|neet|repair|plumb\w*|travel|wedding|software|school)\b/
+const INDUSTRY_WORDS = /\b(homestay|guest ?house|hotel|resort|haveli|villa|hostel|dental|dentist|clinic|bakery|sourdough|cafe|café|restaurant|salon|spa|physio\w*|gym|steel|rice|textiles?|coaching|tuition|law|lawyer|architect|photograph\w*|real estate|property|ngo|temple|jee|neet|repair|plumb\w*|travel|wedding|software|school)\b/
 
 function detectModules(prompt: string, intent: IntentId): ModuleId[] {
   const p = prompt.toLowerCase()

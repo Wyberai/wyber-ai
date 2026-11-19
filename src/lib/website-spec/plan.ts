@@ -20,6 +20,7 @@ export function seededRandom(seed: string): () => number {
 }
 
 const SCHEMA_BY_INDUSTRY: [RegExp, string][] = [
+  [/homestay|guest ?house|hotel|resort|haveli|villa|hostel/, 'LodgingBusiness'],
   [/dental|dentist/, 'Dentist'], [/physio|clinic|doctor|vet/, 'MedicalBusiness'], [/bakery/, 'Bakery'], [/cafe|café|coffee/, 'CafeOrCoffeeShop'],
   [/restaurant|kitchen|dhaba|tiffin|bistro/, 'Restaurant'], [/salon|spa/, 'HealthAndBeautyBusiness'], [/gym|studio/, 'SportsActivityLocation'],
   [/law|lawyer|advocate|attorney|notary/, 'LegalService'], [/real estate|property/, 'RealEstateAgent'], [/travel|tour/, 'TravelAgency'],
@@ -54,11 +55,27 @@ export interface PlanOptions {
   avoid?: string[]
 }
 
+/** What the owner said about the feel they want. Each phrase prefers the directions that deliver it. */
+const FEEL: { re: RegExp; fits: (d: Direction) => boolean }[] = [
+  { re: /\b(editorial|magazine|journal|literary)\b/i, fits: d => EDITORIAL.has(d.group) },
+  { re: /\b(photo-?led|photograph\w*|photos|imagery|visual)\b/i, fits: d => d.rules.heroMedia === 'photo' },
+  { re: /\b(warm|friendly|cosy|cozy|homely|welcoming|family)\b/i, fits: d => d.palette.mode === 'light' && (OPEN.has(d.group) || EDITORIAL.has(d.group)) },
+  { re: /\b(dark|cinematic|moody|night|dramatic)\b/i, fits: d => d.palette.mode === 'dark' },
+  { re: /\b(minimal|minimalist|clean|simple|quiet|calm)\b/i, fits: d => d.group === 'light-tech' || d.group === 'type-led' },
+  { re: /\b(bold|loud|playful|colou?rful|vibrant)\b/i, fits: d => d.group === 'brand-block' },
+  { re: /\b(luxury|luxurious|premium|elegant|refined)\b/i, fits: d => d.group === 'editorial' || d.group === 'dark' },
+]
+export function feelScore(prompt: string, d: Direction): number {
+  return FEEL.reduce((n, f) => n + (f.re.test(prompt) && f.fits(d) ? 1 : 0), 0)
+}
+
 export function pickWebsiteDirection(prompt: string, o: PlanOptions): Direction {
   const explicit = getDirectionById(o.directionId)
   if (explicit) return explicit
   const rnd = seededRandom(o.seed)
-  const top = dealDirections(prompt, 3, { projectType: 'website', rnd })
+  // Take the best fits for the business, then let the stated feel decide the order (stable for equal scores).
+  const wide = dealDirections(prompt, 9, { projectType: 'website', rnd })
+  const top = wide.map((d, i) => ({ d, i, s: feelScore(prompt, d) })).sort((a, b) => b.s - a.s || a.i - b.i).slice(0, 3).map(x => x.d)
   const fresh = top.filter(d => !(o.avoid ?? []).includes(d.id))
   const pool = fresh.length ? fresh : top
   return pool[Math.floor(rnd() * pool.length)]
@@ -85,15 +102,16 @@ export function planWebsite(prompt: string, o: PlanOptions): BuildSpec {
     })
 
   const images: ImageSlot[] = []
-  const subject = `${brief.industry}${facts.city ? ' in ' + facts.city : ''}`
+  // Slots carry the direction's STYLE only. The subject is written by the copy step from the real brief (an image prompt must
+  // never contain the goal action, a phone number or any wording the image model could paint as a sign).
   if (HERO_IMAGE_MEDIA.has(d.rules.heroMedia)) {
     images.push({
-      id: 'hero', brief: `${d.imageBrief} Subject: ${subject}, ${bp.goalAction}.`, eager: true, altFrom: 'hero',
+      id: 'hero', brief: d.imageBrief, eager: true, altFrom: 'hero',
       ratio: hero === 'editorial' ? '21/9' : hero === 'stacked' ? '16/9' : '4/3',
     })
   }
   if ((EDITORIAL.has(d.group) || d.group === 'physical') && sections.some(s => s.id === 'about')) {
-    images.push({ id: 'about', brief: `${d.imageBrief} Subject: the people and place behind a ${subject}.`, ratio: '4/5', eager: false, altFrom: 'about' })
+    images.push({ id: 'about', brief: d.imageBrief, ratio: '4/5', eager: false, altFrom: 'about' })
   }
 
   const schemaType = SCHEMA_BY_INDUSTRY.find(([re]) => re.test(brief.industry))?.[1] ?? bp.schemaType

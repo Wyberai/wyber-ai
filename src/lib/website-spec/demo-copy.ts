@@ -24,6 +24,7 @@ export const DEMOS: DemoSite[] = [
         cta: 'Book a visit',
         secondary: 'See what we do',
         imageAlt: 'A dentist and a young patient looking at a tooth model together in a bright, calm treatment room',
+        imageBrief: 'A bright, calm dental treatment room: a dentist and a young patient looking at a tooth model together, tall window, soft late-morning light, a plant on the shelf.',
       },
       sections: {
         services: {
@@ -91,6 +92,7 @@ export const DEMOS: DemoSite[] = [
         cta: 'Request a quote',
         secondary: 'See the range',
         imageAlt: 'Open sacks of long-grain rice in a warehouse, with a hand lifting a scoop of grain into the light',
+        imageBrief: 'Open jute sacks of long-grain white rice in a warehouse, a hand lifting a scoop of grain into warm light falling across the stacked sacks.',
       },
       sections: {
         range: {
