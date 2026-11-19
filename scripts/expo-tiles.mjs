@@ -5,7 +5,7 @@ import os from 'node:os'
 import fs from 'node:fs'
 
 const OUT = path.join(os.homedir(), 'OneDrive', 'Desktop', 'Wyber Ai', 'Gujarat Tech Expo', 'booth-artwork', '2-UPLOAD-TO-XPRO')
-for (const d of ["products", "services"]) fs.mkdirSync(path.join(OUT, d), { recursive: true })
+for (const d of ["products", "services", "superpower-tiles"]) fs.mkdirSync(path.join(OUT, d), { recursive: true })
 const SKY = '#0ea5e9'
 const mark = `<svg width="84" height="84" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="${SKY}"/><path d="M20 7L11 16L20 25" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M23 11L28 16L23 21" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.4"/></svg>`
 const SERVICES = [
@@ -23,7 +23,10 @@ const POWERS = [
   ['power-own-design-system', 'Own design system', 'Over 150 original components and 31 design directions, built in-house.'],
   ['power-seo-aeo-friendly', 'SEO + AEO friendly', 'On websites: readable by Google and by AI answer engines.'],
 ]
-const TILES = [...SERVICES, ...POWERS]
+const OFFERS = [
+  ['service-live-build', 'Live build', 'Bring your problem. We build a solution live at booth S23.'],
+]
+const TILES = [...SERVICES, ...OFFERS, ...POWERS]
 const html = (t, d) => `<!doctype html><html><head><meta charset="utf-8"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
 <style>*{box-sizing:border-box}html,body{margin:0;width:1000px;height:1000px;background:#05060a;color:#f2f4f8;font-family:Inter,sans-serif;overflow:hidden}
 .glow{position:absolute;right:-260px;top:-260px;width:900px;height:900px;border-radius:50%;background:radial-gradient(closest-side,rgba(14,165,233,.26),transparent)}
@@ -41,7 +44,7 @@ for (const [file, t, d] of TILES) {
   await pg.setViewport({ width: 1000, height: 1000, deviceScaleFactor: 1 })
   await pg.setContent(html(t, d), { waitUntil: 'networkidle2', timeout: 90000 })
   await pg.evaluate(() => document.fonts.ready)
-  await pg.screenshot({ path: path.join(OUT, file.startsWith('power-') ? 'services' : 'products', file + '.png') })
+  await pg.screenshot({ path: path.join(OUT, file.startsWith('power-') ? 'superpower-tiles' : file.startsWith('service-') ? 'services' : 'products', file + '.png') })
   await pg.close()
   console.log('wrote', file)
 }
