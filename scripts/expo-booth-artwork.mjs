@@ -64,16 +64,14 @@ const chipRow = (size, gap, padV, padH, border) => CHIPS.map((c, i) => i === CHI
 async function backdrop() {
   const W = 6 * FT, M = 110
   const qr = await qrSvg()
-  const TYPES = ['WEBSITES', 'WEB APPS', 'MOBILE APPS', 'SAAS']
-  const types = TYPES.map(t => `<div style="border:2mm solid #2a3650;border-radius:60mm;padding:13mm 28mm;${mono(28, INK, 'letter-spacing:.1em')}">${t}</div>`).join('')
   return page(W, W, `
     <div class="abs" style="left:${M}mm;top:${M}mm">${logo(150, 118)}</div>
     <div class="abs" style="right:${M}mm;top:${M}mm;width:330mm">${qrPlate(330, qr)}
       <div style="${mono(24, MUTED, 'margin-top:20mm;line-height:1.45;text-align:center')}">SCAN QR TO VIEW<br>STALL DETAILS</div>
       <div style="${mono(30, SKY, 'margin-top:14mm;text-align:center;letter-spacing:.05em')}">wyberai.com</div></div>
-    <div class="abs" style="left:${M}mm;top:410mm;font-weight:900;font-size:118mm;line-height:.99;letter-spacing:-0.045em">Build the next SaaS.<br><span class="sky">Or replace the<br>one you rent.</span></div>
-    <div class="abs" style="left:${M}mm;top:808mm;font-size:52mm;font-weight:600;color:${MUTED};letter-spacing:-0.01em">Vibe coding, plus the checks it skips.</div>
-    <div class="abs" style="left:${M}mm;top:925mm;display:flex;flex-wrap:wrap;gap:16mm;width:1609mm">${types}</div>`)
+    <div class="abs" style="left:${M}mm;top:430mm;font-weight:900;font-size:140mm;line-height:.99;letter-spacing:-0.045em;white-space:nowrap">Vibe coding<br>with <span class="sky">superpowers.</span></div>
+    <div class="abs" style="left:${M}mm;top:790mm;font-size:60mm;font-weight:700;letter-spacing:-0.015em">Websites. Web apps. Mobile apps. SaaS.</div>
+    <div class="abs" style="left:${M}mm;top:880mm;font-size:60mm;font-weight:700;letter-spacing:-0.015em;color:${SKY}">Or replace the SaaS you rent.</div>`)
 }
 
 // ---------- Backdrop B (alternative): lead with what WyberAi does, in the words on the Xpro portal ----------
@@ -106,7 +104,8 @@ async function tableFront() {
     <div class="abs" style="right:${M}mm;top:${M}mm;width:260mm">${qrPlate(260, qr)}
       <div style="${mono(16, MUTED, 'margin-top:10mm;text-align:center')}">SCAN QR TO VIEW STALL DETAILS</div></div>
     <div class="abs" style="left:${M}mm;top:170mm;font-weight:900;font-size:49mm;line-height:1.02;letter-spacing:-0.04em">Vibe coding gives you a base.<br><span class="sky">WyberAi gives you the whole app.</span></div>
-    <div class="abs" style="left:${M}mm;top:282mm;font-size:21mm;font-weight:500;color:${MUTED}">Login, database and API come wired up. Then six checks run on it:</div>
+    <div class="abs" style="left:${M}mm;top:278mm;font-size:25mm;font-weight:700;letter-spacing:-0.01em">An <span class="sky">AI agent</span> plans it, builds it, repairs it and checks it.</div>
+    <div class="abs" style="left:${M}mm;top:318mm;font-size:19mm;font-weight:500;color:${MUTED}">Login, database and API come wired up. Then six checks run:</div>
     <div class="abs" style="left:${M}mm;top:392mm;width:${W - 2 * M}mm;display:flex;flex-wrap:wrap;gap:16mm">${pills}</div>
     <div class="abs" style="left:${M}mm;top:588mm;font-weight:800;font-size:30mm;letter-spacing:-0.02em">Saves <span class="sky">hundreds of hours</span> of research and vibe coding.</div>
     <div class="abs" style="left:${M}mm;top:652mm;${mono(18, MUTED, 'letter-spacing:.1em')}">YOUR CODE. YOUR GITHUB. YOUR DOMAIN.</div>
@@ -119,8 +118,7 @@ async function tableSide() {
   const W = 2.5 * FT, H = 2 * FT, M = 48
   return page(W, H, `
     <div class="abs" style="left:${M}mm;top:${M}mm">${logo(70, 54)}</div>
-    <div class="abs" style="left:${M}mm;top:215mm;font-weight:900;font-size:72mm;line-height:1.02;letter-spacing:-0.04em;white-space:nowrap">Vibe coding<br>with <span class="sky">superpowers.</span></div>
-    <div class="abs" style="left:${M}mm;top:395mm;${mono(21, MUTED, 'letter-spacing:.1em')}">SAME YOU. SUPERPOWERS ADDED.</div>
+    <div class="abs" style="left:${M}mm;top:215mm;font-weight:900;font-size:86mm;line-height:1;letter-spacing:-0.04em">Own your<br>software.<br><span class="sky">Stop renting it.</span></div>
     <div class="abs" style="left:${M}mm;bottom:${M}mm;${mono(22, SKY, 'letter-spacing:.06em')}">wyberai.com</div>`)
 }
 
