@@ -207,7 +207,7 @@ export async function POST(req: NextRequest) {
       id: 'robots',
       label: 'robots.txt present',
       status: hasRobots ? 'pass' : 'fail',
-      detail: hasRobots ? 'robots.txt exists and points crawlers to your sitemap.' : 'No robots.txt — crawlers have no explicit guidance and may miss your sitemap link.',
+      detail: hasRobots ? 'robots.txt is in your project. Search engines read it only at the root of a domain, so it takes effect on your own domain; on a wyberai.com/app/ address it is not served.' : 'No robots.txt — crawlers have no explicit guidance and may miss your sitemap link.',
     })
 
     const hasSitemap = !!files['public/sitemap.xml']?.content

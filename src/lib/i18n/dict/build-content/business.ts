@@ -40,7 +40,7 @@ export const BUSINESS_BUILD_CONTENT: Record<Locale, Record<string, TranslatedBui
         { q: 'Will it stop double-bookings?', a: 'Yes — available slots are computed from the stylist\'s working hours minus existing bookings and the service\'s duration, so a taken slot simply never appears.' },
         { q: 'Can clients cancel or reschedule themselves?', a: 'Ask for a manage-booking page in your prompt or later in chat — clients get a link to view, cancel, or move their appointment within rules you set.' },
         { q: 'Does this work for barbershops, spas, or clinics?', a: 'The same structure — services, staff, working hours, slots — fits any appointment business. Describe your version and the labels and rules adapt.' },
-        { q: 'What happens when I\'m ready to take it live?', a: 'Publish from the editor and share the link. Before publish, WyberAi runs a live security scan on the app\'s database so client data isn\'t exposed.' },
+        { q: 'What happens when I\'m ready to take it live?', a: 'Publish from the editor and share the link. Right after you publish, WyberAi runs a live security scan on the app\'s database and warns you straight away if client data is exposed.' },
       ],
     },
     'restaurant-menu-app': {
@@ -63,7 +63,7 @@ export const BUSINESS_BUILD_CONTENT: Record<Locale, Record<string, TranslatedBui
         { q: 'How do guests get to the menu?', a: 'Publish the app and point a QR code at its URL — any free QR generator works. Guests scan and the menu opens in their browser, no download.' },
         { q: 'Can non-technical staff update it?', a: 'That\'s the point of the admin page: logging in and toggling a dish or editing a price is a form, not a code change.' },
         { q: 'Can I add online ordering later?', a: 'Yes — start with the menu and ask chat to add a takeaway order flow when you\'re ready; the dish data you\'ve entered carries over.' },
-        { q: 'What does it cost to run?', a: 'Building uses free monthly credits (a build is 30, edits are 2), and published apps are hosted for you — no per-table or per-scan fees.' },
+        { q: 'What does it cost to run?', a: 'Building uses free signup credits (a small build is 30, edits start at 4), and published apps are hosted for you — no per-table or per-scan fees.' },
       ],
     },
     'client-crm': {
@@ -85,7 +85,7 @@ export const BUSINESS_BUILD_CONTENT: Record<Locale, Record<string, TranslatedBui
       faqs: [
         { q: 'How is this better than a HubSpot free tier?', a: 'It\'s smaller on purpose: only your fields, only your stages, no upgrade walls — and when you outgrow a feature you add it in chat instead of moving plans.' },
         { q: 'Can I import my existing contacts?', a: 'Ask for a CSV import in your prompt or afterwards — describe your spreadsheet\'s columns and they map into the contacts table.' },
-        { q: 'Is client data safe in a generated app?', a: 'The app ships with authentication and row-level security, and WyberAi probes the live database like an attacker before you publish — critical leaks block the publish gate.' },
+        { q: 'Is client data safe in a generated app?', a: 'The app ships with authentication and row-level security, and WyberAi probes the live database like an attacker as soon as you publish and warns you straight away about anything exposed.' },
         { q: 'Can my team use it at the same time?', a: 'Yes — it\'s a real multi-user web app on Postgres. Everyone logs in, and edits show up for the whole team.' },
       ],
     },
@@ -109,7 +109,7 @@ export const BUSINESS_BUILD_CONTENT: Record<Locale, Record<string, TranslatedBui
         { q: 'Can it handle barcodes?', a: 'Add a barcode field to each product in your prompt; pairing it with a phone camera scanner is an edit in chat once you\'re live.' },
         { q: 'Can I track stock across more than one store?', a: 'Yes — describe your locations and quantities can be tracked per location, with a combined total view on the dashboard.' },
         { q: 'Does it generate purchase orders?', a: 'Ask for a purchase-order page and low-stock items can be turned into a PO addressed to their supplier in one click.' },
-        { q: 'Is this cheaper than an inventory SaaS?', a: 'You build it once with free monthly credits and it\'s yours — no per-SKU or per-location monthly fee as your catalog grows.' },
+        { q: 'Is this cheaper than an inventory SaaS?', a: 'You build it once with free signup credits and it\'s yours — no per-SKU or per-location monthly fee as your catalog grows.' },
       ],
     },
     'rental-property-manager': {
@@ -132,7 +132,7 @@ export const BUSINESS_BUILD_CONTENT: Record<Locale, Record<string, TranslatedBui
         { q: 'Can tenants submit maintenance requests themselves?', a: 'Yes — add a tenant login and a request form, and issues they submit land directly on your maintenance board.' },
         { q: 'Can it calculate late fees?', a: 'Describe your late-fee rule in the prompt and the rent ledger can apply it automatically once a payment passes its due date.' },
         { q: 'Does it work for more than one property?', a: 'Yes — the structure scales from one duplex to a portfolio; each property has its own units, tenants, and ledger.' },
-        { q: 'Is tenant data secure?', a: 'The app runs on its own database with row-level security, scanned live before you publish — tenant details aren\'t exposed publicly.' },
+        { q: 'Is tenant data secure?', a: 'The app runs on its own database with row-level security, scanned live as soon as you publish, with a warning if anything is exposed.' },
       ],
     },
     'ecommerce-seller-dashboard': {
@@ -155,7 +155,7 @@ export const BUSINESS_BUILD_CONTENT: Record<Locale, Record<string, TranslatedBui
         { q: 'Does it connect directly to my Amazon or Shopify account?', a: 'Not out of the box — this is a describe-your-numbers dashboard, so you log or paste in orders yourself. That avoids depending on a marketplace API that can change or get revoked; ask for a bulk-paste or CSV-import screen in your prompt and it can be added.' },
         { q: 'Can it handle more than three channels?', a: 'Yes — the Channels page holds however many you describe, each with its own fee percentage, and the dashboard rolls them all into one margin view.' },
         { q: 'Do I need my own website or hosting?', a: 'No — publish and it\'s live instantly at a free wyberai.com/app/ address; connect your own domain later only if you want one.' },
-        { q: 'Is this cheaper than a multi-channel seller tool?', a: 'You build it once with free monthly credits and own it outright — no per-order or per-channel fee that grows as your sales do.' },
+        { q: 'Is this cheaper than a multi-channel seller tool?', a: 'You build it once with free signup credits and own it outright — no per-order or per-channel fee that grows as your sales do.' },
       ],
     },
   },

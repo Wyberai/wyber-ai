@@ -67,7 +67,7 @@ export function ImageGenPanel({ onInsert }: Props) {
         ))}
       </div>
 
-      <button onClick={generate} disabled={loading || !prompt.trim()} style={{ padding: '8px', borderRadius: 8, background: 'var(--sky)', color: '#fff', fontWeight: 700, fontSize: 13, border: 'none', cursor: loading ? 'wait' : 'pointer', fontFamily: 'inherit', opacity: !prompt.trim() ? 0.5 : 1 }}>
+      <button onClick={generate} disabled={loading || !prompt.trim()} style={{ padding: '8px', borderRadius: 8, background: 'var(--sky)', color: '#03111c', fontWeight: 700, fontSize: 13, border: 'none', cursor: loading ? 'wait' : 'pointer', fontFamily: 'inherit', opacity: !prompt.trim() ? 0.5 : 1 }}>
         {loading ? t('generatingEllipsis') : t('generateImageButton')}
       </button>
 
@@ -82,7 +82,7 @@ export function ImageGenPanel({ onInsert }: Props) {
               {t('openFullSize')}
             </a>
             {onInsert && (
-              <button onClick={() => onInsert(result, alt)} style={{ flex: 1, padding: '7px', borderRadius: 8, background: 'var(--sky)', color: '#fff', fontWeight: 700, fontSize: 11, border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
+              <button onClick={() => onInsert(result, alt)} style={{ flex: 1, padding: '7px', borderRadius: 8, background: 'var(--sky)', color: '#03111c', fontWeight: 700, fontSize: 11, border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
                 {t('insertIntoApp')}
               </button>
             )}

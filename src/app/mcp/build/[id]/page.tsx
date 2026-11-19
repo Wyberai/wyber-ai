@@ -55,7 +55,7 @@ export default async function BuildStatusPage({ params }: { params: { id: string
           <h1 style={{ fontSize: 28, fontWeight: 700, color: statusColor, marginBottom: 8 }}>{statusText}</h1>
           <p style={{ color: 'var(--text2)', fontSize: 15, marginBottom: 4 }}>Build running for {elapsedMin}m {elapsedSec}s</p>
           {message.status !== 'done' && message.status !== 'error' && (
-            <p style={{ color: 'var(--text3)', fontSize: 13 }}>Typical build time: 8-10 minutes</p>
+            <p style={{ color: 'var(--text3)', fontSize: 13 }}>Typical build time: 2 to 5 minutes</p>
           )}
         </div>
 

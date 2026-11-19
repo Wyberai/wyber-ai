@@ -222,6 +222,26 @@ if (typeof document !== 'undefined' && !document.getElementById('wyber-grow-root
 
 /** Install or update the kit. `qrSvg` is the UPI QR as an SVG string
  *  (empty when UPI is off). Returns a new file map; input is not mutated. */
+/**
+ * Launch-ready websites keep every business fact in src/owner-details.ts (export const OWNER = { ... }, string values only).
+ * The Grow panel's facts are the same facts, so applying the kit rewrites those keys and keeps every other key as it was.
+ */
+export function mergeOwnerDetails(existing: string, c: GrowConfig): string {
+  const pairs = new Map<string, string>();
+  const re = /(\w+)\s*:\s*(['"`])((?:\\.|(?!\2)[^\\])*)\2/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(existing)) !== null) pairs.set(m[1], m[3].replace(/\\(['"`\\])/g, '$1'));
+  const set = (k: string, v: string) => { if (v.trim()) pairs.set(k, v.trim()); };
+  set('name', c.businessName);
+  set('city', c.city);
+  set('address', c.address);
+  set('phone', c.phone);
+  set('whatsapp', normalizeWhatsApp(c.whatsapp));
+  set('hours', c.hours);
+  const body = [...pairs.entries()].map(([k, v]) => `  ${k}: ${JSON.stringify(v)},`).join('\n');
+  return `// Updated by the WyberAi Grow panel. Components read these values at render time; empty means "not set".\nexport const OWNER = {\n${body}\n};\n`;
+}
+
 export function applyGrowKit(files: FileMap, config: GrowConfig, opts: { qrSvg: string; siteUrl?: string }): FileMap {
   const entry = findEntry(files);
   if (!entry || !('index.html' in files)) throw new Error('Grow kit needs a web app with index.html and a main entry');
@@ -241,6 +261,9 @@ export function applyGrowKit(files: FileMap, config: GrowConfig, opts: { qrSvg: 
   out[widgetsPath] = { path: widgetsPath, language: lang, content: widgets };
   const mountPath = `${GROW_DIR}/mount.${ext}`;
   out[mountPath] = { path: mountPath, language: lang, content: MOUNT_SOURCE };
+
+  const ownerPath = Object.keys(out).find(p => /(^|\/)owner-details\.(ts|js)$/.test(p));
+  if (ownerPath) out[ownerPath] = withContent(files[ownerPath], ownerPath, mergeOwnerDetails(contentOf(files[ownerPath]), clean), ownerPath.endsWith('.ts') ? 'typescript' : 'javascript');
 
   out[entry] = withContent(files[entry], entry, patchEntry(contentOf(files[entry]), true), lang);
 

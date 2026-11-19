@@ -1,7 +1,7 @@
 import { DocsPage, DocSection, Steps, Step, ScreenshotPlaceholder, Note } from '@/components/docs/DocsPage'
 import Link from 'next/link'
 
-export const metadata = { title: 'Building AI Agents — Docs' }
+export const metadata = { title: 'Building AI Agents — Docs', description: "Describe what you want your agent to do and Wyber builds a visual canvas of nodes and edges — no code, no prompt engineering, just a description of the…" }
 
 export default function Page() {
   return (
@@ -27,7 +27,7 @@ export default function Page() {
               Type a plain-English description of what the agent should do. Include the tools it needs and the goal. Example:
             </p>
             <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 8, padding: '12px 16px', fontFamily: 'monospace', fontSize: 13, color: '#e2e8f0', lineHeight: 1.7, margin: '8px 0' }}>
-              Monitor my Gmail for support emails, classify them by urgency using Claude, and create a Linear ticket for urgent ones with a summary.
+              Monitor my Gmail for support emails, classify them by urgency using WyberCode, and create a Linear ticket for urgent ones with a summary.
             </div>
             <ScreenshotPlaceholder label="Agent description input" />
           </Step>

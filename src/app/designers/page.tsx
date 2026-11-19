@@ -2,7 +2,7 @@ import { NavbarClient as Navbar } from '@/components/shared/NavbarClient';
 import { Footer } from '@/components/shared/FooterClient';
 import Link from 'next/link';
 import type { Metadata } from 'next';
-export const metadata: Metadata = { title: 'WyberAi for Designers', description: 'Turn your Figma designs into production code. Import, generate, and ship real apps.' };
+export const metadata: Metadata = { title: 'WyberAi for Designers', description: 'Turn your Figma designs into production code. Import a design, generate a real app from it, and ship it live without waiting on engineering.' };
 const FEATURES = [
   { icon: '◈', title: 'Figma import', desc: 'Paste a Figma URL and WyberAi converts your design to a production React component. Design in Figma, ship in Wyber.' },
   { icon: '✦', title: 'AI image generation', desc: 'Generate hero illustrations, product mockups, and UI assets directly in the IDE. DALL-E 3 built in.' },
@@ -21,7 +21,7 @@ export default function DesignersPage() {
         <p style={{ fontSize:17, color:'var(--text2)', maxWidth:520, lineHeight:1.75, marginBottom:36 }}>Turn your Figma designs into production code. Generate UI from descriptions. Ship real apps — not just mockups.</p>
         <div style={{ display:'flex', gap:12, flexWrap:'wrap', marginBottom:56 }}>
           <Link href="/signup" className="wy-btn-primary">Start building free →</Link>
-          <Link href="/blog/build-saas-without-code" className="wy-btn-ghost">Read the guide</Link>
+          <Link href="/blog/build-saas-mvp-with-ai-2026" className="wy-btn-ghost">Read the guide</Link>
         </div>
       </div>
       <div className="wy-section" style={{ paddingTop:32 }}>
@@ -36,7 +36,7 @@ export default function DesignersPage() {
         </div>
         <div style={{ padding:'48px', borderRadius:20, background:'linear-gradient(135deg, var(--sky3), var(--bg2))', border:'1px solid var(--border)', textAlign:'center' }}>
           <h2 style={{ fontFamily:'var(--font-display)', fontSize:'clamp(24px,3.5vw,40px)', fontWeight: 700, color:'var(--text)', letterSpacing:'-0.025em', marginBottom:12 }}>Design it. Build it. Ship it.</h2>
-          <p style={{ fontSize:15, color:'var(--text2)', marginBottom:28 }}>30 free credits/month. No card required.</p>
+          <p style={{ fontSize:15, color:'var(--text2)', marginBottom:28 }}>30 free credits to start. No card required.</p>
           <Link href="/signup" className="wy-btn-primary">Start for free →</Link>
         </div>
       </div>

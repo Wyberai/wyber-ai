@@ -50,7 +50,7 @@ export function CollaboratorAvatars({ projectId, userId, email }: Props) {
             width: 26, height: 26, borderRadius: '50%',
             background: c.color, border: '2px solid var(--bg-base)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 9, fontWeight: 700, color: 'white',
+            fontSize: 11, fontWeight: 700, color: 'white',
             cursor: 'default', marginLeft: -6,
             boxShadow: `0 0 0 2px ${c.color}44`,
           }}
@@ -59,7 +59,7 @@ export function CollaboratorAvatars({ projectId, userId, email }: Props) {
         </div>
       ))}
       {collaborators.length > 5 && (
-        <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'var(--bg-elevated)', border: '2px solid var(--bg-base)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: 'var(--text-muted)', marginLeft: -6 }}>
+        <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'var(--bg-elevated)', border: '2px solid var(--bg-base)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: 'var(--text-muted)', marginLeft: -6 }}>
           +{collaborators.length - 5}
         </div>
       )}

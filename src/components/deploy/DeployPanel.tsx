@@ -109,12 +109,12 @@ export function DeployPanel({ projectId, userId, projectName }: Props) {
               <div key={d.id} style={{ padding: '9px 11px', background: 'var(--bg-elevated)', borderRadius: 7, border: '1px solid var(--border)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ fontSize: 10, color: statusColor[d.status] }}>{statusDot[d.status]}</span>
+                    <span style={{ fontSize: 11, color: statusColor[d.status] }}>{statusDot[d.status]}</span>
                     <span style={{ fontSize: 12, color: 'var(--text-primary)', fontWeight: 500 }}>
                       {i === 0 ? 'Latest' : `Deploy #${deployments.length - i}`}
                     </span>
                   </div>
-                  <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{formatTime(d.created_at)}</span>
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{formatTime(d.created_at)}</span>
                 </div>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                   <a href={d.url} target="_blank" rel="noreferrer"
@@ -135,7 +135,7 @@ export function DeployPanel({ projectId, userId, projectName }: Props) {
       {/* Vercel setup note */}
       {!process.env.NEXT_PUBLIC_APP_URL?.includes('localhost') && (
         <div style={{ padding: '9px 12px', background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 7, fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.6 }}>
-          Add <code style={{ fontFamily: 'monospace', fontSize: 10 }}>VERCEL_TOKEN</code> to your .env.local to enable one-click deployment.
+          Add <code style={{ fontFamily: 'monospace', fontSize: 11 }}>VERCEL_TOKEN</code> to your .env.local to enable one-click deployment.
           Get it at vercel.com → Settings → Tokens.
         </div>
       )}

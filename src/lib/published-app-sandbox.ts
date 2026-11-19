@@ -26,6 +26,30 @@ export function storagePrefix(slug: string): string {
   return `wyber-app:${slug}:`
 }
 
+// In-page links. The app runs in a srcdoc frame whose base URL is the page that hosts it (the editor or /app/<slug>), so a plain
+// <a href="#services"> resolves to "<host page>#services": a different document from about:srcdoc, which makes the browser load
+// the WHOLE WyberAi page inside the frame (it opens a sign-in screen for a second, then crashes with "Application error").
+// Found 16 Nov: clicking "Treatments" on a generated website, in the editor and on the published page. This handler takes over
+// hash-only links: it scrolls to the element, or for #/route links sets the hash so a hash router sees the change. It runs after
+// the app's own click handlers and stands down if one already called preventDefault, or for modified clicks and target=_blank.
+export const ANCHOR_NAV_JS = `try{
+document.addEventListener('click',function(e){
+  if(e.defaultPrevented||e.button||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;
+  var a=e.target&&e.target.closest?e.target.closest('a[href]'):null;
+  if(!a)return;
+  var h=a.getAttribute('href');
+  if(!h||h.charAt(0)!=='#')return;
+  if(a.target&&a.target!=='_self')return;
+  e.preventDefault();
+  var id=h.slice(1);
+  try{id=decodeURIComponent(id)}catch(x){}
+  if(id.charAt(0)==='/'){try{location.hash=h}catch(x){}return}
+  var el=id?(document.getElementById(id)||document.getElementsByName(id)[0]):null;
+  if(el&&el.scrollIntoView)el.scrollIntoView({behavior:'smooth',block:'start'});
+  else if(!id||id==='top')window.scrollTo({top:0,behavior:'smooth'});
+},false);
+}catch(e){}`
+
 export function buildStorageShim(seed: Record<string, string>): string {
   // JSON.stringify + "<" escaping so seed data can't close the script tag.
   const seedJson = JSON.stringify(seed).replace(/</g, '\\u003c')
@@ -62,6 +86,7 @@ try{
       data=new Blob([data],{type:'text/plain;charset=UTF-8'})}
     return sb(url,data)};
 }catch(e){}
+${ANCHOR_NAV_JS}
 })();</script>`
 }
 

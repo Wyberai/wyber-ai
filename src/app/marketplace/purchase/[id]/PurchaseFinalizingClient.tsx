@@ -50,7 +50,7 @@ export function PurchaseFinalizingClient({ purchaseId }: { purchaseId: string })
   }, [purchaseId, router])
 
   return (
-    <div style={{ minHeight: '100vh', background: '#09090b', color: '#fafafa', fontFamily: 'var(--font-display)', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100vh', background: '#05080d', color: '#fafafa', fontFamily: 'var(--font-display)', display: 'flex', flexDirection: 'column' }}>
       <nav style={{ padding: '0 clamp(16px,4vw,48px)', height: 60, display: 'flex', alignItems: 'center' }}>
         <WyberLogo markSize={24} wordmarkSize={13} />
       </nav>
@@ -63,7 +63,7 @@ export function PurchaseFinalizingClient({ purchaseId }: { purchaseId: string })
               <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 6 }}>
                 Finalizing your purchase{listingTitle ? ` of ${listingTitle}` : ''}…
               </div>
-              <div style={{ fontSize: 13, color: '#71717a' }}>Dropping a fully editable copy into your account. This only takes a moment.</div>
+              <div style={{ fontSize: 13, color: '#8797ab' }}>Dropping a fully editable copy into your account. This only takes a moment.</div>
               <style>{'@keyframes spin{to{transform:rotate(360deg)}}'}</style>
             </>
           )}
@@ -72,8 +72,8 @@ export function PurchaseFinalizingClient({ purchaseId }: { purchaseId: string })
             <>
               <div style={{ fontSize: 32, marginBottom: 12 }}>⚠️</div>
               <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 6 }}>Something went wrong delivering your app</div>
-              <div style={{ fontSize: 13, color: '#71717a', marginBottom: 20 }}>Your payment went through, but we hit an error setting up the project. Contact support and we'll sort it out.</div>
-              <Link href="/contact" style={{ padding: '10px 20px', borderRadius: 10, background: ACCENT, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Contact support →</Link>
+              <div style={{ fontSize: 13, color: '#8797ab', marginBottom: 20 }}>Your payment went through, but we hit an error setting up the project. Contact support and we'll sort it out.</div>
+              <Link href="/contact" style={{ padding: '10px 20px', borderRadius: 10, background: ACCENT, color: '#03111c', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Contact support →</Link>
             </>
           )}
 
@@ -81,8 +81,8 @@ export function PurchaseFinalizingClient({ purchaseId }: { purchaseId: string })
             <>
               <div style={{ fontSize: 32, marginBottom: 12 }}>⏳</div>
               <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 6 }}>Still working on it</div>
-              <div style={{ fontSize: 13, color: '#71717a', marginBottom: 20 }}>This is taking longer than usual. Check your dashboard in a minute — your project will be there.</div>
-              <Link href="/dashboard" style={{ padding: '10px 20px', borderRadius: 10, background: ACCENT, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Go to dashboard →</Link>
+              <div style={{ fontSize: 13, color: '#8797ab', marginBottom: 20 }}>This is taking longer than usual. Check your dashboard in a minute — your project will be there.</div>
+              <Link href="/dashboard" style={{ padding: '10px 20px', borderRadius: 10, background: ACCENT, color: '#03111c', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Go to dashboard →</Link>
             </>
           )}
         </div>

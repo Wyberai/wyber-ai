@@ -82,28 +82,28 @@ export function TwoFactorPanel() {
   const copyCodes = () => { if (recovery) navigator.clipboard.writeText(recovery.join('\n')).catch(() => {}) }
 
   const S = {
-    card: { background: '#111113', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: 20, marginBottom: 16 } as const,
-    input: { width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: '#18181b', color: '#fafafa', fontSize: 18, letterSpacing: '0.3em', outline: 'none', fontFamily: 'monospace', boxSizing: 'border-box' as const, textAlign: 'center' as const },
-    btn: (c = '#0EA5E9') => ({ padding: '9px 20px', borderRadius: 8, border: 'none', background: c, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }) as const,
-    ghost: { padding: '9px 20px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#a1a1aa', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' } as const,
+    card: { background: '#0d141e', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: 20, marginBottom: 16 } as const,
+    input: { width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: '#111b28', color: '#fafafa', fontSize: 18, letterSpacing: '0.3em', outline: 'none', fontFamily: 'monospace', boxSizing: 'border-box' as const, textAlign: 'center' as const },
+    btn: (c = '#0EA5E9') => ({ padding: '9px 20px', borderRadius: 8, border: 'none', background: c, color: '#03111c', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }) as const,
+    ghost: { padding: '9px 20px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#9aa8bb', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' } as const,
   }
 
   return (
     <>
       <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 4 }}>Two-factor authentication</h1>
-      <p style={{ fontSize: 13, color: '#71717a', marginBottom: 24, lineHeight: 1.5 }}>
+      <p style={{ fontSize: 13, color: '#8797ab', marginBottom: 24, lineHeight: 1.5 }}>
         Add an authenticator app (Google Authenticator, Authy, 1Password) as a second factor. When enabled, you'll confirm a 6-digit code before authorizing an MCP connector to act on your account.
       </p>
 
       {recovery && (
         <div style={{ ...S.card, border: '1px solid rgba(245,158,11,0.35)', background: 'rgba(245,158,11,0.05)' }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: '#f59e0b', marginBottom: 6 }}>Save your recovery codes</div>
-          <div style={{ fontSize: 12.5, color: '#a1a1aa', marginBottom: 14, lineHeight: 1.5 }}>
+          <div style={{ fontSize: 12.5, color: '#9aa8bb', marginBottom: 14, lineHeight: 1.5 }}>
             Each code works once. Store them somewhere safe — if you lose your authenticator, a recovery code is the only way back in (and using one turns 2FA off so you can re-enroll). They won't be shown again.
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 14 }}>
             {recovery.map(c => (
-              <code key={c} style={{ fontFamily: 'monospace', fontSize: 13, color: '#fafafa', background: '#18181b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 7, padding: '7px 10px', textAlign: 'center', letterSpacing: '0.06em' }}>{c}</code>
+              <code key={c} style={{ fontFamily: 'monospace', fontSize: 13, color: '#fafafa', background: '#111b28', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 7, padding: '7px 10px', textAlign: 'center', letterSpacing: '0.06em' }}>{c}</code>
             ))}
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
@@ -114,20 +114,20 @@ export function TwoFactorPanel() {
       )}
 
       {loading ? (
-        <div style={{ fontSize: 13, color: '#52525b' }}>Loading…</div>
+        <div style={{ fontSize: 13, color: '#8797ab' }}>Loading…</div>
       ) : enroll ? (
         <div style={S.card}>
           <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>Scan this QR code</div>
-          <div style={{ fontSize: 12, color: '#71717a', marginBottom: 14 }}>Open your authenticator app and scan, or enter the key manually. Then type the 6-digit code it shows.</div>
+          <div style={{ fontSize: 12, color: '#8797ab', marginBottom: 14 }}>Open your authenticator app and scan, or enter the key manually. Then type the 6-digit code it shows.</div>
           <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', alignItems: 'flex-start' }}>
             <div style={{ background: '#fff', padding: 12, borderRadius: 12, width: 184, height: 184, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               {enroll.qr
                 ? <img src={enroll.qr} alt="Scan with your authenticator app" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                : <span style={{ fontSize: 12, color: '#71717a', textAlign: 'center', padding: 8 }}>Use the manual key →</span>}
+                : <span style={{ fontSize: 12, color: '#8797ab', textAlign: 'center', padding: 8 }}>Use the manual key →</span>}
             </div>
             <div style={{ flex: 1, minWidth: 200 }}>
-              <div style={{ fontSize: 11, color: '#52525b', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Manual key</div>
-              <code style={{ display: 'block', wordBreak: 'break-all', fontSize: 12, color: '#a1a1aa', background: '#18181b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '8px 10px', marginBottom: 16 }}>{enroll.secret}</code>
+              <div style={{ fontSize: 11, color: '#8797ab', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Manual key</div>
+              <code style={{ display: 'block', wordBreak: 'break-all', fontSize: 12, color: '#9aa8bb', background: '#111b28', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '8px 10px', marginBottom: 16 }}>{enroll.secret}</code>
               <input value={code} onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="000000" inputMode="numeric" style={S.input} onKeyDown={e => e.key === 'Enter' && code.length === 6 && confirmEnroll()} />
               {error && <div style={{ fontSize: 12, color: '#ef4444', marginTop: 8 }}>{error}</div>}
               <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
@@ -142,7 +142,7 @@ export function TwoFactorPanel() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, background: 'rgba(34,197,94,0.1)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.2)' }}>✓ ENABLED</span>
-              <div style={{ fontSize: 13, color: '#a1a1aa' }}>Authenticator app is protecting your account.</div>
+              <div style={{ fontSize: 13, color: '#9aa8bb' }}>Authenticator app is protecting your account.</div>
             </div>
             <button onClick={() => remove(verified[0].id)} disabled={busy} style={{ ...S.ghost, color: '#ef4444', borderColor: 'rgba(239,68,68,0.3)', fontSize: 12 }}>{busy ? '…' : 'Remove'}</button>
           </div>
@@ -151,7 +151,7 @@ export function TwoFactorPanel() {
         </div>
       ) : (
         <div style={S.card}>
-          <div style={{ fontSize: 13, color: '#71717a', marginBottom: 14 }}>2FA is not enabled yet.</div>
+          <div style={{ fontSize: 13, color: '#8797ab', marginBottom: 14 }}>2FA is not enabled yet.</div>
           <button onClick={startEnroll} disabled={busy} style={S.btn()}>{busy ? 'Starting…' : 'Set up authenticator app'}</button>
           {error && <div style={{ fontSize: 12, color: '#ef4444', marginTop: 10 }}>{error}</div>}
         </div>

@@ -8,11 +8,11 @@ import { WyberLogo } from '@/components/shared/WyberLogo'
 const DEADLINE = new Date('2026-08-15T18:29:59Z')
 
 const s = {
-  bg: '#09090b',
-  card: '#111115',
+  bg: '#05080d',
+  card: '#0d141e',
   border: 'rgba(255,255,255,0.07)',
   text: '#fafafa',
-  muted: '#71717a',
+  muted: '#8797ab',
   sky: '#0EA5E9',
   green: '#22c55e',
   saffron: '#FF9933',
@@ -20,7 +20,7 @@ const s = {
 
 const PRIZES = [
   { place: '1st', emoji: '🥇', cash: '₹50,000', color: '#f59e0b' },
-  { place: '2nd', emoji: '🥈', cash: '₹25,000', color: '#a1a1aa' },
+  { place: '2nd', emoji: '🥈', cash: '₹25,000', color: '#9aa8bb' },
   { place: '3rd', emoji: '🥉', cash: '₹25,000', color: '#cd7c2f' },
 ]
 
@@ -69,7 +69,7 @@ function CountdownBox({ value, label }: { value: number; label: string }) {
   return (
     <div style={{ textAlign: 'center', background: s.card, border: `1px solid ${s.border}`, borderRadius: 14, padding: '14px 20px', minWidth: 80 }}>
       <div style={{ fontSize: 42, fontWeight: 900, color: s.sky, letterSpacing: '-0.04em', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{pad(value)}</div>
-      <div style={{ fontSize: 10, color: s.muted, marginTop: 5, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>{label}</div>
+      <div style={{ fontSize: 11, color: s.muted, marginTop: 5, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>{label}</div>
     </div>
   )
 }
@@ -217,7 +217,7 @@ function SubmitForm() {
         style={{
           padding: '14px 28px',
           borderRadius: 10,
-          background: state === 'submitting' ? '#27272a' : s.sky,
+          background: state === 'submitting' ? '#162231' : s.sky,
           color: '#fff',
           fontSize: 15,
           fontWeight: 800,
@@ -252,7 +252,7 @@ export function IndependenceDayChallenge() {
         <Link href="/" style={{ textDecoration: 'none', color: s.text }}>
           <WyberLogo markSize={24} wordmarkSize={14} />
         </Link>
-        <Link href="/signup" style={{ padding: '7px 18px', borderRadius: 8, background: s.sky, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>
+        <Link href="/signup" style={{ padding: '7px 18px', borderRadius: 8, background: s.sky, color: '#03111c', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>
           Start Building Free →
         </Link>
       </nav>
@@ -283,7 +283,7 @@ export function IndependenceDayChallenge() {
           </div>
 
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link href="/signup" style={{ padding: '14px 36px', borderRadius: 12, background: s.sky, color: '#fff', fontSize: 16, fontWeight: 800, textDecoration: 'none', boxShadow: '0 0 40px rgba(14,165,233,0.35)' }}>
+            <Link href="/signup" style={{ padding: '14px 36px', borderRadius: 12, background: s.sky, color: '#03111c', fontSize: 16, fontWeight: 800, textDecoration: 'none', boxShadow: '0 0 40px rgba(14,165,233,0.35)' }}>
               Start Building Free →
             </Link>
             <a href="#submit" style={{ padding: '14px 36px', borderRadius: 12, border: `1px solid ${s.border}`, color: s.muted, fontSize: 15, fontWeight: 600, textDecoration: 'none' }}>
@@ -350,7 +350,7 @@ export function IndependenceDayChallenge() {
           ))}
         </div>
         <div style={{ textAlign: 'center', marginTop: 32 }}>
-          <Link href="/signup" style={{ display: 'inline-block', padding: '13px 32px', borderRadius: 10, background: s.sky, color: '#fff', fontSize: 15, fontWeight: 700, textDecoration: 'none' }}>
+          <Link href="/signup" style={{ display: 'inline-block', padding: '13px 32px', borderRadius: 10, background: s.sky, color: '#03111c', fontSize: 15, fontWeight: 700, textDecoration: 'none' }}>
             Create Free Account →
           </Link>
         </div>
@@ -434,7 +434,7 @@ export function IndependenceDayChallenge() {
         <p style={{ fontSize: 16, color: s.muted, marginBottom: 32 }}>
           Every great startup started with one build. Today, yours could win ₹1 lakh.
         </p>
-        <Link href="/signup" style={{ display: 'inline-block', padding: '16px 48px', borderRadius: 14, background: s.sky, color: '#fff', fontSize: 17, fontWeight: 900, textDecoration: 'none', boxShadow: '0 0 50px rgba(14,165,233,0.3)' }}>
+        <Link href="/signup" style={{ display: 'inline-block', padding: '16px 48px', borderRadius: 14, background: s.sky, color: '#03111c', fontSize: 17, fontWeight: 900, textDecoration: 'none', boxShadow: '0 0 50px rgba(14,165,233,0.3)' }}>
           Start Building Free →
         </Link>
         <div style={{ fontSize: 12, color: s.muted, marginTop: 16 }}>Sign up · Build · Submit by 11:59 PM IST</div>

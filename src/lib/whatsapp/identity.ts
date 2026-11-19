@@ -1,5 +1,6 @@
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { createServiceClient } from '@/lib/supabase/server'
+import { EMAIL_CODE_LENGTH, EMAIL_CODE_MIN_LENGTH } from '@/lib/auth/otp-length'
 
 type WhatsappIdentity = {
   id: string
@@ -11,7 +12,8 @@ type WhatsappIdentity = {
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const OTP_RE = /^\d{6}$/
+// The emailed code is EMAIL_CODE_LENGTH digits (8); a shorter one is accepted in case the Supabase setting is lowered.
+const OTP_RE = new RegExp(`^\\d{${EMAIL_CODE_MIN_LENGTH},${EMAIL_CODE_LENGTH}}$`)
 
 /** GoTrue's public auth endpoints (signInWithOtp/verifyOtp) need the anon
  *  key, not the service-role key — this is a bare client with no cookie jar
@@ -108,13 +110,13 @@ export async function handleOnboardingMessage(
       }
     }
     await db.from('whatsapp_identities').update({ status: 'pending_otp', pending_email: email }).eq('id', identity.id)
-    return { reply: `Sent a 6-digit code to ${email} — reply with that code to link this number.`, linkedUserId: null }
+    return { reply: `Sent a ${EMAIL_CODE_LENGTH}-digit code to ${email} — reply with that code to link this number.`, linkedUserId: null }
   }
 
   if (identity.status === 'pending_otp') {
     if (!OTP_RE.test(trimmed)) {
       return {
-        reply: 'Reply with the 6-digit code from your email, or text your email again to get a new one.',
+        reply: `Reply with the ${EMAIL_CODE_LENGTH}-digit code from your email, or text your email again to get a new one.`,
         linkedUserId: null,
       }
     }

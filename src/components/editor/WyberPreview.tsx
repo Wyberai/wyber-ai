@@ -188,7 +188,7 @@ export default function WyberPreview({
       flexDirection: 'column',
       height: '100%',
       width: '100%',
-      background: 'var(--bg-base, #09090b)',
+      background: 'var(--bg-base, #05080d)',
       position: 'relative',
     }}>
       {/* Toolbar */}
@@ -217,7 +217,7 @@ export default function WyberPreview({
             </div>
           )}
           {status === 'ready' && compileDuration !== null && (
-            <div style={{ fontSize: 11, color: 'var(--ide-text3, #52525b)', display: 'flex', alignItems: 'center', gap: 4 }}>
+            <div style={{ fontSize: 11, color: 'var(--ide-text3, #8797ab)', display: 'flex', alignItems: 'center', gap: 4 }}>
               <span style={{ color: '#22c55e', fontSize: 9 }}>●</span>
               {t('liveLabel')} · {compileDuration}ms · {t('phaseLabel')} {phase}
             </div>
@@ -241,7 +241,7 @@ export default function WyberPreview({
             </div>
           )}
           {status === 'idle' && !hasFiles && (
-            <div style={{ fontSize: 11, color: 'var(--ide-text3, #52525b)' }}>
+            <div style={{ fontSize: 11, color: 'var(--ide-text3, #8797ab)' }}>
               {esbuildReady ? t('engineReady') : t('loadingEngine')}
             </div>
           )}
@@ -279,7 +279,7 @@ export default function WyberPreview({
             style={{
               background: 'none',
               border: '1px solid var(--ide-border, rgba(255,255,255,0.08))',
-              color: 'var(--ide-text3, #52525b)',
+              color: 'var(--ide-text3, #8797ab)',
               cursor: 'pointer',
               padding: '3px 6px',
               borderRadius: 5,
@@ -300,7 +300,7 @@ export default function WyberPreview({
               style={{
                 background: 'none',
                 border: '1px solid var(--ide-border, rgba(255,255,255,0.08))',
-                color: 'var(--ide-text3, #52525b)',
+                color: 'var(--ide-text3, #8797ab)',
                 cursor: 'pointer',
                 padding: '3px 6px',
                 borderRadius: 5,
@@ -328,7 +328,7 @@ export default function WyberPreview({
             alignItems: 'center',
             justifyContent: 'center',
             gap: 12,
-            color: 'var(--ide-text3, #52525b)',
+            color: 'var(--ide-text3, #8797ab)',
           }}>
             <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
               <rect width="32" height="32" rx="8" fill="rgba(14,165,233,0.08)" stroke="rgba(14,165,233,0.2)" strokeWidth="1"/>
@@ -384,7 +384,7 @@ export default function WyberPreview({
             height: '100%',
             border: 'none',
             display: previewURL ? 'block' : 'none',
-            background: '#09090b',
+            background: '#05080d',
           }}
           allow="clipboard-write"
         />

@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 import { WorkOS } from '@workos-inc/node'
 import { reconcileSsoLogin } from '@/lib/orgs/sso'
+import { publicSupabaseKey } from '@/lib/supabase/keys'
 
 // Sibling to /auth/callback — never modifies it. Exchanges the WorkOS code, reconciles
 // into the existing profiles/organization_members tables, then establishes a normal
@@ -35,7 +36,7 @@ export async function GET(req: NextRequest) {
     const cookieStore = await cookies()
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      publicSupabaseKey()!,
       {
         cookies: {
           getAll() { return cookieStore.getAll() },

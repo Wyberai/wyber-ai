@@ -3,6 +3,7 @@ export const maxDuration = 30
 
 import { NextRequest, NextResponse } from 'next/server'
 import { GOOGLE_FONTS_LINKS, PREVIEW_TAILWIND_CONFIG, TOKEN_VARS_CSS } from '@/lib/design-system'
+import { extraFontLinks } from '@/lib/direction-fonts'
 import { WYBER_BRIDGE_SCRIPT, injectWyberLoc } from '@/lib/wyber-preview/bridge'
 import { WYBER_UI_KIT_FILES } from '@/lib/wyber-ui-kit'
 import { WYBER_STORE_FILES } from '@/lib/wyber-store'
@@ -190,6 +191,7 @@ function generateHtml(js: string, css: string, projectId: string): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Wyber Preview</title>
   ${GOOGLE_FONTS_LINKS}
+  ${extraFontLinks(css)}
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config = ${PREVIEW_TAILWIND_CONFIG};</script>
   <script type="importmap">${importmap}</script>

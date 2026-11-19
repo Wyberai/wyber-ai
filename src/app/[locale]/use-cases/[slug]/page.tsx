@@ -9,6 +9,7 @@ import { getT } from '@/lib/i18n/getT'
 import { BUILD_TEMPLATE_STRINGS } from '@/lib/i18n/dict/build-template'
 import { USE_CASES_TEMPLATE_STRINGS } from '@/lib/i18n/dict/use-cases-template'
 import { USE_CASES_CONTENT, type TranslatedUseCase } from '@/lib/i18n/dict/use-cases-content'
+import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
 // Locale-prefixed sibling of app/use-cases/[slug]/page.tsx — see that file's
 // English version for the canonical (unprefixed) route. Only 'hi'|'kn'|'te'|'ta'
@@ -22,6 +23,8 @@ function getTranslatedUseCase(slug: string, locale: Locale): TranslatedUseCase |
   return USE_CASES_CONTENT[locale]?.[slug] ?? USE_CASES_CONTENT.en[slug]
 }
 
+// Unknown slugs must answer a real 404 (the root loading.tsx streams a 200 before notFound() runs otherwise).
+export const dynamicParams = false
 export function generateStaticParams() {
   return NON_ENGLISH_LOCALES.flatMap(locale => USE_CASES.map(uc => ({ locale, slug: uc.slug })))
 }
@@ -39,7 +42,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
       canonical: `https://wyberai.com/${locale}/use-cases/${slug}`,
       languages: localeAlternates(`/use-cases/${slug}`),
     },
-    openGraph: { title: content.metaTitle, description: content.metaDesc, url: `https://wyberai.com/${locale}/use-cases/${slug}` },
+    openGraph: { images: DEFAULT_OG_IMAGES, title: content.metaTitle, description: content.metaDesc, url: `https://wyberai.com/${locale}/use-cases/${slug}` },
   }
 }
 

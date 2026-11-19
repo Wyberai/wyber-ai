@@ -8,7 +8,7 @@ import type { Locale } from '../locales';
 // (pure SVG edge rendering) so it does not draw from this dictionary.
 // Generic atoms (Save/Cancel/Loading/etc.) live in dict/common.ts and are
 // pulled in via useT(COMMON_STRINGS) instead of being duplicated here.
-// Proper nouns (WyberAi/Wyber, Claude, GitHub, Slack, Gmail, HubSpot, Notion,
+// Proper nouns (WyberAi/Wyber, WyberCode, GitHub, Slack, Gmail, HubSpot, Notion,
 // Supabase, GPT-4o, model names, integration/brand names), code/interpolation
 // tokens ({{SECRET:...}}, {{webhook.body}}, {{loop.item}}, {{step_name.field}},
 // X-Wyber-Secret), and illustrative "e.g." example placeholders are
@@ -19,7 +19,7 @@ export const EDITOR_CANVAS_STRINGS: Record<Locale, Record<string, string>> = {
     triggerLabel: 'When this starts',
     triggerHelp: 'How and when this agent begins running',
     aiagentLabel: 'AI Step',
-    aiagentHelp: 'Claude reads inputs and decides what to do',
+    aiagentHelp: 'WyberCode reads inputs and decides what to do',
     toolLabel: 'Use a tool',
     toolHelp: 'Connect to an external app (Gmail, Slack, etc.)',
     conditionLabel: 'Decision point',
@@ -103,8 +103,8 @@ export const EDITOR_CANVAS_STRINGS: Record<Locale, Record<string, string>> = {
     gmailInboxCheckNote: 'Wyber checks your Gmail inbox every ~15 minutes and runs this flow when a new message arrives. Connect Gmail in Settings → Integrations, then click Save to activate.',
 
     whichAiModel: 'Which AI model?',
-    modelClaudeSonnet: 'Claude Sonnet 4.6 (fast, smart)',
-    modelClaudeOpus: 'Claude Opus 4.8 (most capable)',
+    modelClaudeSonnet: 'WyberCode 1.0 (fast, smart)',
+    modelClaudeOpus: 'WyberCode 1.0 Max (most capable)',
     modelGpt4o: 'GPT-4o',
     modelGpt4oMini: 'GPT-4o mini (faster, cheaper)',
     whatShouldAiDo: 'What should the AI do?',
@@ -343,7 +343,7 @@ export const EDITOR_CANVAS_STRINGS: Record<Locale, Record<string, string>> = {
     triggerLabel: 'यह कब शुरू होता है',
     triggerHelp: 'यह एजेंट कैसे और कब चलना शुरू करता है',
     aiagentLabel: 'AI स्टेप',
-    aiagentHelp: 'Claude इनपुट पढ़ता है और तय करता है क्या करना है',
+    aiagentHelp: 'WyberCode इनपुट पढ़ता है और तय करता है क्या करना है',
     toolLabel: 'एक टूल इस्तेमाल करें',
     toolHelp: 'किसी बाहरी ऐप से कनेक्ट करें (Gmail, Slack, वगैरह)',
     conditionLabel: 'डिसीज़न पॉइंट',
@@ -424,8 +424,8 @@ export const EDITOR_CANVAS_STRINGS: Record<Locale, Record<string, string>> = {
     gmailInboxCheckNote: 'Wyber आपका Gmail इनबॉक्स हर ~15 मिनट में चेक करता है और नया मैसेज आने पर यह फ्लो चलाता है। Settings → Integrations में Gmail कनेक्ट करें, फिर एक्टिवेट करने के लिए Save दबाएं।',
 
     whichAiModel: 'कौन सा AI मॉडल?',
-    modelClaudeSonnet: 'Claude Sonnet 4.6 (तेज़, स्मार्ट)',
-    modelClaudeOpus: 'Claude Opus 4.8 (सबसे सक्षम)',
+    modelClaudeSonnet: 'WyberCode 1.0 (तेज़, स्मार्ट)',
+    modelClaudeOpus: 'WyberCode 1.0 Max (सबसे सक्षम)',
     modelGpt4o: 'GPT-4o',
     modelGpt4oMini: 'GPT-4o mini (तेज़, सस्ता)',
     whatShouldAiDo: 'AI को क्या करना चाहिए?',
@@ -654,7 +654,7 @@ export const EDITOR_CANVAS_STRINGS: Record<Locale, Record<string, string>> = {
     triggerLabel: 'ಇದು ಯಾವಾಗ ಶುರುವಾಗುತ್ತದೆ',
     triggerHelp: 'ಈ ಏಜೆಂಟ್ ಹೇಗೆ ಮತ್ತು ಯಾವಾಗ ಚಾಲನೆ ಶುರುಮಾಡುತ್ತದೆ',
     aiagentLabel: 'AI ಸ್ಟೆಪ್',
-    aiagentHelp: 'Claude ಇನ್‌ಪುಟ್ ಓದಿ ಏನು ಮಾಡಬೇಕೆಂದು ನಿರ್ಧರಿಸುತ್ತದೆ',
+    aiagentHelp: 'WyberCode ಇನ್‌ಪುಟ್ ಓದಿ ಏನು ಮಾಡಬೇಕೆಂದು ನಿರ್ಧರಿಸುತ್ತದೆ',
     toolLabel: 'ಒಂದು ಟೂಲ್ ಬಳಸಿ',
     toolHelp: 'ಬಾಹ್ಯ ಆ್ಯಪ್‌ಗೆ ಕನೆಕ್ಟ್ ಮಾಡಿ (Gmail, Slack, ಇತ್ಯಾದಿ)',
     conditionLabel: 'ಡಿಸಿಷನ್ ಪಾಯಿಂಟ್',
@@ -735,8 +735,8 @@ export const EDITOR_CANVAS_STRINGS: Record<Locale, Record<string, string>> = {
     gmailInboxCheckNote: 'Wyber ನಿಮ್ಮ Gmail ಇನ್‌ಬಾಕ್ಸ್ ಅನ್ನು ಪ್ರತಿ ~15 ನಿಮಿಷಕ್ಕೆ ಚೆಕ್ ಮಾಡಿ ಹೊಸ ಮೆಸೇಜ್ ಬಂದಾಗ ಈ ಫ್ಲೋ ಚಲಾಯಿಸುತ್ತದೆ. Settings → Integrations ನಲ್ಲಿ Gmail ಕನೆಕ್ಟ್ ಮಾಡಿ, ನಂತರ ಆ್ಯಕ್ಟಿವೇಟ್ ಮಾಡಲು Save ಒತ್ತಿ.',
 
     whichAiModel: 'ಯಾವ AI ಮಾಡೆಲ್?',
-    modelClaudeSonnet: 'Claude Sonnet 4.6 (ವೇಗ, ಸ್ಮಾರ್ಟ್)',
-    modelClaudeOpus: 'Claude Opus 4.8 (ಅತಿ ಸಮರ್ಥ)',
+    modelClaudeSonnet: 'WyberCode 1.0 (ವೇಗ, ಸ್ಮಾರ್ಟ್)',
+    modelClaudeOpus: 'WyberCode 1.0 Max (ಅತಿ ಸಮರ್ಥ)',
     modelGpt4o: 'GPT-4o',
     modelGpt4oMini: 'GPT-4o mini (ವೇಗ, ಅಗ್ಗ)',
     whatShouldAiDo: 'AI ಏನು ಮಾಡಬೇಕು?',
@@ -965,7 +965,7 @@ export const EDITOR_CANVAS_STRINGS: Record<Locale, Record<string, string>> = {
     triggerLabel: 'ఇది ఎప్పుడు మొదలవుతుంది',
     triggerHelp: 'ఈ ఏజెంట్ ఎలా మరియు ఎప్పుడు నడవడం మొదలుపెడుతుంది',
     aiagentLabel: 'AI స్టెప్',
-    aiagentHelp: 'Claude ఇన్‌పుట్‌లు చదివి ఏం చేయాలో నిర్ణయిస్తుంది',
+    aiagentHelp: 'WyberCode ఇన్‌పుట్‌లు చదివి ఏం చేయాలో నిర్ణయిస్తుంది',
     toolLabel: 'ఒక టూల్ వాడండి',
     toolHelp: 'బయటి యాప్‌కి కనెక్ట్ చేయండి (Gmail, Slack, మొదలైనవి)',
     conditionLabel: 'డెసిషన్ పాయింట్',
@@ -1046,8 +1046,8 @@ export const EDITOR_CANVAS_STRINGS: Record<Locale, Record<string, string>> = {
     gmailInboxCheckNote: 'Wyber మీ Gmail ఇన్‌బాక్స్‌ను ప్రతి ~15 నిమిషాలకు చెక్ చేసి కొత్త మెసేజ్ వచ్చినప్పుడు ఈ ఫ్లోను నడుపుతుంది. Settings → Integrations లో Gmail కనెక్ట్ చేసి, యాక్టివేట్ చేయడానికి Save నొక్కండి.',
 
     whichAiModel: 'ఏ AI మోడల్?',
-    modelClaudeSonnet: 'Claude Sonnet 4.6 (వేగం, స్మార్ట్)',
-    modelClaudeOpus: 'Claude Opus 4.8 (అత్యంత సమర్థవంతమైనది)',
+    modelClaudeSonnet: 'WyberCode 1.0 (వేగం, స్మార్ట్)',
+    modelClaudeOpus: 'WyberCode 1.0 Max (అత్యంత సమర్థవంతమైనది)',
     modelGpt4o: 'GPT-4o',
     modelGpt4oMini: 'GPT-4o mini (వేగం, చౌక)',
     whatShouldAiDo: 'AI ఏమి చేయాలి?',
@@ -1276,7 +1276,7 @@ export const EDITOR_CANVAS_STRINGS: Record<Locale, Record<string, string>> = {
     triggerLabel: 'இது எப்போது தொடங்குகிறது',
     triggerHelp: 'இந்த ஏஜென்ட் எப்படி, எப்போது இயங்கத் தொடங்குகிறது',
     aiagentLabel: 'AI ஸ்டெப்',
-    aiagentHelp: 'Claude உள்ளீடுகளைப் படித்து என்ன செய்யவேண்டும் என முடிவெடுக்கிறது',
+    aiagentHelp: 'WyberCode உள்ளீடுகளைப் படித்து என்ன செய்யவேண்டும் என முடிவெடுக்கிறது',
     toolLabel: 'ஒரு டூலைப் பயன்படுத்துங்கள்',
     toolHelp: 'ஒரு வெளிப்புற ஆப்-உடன் கனெக்ட் செய்யுங்கள் (Gmail, Slack, முதலியன)',
     conditionLabel: 'முடிவெடுக்கும் புள்ளி',
@@ -1357,8 +1357,8 @@ export const EDITOR_CANVAS_STRINGS: Record<Locale, Record<string, string>> = {
     gmailInboxCheckNote: 'Wyber உங்கள் Gmail இன்பாக்ஸை ஒவ்வொரு ~15 நிமிடமும் செக் செய்து புதிய மெசேஜ் வரும்போது இந்த ஃப்ளோவை இயக்கும். Settings → Integrations இல் Gmail ஐ கனெக்ட் செய்து, செயல்படுத்த Save ஐ அழுத்துங்கள்.',
 
     whichAiModel: 'எந்த AI மாடல்?',
-    modelClaudeSonnet: 'Claude Sonnet 4.6 (வேகம், ஸ்மார்ட்)',
-    modelClaudeOpus: 'Claude Opus 4.8 (மிக திறமையானது)',
+    modelClaudeSonnet: 'WyberCode 1.0 (வேகம், ஸ்மார்ட்)',
+    modelClaudeOpus: 'WyberCode 1.0 Max (மிக திறமையானது)',
     modelGpt4o: 'GPT-4o',
     modelGpt4oMini: 'GPT-4o mini (வேகமானது, மலிவானது)',
     whatShouldAiDo: 'AI என்ன செய்யவேண்டும்?',

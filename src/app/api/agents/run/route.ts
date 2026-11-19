@@ -3,13 +3,14 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { decryptCredential } from '@/lib/encryption'
 import { getToolById, detectRequiredTools } from '@/lib/tool-registry'
 import Anthropic from '@anthropic-ai/sdk'
+import { createAnthropic } from '@/lib/ai-usage'
 import { creditCost } from '@/lib/credits'
 import { sendAgentCompletedEmail, sendAgentFailedEmail } from '@/lib/email'
 import { withCacheBreakpoint } from '@/lib/anthropic-cache'
 import { internalSecret } from '@/lib/internal-auth'
 import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+const anthropic = createAnthropic('app/api/agents/run', { apiKey: process.env.ANTHROPIC_API_KEY! })
 
 // Cost per Anthropic call in this route (model is always CHEAP_MODEL = default tier)
 const ITER_COST = creditCost('execution', 'default') // 2 credits

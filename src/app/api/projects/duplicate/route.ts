@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 
 export async function POST(req: NextRequest) {
-  const { projectId } = await req.json();
+  const { projectId, orgId } = await req.json();
   if (!projectId) return NextResponse.json({ error: 'Missing params' }, { status: 400 });
 
   // The caller — never the client-supplied body — owns the fork. Previously
@@ -26,6 +26,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Not authorized to duplicate this project' }, { status: 403 });
   }
 
+  // A copy can be made inside an agency workspace so teammates can open it. The caller must be able to create there.
+  let forkOrgId: string | null = null
+  if (typeof orgId === 'string' && orgId) {
+    const { requireOrgCapability } = await import('@/lib/orgs/rbac')
+    const check = await requireOrgCapability(user.id, orgId, 'project.create')
+    if (!check.ok) return NextResponse.json({ error: 'Workspace not found' }, { status: 404 })
+    forkOrgId = orgId
+  }
+
   // Create fork
   const { data: fork, error: forkError } = await supabase
     .from('projects')
@@ -36,6 +45,7 @@ export async function POST(req: NextRequest) {
       framework: original.framework,
       files: original.files,
       is_public: false,
+      ...(forkOrgId ? { org_id: forkOrgId } : {}),
     })
     .select('id, name')
     .single();

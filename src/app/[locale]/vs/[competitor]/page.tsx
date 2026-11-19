@@ -10,6 +10,7 @@ import { CURSOR_CONTENT } from '@/lib/i18n/dict/vs-content/cursor'
 import { REPLIT_CONTENT } from '@/lib/i18n/dict/vs-content/replit'
 import { SOFTR_CONTENT } from '@/lib/i18n/dict/vs-content/softr'
 import { V0_CONTENT } from '@/lib/i18n/dict/vs-content/v0'
+import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
 // Locale-prefixed sibling of app/vs/[competitor]/page.tsx — see that file's
 // English version for the canonical (unprefixed) route. Only 'hi'|'kn'|'te'|'ta'
@@ -30,7 +31,7 @@ const COMPETITORS: Record<string, { name: string; url: string; content: typeof L
 }
 
 const META: Record<Locale, { titleSuffix: string; descTemplate: string }> = {
-  en: { titleSuffix: 'Honest Comparison', descTemplate: 'WyberAi vs {name}: fresh code every build, web + mobile apps, self-healing builds, 27 integrations, and GitHub ownership. Verified June 2026.' },
+  en: { titleSuffix: 'Honest Comparison', descTemplate: 'WyberAi vs {name}: fresh code every build, web + mobile apps, self-healing builds, 68 connectors, and GitHub ownership. Last reviewed June 2026.' },
   hi: { titleSuffix: 'ईमानदार तुलना', descTemplate: 'WyberAi बनाम {name}: हर बिल्ड में नया कोड, वेब + मोबाइल ऐप्स, सेल्फ-हीलिंग बिल्ड्स, 27 इंटीग्रेशन, और GitHub ओनरशिप। जून 2026 में सत्यापित।' },
   kn: { titleSuffix: 'ಪ್ರಾಮಾಣಿಕ ಹೋಲಿಕೆ', descTemplate: 'WyberAi vs {name}: ಪ್ರತಿ ಬಿಲ್ಡ್‌ನಲ್ಲೂ ಹೊಸ ಕೋಡ್, ವೆಬ್ + ಮೊಬೈಲ್ ಆ್ಯಪ್‌ಗಳು, ಸ್ವಯಂ-ಸರಿಪಡಿಸುವ ಬಿಲ್ಡ್‌ಗಳು, 27 ಇಂಟಿಗ್ರೇಶನ್‌ಗಳು, ಮತ್ತು GitHub ಮಾಲೀಕತ್ವ. ಜೂನ್ 2026 ರಲ್ಲಿ ಪರಿಶೀಲಿಸಲಾಗಿದೆ.' },
   te: { titleSuffix: 'నిజాయితీ పోలిక', descTemplate: 'WyberAi vs {name}: ప్రతి బిల్డ్‌లో కొత్త కోడ్, వెబ్ + మొబైల్ యాప్‌లు, స్వీయ-సరిదిద్దుకునే బిల్డ్‌లు, 27 ఇంటిగ్రేషన్‌లు, మరియు GitHub యాజమాన్యం. జూన్ 2026లో ధృవీకరించబడింది.' },
@@ -55,7 +56,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
       canonical: `https://wyberai.com/${locale}/vs/${competitor}`,
       languages: localeAlternates(`/vs/${competitor}`),
     },
-    openGraph: {
+    openGraph: { images: DEFAULT_OG_IMAGES,
       title: `WyberAi vs ${comp.name} (2026)`,
       description: m.descTemplate.replace('{name}', comp.name),
       url: `https://wyberai.com/${locale}/vs/${competitor}`,

@@ -23,7 +23,7 @@ export function OwnerRegionSwitcher({ current }: { current: Currency }) {
         fontSize: 12.5,
         fontWeight: 700,
         textDecoration: 'none',
-        color: active ? '#fff' : '#a1a1aa',
+        color: active ? '#fff' : '#9aa8bb',
         background: active ? '#0EA5E9' : 'transparent',
         transition: 'all .15s',
       }}
@@ -50,7 +50,7 @@ export function OwnerRegionSwitcher({ current }: { current: Currency }) {
         backdropFilter: 'blur(8px)',
       }}
     >
-      <span style={{ fontSize: 11, fontWeight: 700, color: '#52525b', padding: '0 6px 0 8px' }}>
+      <span style={{ fontSize: 11, fontWeight: 700, color: '#8797ab', padding: '0 6px 0 8px' }}>
         OWNER
       </span>
       {btn('🇺🇸 US', current === 'USD', 'US')}
@@ -58,7 +58,7 @@ export function OwnerRegionSwitcher({ current }: { current: Currency }) {
       <a
         href={go('off')}
         title="Back to IP-based (see what real visitors see)"
-        style={{ fontSize: 11, color: '#52525b', textDecoration: 'none', padding: '0 8px 0 4px' }}
+        style={{ fontSize: 11, color: '#8797ab', textDecoration: 'none', padding: '0 8px 0 4px' }}
       >
         auto
       </a>

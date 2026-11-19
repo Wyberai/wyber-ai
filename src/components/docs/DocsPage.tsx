@@ -2,8 +2,8 @@ import React from 'react'
 
 const SKY = '#0EA5E9'
 const TEXT = '#fafafa'
-const TEXT2 = '#a1a1aa'
-const TEXT3 = '#71717a'
+const TEXT2 = '#9aa8bb'
+const TEXT3 = '#8797ab'
 const BORDER = 'rgba(255,255,255,0.06)'
 const CARD = '#111118'
 
@@ -102,23 +102,14 @@ export function Step({ n, title, children }: { n: number; title: string; childre
   )
 }
 
-export function ScreenshotPlaceholder({ label }: { label: string }) {
-  return (
-    <div style={{ background: CARD, border: `1px dashed rgba(255,255,255,0.12)`, borderRadius: 10, height: 200, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, margin: '12px 0 24px', color: TEXT3, fontSize: 12 }}>
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" opacity="0.4">
-        <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="1.5"/>
-        <circle cx="8.5" cy="10.5" r="1.5" fill="currentColor"/>
-        <path d="M3 17l4.5-4.5 3 3 3-3 4.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-      </svg>
-      <span style={{ fontWeight: 500 }}>{label}</span>
-      <span style={{ fontSize: 11, opacity: 0.6 }}>Screenshot placeholder — to be added after testing</span>
-    </div>
-  )
+// Screenshots are not captured yet. Until they are, the public docs show nothing rather than a "to be added" box.
+export function ScreenshotPlaceholder(_props: { label: string }) {
+  return null
 }
 
 export function TodoBlock({ note }: { note: string }) {
   return (
-    <div style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 8, padding: '10px 14px', margin: '8px 0 16px', display: 'flex', alignItems: 'flex-start', gap: 9, fontSize: 13, color: '#a1a1aa' }}>
+    <div style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 8, padding: '10px 14px', margin: '8px 0 16px', display: 'flex', alignItems: 'flex-start', gap: 9, fontSize: 13, color: '#9aa8bb' }}>
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, marginTop: 1 }}>
         <circle cx="8" cy="8" r="7" stroke="#f59e0b" strokeWidth="1.4"/>
         <path d="M8 5v4M8 11v.5" stroke="#f59e0b" strokeWidth="1.6" strokeLinecap="round"/>

@@ -6,7 +6,7 @@ import { runSmokeTest } from '@/lib/smoke-test'
 import { scanForExposedSecrets } from '@/lib/security-scan'
 import { runProjectRlsScan, hasCriticalLeak } from '@/lib/rls-scan-project'
 import { runProjectWyberCloudScan, hasCriticalWyberCloudLeak } from '@/lib/wybercloud-scan-project'
-import { extractImageDirectives, replaceTokenInFiles } from '@/lib/image-directives'
+import { extractImageDirectives, replaceTokenInFiles, resolveDirectivesForPreview } from '@/lib/image-directives'
 import { generateAndPersistImage, billBuildImage } from '@/lib/generate-image-persist'
 import { syncSupabaseAuthUrl } from '@/lib/sync-supabase-auth-url'
 import { notify } from '@/lib/push'
@@ -102,9 +102,11 @@ export async function POST(req: NextRequest) {
     // Support mode: allowlisted admins can publish on a customer's behalf
     // after fixing their project remotely.
     const { isAdminEmail } = await import('@/lib/admin')
-    let projectQuery = admin.from('projects').select('*').eq('id', projectId)
-    if (!isAdminEmail(user.email)) projectQuery = projectQuery.eq('user_id', user.id)
-    const { data: project } = await projectQuery.single()
+    // The owner, or a workspace member / editor collaborator on a shared project (see src/lib/project-access.ts).
+    if (!isAdminEmail(user.email) && !(await (await import('@/lib/project-access')).canEditProject(admin, user.id, projectId))) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 })
+    }
+    const { data: project } = await admin.from('projects').select('*').eq('id', projectId).single()
 
     if (!project) return NextResponse.json({ error: 'Project not found' }, { status: 404 })
 
@@ -204,6 +206,17 @@ export async function POST(req: NextRequest) {
       appId: projectId,
       securityBadge: (project.show_security_badge && rlsScore !== undefined) ? { score: rlsScore } : undefined,
     })
+
+    // Last guard: a raw {{wyber-image: ...}} token must never reach the live page, where it becomes a broken
+    // <img src>. Anything sanitizeFiles left behind (any file type) turns into the same gradient placeholder.
+    for (const [path, val] of Object.entries(sanitized as Record<string, unknown>)) {
+      const content = typeof val === 'string' ? val : (val as { content?: string } | null)?.content
+      if (typeof content !== 'string' || !/wyber-image/i.test(content)) continue
+      const resolved = resolveDirectivesForPreview(content)
+      if (resolved === content) continue
+      console.warn('[publish] image token survived sanitize in', path)
+      ;(sanitized as Record<string, unknown>)[path] = typeof val === 'string' ? resolved : { ...(val as object), content: resolved }
+    }
 
     const secretScan = scanForExposedSecrets(sanitized)
     if (!secretScan.ok) {
@@ -334,9 +347,15 @@ export async function POST(req: NextRequest) {
           const snapshot = await renderStaticSnapshot(htmlForSnapshot)
           if (snapshot) {
             await admin.storage.from('published-apps').upload(`${projectId}/snapshot.html`, snapshot, { contentType: 'text/html', upsert: true })
+          } else {
+            // Rendered, but with too little text to be useful: say so instead of leaving nothing to read.
+            console.error('[publish] snapshot empty: page rendered fewer than 80 characters of text')
           }
         } catch (e) {
           console.error('[publish] snapshot failed:', e)
+          // Leave a readable reason where the snapshot would be, so a missing snapshot can be diagnosed (none of four live sites had one).
+          const reason = `${new Date().toISOString()}\n${e instanceof Error ? (e.stack || e.message) : String(e)}`.slice(0, 4000)
+          await admin.storage.from('published-apps').upload(`${projectId}/snapshot.error.txt`, reason, { contentType: 'text/plain', upsert: true }).catch(() => {})
         }
       })
     }
@@ -362,13 +381,8 @@ export async function DELETE(req: NextRequest) {
 
     // Verify ownership BEFORE touching storage — an authenticated non-owner
     // could otherwise delete another user's published CDN files.
-    const { data: owned } = await admin
-      .from('projects')
-      .select('id')
-      .eq('id', projectId)
-      .eq('user_id', user.id)
-      .maybeSingle()
-    if (!owned) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    const { canEditProject } = await import('@/lib/project-access')
+    if (!(await canEditProject(admin, user.id, projectId))) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
     await admin.storage.from('published-apps').remove([
       `${projectId}/index.html`,
@@ -378,7 +392,6 @@ export async function DELETE(req: NextRequest) {
     await admin.from('projects')
       .update({ published_url: null, is_public: false })
       .eq('id', projectId)
-      .eq('user_id', user.id)
 
     return NextResponse.json({ success: true })
   } catch (err: any) {

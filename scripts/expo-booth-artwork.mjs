@@ -1,0 +1,171 @@
+// Tech Expo Gujarat 2026, Startup Booth (2 x 2 m) branding artwork, made at ACTUAL SIZE as vector PDFs.
+// Sizes come from the organiser's Exhibitor Manual (Startup Booth, Section 2):
+//   Backdrop 6 x 6 ft, table front 4 x 2.6 ft, table side (x2) 2.5 x 2 ft. "Print-ready artwork at actual size (PDF / AI / CDR)".
+// Run: node scripts/expo-booth-artwork.mjs   (needs Google Chrome; writes to the Gujarat Tech Expo folder on the Desktop)
+// Look: the same palette and type as scripts/expo-collateral.mjs (#05060a ground, #0ea5e9 accent, Inter + JetBrains Mono).
+import puppeteer from 'puppeteer-core'
+import fs from 'node:fs'
+import path from 'node:path'
+import os from 'node:os'
+import { fileURLToPath } from 'node:url'
+
+const OUT = path.join(os.homedir(), 'OneDrive', 'Desktop', 'Wyber Ai', 'Gujarat Tech Expo', 'booth-artwork')
+const CHROME = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
+const FT = 304.8 // mm in a foot
+
+const BG = '#05060a', INK = '#f2f4f8', SKY = '#0ea5e9', MUTED = '#9aa4b5', DIM = '#6b7488'
+const FONT = `<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">`
+
+// The QR is the one the organiser issued for our stall (Xpro "Generate QR": WyberAi, Startup Booth - S23, "Scan QR to view stall details").
+// It arrives as a 300 dpi picture, so its 37 x 37 module grid is read once (scripts/expo-organiser-qr.mjs, verified pixel for pixel) and
+// redrawn here as vector squares: sharp at any size, same code.
+const QR = JSON.parse(fs.readFileSync(fileURLToPath(new URL('./expo-organiser-qr.json', import.meta.url)), 'utf8'))
+const qrSvg = async () => {
+  const d = QR.rows.map((row, y) => { let out = '', x = 0; while (x < row.length) { if (row[x] === '1') { let e = x; while (e < row.length && row[e] === '1') e++; out += 'M' + x + ' ' + y + 'h' + (e - x) + 'v1h-' + (e - x) + 'z'; x = e } else x++ } return out }).join('')
+  return '<svg viewBox="0 0 ' + QR.size + ' ' + QR.size + '" style="width:100%;height:100%;display:block" shape-rendering="crispEdges" preserveAspectRatio="xMidYMid meet"><path d="' + d + '" fill="' + BG + '"/></svg>'
+}
+
+// The WyberAi mark, as vector (same shapes as the app's logo).
+const mark = (mm) => `<svg width="${mm}mm" height="${mm}mm" viewBox="0 0 32 32" fill="none" style="display:block"><rect width="32" height="32" rx="8" fill="${SKY}"/><path d="M20 7L11 16L20 25" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M23 11L28 16L23 21" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.4"/></svg>`
+const logo = (m, word) => `<div style="display:flex;align-items:center;gap:${m * 0.28}mm">${mark(m)}<div style="font-weight:900;font-size:${word}mm;letter-spacing:-0.03em;line-height:1">Wyber<span style="color:${SKY}">Ai</span></div></div>`
+const qrPlate = (size, svg) => `<div style="width:${size}mm;height:${size}mm;background:#fff;border-radius:${size * 0.05}mm;padding:${size * 0.1}mm;box-sizing:border-box">${svg}</div>`
+const mono = (size, color, extra = '') => `font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:.12em;font-size:${size}mm;color:${color};${extra}`
+
+function page(wMM, hMM, inner) {
+  return `<!doctype html><html><head><meta charset="utf-8">${FONT}<style>
+@page{size:${wMM}mm ${hMM}mm;margin:0}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;width:${wMM}mm;height:${hMM}mm;background:${BG};color:${INK};font-family:Inter,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact;overflow:hidden}
+.c{position:relative;width:${wMM}mm;height:${hMM}mm;overflow:hidden;background:${BG}}
+.abs{position:absolute}
+.sky{color:${SKY}}
+</style></head><body><div class="c">${inner}</div></body></html>`
+}
+
+// ---------- Backdrop 6 x 6 ft = 1828.8 mm square ----------
+// The six powers, held to what the code does (see src/app/gujaratexpo/data.ts POWERS): the database test runs right after a publish.
+const POWERS = ['Data leak test', 'Secret-key guard', 'Security checklist', 'AI slop remover', 'Own design system', 'SEO + AEO friendly']
+const ICON = {
+  'Data leak test': '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  'Secret-key guard': '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+  'Security checklist': '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/>',
+  'SEO + AEO friendly': '<circle cx="11" cy="11" r="6"/><path d="M16 16l5 5"/>',
+  'AI slop remover': '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><path d="M12 12L19 5"/>',
+  'Own design system': '<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="5" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><rect x="3" y="14" width="8" height="7" rx="1.5"/>',
+}
+const icon = (t, size) => `<svg width="${size}mm" height="${size}mm" viewBox="0 0 24 24" fill="none" stroke="${SKY}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display:block;flex:none">${ICON[t]}</svg>`
+const CHIPS = ['WEBSITES', 'WEB APPS', 'MOBILE APPS', 'SAAS', 'REPLACE YOUR SAAS']
+const chipRow = (size, gap, padV, padH, border) => CHIPS.map((c, i) => i === CHIPS.length - 1
+  ? `<div style="background:${SKY};border-radius:60mm;padding:${padV + border}mm ${padH + 1}mm;${mono(size, '#03111c', 'letter-spacing:.1em')}">${c}</div>`
+  : `<div style="border:${border}mm solid #2a3650;border-radius:60mm;padding:${padV}mm ${padH}mm;${mono(size, INK, 'letter-spacing:.1em')}">${c}</div>`).join('')
+
+// The table stands in front of the lower part of this wall (organiser's reference photo), so everything that matters sits in the top
+// 1000 mm of 1829 mm: logo, QR (at eye level), headline, what we build, and the call to action. The six powers live on the table front.
+async function backdrop() {
+  const W = 6 * FT, M = 110
+  const qr = await qrSvg()
+  return page(W, W, `
+    <div class="abs" style="left:${M}mm;top:${M}mm">${logo(150, 118)}</div>
+    <div class="abs" style="right:${M}mm;top:${M}mm;width:330mm">${qrPlate(330, qr)}
+      <div style="${mono(28, INK, 'margin-top:20mm;line-height:1.4;text-align:center')}">SCAN QR TO VIEW<br>STALL DETAILS</div>
+      <div style="${mono(40, SKY, 'margin-top:16mm;text-align:center;letter-spacing:.03em')}">wyberai.com</div></div>
+    <div class="abs" style="left:${M}mm;top:430mm;font-weight:900;font-size:140mm;line-height:.99;letter-spacing:-0.045em;white-space:nowrap">Vibe coding<br>with <span class="sky">superpowers.</span></div>
+    <div class="abs" style="left:${M}mm;top:790mm;font-size:60mm;font-weight:700;letter-spacing:-0.015em">Websites. Web apps. Mobile apps. SaaS.</div>
+    <div class="abs" style="left:${M}mm;top:880mm;font-size:60mm;font-weight:700;letter-spacing:-0.015em;color:${SKY}">Or replace the SaaS you rent.</div>`)
+}
+
+// ---------- Backdrop B (alternative): lead with what WyberAi does, in the words on the Xpro portal ----------
+async function backdropB() {
+  const W = 6 * FT, M = 110
+  const qr = await qrSvg()
+  const tiles = ['Website', 'Web app', 'Mobile app', 'SaaS']
+  const tw = (1609 - 3 * 30) / 4
+  const tileHtml = tiles.map((t, i) => `<div style="width:${tw}mm;height:250mm;border-radius:22mm;background:${i === 0 ? SKY : '#121722'};border:2mm solid ${i === 0 ? SKY : '#1b2230'};display:flex;align-items:flex-end;padding:30mm;box-sizing:border-box"><div style="font-weight:900;font-size:50mm;letter-spacing:-0.03em;color:${i === 0 ? '#04121c' : INK}">${t}</div></div>`).join('')
+  return page(W, W, `
+    <div class="abs" style="left:${M}mm;top:${M}mm">${logo(150, 118)}</div>
+    <div class="abs" style="right:${M}mm;top:${M}mm;width:330mm">${qrPlate(330, qr)}
+      <div style="${mono(28, INK, 'margin-top:20mm;line-height:1.4;text-align:center')}">SCAN QR TO VIEW<br>STALL DETAILS</div>
+      <div style="${mono(40, SKY, 'margin-top:16mm;text-align:center;letter-spacing:.03em')}">wyberai.com</div></div>
+    <div class="abs" style="left:${M}mm;top:440mm;font-weight:900;font-size:168mm;line-height:.98;letter-spacing:-0.045em">Build any<br>digital product.<br><span class="sky">Ship it<br>in minutes.</span></div>
+    <div class="abs" style="left:${M}mm;top:1130mm;width:1400mm;font-size:52mm;line-height:1.32;font-weight:500;color:${MUTED}">Describe what you need in plain words. WyberAi builds the website, web app, mobile app or SaaS.</div>
+    <div class="abs" style="left:${M}mm;top:1440mm;width:1609mm;display:flex;gap:30mm">${tileHtml}</div>
+    <div class="abs" style="left:${M}mm;top:1728mm;${mono(34, DIM)}">DESCRIBE IT. SHIP IT.</div>`)
+}
+
+// ---------- Table front 4 x 2.6 ft = 1219.2 x 792.5 mm ----------
+// Seen close up and head-on, so it carries the detail: the whole-app message, the six checks and the QR.
+async function tableFront() {
+  const W = 4 * FT, H = 2.6 * FT, M = 56
+  const qr = await qrSvg()
+  const gw = (W - 2 * M - 2 * 16) / 3
+  const pills = POWERS.map(t => `<div style="width:${gw}mm;height:84mm;border:1.4mm solid #2a3650;border-radius:16mm;background:#0e131c;display:flex;align-items:center;gap:10mm;padding:0 12mm;box-sizing:border-box">${icon(t, 30)}<div style="font-weight:800;font-size:25mm;letter-spacing:-0.02em;white-space:nowrap">${t}</div></div>`).join('')
+  return page(W, H, `
+    <div class="abs" style="left:${M}mm;top:${M}mm">${logo(78, 60)}</div>
+    <div class="abs" style="right:${M}mm;top:${M}mm;width:260mm">${qrPlate(260, qr)}
+      <div style="${mono(18, INK, 'margin-top:10mm;text-align:center;white-space:nowrap')}">SCAN QR FOR DETAILS</div></div>
+    <div class="abs" style="left:${M}mm;top:170mm;font-weight:900;font-size:49mm;line-height:1.02;letter-spacing:-0.04em">Vibe coding gives you a base.<br><span class="sky">WyberAi gives you the whole app.</span></div>
+    <div class="abs" style="left:${M}mm;top:278mm;font-size:25mm;font-weight:700;letter-spacing:-0.01em">An <span class="sky">AI agent</span> plans it, builds it, repairs it and checks it.</div>
+    <div class="abs" style="left:${M}mm;top:334mm;${mono(22, SKY, 'letter-spacing:.12em')}">SIX SUPERPOWERS, BUILT IN</div>
+    <div class="abs" style="left:${M}mm;top:376mm;width:${W - 2 * M}mm;display:flex;flex-wrap:wrap;gap:14mm">${pills}</div>
+    <div class="abs" style="left:${M}mm;top:588mm;font-weight:800;font-size:34mm;letter-spacing:-0.02em">Saves <span class="sky">hundreds of hours</span> of research and vibe coding.</div>
+    <div class="abs" style="left:${M}mm;top:660mm;${mono(21, INK, 'letter-spacing:.08em')}">YOUR CODE. YOUR GITHUB. YOUR DOMAIN.</div>
+    <div class="abs" style="right:${M}mm;bottom:${M}mm;${mono(26, SKY, 'letter-spacing:.06em')}">wyberai.com</div>`)
+}
+
+// ---------- Table side (x2) 2.5 x 2 ft = 762 x 609.6 mm ----------
+// Glanced at from the aisle: one short line.
+async function tableSide() {
+  const W = 2.5 * FT, H = 2 * FT, M = 48
+  return page(W, H, `
+    <div class="abs" style="left:${M}mm;top:${M}mm">${logo(70, 54)}</div>
+    <div class="abs" style="left:${M}mm;top:215mm;font-weight:900;font-size:86mm;line-height:1;letter-spacing:-0.04em">Own your<br>software.<br><span class="sky">Stop renting it.</span></div>
+    <div class="abs" style="left:${M}mm;bottom:${M}mm;${mono(22, SKY, 'letter-spacing:.06em')}">wyberai.com</div>`)
+}
+
+const PIECES = [
+  ['01-backdrop-6x6ft', 6 * FT, 6 * FT, backdrop],
+  ['01b-backdrop-6x6ft-ALT-capability', 6 * FT, 6 * FT, backdropB],
+  ['02-table-front-4x2.6ft', 4 * FT, 2.6 * FT, tableFront],
+  ['03-table-side-2.5x2ft', 2.5 * FT, 2 * FT, tableSide],
+]
+
+fs.mkdirSync(OUT, { recursive: true })
+const browser = await puppeteer.launch({ executablePath: CHROME, headless: true, args: ['--no-sandbox'] })
+try {
+  for (const [name, wMM, hMM, make] of PIECES) {
+    const html = await make()
+    fs.writeFileSync(path.join(OUT, name + '.html'), html)
+    const pg = await browser.newPage()
+    await pg.setContent(html, { waitUntil: 'networkidle0', timeout: 60000 })
+    await pg.evaluate(() => document.fonts.ready)
+    await new Promise(r => setTimeout(r, 600))
+    await pg.pdf({ path: path.join(OUT, name + '.pdf'), width: `${wMM}mm`, height: `${hMM}mm`, printBackground: true, preferCSSPageSize: true, margin: { top: 0, right: 0, bottom: 0, left: 0 } })
+    // A small preview image (not for print).
+    const pxW = Math.round(wMM / 25.4 * 96), pxH = Math.round(hMM / 25.4 * 96)
+    await pg.setViewport({ width: pxW, height: pxH, deviceScaleFactor: 1200 / pxW })
+    await pg.screenshot({ path: path.join(OUT, name + '-preview.png') })
+    await pg.close()
+    console.log('wrote', name)
+  }
+  // Comparison sheet (not for print).
+  const b64 = f => 'data:image/png;base64,' + fs.readFileSync(path.join(OUT, f)).toString('base64')
+  const A = b64('01-backdrop-6x6ft-preview.png'), B = b64('01b-backdrop-6x6ft-ALT-capability-preview.png')
+  const sheet = `<!doctype html><html><head><meta charset="utf-8"><style>
+    body{margin:0;background:#e9edf3;font-family:Inter,Arial,sans-serif;color:#10151f;width:1700px}
+    .row{display:flex;gap:40px;padding:40px 50px 0}.col{flex:1}
+    h2{margin:0 0 6px;font-size:30px}p{margin:0 0 16px;font-size:19px;color:#4a5568}
+    img.big{width:100%;display:block;border:1px solid #c5ccd8}
+    .far{display:flex;gap:40px;padding:36px 50px 50px;align-items:flex-end}.far div{flex:1}
+    .far img{width:190px;display:block;border:1px solid #c5ccd8}.far span{font-size:17px;color:#4a5568;display:block;margin-top:8px}
+  </style></head><body>
+  <div class="row"><div class="col"><h2>A. The problem</h2><p>"Your software has 100 features. You use 5." then "Build your own software."</p><img class="big" src="${A}"></div>
+  <div class="col"><h2>B. What it does</h2><p>"Build any digital product. Ship it in minutes." (the Xpro portal wording)</p><img class="big" src="${B}"></div></div>
+  <div class="far"><div><img src="${A}"><span>A from far away (a 6 ft backdrop seen from about 8 m)</span></div><div><img src="${B}"><span>B from far away</span></div></div>
+  </body></html>`
+  const pg = await browser.newPage()
+  await pg.setViewport({ width: 1700, height: 1300 })
+  await pg.setContent(sheet, { waitUntil: 'load' })
+  await pg.screenshot({ path: path.join(OUT, 'COMPARE-A-vs-B.png'), fullPage: true })
+  await pg.close()
+  console.log('wrote COMPARE-A-vs-B.png')
+} finally { await browser.close() }

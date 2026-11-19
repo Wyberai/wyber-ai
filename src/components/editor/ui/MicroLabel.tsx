@@ -12,7 +12,7 @@ export function MicroLabel({ children, color, style }: { children: ReactNode; co
     <span
       style={{
         fontFamily: BRAND.mono,
-        fontSize: 10,
+        fontSize: 11,
         fontWeight: 600,
         textTransform: 'uppercase',
         letterSpacing: '0.09em',

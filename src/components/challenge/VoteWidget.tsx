@@ -31,7 +31,7 @@ export function VoteWidget({ entryId, initialCount, initialVoted }: { entryId: s
     <button onClick={vote} disabled={busy} aria-pressed={voted} style={{
       display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 24px', borderRadius: 12, cursor: busy ? 'default' : 'pointer',
       fontFamily: 'inherit', fontSize: 15, fontWeight: 800, border: `1px solid ${voted ? BRAND : 'rgba(255,255,255,0.14)'}`,
-      background: voted ? 'rgba(14,165,233,0.15)' : 'transparent', color: voted ? BRAND : '#e4e4e7',
+      background: voted ? 'rgba(14,165,233,0.15)' : 'transparent', color: voted ? BRAND : '#e8eef7',
     }}>
       <span>▲</span> {voted ? 'Voted' : 'Upvote'} · {count}
     </button>

@@ -1,24 +1,25 @@
 import type { Metadata } from 'next'
 import { VsPageTemplate } from '@/components/seo/VsPageTemplate'
 import { localeAlternates } from '@/lib/i18n/hreflang'
+import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
 export const metadata: Metadata = {
   title: 'WyberAi vs Bolt.new (2026) — Honest Comparison',
-  description: 'WyberAi vs Bolt.new: fixed-credit pricing vs Bolt\'s token model, plus mobile apps, self-healing builds, and 27 integrations. Verified June 2026.',
+  description: 'WyberAi vs Bolt.new: fixed-credit pricing vs Bolt\'s token model, plus mobile apps, self-healing builds, and 68 connectors. Last reviewed June 2026.',
   alternates: { canonical: 'https://wyberai.com/vs/bolt', languages: localeAlternates('/vs/bolt') },
-  openGraph: { title: 'WyberAi vs Bolt.new (2026)', description: 'Fixed credits, web + mobile, self-healing builds. Verified June 2026.', url: 'https://wyberai.com/vs/bolt' },
+  openGraph: { images: DEFAULT_OG_IMAGES, title: 'WyberAi vs Bolt.new (2026)', description: 'Fixed credits, web + mobile, self-healing builds. Last reviewed June 2026.', url: 'https://wyberai.com/vs/bolt' },
 }
 
 const ROWS = [
   { feature: 'Starter price',           wyber: '$29/mo (Starter)',            other: '$25/mo',            winner: 'tie'   as const },
-  { feature: 'Starter credits/mo',      wyber: '150',               other: '~250 tokens equiv', winner: 'other' as const },
-  { feature: 'Free tier',               wyber: '30 credits/month',  other: '1M tokens/mo',      winner: 'tie'   as const },
+  { feature: 'Starter credits/mo',      wyber: '450',               other: '10M tokens (different unit)', winner: 'tie' as const },
+  { feature: 'Free tier',               wyber: '30 free credits on signup',  other: '1M tokens/mo',      winner: 'tie'   as const },
   { feature: 'Usage model',             wyber: 'Fixed credits',     other: 'Tokens (per char)', winner: 'wyber' as const },
   { feature: 'Unused credits rollover', wyber: '✓ Always',          other: '✓ Up to 2 months',  winner: 'wyber' as const },
   { feature: 'Daily bonus',             wyber: '8 credits/day',     other: 'None',              winner: 'wyber' as const },
   { feature: 'Mobile app builder',      wyber: '✓ React Native',    other: '✗ Web only',        winner: 'wyber' as const },
   { feature: 'Self-healing builds',      wyber: '✓ Auto-fixes errors', other: '✗',               winner: 'wyber' as const },
-  { feature: '27 integrations',         wyber: '✓ Built-in',        other: 'Limited',           winner: 'wyber' as const },
+  { feature: '68 connectors',         wyber: '✓ Built-in',        other: 'Limited',           winner: 'wyber' as const },
   { feature: 'Code generation',    wyber: 'Always fresh AI code',    other: 'None',              winner: 'wyber' as const },
   { feature: 'Credit estimate upfront', wyber: '✓',                 other: '✗',                 winner: 'wyber' as const },
   { feature: 'Visual click-to-edit',    wyber: '✓',                 other: 'Limited',           winner: 'wyber' as const },
@@ -34,7 +35,7 @@ const ROWS = [
 const FAQS = [
   {
     q: 'How does WyberAi pricing compare to Bolt.new?',
-    a: 'WyberAi Starter is $29/month for 150 fixed credits — you always know the cost before generating. Bolt uses a token-based model ($25/month) where cost depends on prompt length, making it harder to predict spend. Wyber also builds mobile apps and includes self-healing builds.',
+    a: 'WyberAi Starter is $29/month for 450 fixed credits — you always know the cost before generating. Bolt uses a token-based model ($25/month) where cost depends on prompt length, making it harder to predict spend. Wyber also builds mobile apps and includes self-healing builds.',
   },
   {
     q: 'Does Bolt.new have a mobile app builder?',
@@ -60,8 +61,8 @@ export default function VsBolt() {
       slug="bolt"
       competitorName="Bolt.new"
       competitorUrl="https://bolt.new"
-      tagline="Bolt.new is a powerful web app builder for developers. WyberAi offers predictable fixed-credit pricing, a friendlier interface, mobile apps, self-healing builds, and 27 integrations Bolt doesn't have."
-      blurb="Honest comparison of WyberAi vs Bolt.new: pricing model, credits, and features. Verified June 2026."
+      tagline="Bolt.new is a powerful web app builder for developers. WyberAi offers predictable fixed-credit pricing, a friendlier interface, mobile apps, self-healing builds, and 68 connectors Bolt doesn't have."
+      blurb="Honest comparison of WyberAi vs Bolt.new: pricing model, credits, and features. Last reviewed June 2026."
       rows={ROWS}
       faqs={FAQS}
       pillarNote="Bolt.new builds web apps only."

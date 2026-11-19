@@ -70,7 +70,8 @@ export function SandboxedApp({ html, slug, projectId, title }: { html: string; s
       ref={frame}
       srcDoc={srcDoc}
       sandbox={PUBLISHED_APP_SANDBOX}
-      style={{ width: '100%', height: '100vh', border: 'none', display: 'block' }}
+      // Leave a 36px strip for the Report button and the "Built with" badge, so they never cover the app's own bottom tabs.
+      style={{ width: '100%', height: 'calc(100vh - 36px)', border: 'none', display: 'block' }}
       title={title}
     />
   )

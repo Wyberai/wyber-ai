@@ -4,7 +4,11 @@ import { notFound } from 'next/navigation'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 import { BUILD_PAGES, CATEGORY_LABELS, getBuildPage } from '../data'
 import { StartBuildButton } from '../StartBuildButton'
+import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
+import { fitTitle } from '@/lib/seo-title'
 
+// Unknown slugs must answer a real 404 (the root loading.tsx streams a 200 before notFound() runs otherwise).
+export const dynamicParams = false
 export function generateStaticParams() {
   return BUILD_PAGES.map(p => ({ slug: p.slug }))
 }
@@ -14,10 +18,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const page = getBuildPage(slug)
   if (!page) return {}
   return {
-    title: page.metaTitle,
+    title: fitTitle(page.metaTitle),
     description: page.metaDesc,
     alternates: { canonical: `https://wyberai.com/build/${page.slug}` },
-    openGraph: { title: page.metaTitle, description: page.metaDesc, url: `https://wyberai.com/build/${page.slug}` },
+    openGraph: { images: DEFAULT_OG_IMAGES, title: page.metaTitle, description: page.metaDesc, url: `https://wyberai.com/build/${page.slug}` },
   }
 }
 
@@ -177,7 +181,7 @@ export default async function BuildPage({ params }: { params: Promise<{ slug: st
 
         {/* CTA footer */}
         <div style={{ textAlign: 'center', padding: 'clamp(24px,4vw,40px)', background: s.card, borderRadius: 14, border: `1px solid ${s.border}` }}>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, margin: '0 0 8px' }}>Start building for free — 30 credits/month</h2>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, margin: '0 0 8px' }}>Start building for free — 30 free credits on signup</h2>
           <p style={{ fontSize: 14, color: s.muted, margin: '0 0 20px' }}>No credit card required. Your {page.noun} live in minutes.</p>
           <StartBuildButton prompt={page.promptExample} target={page.target} slug={page.slug} label={`Build my ${page.noun} →`} color={color} variant="compact" />
         </div>

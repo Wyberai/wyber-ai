@@ -35,7 +35,10 @@ function metaContent(html: string, key: 'name' | 'property', val: string): strin
 
 export function analyzeHtml(url: string, html: string, robotsOk: boolean, sitemapOk: boolean): SeoReport {
   const checks: SeoCheck[] = []
-  const head = (html.match(/<head[\s\S]*?<\/head>/i)?.[0]) ?? html.slice(0, 20000)
+  // Next can stream title/meta/canonical into the body after </head>. Search engines run the page and read them, so the
+  // tags still count: look at the head, and fall back to the whole document for tags the head does not have.
+  const headOnly = (html.match(/<head[\s\S]*?<\/head>/i)?.[0]) ?? html.slice(0, 20000)
+  const head = /<title[\s>]/i.test(headOnly) && /rel\s*=\s*["']canonical["']/i.test(headOnly) ? headOnly : headOnly + '\n' + html.replace(/<script\b(?![^>]*ld\+json)[\s\S]*?<\/script>/gi, '').slice(0, 400000)
 
   // Title
   const title = head.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.trim()

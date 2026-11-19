@@ -31,7 +31,7 @@ export default function NotFound() {
           It seems this page doesn't exist — or maybe it just went off and built its own product. Either way, let's get you back to building things.
         </p>
         <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
-          <Link href="/" style={{ padding: '12px 28px', borderRadius: 10, background: '#0EA5E9', color: '#fff', fontWeight: 700, fontSize: 14, display: 'inline-block' }}>
+          <Link href="/" style={{ padding: '12px 28px', borderRadius: 10, background: '#0EA5E9', color: '#03111c', fontWeight: 700, fontSize: 14, display: 'inline-block' }}>
             Go home →
           </Link>
           <Link href="/dashboard" style={{ padding: '12px 22px', borderRadius: 10, border: '1px solid var(--border)', color: 'var(--text2)', fontSize: 14, fontWeight: 500, display: 'inline-block' }}>

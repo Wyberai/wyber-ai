@@ -139,7 +139,7 @@ export function SecretsManager({ projectId }: { projectId: string }) {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Secrets Manager</h1>
+          <h3 className="text-xl font-bold text-white mb-2">Secrets Manager</h3>
           <p className="text-slate-400">Securely manage environment variables and API keys</p>
         </div>
         <div className="flex items-center gap-2">

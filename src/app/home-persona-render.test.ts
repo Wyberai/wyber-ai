@@ -63,7 +63,7 @@ describe('homepage with the intent experiment', () => {
     expect(html).toContain('Build any digital product.')
     expect(html).not.toContain('--brand-accent:')
     expect(html).toContain('You chose: Just scrolling.')
-    for (const id of ['gallery', 'userbuilds', 'websites', 'byos', 'telemetry', 'journey', 'ph', 'projects', 'examples']) expect(html, id).toContain(`[data-sec="${id}"]{display:none !important}`)
+    for (const id of ['gallery', 'userbuilds', 'websites', 'byos', 'telemetry', 'ph', 'projects', 'examples']) expect(html, id).toContain(`[data-sec="${id}"]{display:none !important}`)
     for (const id of ['mission', 'products', 'proof', 'pricing', 'faq', 'final']) expect(html, id).toContain(`[data-sec="${id}"]{order:`)
   })
 

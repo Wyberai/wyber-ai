@@ -16,8 +16,8 @@ export async function POST(req: NextRequest) {
   }
 
   const admin = await createAdminClient()
-  const { data: project } = await admin.from('projects').select('id').eq('id', projectId).eq('user_id', user.id).maybeSingle()
-  if (!project) return NextResponse.json({ error: 'Project not found' }, { status: 404 })
+  const { canEditProject } = await import('@/lib/project-access')
+  if (!(await canEditProject(admin, user.id, projectId))) return NextResponse.json({ error: 'Project not found' }, { status: 404 })
 
   await admin.from('projects').update({ feedback_mode_enabled: enabled }).eq('id', projectId)
   return NextResponse.json({ success: true, enabled })

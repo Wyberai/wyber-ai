@@ -1,9 +1,10 @@
 import Link from 'next/link';
-import { Space_Grotesk, Manrope } from 'next/font/google';
 import ChatWidget from './ChatWidget';
 
-const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], weight: ['500', '600', '700'], variable: '--font-display' });
-const manrope = Manrope({ subsets: ['latin'], weight: ['400', '500', '600', '700', '800'], variable: '--font-body' });
+// The two fonts used to come from next/font/google, which downloads them while the site is being BUILT: three times on 18 Nov 2026 a slow
+// Google download failed the whole deployment for no code reason. They are now requested by the visitor's browser instead (the link below),
+// so the build never depends on Google. The stacks fall back to system fonts until they arrive.
+const FONTS_URL = 'https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap';
 
 const CAL_LINK = 'https://cal.com/wyberai/wyberai-practice-transformation-call';
 const DASHBOARD_LINK = '/app/clinic-ops-dashboard/index.html';
@@ -63,7 +64,10 @@ export const metadata = {
 
 export default function ClinicOpsDemo() {
   return (
-    <div className={`page ${spaceGrotesk.variable} ${manrope.variable}`}>
+    <div className="page">
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      <link rel="stylesheet" href={FONTS_URL} />
       {/* ---------- nav ---------- */}
       <header className="nav">
         <div className="wrap navwrap">
@@ -276,7 +280,7 @@ export default function ClinicOpsDemo() {
       <ChatWidget />
 
       <style>{`
-        .page { --accent: #3B39E0; --accent-dark: #2C2AB8; --accent-soft: #EFEEFD; min-height: 100vh; background: #fff; color: #0a0a0a; font-family: var(--font-body), -apple-system, 'Segoe UI', sans-serif; overflow-x: clip; }
+        .page { --font-display: 'Space Grotesk', system-ui, sans-serif; --font-body: 'Manrope', system-ui, sans-serif; --accent: #3B39E0; --accent-dark: #2C2AB8; --accent-soft: #EFEEFD; min-height: 100vh; background: #fff; color: #0a0a0a; font-family: var(--font-body), -apple-system, 'Segoe UI', sans-serif; overflow-x: clip; }
         .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; position: relative; }
         .page h1, .page h2, .page h3 { font-family: var(--font-display), 'Arial Black', sans-serif; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
         .strike { position: relative; color: var(--accent); }

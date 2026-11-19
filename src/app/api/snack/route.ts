@@ -1,44 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { sdkVersions, snackSdkVersion } from '@/lib/mobile-sdk'
 
-// Authoritative versions for Expo SDK 54 (compatible with Expo Go latest)
-const SDK_VERSIONS: Record<string, string> = {
-  // Navigation (v7 for SDK 54)
-  '@react-navigation/native': '^7.0.0',
-  '@react-navigation/native-stack': '^7.0.0',
-  '@react-navigation/stack': '^7.0.0',
-  '@react-navigation/bottom-tabs': '^7.0.0',
-  '@react-navigation/drawer': '^7.0.0',
-  '@react-navigation/material-top-tabs': '^7.0.0',
-  // Icons
-  '@expo/vector-icons': '~14.0.4',
-  // React Native community
-  'react-native-safe-area-context': '~4.14.0',
-  'react-native-screens': '~4.9.2',
-  'react-native-gesture-handler': '~2.24.0',
-  'react-native-reanimated': '~3.17.4',
-  'react-native-svg': '~15.11.2',
-  'react-native-maps': '~1.20.1',
-  'react-native-webview': '~13.13.4',
-  '@react-native-async-storage/async-storage': '~2.1.2',
-  '@react-native-community/slider': '~4.5.6',
-  // Expo modules
-  'expo-status-bar': '~2.2.3',
-  'expo-constants': '~17.1.6',
-  'expo-font': '~13.3.1',
-  'expo-splash-screen': '~0.30.8',
-  'expo-linear-gradient': '~14.1.4',
-  'expo-blur': '~14.1.4',
-  'expo-image': '~2.2.5',
-  'expo-av': '~15.1.4',
-  'expo-video': '~2.2.6',
-  'expo-camera': '~16.1.6',
-  'expo-location': '~18.1.5',
-  'expo-haptics': '~14.1.4',
-  'expo-clipboard': '~7.1.4',
-  'expo-sharing': '~13.1.4',
-  'expo-file-system': '~18.1.8',
-}
+// Authoritative dependency versions come from src/lib/mobile-sdk.ts (SDK 54 by default, SDK 58 when MOBILE_SDK_VERSION=58).
+const SDK_VERSIONS: Record<string, string> = sdkVersions()
 
 // Packages that are built into React Native / Expo SDK — no declaration needed
 const BUILTIN_PREFIXES = [
@@ -151,7 +116,7 @@ export async function POST(req: NextRequest) {
     // dependencies (top-level): { pkg: { version: versionString } }
     const payload = {
       manifest: {
-        sdkVersion: '54.0.0',
+        sdkVersion: snackSdkVersion(),
         name: name || 'WyberAi Mobile App',
         description: description || 'Generated with WyberAi',
         dependencies: resolvedDeps,

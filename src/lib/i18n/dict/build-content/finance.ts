@@ -39,7 +39,7 @@ export const FINANCE_BUILD_CONTENT: Record<Locale, Record<string, TranslatedBuil
         { q: 'Can it handle more than one currency?', a: 'Yes — add a currency per expense in your prompt, set a home currency, and totals convert at rates you control.' },
         { q: 'Can I attach receipts?', a: 'Add a photo field to expenses and each entry stores its receipt image — tax-season you will thank present-day you.' },
         { q: 'Does it connect to my bank?', a: 'Generated apps don\'t link to bank feeds out of the box — this is a deliberate-entry tracker, which is also why its categories are always right.' },
-        { q: 'What does building it cost?', a: 'The 30 free monthly credits cover your first build (30 credits); after that, changes are 2-credit edits. No card needed to start.' },
+        { q: 'What does building it cost?', a: 'The 30 free signup credits cover a small first build (30 credits; larger apps cost more); after that, small changes start at 4 credits. No card needed to start.' },
       ],
     },
     'budget-planner-app': {
@@ -62,7 +62,7 @@ export const FINANCE_BUILD_CONTENT: Record<Locale, Record<string, TranslatedBuil
         { q: 'Can both my partner and I use it?', a: 'Yes — it generates with authentication, and a shared-household structure means you both see and update the same budget live.' },
         { q: 'What happens to leftover money at month end?', a: 'Your choice of rule: roll unspent balances into next month\'s envelope, sweep them to a savings goal, or reset — set it in the prompt or change it in chat.' },
         { q: 'Can it do the 50/30/20 method instead of envelopes?', a: 'Yes — describe the method you follow and the budget structure, math, and dashboard are generated to match it.' },
-        { q: 'Is our financial data private?', a: 'The app runs on its own Postgres database with row-level security, and WyberAi\'s live scan probes it as an attacker would before you publish.' },
+        { q: 'Is our financial data private?', a: 'The app runs on its own Postgres database with row-level security, and WyberAi\'s live scan probes it as an attacker would as soon as you publish.' },
       ],
     },
     'subscription-tracker': {
@@ -131,7 +131,7 @@ export const FINANCE_BUILD_CONTENT: Record<Locale, Record<string, TranslatedBuil
         { q: 'Can it handle uneven splits, like one person\'s guest?', a: 'Yes — set a custom split per expense, so a dinner where only two of three roommates ate splits between just those two.' },
         { q: 'Does it work for more than roommates — trips too?', a: 'The same structure fits any shared-expense group; describe your use case (a trip, a shared subscription) and the split logic follows.' },
         { q: 'Can someone leave the household and settle their final balance?', a: 'Yes — a final settle-up clears their balance to zero, and their historical expenses stay in the log for reference.' },
-        { q: 'Is it free to use with my roommates?', a: 'Yes — no ads, no per-transaction fee. Building uses free monthly credits, and the app runs as yours from then on.' },
+        { q: 'Is it free to use with my roommates?', a: 'Yes — no ads, no per-transaction fee. Building uses free signup credits, and the app runs as yours from then on.' },
       ],
     },
   },

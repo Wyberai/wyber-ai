@@ -26,7 +26,7 @@ export default function MobileTemplatesPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#09090b', color: '#fafafa', fontFamily: 'var(--font-display)' }}>
+    <div style={{ minHeight: '100vh', background: '#05080d', color: '#fafafa', fontFamily: 'var(--font-display)' }}>
 
       {/* Header */}
       <div style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '0 32px', background: '#0d0d0f' }}>
@@ -35,10 +35,10 @@ export default function MobileTemplatesPage() {
             <WyberLogo markSize={24} wordmarkSize={13} />
           </Link>
           <span style={{ color: 'rgba(255,255,255,0.15)' }}>|</span>
-          <span style={{ fontSize: 13, color: '#71717a', fontWeight: 500 }}>Mobile Templates</span>
+          <span style={{ fontSize: 13, color: '#8797ab', fontWeight: 500 }}>Mobile Templates</span>
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 16, alignItems: 'center' }}>
-            <Link href="/templates" style={{ fontSize: 13, color: '#71717a', textDecoration: 'none' }}>Web</Link>
-            <Link href="/gallery" style={{ fontSize: 13, color: '#71717a', textDecoration: 'none' }}>Gallery</Link>
+            <Link href="/templates" style={{ fontSize: 13, color: '#8797ab', textDecoration: 'none' }}>Web</Link>
+            <Link href="/gallery" style={{ fontSize: 13, color: '#8797ab', textDecoration: 'none' }}>Gallery</Link>
             <Link href="/dashboard" style={{ fontSize: 13, color: '#0EA5E9', textDecoration: 'none', fontWeight: 700 }}>Dashboard →</Link>
           </div>
         </div>
@@ -48,14 +48,14 @@ export default function MobileTemplatesPage() {
 
         {/* Hero */}
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 20, padding: '4px 14px', fontSize: 12, color: '#8b5cf6', marginBottom: 16, fontWeight: 700 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 20, padding: '4px 14px', fontSize: 12, color: '#a78bfa', marginBottom: 16, fontWeight: 700 }}>
             📱 {MOBILE_GALLERY.length} Mobile Templates
           </div>
           <h1 style={{ fontSize: 'clamp(28px,4vw,42px)', fontWeight: 800, margin: '0 0 12px', letterSpacing: '-0.03em', fontFamily: 'var(--font-display)' }}>
             Ship mobile apps in<br />
             <span style={{ color: '#0EA5E9' }}>minutes, not months</span>
           </h1>
-          <p style={{ fontSize: 15, color: '#71717a', maxWidth: 520, margin: '0 auto 28px', lineHeight: 1.65 }}>
+          <p style={{ fontSize: 15, color: '#8797ab', maxWidth: 520, margin: '0 auto 28px', lineHeight: 1.65 }}>
             {MOBILE_GALLERY.length} curated Expo templates for the most-built mobile apps. Pick one and the AI mobile builder starts from a detailed blueprint.
           </p>
           <div style={{ display: 'flex', gap: 8, maxWidth: 420, margin: '0 auto' }}>
@@ -76,7 +76,7 @@ export default function MobileTemplatesPage() {
                 padding: '5px 13px', borderRadius: 20, fontSize: 11, fontWeight: 600, cursor: 'pointer', border: '1px solid',
                 background: category === cat ? '#0EA5E9' : 'transparent',
                 borderColor: category === cat ? '#0EA5E9' : 'rgba(255,255,255,0.08)',
-                color: category === cat ? 'white' : '#71717a',
+                color: category === cat ? 'white' : '#8797ab',
                 transition: 'all 0.15s',
               }}>
               {cat}
@@ -85,16 +85,16 @@ export default function MobileTemplatesPage() {
         </div>
 
         {/* Count */}
-        <div style={{ marginBottom: 20, fontSize: 12, color: '#52525b' }}>
+        <div style={{ marginBottom: 20, fontSize: 12, color: '#8797ab' }}>
           {filtered.length} template{filtered.length !== 1 ? 's' : ''}{category !== 'All' ? ` in ${category}` : ''}
           {search ? ` matching "${search}"` : ''}
         </div>
 
         {/* Grid */}
         {filtered.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '80px 0', color: '#52525b' }}>
+          <div style={{ textAlign: 'center', padding: '80px 0', color: '#8797ab' }}>
             <div style={{ fontSize: 40, marginBottom: 12 }}>📱</div>
-            <div style={{ fontSize: 16, fontWeight: 600, color: '#a1a1aa', marginBottom: 8 }}>No templates found</div>
+            <div style={{ fontSize: 16, fontWeight: 600, color: '#9aa8bb', marginBottom: 8 }}>No templates found</div>
             <div style={{ fontSize: 13 }}>Try a different search or category</div>
           </div>
         ) : (
@@ -112,18 +112,18 @@ export default function MobileTemplatesPage() {
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 14, fontWeight: 700, color: '#fafafa', marginBottom: 3 }}>{t.title}</div>
-                    <div style={{ fontSize: 11, color: '#52525b' }}>{t.category} · Expo</div>
+                    <div style={{ fontSize: 11, color: '#8797ab' }}>{t.category} · Expo</div>
                   </div>
                 </div>
 
                 {/* Description */}
-                <p style={{ fontSize: 12, color: '#a1a1aa', lineHeight: 1.55, margin: '0 0 16px', flex: 1 }}>
+                <p style={{ fontSize: 12, color: '#9aa8bb', lineHeight: 1.55, margin: '0 0 16px', flex: 1 }}>
                   {t.description}
                 </p>
 
                 {/* Footer */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: 'rgba(139,92,246,0.1)', color: '#8b5cf6', border: '1px solid rgba(139,92,246,0.2)' }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: 'rgba(139,92,246,0.1)', color: '#a78bfa', border: '1px solid rgba(139,92,246,0.2)' }}>
                     📱 Mobile
                   </span>
                   <button
@@ -131,7 +131,7 @@ export default function MobileTemplatesPage() {
                     disabled={launching === t.id}
                     style={{
                       fontSize: 12, fontWeight: 700,
-                      color: launching === t.id ? '#52525b' : '#0EA5E9',
+                      color: launching === t.id ? '#8797ab' : '#0EA5E9',
                       border: `1px solid ${launching === t.id ? 'rgba(255,255,255,0.08)' : 'rgba(14,165,233,0.3)'}`,
                       borderRadius: 8,
                       background: launching === t.id ? 'transparent' : 'rgba(14,165,233,0.08)',
@@ -155,8 +155,8 @@ export default function MobileTemplatesPage() {
         <div style={{ marginTop: 56, padding: '36px', background: 'rgba(14,165,233,0.04)', border: '1px solid rgba(14,165,233,0.12)', borderRadius: 16, textAlign: 'center' }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: '#0EA5E9', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>Don&apos;t see your app?</div>
           <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 8, fontFamily: 'var(--font-display)' }}>Describe any mobile app in plain English</div>
-          <div style={{ fontSize: 14, color: '#71717a', marginBottom: 20 }}>The AI mobile builder creates full Expo apps from your description.</div>
-          <Link href="/dashboard?new=mobile" style={{ display: 'inline-block', padding: '11px 24px', borderRadius: 10, background: '#0EA5E9', color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
+          <div style={{ fontSize: 14, color: '#8797ab', marginBottom: 20 }}>The AI mobile builder creates full Expo apps from your description.</div>
+          <Link href="/dashboard?new=mobile" style={{ display: 'inline-block', padding: '11px 24px', borderRadius: 10, background: '#0EA5E9', color: '#03111c', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
             Build from scratch →
           </Link>
         </div>
@@ -165,7 +165,7 @@ export default function MobileTemplatesPage() {
       <style>{`
         
         @keyframes spin { to { transform: rotate(360deg) } }
-        input::placeholder { color: #52525b }
+        input::placeholder { color: #8797ab }
       `}</style>
     </div>
   )

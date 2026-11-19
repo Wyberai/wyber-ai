@@ -1,11 +1,12 @@
 import type { Metadata } from 'next'
 import { createServiceClient } from '@/lib/supabase/server'
 import { MarketplaceClient, type MarketplaceListing } from './MarketplaceClient'
+import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
 export const metadata: Metadata = {
   title: 'Marketplace — Buy ready-made apps built on WyberAi',
   description: 'Browse real apps built on WyberAi and buy one for a price the seller set. Every purchase drops a fully editable copy straight into your account.',
-  openGraph: {
+  openGraph: { images: DEFAULT_OG_IMAGES,
     title: 'WyberAi Marketplace — Buy ready-made apps',
     description: 'Real apps, real prices, instantly yours to edit.',
     url: 'https://wyberai.com/marketplace',

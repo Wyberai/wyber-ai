@@ -2,7 +2,12 @@ import type { Metadata } from "next";
 import "./globals.css";
 import "@/styles/brand.css";
 import "@/styles/editor.css";
+import "@/styles/signal.css";
+import "@/styles/blog.css";
+import "@/styles/motion.css";
+import "@/styles/tokens.css";
 import { ThemeProvider } from '@/lib/theme';
+import { MainLandmark } from '@/components/shared/MainLandmark';
 import { LocaleProvider } from '@/lib/i18n/LocaleProvider';
 import { DEFAULT_LOCALE, LOCALE_STORAGE_KEY } from '@/lib/i18n/locales';
 import { PlatformChrome } from '@/components/shared/PlatformChrome';
@@ -26,8 +31,8 @@ export const metadata: Metadata = {
     'mobile-web-app-capable': 'yes',
   },
   metadataBase: new URL('https://wyberai.com'),
-  title: { default: 'WyberAi — Build web apps, mobile apps, websites & SaaS with AI', template: '%s | WyberAi' },
-  description: 'Describe what you want in plain English. WyberAi builds web apps, mobile apps, websites, and full SaaS products with AI — production-ready code, live preview, one-click deploy. No engineers needed.',
+  title: { default: 'WyberAi: Build Web Apps, Mobile Apps and SaaS with AI', template: '%s | WyberAi' },
+  description: 'Describe your idea in plain English. WyberAi builds web apps, mobile apps, websites and SaaS with AI: live preview, one-click deploy, and you own the code.',
   keywords: ['AI app builder', 'no-code AI', 'build web app with AI', 'mobile app builder', 'website builder AI', 'SaaS builder', 'React app generator', 'AI code generator', 'build app without coding', 'WyberAi'],
   authors: [{ name: 'WyberAi', url: 'https://wyberai.com' }],
   creator: 'SignalPulse Technologies',
@@ -36,18 +41,18 @@ export const metadata: Metadata = {
     locale: 'en_US',
     url: 'https://wyberai.com',
     siteName: 'WyberAi',
-    title: 'WyberAi — Build web apps, mobile apps, websites & SaaS with AI',
-    description: 'Describe what you want in plain English. WyberAi builds web apps, mobile apps, websites, and full SaaS products with AI — production-ready code, live preview, one-click deploy. No engineers needed.',
+    title: 'WyberAi: Build Web Apps, Mobile Apps and SaaS with AI',
+    description: 'Describe your idea in plain English. WyberAi builds web apps, mobile apps, websites and SaaS with AI: live preview, one-click deploy, and you own the code.',
     images: [{ url: '/api/og?title=Build%20any%20digital%20product&sub=Web%20Apps%20%C2%B7%20Mobile%20%C2%B7%20Websites%20%C2%B7%20SaaS%20%C2%B7%20AI-powered', width: 1200, height: 630, alt: 'WyberAi' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'WyberAi — Build web apps, mobile apps, websites & SaaS with AI',
-    description: 'Describe what you want in plain English. WyberAi builds web apps, mobile apps, websites, and full SaaS products with AI — production-ready code, live preview, one-click deploy. No engineers needed.',
+    title: 'WyberAi: Build Web Apps, Mobile Apps and SaaS with AI',
+    description: 'Describe your idea in plain English. WyberAi builds web apps, mobile apps, websites and SaaS with AI: live preview, one-click deploy, and you own the code.',
     images: ['/api/og?title=Build%20any%20digital%20product&sub=Web%20Apps%20%C2%B7%20Mobile%20%C2%B7%20Websites%20%C2%B7%20SaaS%20%C2%B7%20AI-powered'],
   },
   robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
-  alternates: { canonical: 'https://wyberai.com' },
+  alternates: { canonical: './' },
 }
 
 export const viewport = { themeColor: '#0EA5E9' };
@@ -128,7 +133,7 @@ const jsonLd = {
         'Automatic error detection and resolution during builds',
         'One-click deploy to a live URL on Vercel',
         'Supabase database + auth, GitHub push, custom domains',
-        '27 integrations — Supabase, Stripe, OpenAI and more',
+        '68 connectors — Supabase, Stripe, OpenAI and more',
       ],
       // AggregateOffer (not a single $29 Offer) so engines report the real
       // range — free to start, paid plans up to $199 — instead of "$29 only".
@@ -204,6 +209,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 renders NOTHING on white-label routes (/app/[slug]) so published
                 user apps stay 100% unbranded and untracked. */}
             <Suspense fallback={null}><PlatformChrome /></Suspense>
+            <MainLandmark />
           </LocaleProvider>
         </PostHogProvider>
         <Analytics />

@@ -6,7 +6,7 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
   useEffect(() => { console.error(error) }, [error])
 
   return (
-    <div style={{ minHeight: '100vh', background: '#09090b', color: '#fafafa', fontFamily: 'var(--font-display)', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100vh', background: '#05080d', color: '#fafafa', fontFamily: 'var(--font-display)', display: 'flex', flexDirection: 'column' }}>
       <nav style={{ height: 58, display: 'flex', alignItems: 'center', padding: '0 clamp(16px,4vw,40px)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
           <svg width="26" height="26" viewBox="0 0 32 32" fill="none">
@@ -32,27 +32,27 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
           <h1 style={{ fontSize: 'clamp(24px,3vw,36px)', fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 12, lineHeight: 1.1 }}>
             Something went wrong
           </h1>
-          <p style={{ fontSize: 15, color: '#71717a', lineHeight: 1.65, marginBottom: 36 }}>
+          <p style={{ fontSize: 15, color: '#8797ab', lineHeight: 1.65, marginBottom: 36 }}>
             An unexpected error occurred. Our team has been notified. Try refreshing the page or going back to the dashboard.
           </p>
 
           {error?.digest && (
-            <div style={{ padding: '8px 14px', borderRadius: 8, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', fontSize: 11, color: '#52525b', fontFamily: 'monospace', marginBottom: 28 }}>
+            <div style={{ padding: '8px 14px', borderRadius: 8, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', fontSize: 11, color: '#8797ab', fontFamily: 'monospace', marginBottom: 28 }}>
               Error ID: {error.digest}
             </div>
           )}
 
           <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
             <button onClick={reset}
-              style={{ padding: '11px 24px', borderRadius: 9, border: 'none', background: '#0EA5E9', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+              style={{ padding: '11px 24px', borderRadius: 9, border: 'none', background: '#0EA5E9', color: '#03111c', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
               Try again
             </button>
             <Link href="/dashboard"
-              style={{ padding: '11px 22px', borderRadius: 9, border: '1px solid rgba(255,255,255,0.1)', color: '#a1a1aa', fontSize: 14, fontWeight: 500, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
+              style={{ padding: '11px 22px', borderRadius: 9, border: '1px solid rgba(255,255,255,0.1)', color: '#9aa8bb', fontSize: 14, fontWeight: 500, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
               Dashboard
             </Link>
             <Link href="/"
-              style={{ padding: '11px 22px', borderRadius: 9, border: '1px solid rgba(255,255,255,0.1)', color: '#a1a1aa', fontSize: 14, fontWeight: 500, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
+              style={{ padding: '11px 22px', borderRadius: 9, border: '1px solid rgba(255,255,255,0.1)', color: '#9aa8bb', fontSize: 14, fontWeight: 500, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
               Home
             </Link>
           </div>

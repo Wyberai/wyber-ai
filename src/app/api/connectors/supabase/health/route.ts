@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getAnonConnector, getMgmtToken } from '@/lib/rls-scan-project'
 import { getProject, restoreProject } from '@/lib/supabase-management'
+import { supabaseRestHeaders } from '@/lib/supabase/keys'
 
 /**
  * Health check + one-click restore for a project's connected Supabase DB.
@@ -53,7 +54,7 @@ export async function GET(req: NextRequest) {
     const ctrl = new AbortController()
     const t = setTimeout(() => ctrl.abort(), 6000)
     const res = await fetch(`${conn.url}/rest/v1/`, {
-      headers: { apikey: conn.anonKey, Authorization: `Bearer ${conn.anonKey}` },
+      headers: supabaseRestHeaders(conn.anonKey),
       signal: ctrl.signal,
     })
     clearTimeout(t)

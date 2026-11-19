@@ -112,11 +112,21 @@ export function gradientDataUri(prompt: string, ratio: string): string {
   return `data:image/svg+xml,${encodeURIComponent(svg)}`
 }
 
+// A wrapper component that builds the token at runtime, e.g. src={`{{wyber-image: ${prompt} | ${ratio}}}`}, can never be
+// resolved (the text is not in the source). Found on the 15 Nov wedding site: every image was broken. Such a template
+// literal becomes the neutral placeholder so no image is ever a broken box; a real image needs a literal token at the call site.
+const DYNAMIC_DIRECTIVE_RE = /`\s*\{\{\s*wyber-image\s*:[^`]*\$\{[^`]*`/gi
+
+export function neutralizeDynamicDirectives(content: string): string {
+  if (!content || !content.includes('wyber-image')) return content
+  return content.replace(DYNAMIC_DIRECTIVE_RE, () => JSON.stringify(gradientDataUri('image', '4:5')))
+}
+
 /** Resolve every token to its gradient fallback — used for preview and as the
  *  publish-time fallback when real image generation is unavailable. */
 export function resolveDirectivesForPreview(content: string): string {
   if (!content || !content.includes('{{')) return content
-  return content.replace(DIRECTIVE_RE, (_full, prompt: string, ratio?: string) =>
+  return neutralizeDynamicDirectives(content).replace(DIRECTIVE_RE, (_full, prompt: string, ratio?: string) =>
     gradientDataUri((prompt || '').trim(), ratioToSize(ratio)),
   )
 }

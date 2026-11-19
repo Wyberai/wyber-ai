@@ -125,7 +125,7 @@ export function LaunchKit({ projectId, liveUrl }: { projectId: string; liveUrl: 
             <button onClick={() => { copy(text); track('launch_kit_copied', { channel }) }} style={smallBtn}>{copied ? 'Copied' : 'Copy'}</button>
             <a href={target[channel].href} target="_blank" rel="noopener noreferrer"
               onClick={() => { if (target[channel].copyFirst) copy(text); track('launch_kit_posted', { channel }) }}
-              style={{ ...smallBtn, background: '#0EA5E9', borderColor: '#0EA5E9', color: '#fff' }}>
+              style={{ ...smallBtn, background: '#0EA5E9', borderColor: '#0EA5E9', color: '#03111c' }}>
               {target[channel].cta}
             </a>
             <button onClick={writePosts} disabled={loading} style={{ ...smallBtn, marginLeft: 'auto', border: 'none', color: 'var(--ide-text3)' }}>

@@ -2,19 +2,20 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 import { localeAlternates } from '@/lib/i18n/hreflang'
+import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
 export const metadata: Metadata = {
   title: 'WyberAi vs Competitors (2026) — Honest Comparisons',
-  description: 'Compare WyberAi to Lovable, Bolt.new, v0, Replit, and Cursor. See how pricing, credits, and the six-product difference (web + mobile + agents + workflows + AI employees) stack up.',
+  description: 'Compare WyberAi to Lovable, Bolt.new, v0, Replit and Cursor: pricing, credits, and building both web and mobile apps from one prompt.',
   alternates: { canonical: 'https://wyberai.com/vs', languages: localeAlternates('/vs') },
-  openGraph: { title: 'WyberAi vs Competitors (2026)', description: 'Compare WyberAi to every major AI builder.', url: 'https://wyberai.com/vs' },
+  openGraph: { images: DEFAULT_OG_IMAGES, title: 'WyberAi vs Competitors (2026)', description: 'Compare WyberAi to every major AI builder.', url: 'https://wyberai.com/vs' },
 }
 
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'WebPage',
   name: 'WyberAi vs Competitors',
-  description: 'Compare WyberAi to Lovable, Bolt.new, v0, Replit, and Cursor. Verified June 2026.',
+  description: 'Compare WyberAi to Lovable, Bolt.new, v0, Replit, and Cursor. Last reviewed June 2026.',
   url: 'https://wyberai.com/vs',
 }
 
@@ -24,24 +25,24 @@ const COMPARISONS = [
     name: 'Lovable',
     url: 'lovable.dev',
     tag: 'AI web app builder',
-    summary: 'WyberAi offers ~56% more credits at a lower price, plus mobile apps, agents, and workflows Lovable doesn\'t have.',
-    wyberWins: ['300 credits/month on Builder ($99)', 'Top-ups never expire', 'Mobile + agents + workflows + AI employees + GTM', '6 products vs Lovable\'s 1'],
+    summary: 'WyberAi Starter includes 450 credits a month for $29 against Lovable\'s 100 (plus 5 a day) for $25, plus native mobile apps Lovable doesn\'t offer.',
+    wyberWins: ['450 credits/month on Starter ($29)', 'Top-ups never expire', 'Web and mobile apps from one prompt', 'Real code you own and can export'],
   },
   {
     slug: 'bolt',
     name: 'Bolt.new',
     url: 'bolt.new',
     tag: 'AI web app builder',
-    summary: 'WyberAi uses fixed-credit pricing (no token surprises) and adds mobile apps, agents, and workflows Bolt doesn\'t offer.',
-    wyberWins: ['Predictable fixed credits', 'Daily bonus credits', 'Guided for non-technical users', 'Mobile + agents + workflows'],
+    summary: 'WyberAi uses fixed-credit pricing (no token surprises) and adds native mobile apps Bolt doesn\'t offer.',
+    wyberWins: ['Predictable fixed credits', 'Daily bonus credits', 'Guided for non-technical users', 'Web and mobile from one prompt'],
   },
   {
     slug: 'v0',
     name: 'v0 by Vercel',
     url: 'v0.dev',
     tag: 'UI component generator',
-    summary: 'v0 generates UI components. WyberAi generates complete full-stack apps — plus mobile, agents, and workflows.',
-    wyberWins: ['Complete app in one generation', 'Database + auth included', 'No assembly required', 'Mobile + agents + workflows'],
+    summary: 'v0 generates UI components. WyberAi generates complete full-stack apps — plus native mobile apps.',
+    wyberWins: ['Complete app in one generation', 'Database + auth included', 'No assembly required', 'Web and mobile from one prompt'],
   },
   {
     slug: 'replit',
@@ -49,7 +50,7 @@ const COMPARISONS = [
     url: 'replit.com',
     tag: 'Cloud IDE',
     summary: 'Replit is an IDE for developers. WyberAi is a no-code builder for founders — faster, cheaper, and more predictable.',
-    wyberWins: ['No coding knowledge needed', 'Predictable fixed credits', '< 60 second app generation', 'Mobile + agents + workflows'],
+    wyberWins: ['No coding knowledge needed', 'Predictable fixed credits', '< 60 second app generation', 'Web and mobile from one prompt'],
   },
   {
     slug: 'cursor',
@@ -57,7 +58,7 @@ const COMPARISONS = [
     url: 'cursor.com',
     tag: 'AI code editor',
     summary: 'Cursor makes developers faster. WyberAi builds complete apps from plain English — no developer needed.',
-    wyberWins: ['Zero coding required', 'App in A few minutes', 'Live preview + one-click deploy', 'Mobile + agents + workflows'],
+    wyberWins: ['Zero coding required', 'App in A few minutes', 'Live preview + one-click deploy', 'Web and mobile from one prompt'],
   },
   {
     slug: 'softr',
@@ -81,12 +82,12 @@ export default function VsIndex() {
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none', color: 'inherit' }}>
           <WyberLogo markSize={22} wordmarkSize={14} />
         </Link>
-        <Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: s.sky, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Try free →</Link>
+        <Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: s.sky, color: '#03111c', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Try free →</Link>
       </nav>
 
       <div style={{ maxWidth: 960, margin: '0 auto', padding: 'clamp(40px,6vw,72px) clamp(16px,4vw,48px)' }}>
         <header style={{ textAlign: 'center', marginBottom: 56 }}>
-          <div className="mk-eyebrow" style={{ marginBottom: 12 }}>VERIFIED JUNE 2026</div>
+          <div className="mk-eyebrow" style={{ marginBottom: 12 }}>LAST REVIEWED JUNE 2026</div>
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(26px,4vw,44px)', fontWeight: 800, letterSpacing: '-0.04em', margin: '0 0 16px' }}>
             WyberAi vs Every Alternative
           </h1>
@@ -97,7 +98,7 @@ export default function VsIndex() {
 
         {/* Six products banner */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(140px,1fr))', gap: 10, marginBottom: 56 }}>
-          {[['🖥','Web Apps','Full-stack React app'],['📱','Mobile Apps','React Native + Expo'],['🔗','27 Integrations','Supabase, Stripe, OpenAI...'],['🚀','One-click Deploy','Live URL in seconds'],['📦','GitHub Sync','Own your code'],['🏆','Premier League','$1,800 in monthly prizes']].map(([icon,label,sub])=>(
+          {[['🖥','Web Apps','Full-stack React app'],['📱','Mobile Apps','React Native + Expo'],['🔗','68 Connectors','Supabase, Stripe, OpenAI...'],['🚀','One-click Deploy','Live URL in seconds'],['📦','GitHub Sync','Own your code'],['🏆','Premier League','$1,800 in monthly prizes']].map(([icon,label,sub])=>(
             <div key={label} style={{ background: s.card, border: `1px solid rgba(14,165,233,0.15)`, borderRadius: 12, padding: '16px 18px', textAlign: 'center' }}>
               <div style={{ fontSize: 24, marginBottom: 6 }}>{icon}</div>
               <div style={{ fontSize: 13, fontWeight: 700, color: s.sky, marginBottom: 2 }}>{label}</div>
@@ -117,7 +118,7 @@ export default function VsIndex() {
                     <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, letterSpacing: '-0.02em', margin: 0, color: s.text }}>
                       WyberAi vs {c.name}
                     </h2>
-                    <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: 'rgba(255,255,255,0.05)', color: s.muted, border: `1px solid ${s.border}` }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: 'rgba(255,255,255,0.05)', color: s.muted, border: `1px solid ${s.border}` }}>
                       {c.tag}
                     </span>
                   </div>
@@ -140,9 +141,9 @@ export default function VsIndex() {
 
         {/* CTA */}
         <div style={{ textAlign: 'center', padding: 'clamp(24px,4vw,40px)', background: s.card, borderRadius: 14, border: `1px solid ${s.border}` }}>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, margin: '0 0 8px' }}>Try WyberAi free — 30 credits/month</h2>
-          <p style={{ fontSize: 14, color: s.muted, margin: '0 0 20px' }}>Web app, mobile app, AI agent, or workflow. No credit card required.</p>
-          <Link href="/signup" style={{ display: 'inline-block', padding: '12px 28px', borderRadius: 10, background: s.sky, color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, margin: '0 0 8px' }}>Try WyberAi free — 30 free credits on signup</h2>
+          <p style={{ fontSize: 14, color: s.muted, margin: '0 0 20px' }}>Web app or mobile app. No credit card required.</p>
+          <Link href="/signup" style={{ display: 'inline-block', padding: '12px 28px', borderRadius: 10, background: s.sky, color: '#03111c', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
             Start building free →
           </Link>
         </div>

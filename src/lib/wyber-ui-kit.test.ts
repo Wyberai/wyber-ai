@@ -171,3 +171,35 @@ export default function App() { return <Button>hi</Button> }`
     expect(WYBER_UI_KIT_PATH in out).toBe(false)
   })
 })
+
+// Regressions found by rendering every component (scripts/ui-kit-gallery.ts).
+describe('wyber-ui-kit — rendered-gallery regressions', () => {
+  const body = (name: string, len = 60) => {
+    const i = WYBER_UI_KIT_SOURCE.indexOf(`export function ${name}(`)
+    expect(i, `${name} not found`).toBeGreaterThan(-1)
+    return WYBER_UI_KIT_SOURCE.slice(i, i + len * 120)
+  }
+
+  it('CondensingNavbar never hands framer-motion a CSS-variable color (it throws an unhandled rejection)', () => {
+    const nav = body('CondensingNavbar', 40).split('export function BackToTop')[0]
+    const animate = nav.match(/animate=\{\{[^}]*\}\}/g) ?? []
+    for (const a of animate) expect(a).not.toMatch(/hsl\(var\(/)
+  })
+
+  it('GradientText sweeps primary → foreground, never through the pale --accent surface tint', () => {
+    const g = (body('GradientText', 25).split('export function ')[1] ?? '').match(/backgroundImage:.*/)?.[0] ?? ''
+    expect(g).not.toContain('--accent')
+    expect(g).toContain('--foreground')
+  })
+
+  it('GradientUnderline does not fade into --accent', () => {
+    const g = (body('GradientUnderline', 25).split('export function ')[1] ?? '').match(/backgroundImage:.*/)?.[0] ?? ''
+    expect(g).toContain('linear-gradient')
+    expect(g).not.toContain('--accent')
+  })
+
+  it('PillTabNav isolates its stacking context so the -z-10 active pill sits above the container background', () => {
+    const p = body('PillTabNav', 30)
+    expect(p).toContain('isolate')
+  })
+})

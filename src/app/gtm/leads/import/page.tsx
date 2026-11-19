@@ -5,8 +5,8 @@ import { WyberLogo } from '@/components/shared/WyberLogo'
 import { useRouter } from 'next/navigation'
 
 const s = {
-  bg: '#09090b', card: '#111113', border: 'rgba(255,255,255,0.07)',
-  text: '#fafafa', muted: '#71717a', dim: '#52525b',
+  bg: '#05080d', card: '#0d141e', border: 'rgba(255,255,255,0.07)',
+  text: '#fafafa', muted: '#8797ab', dim: '#8797ab',
   orange: '#f97316', green: '#10b981', yellow: '#f59e0b', sky: '#0EA5E9', violet: '#8b5cf6',
 }
 
@@ -191,13 +191,13 @@ export default function ImportLeadsPage() {
                     placeholder={placeholder}
                     style={{ width: '100%', background: s.card, border: `1px solid ${s.border}`, borderRadius: 8, padding: '9px 12px', fontSize: 13, color: s.text, fontFamily: 'inherit', outline: 'none' }}
                   />
-                  <div style={{ fontSize: 10, color: s.dim, marginTop: 3 }}>{hint}</div>
+                  <div style={{ fontSize: 11, color: s.dim, marginTop: 3 }}>{hint}</div>
                 </div>
               ))}
             </div>
 
             <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
-              <button onClick={searchApollo} disabled={searching || !apolloConnected} style={{ padding: '10px 20px', borderRadius: 8, background: s.sky, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', border: 'none', opacity: apolloConnected ? 1 : 0.5 }}>
+              <button onClick={searchApollo} disabled={searching || !apolloConnected} style={{ padding: '10px 20px', borderRadius: 8, background: s.sky, color: '#03111c', fontSize: 13, fontWeight: 700, cursor: 'pointer', border: 'none', opacity: apolloConnected ? 1 : 0.5 }}>
                 {searching ? 'Searching...' : 'Search Apollo'}
               </button>
               <button onClick={() => {
@@ -219,7 +219,7 @@ export default function ImportLeadsPage() {
                   <div style={{ fontSize: 13, color: s.muted }}>Showing {results.length} of {total.toLocaleString()} matches</div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <span style={{ fontSize: 12, color: s.yellow, fontWeight: 700 }}>Cost: {estimatedCost} credits</span>
-                    <button onClick={importSelected} disabled={importing} style={{ padding: '8px 16px', borderRadius: 8, background: s.orange, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', border: 'none' }}>
+                    <button onClick={importSelected} disabled={importing} style={{ padding: '8px 16px', borderRadius: 8, background: s.orange, color: '#03111c', fontSize: 13, fontWeight: 700, cursor: 'pointer', border: 'none' }}>
                       {importing ? 'Importing...' : `Import ${results.length} contacts →`}
                     </button>
                   </div>
@@ -228,7 +228,7 @@ export default function ImportLeadsPage() {
                   <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead><tr style={{ borderBottom: `1px solid ${s.border}`, background: 'rgba(255,255,255,0.02)' }}>
                       {['Name', 'Title', 'Company', 'Location'].map(h => (
-                        <th key={h} style={{ padding: '9px 14px', textAlign: 'left', fontSize: 10, fontWeight: 700, color: s.dim, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</th>
+                        <th key={h} style={{ padding: '9px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: s.dim, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</th>
                       ))}
                     </tr></thead>
                     <tbody>
@@ -255,7 +255,7 @@ export default function ImportLeadsPage() {
                 <div style={{ fontSize: 13, color: s.muted, marginBottom: 20 }}>Free for your own data. We auto-map columns like email, first_name, company…</div>
               </>}
               <input type="file" accept=".csv,text/csv" onChange={e => onCsvFile(e.target.files?.[0] || null)} style={{ display: 'none' }} id="csv-upload" />
-              <label htmlFor="csv-upload" style={{ display: 'inline-block', padding: '10px 20px', borderRadius: 8, background: s.sky, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+              <label htmlFor="csv-upload" style={{ display: 'inline-block', padding: '10px 20px', borderRadius: 8, background: s.sky, color: '#03111c', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
                 {csvFile ? `📄 ${csvFile.name}` : 'Choose CSV file'}
               </label>
               {csvRows.length > 0 && <span style={{ marginLeft: 12, fontSize: 13, color: s.muted }}>{csvRows.length.toLocaleString()} rows parsed</span>}
@@ -286,7 +286,7 @@ export default function ImportLeadsPage() {
                 <div style={{ background: s.card, border: `1px solid ${s.border}`, borderRadius: 10, overflow: 'auto', marginBottom: 16 }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead><tr style={{ borderBottom: `1px solid ${s.border}`, background: 'rgba(255,255,255,0.02)' }}>
-                      {LEAD_FIELDS.filter(f => csvMap[f]).map(f => <th key={f} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 10, fontWeight: 700, color: s.dim, textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>{f}</th>)}
+                      {LEAD_FIELDS.filter(f => csvMap[f]).map(f => <th key={f} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: s.dim, textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>{f}</th>)}
                     </tr></thead>
                     <tbody>
                       {csvRows.slice(0, 3).map((r, i) => (
@@ -297,7 +297,7 @@ export default function ImportLeadsPage() {
                     </tbody>
                   </table>
                 </div>
-                <button onClick={importCsv} disabled={importing || !csvMap.email} style={{ padding: '10px 20px', borderRadius: 8, background: s.orange, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', border: 'none', opacity: csvMap.email ? 1 : 0.5 }}>
+                <button onClick={importCsv} disabled={importing || !csvMap.email} style={{ padding: '10px 20px', borderRadius: 8, background: s.orange, color: '#03111c', fontSize: 13, fontWeight: 700, cursor: 'pointer', border: 'none', opacity: csvMap.email ? 1 : 0.5 }}>
                   {csvProgress ? `Importing… ${csvProgress.done.toLocaleString()} / ${csvProgress.total.toLocaleString()}` : importing ? 'Importing…' : `Import ${csvRows.length.toLocaleString()} leads (free) →`}
                 </button>
               </div>
@@ -310,7 +310,7 @@ export default function ImportLeadsPage() {
                   {csvResult.imported.toLocaleString()} imported · {csvResult.duplicates.toLocaleString()} already existed · {csvResult.invalid.toLocaleString()} invalid/blank emails
                 </div>
                 <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
-                  <Link href="/gtm/leads" style={{ padding: '8px 16px', borderRadius: 8, background: s.sky, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>View leads →</Link>
+                  <Link href="/gtm/leads" style={{ padding: '8px 16px', borderRadius: 8, background: s.sky, color: '#03111c', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>View leads →</Link>
                   <button onClick={() => onCsvFile(null)} style={{ padding: '8px 16px', borderRadius: 8, background: 'transparent', border: `1px solid ${s.border}`, color: s.muted, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Import another</button>
                 </div>
               </div>

@@ -3,7 +3,10 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 import { USE_CASES } from './data'
+import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
+// Unknown slugs must answer a real 404 (the root loading.tsx streams a 200 before notFound() runs otherwise).
+export const dynamicParams = false
 export function generateStaticParams() {
   return USE_CASES.map(uc => ({ slug: uc.slug }))
 }
@@ -13,10 +16,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const uc = USE_CASES.find(u => u.slug === slug)
   if (!uc) return {}
   return {
-    title: uc.metaTitle,
+    // The site title template already appends " | WyberAi", so the brand suffix in the data is dropped for the <title>
+    // (it stays in openGraph and the JSON-LD name, which have no template).
+    title: uc.metaTitle.replace(/\s*[—|-]\s*WyberAi\s*$/i, ''),
     description: uc.metaDesc,
     alternates: { canonical: `https://wyberai.com/use-cases/${uc.slug}` },
-    openGraph: { title: uc.metaTitle, description: uc.metaDesc, url: `https://wyberai.com/use-cases/${uc.slug}` },
+    openGraph: { images: DEFAULT_OG_IMAGES, title: uc.metaTitle, description: uc.metaDesc, url: `https://wyberai.com/use-cases/${uc.slug}` },
   }
 }
 
@@ -157,7 +162,7 @@ export default async function UseCasePage({ params }: { params: Promise<{ slug: 
 
         {/* CTA footer */}
         <div style={{ textAlign: 'center', padding: 'clamp(24px,4vw,40px)', background: s.card, borderRadius: 14, border: `1px solid ${s.border}` }}>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, margin: '0 0 8px' }}>Start building for free — 30 credits/month</h2>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, margin: '0 0 8px' }}>Start building for free — 30 free credits on signup</h2>
           <p style={{ fontSize: 14, color: s.muted, margin: '0 0 20px' }}>No credit card required. Your first app in minutes.</p>
           <Link href={uc.ctaHref} style={{ display: 'inline-block', padding: '12px 28px', borderRadius: 10, background: color, color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
             {uc.ctaLabel}

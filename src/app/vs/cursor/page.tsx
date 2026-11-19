@@ -1,12 +1,13 @@
 import type { Metadata } from 'next'
 import { VsPageTemplate } from '@/components/seo/VsPageTemplate'
 import { localeAlternates } from '@/lib/i18n/hreflang'
+import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
 export const metadata: Metadata = {
-  title: 'WyberAi vs Cursor (2026) — No-Code Builder vs AI Code Editor',
-  description: 'WyberAi vs Cursor: no-code app generation vs AI-assisted coding. Wyber builds complete apps from plain English; Cursor makes writing code faster for developers. Verified June 2026.',
+  title: 'WyberAi vs Cursor (2026): builder vs code editor',
+  description: 'WyberAi vs Cursor: no-code app generation vs AI-assisted coding. WyberAi builds complete apps from plain English. Last reviewed June 2026.',
   alternates: { canonical: 'https://wyberai.com/vs/cursor', languages: localeAlternates('/vs/cursor') },
-  openGraph: { title: 'WyberAi vs Cursor (2026)', description: 'No-code app builder vs AI code editor. Verified June 2026.', url: 'https://wyberai.com/vs/cursor' },
+  openGraph: { images: DEFAULT_OG_IMAGES, title: 'WyberAi vs Cursor (2026)', description: 'No-code app builder vs AI code editor. Last reviewed June 2026.', url: 'https://wyberai.com/vs/cursor' },
 }
 
 const ROWS = [
@@ -17,14 +18,14 @@ const ROWS = [
   { feature: 'App generation speed',    wyber: 'A few minutes',            other: 'Hours (code-assisted)',    winner: 'wyber' as const },
   { feature: 'Mobile app builder',      wyber: '✓ React Native',           other: '✗ (editor only)',          winner: 'wyber' as const },
   { feature: 'Self-healing builds',      wyber: '✓ Auto-fixes errors',      other: '✗',                        winner: 'wyber' as const },
-  { feature: '27 integrations',         wyber: '✓ Built-in',               other: '✗',                        winner: 'wyber' as const },
+  { feature: '68 connectors',         wyber: '✓ Built-in',               other: '✗',                        winner: 'wyber' as const },
   { feature: 'Code generation',    wyber: 'Always fresh AI code',           other: 'None',                     winner: 'wyber' as const },
   { feature: 'Live preview',            wyber: '✓ Real-time',              other: 'Run locally',              winner: 'wyber' as const },
   { feature: 'One-click deploy',        wyber: '✓ Vercel',                 other: '✗ Manual deploy',          winner: 'wyber' as const },
   { feature: 'Any language/framework',  wyber: 'React/React Native',      other: '✓ All languages',          winner: 'other' as const },
   { feature: 'Codebase refactoring',    wyber: 'Limited',                  other: '✓ Excellent',              winner: 'other' as const },
   { feature: 'Multi-file edits',        wyber: 'AI-managed',               other: '✓ Composer agent',         winner: 'other' as const },
-  { feature: 'Free tier',               wyber: '30 credits/month',         other: '2-week trial',             winner: 'wyber' as const },
+  { feature: 'Free tier',               wyber: '30 free credits on signup',         other: '2-week trial',             winner: 'wyber' as const },
   { feature: 'Supabase integration',    wyber: '✓ Auto',                   other: 'Manual setup',             winner: 'wyber' as const },
   { feature: 'GitHub sync',             wyber: '✓',                        other: '✓',                        winner: 'tie'   as const },
   { feature: 'Live database security scan', wyber: '✓ Probes RLS with anon key', other: '✗', winner: 'wyber' as const },
@@ -64,7 +65,7 @@ export default function VsCursor() {
       competitorName="Cursor"
       competitorUrl="https://cursor.com"
       tagline="Cursor is the AI code editor developers love. WyberAi is the no-code app builder non-technical founders need — complete web + mobile apps in minutes with self-healing builds."
-      blurb="Honest comparison of WyberAi vs Cursor: no-code app generation vs AI-assisted coding. Who each tool is built for. Verified June 2026."
+      blurb="Honest comparison of WyberAi vs Cursor: no-code app generation vs AI-assisted coding. Who each tool is built for. Last reviewed June 2026."
       rows={ROWS}
       faqs={FAQS}
       pillarNote="Cursor is a code editor — it has no app generation or mobile builder."

@@ -52,17 +52,17 @@ export function AdminMarketplaceClient({ listings, tableReady }: { listings: Adm
 
   return (
     <div style={{ minHeight: '100vh', background: '#08080b', color: '#fff', fontFamily: 'var(--font-display), system-ui' }}>
-      <nav style={{ borderBottom: '1px solid #1a1a22', background: '#0d0d11', padding: '0 32px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 50 }}>
+      <nav style={{ borderBottom: '1px solid #14202e', background: '#0a1018', padding: '0 32px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 50 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <Link href="/admin" style={{ fontSize: 12, color: '#52525b', textDecoration: 'none' }}>← Command Center</Link>
+          <Link href="/admin" style={{ fontSize: 12, color: '#8797ab', textDecoration: 'none' }}>← Command Center</Link>
           <span style={{ fontSize: 15, fontWeight: 800, letterSpacing: '-0.02em' }}>🛍 Marketplace Listings</span>
         </div>
-        <span style={{ fontSize: 12, color: '#52525b' }}>{pendingCount} pending</span>
+        <span style={{ fontSize: 12, color: '#8797ab' }}>{pendingCount} pending</span>
       </nav>
 
       <div style={{ maxWidth: 1000, margin: '0 auto', padding: '32px' }}>
         <h1 style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.03em', margin: '0 0 8px' }}>Review queue</h1>
-        <p style={{ fontSize: 13, color: '#71717a', margin: '0 0 24px' }}>
+        <p style={{ fontSize: 13, color: '#8797ab', margin: '0 0 24px' }}>
           User-submitted listings only — studio listings from the seed script are auto-approved. Approve to make a listing live on <Link href="/marketplace" style={{ color: SKY, textDecoration: 'none' }}>/marketplace</Link> immediately.
         </p>
 
@@ -79,21 +79,21 @@ export function AdminMarketplaceClient({ listings, tableReady }: { listings: Adm
         )}
 
         {tableReady && listings.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px 24px', color: '#52525b', border: '1px dashed #1e1e26', borderRadius: 14 }}>No user submissions yet.</div>
+          <div style={{ textAlign: 'center', padding: '60px 24px', color: '#8797ab', border: '1px dashed #1b2a3b', borderRadius: 14 }}>No user submissions yet.</div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {listings.map(l => {
               const st = STATUS_STYLE[l.status] ?? STATUS_STYLE.pending
               return (
-                <div key={l.id} style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 14, alignItems: 'center', padding: '14px 18px', borderRadius: 12, border: '1px solid #1a1a22', background: '#0d0d11' }}>
+                <div key={l.id} style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 14, alignItems: 'center', padding: '14px 18px', borderRadius: 12, border: '1px solid #14202e', background: '#0a1018' }}>
                   <div style={{ minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                       <span style={{ fontSize: 15, fontWeight: 700 }}>{l.title}</span>
-                      <span style={{ fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 20, textTransform: 'uppercase', letterSpacing: '0.04em', background: st.bg, color: st.fg }}>{st.label}</span>
+                      <span style={{ fontSize: 11, fontWeight: 800, padding: '2px 8px', borderRadius: 20, textTransform: 'uppercase', letterSpacing: '0.04em', background: st.bg, color: st.fg }}>{st.label}</span>
                       <span style={{ fontSize: 11, fontWeight: 700, color: SKY }}>${l.price_usd}</span>
-                      {l.sales_count > 0 && <span style={{ fontSize: 11, color: '#52525b' }}>· {l.sales_count} sold</span>}
+                      {l.sales_count > 0 && <span style={{ fontSize: 11, color: '#8797ab' }}>· {l.sales_count} sold</span>}
                     </div>
-                    <div style={{ fontSize: 12, color: '#52525b', display: 'flex', gap: 10, flexWrap: 'wrap', margin: '4px 0 0' }}>
+                    <div style={{ fontSize: 12, color: '#8797ab', display: 'flex', gap: 10, flexWrap: 'wrap', margin: '4px 0 0' }}>
                       <span>{l.email}</span>
                       <span>{l.category}</span>
                     </div>
@@ -102,10 +102,10 @@ export function AdminMarketplaceClient({ listings, tableReady }: { listings: Adm
                     {l.status === 'pending' ? (
                       <>
                         <button disabled={busyId === l.id} onClick={() => act(l.id, 'approve')} style={btn('#059669', busyId === l.id)}>Approve</button>
-                        <button disabled={busyId === l.id} onClick={() => act(l.id, 'reject')} style={btn('#3f3f46', busyId === l.id)}>Reject</button>
+                        <button disabled={busyId === l.id} onClick={() => act(l.id, 'reject')} style={btn('#8797ab', busyId === l.id)}>Reject</button>
                       </>
                     ) : l.status === 'approved' ? (
-                      <button disabled={busyId === l.id} onClick={() => act(l.id, 'reject')} style={btn('#3f3f46', busyId === l.id)}>Unpublish</button>
+                      <button disabled={busyId === l.id} onClick={() => act(l.id, 'reject')} style={btn('#8797ab', busyId === l.id)}>Unpublish</button>
                     ) : (
                       <button disabled={busyId === l.id} onClick={() => act(l.id, 'approve')} style={btn('#059669', busyId === l.id)}>Approve</button>
                     )}

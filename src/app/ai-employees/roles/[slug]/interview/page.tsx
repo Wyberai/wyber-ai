@@ -4,7 +4,7 @@ import { use, useState, useRef, useEffect, useCallback } from 'react'
 import { getRoleBySlug } from '@/lib/employee-roles'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 
-const s = { bg: '#0b0d12', card: '#111115', border: '#1e1e26', text: '#e4e4e7', muted: '#71717a', dim: '#3f3f46' }
+const s = { bg: '#05080d', card: '#0d141e', border: '#1b2a3b', text: '#e8eef7', muted: '#8797ab', dim: '#8797ab' }
 
 type Msg = { role: 'user' | 'assistant'; content: string }
 
@@ -148,7 +148,7 @@ export default function InterviewPage({ params }: { params: Promise<{ slug: stri
               disabled={streaming}
               style={{ flex: 1, boxSizing: 'border-box', background: s.card, border: `1px solid ${s.border}`, borderRadius: 10, padding: '12px 14px', fontSize: 14, color: s.text, outline: 'none', fontFamily: 'inherit' }}
             />
-            <button type="submit" disabled={streaming || !input.trim()} style={{ padding: '0 20px', borderRadius: 10, background: streaming || !input.trim() ? '#1a1a22' : accent, border: 'none', color: streaming || !input.trim() ? s.dim : '#fff', fontSize: 14, fontWeight: 700, cursor: streaming || !input.trim() ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
+            <button type="submit" disabled={streaming || !input.trim()} style={{ padding: '0 20px', borderRadius: 10, background: streaming || !input.trim() ? '#14202e' : accent, border: 'none', color: streaming || !input.trim() ? s.dim : '#fff', fontSize: 14, fontWeight: 700, cursor: streaming || !input.trim() ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
               {streaming ? '…' : 'Send'}
             </button>
           </form>

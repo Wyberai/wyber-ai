@@ -72,27 +72,27 @@ export function FeedbackPanel({ projectId }: { projectId: string }) {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderRadius: 8, border: '1px solid var(--ide-border)', background: 'var(--bg-surface, #16181d)' }}>
         <div>
           <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--ide-text)' }}>Feedback mode</div>
-          <div style={{ fontSize: 10, color: 'var(--ide-text3)', marginTop: 2 }}>
+          <div style={{ fontSize: 12, color: 'var(--ide-text3)', marginTop: 2 }}>
             {enabled ? 'On — the feedback button appears on your published app' : 'Off — no widget on your live app'}
           </div>
         </div>
-        <button onClick={toggleFeedbackMode} disabled={toggling}
+        <button type="button" role="switch" aria-checked={enabled} aria-label="Feedback mode" onClick={toggleFeedbackMode} disabled={toggling}
           style={{ width: 40, height: 22, borderRadius: 999, border: 'none', cursor: toggling ? 'wait' : 'pointer', background: enabled ? '#0EA5E9' : 'var(--ide-border)', position: 'relative', flexShrink: 0 }}>
           <span style={{ position: 'absolute', top: 2, left: enabled ? 20 : 2, width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'left 0.15s' }} />
         </button>
       </div>
 
       {enabled && (
-        <div style={{ fontSize: 11, color: 'var(--ide-text3)', lineHeight: 1.6, padding: '8px 10px', borderRadius: 8, background: 'rgba(14,165,233,0.06)', border: '1px solid rgba(14,165,233,0.2)' }}>
+        <div style={{ fontSize: 12, color: 'var(--ide-text3)', lineHeight: 1.6, padding: '8px 10px', borderRadius: 8, background: 'rgba(14,165,233,0.06)', border: '1px solid rgba(14,165,233,0.2)' }}>
           Publish (or re-publish) your app to activate the widget on the live link. Turn this off again once the review is done — it&apos;s for sharing a review link, not permanent production UI.
         </div>
       )}
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <p style={{ fontSize: 11, color: 'var(--ide-text3)', margin: 0, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+        <p style={{ fontSize: 12, color: 'var(--ide-text3)', margin: 0, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
           {openCount} open
         </p>
-        <label style={{ fontSize: 11, color: 'var(--ide-text3)', display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer' }}>
+        <label style={{ fontSize: 12, color: 'var(--ide-text3)', display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer' }}>
           <input type="checkbox" checked={showResolved} onChange={e => setShowResolved(e.target.checked)} />
           Show resolved
         </label>
@@ -109,16 +109,16 @@ export function FeedbackPanel({ projectId }: { projectId: string }) {
           {visible.map(c => (
             <div key={c.id} style={{ padding: '10px', borderRadius: 8, border: '1px solid var(--ide-border)', background: 'var(--bg-surface, #16181d)', opacity: c.resolved ? 0.55 : 1 }}>
               <div style={{ fontSize: 12, color: 'var(--ide-text)', lineHeight: 1.5, marginBottom: 6 }}>{c.body}</div>
-              <div style={{ fontSize: 10, color: 'var(--ide-text3)', marginBottom: 8 }}>
+              <div style={{ fontSize: 12, color: 'var(--ide-text3)', marginBottom: 8 }}>
                 {c.author_name || 'Anonymous'} · {c.page_path} · {new Date(c.created_at).toLocaleString()}
               </div>
               <div style={{ display: 'flex', gap: 6 }}>
                 <button onClick={() => setResolved(c.id, !c.resolved)}
-                  style={{ flex: 1, padding: '5px', borderRadius: 6, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--text-secondary)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                  style={{ flex: 1, padding: '5px', borderRadius: 6, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--text-secondary)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
                   {c.resolved ? 'Reopen' : 'Resolve'}
                 </button>
                 <button onClick={() => remove(c.id)}
-                  style={{ padding: '5px 10px', borderRadius: 6, border: '1px solid var(--ide-border)', background: 'transparent', color: '#EF4444', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                  style={{ padding: '5px 10px', borderRadius: 6, border: '1px solid var(--ide-border)', background: 'transparent', color: '#EF4444', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
                   Delete
                 </button>
               </div>

@@ -12,8 +12,11 @@ const OUT = path.resolve(process.argv[2] || path.join(os.homedir(), 'OneDrive', 
 fs.mkdirSync(OUT, { recursive: true })
 const pub = p => pathToFileURL(path.resolve('public', p)).href
 const ICON = pub('brand/wyberai-icon-512.png')
-const URL_BROCHURE = 'https://wyberai.com/gujaratexpo?utm_source=brochure&utm_campaign=teg2026'
-const URL_CARD = 'https://wyberai.com/gujaratexpo?utm_source=card&utm_campaign=teg2026'
+// Optional: PHOTO=<path to a portrait> and NAME=<name> put a round photo and a name on the back of the visiting card. The photo is read from disk and never copied into the repo.
+const PHOTO = process.env.PHOTO ? pathToFileURL(path.resolve(process.env.PHOTO)).href : null
+const NAME = process.env.NAME || ''
+const URL_BROCHURE ='https://wyberai.com/gujaratexpo?utm_source=brochure&utm_campaign=teg2026'
+const URL_CARD = 'https://wyberai.com/?utm_source=card&utm_campaign=teg2026'
 const qr = async (u, dark = '#05060a', light = '#ffffff') => QRCode.toDataURL(u, { margin: 1, width: 400, color: { dark, light } })
 
 const FONT = `<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">`
@@ -41,7 +44,16 @@ const EXAMPLES = [
   ['WEBSITE', 'Wedding website with RSVP', 'An invitation page for each event, a venue map, an RSVP form and a live headcount.'],
   ['MOBILE APP', 'Placement season tracker', 'Companies, rounds, dates, results and prep notes in one place.'],
 ]
-const STEPS = [['SAY IT', 'Describe it in plain words. WyberAi plans the build first.'], ['SEE IT', 'Fresh code, never a template. Live preview.'], ['SHAPE IT', 'Change anything by chatting. It fixes its own mistakes.'], ['LOCK IT', 'It probes its own database like an attacker before you publish.'], ['SHIP IT', 'Push to your own GitHub, use your own domain.']]
+const STEPS = [['SAY IT', 'Describe it in plain words. An AI agent plans the build before it writes a line.'], ['SEE IT', 'Fresh code, never a template. A live preview.'], ['SHAPE IT', 'Change anything by chatting. It repairs its own failures.'], ['CHECK IT', 'Six checks run, including a data leak test right after you publish.'], ['SHIP IT', 'Push to your own GitHub and use your own domain.']]
+const POWERS = [
+  ['Data leak test', 'We probe your live database like an attacker, right after you publish, and flag a critical leak the moment we find it.'],
+  ['Secret-key guard', 'If a secret key or service password is exposed in your code, publishing and export stop until it is removed.'],
+  ['Security checklist', 'Run a full security checklist from the editor at any time, against the files WyberAi actually wrote.'],
+  ['AI slop remover', 'Rules against the generic made-by-AI look are built into the builder, and a scanner quotes every sign it finds.'],
+  ['Own design system', 'Over 150 original components and 31 design directions, built in-house and used on every build, so it does not look like the default AI output.'],
+  ['SEO + AEO friendly', 'On websites, an SEO pass with automatic fixes and an AI-readable copy of every page, for Google and AI answer engines.'],
+]
+const CARD = 'border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:14px 16px;background:rgba(255,255,255,.03)'
 
 const brochure = async () => {
   const q = await qr(URL_BROCHURE, '#05060a', '#ffffff')
@@ -50,12 +62,16 @@ const brochure = async () => {
     <div style="position:absolute;inset:0;background:radial-gradient(ellipse 80% 45% at 70% 8%,rgba(14,165,233,.22),transparent 65%)"></div>
     <div style="position:relative">
       <div class="logo" style="font-size:26px"><img src="${ICON}" width="44" height="44"><span>Wyber<b>Ai</b></span></div>
-      <div class="mono sky" style="margin-top:34mm;font-size:12px">TECH EXPO GUJARAT 2026 · BOOTH S23</div>
-      <h1 style="margin:10px 0 0;font-size:62px;line-height:1;font-weight:900;letter-spacing:-.045em">Build any<br>digital product.<br><span class="sky">Ship it in minutes.</span></h1>
-      <p style="margin:18px 0 0;font-size:17px;line-height:1.55;color:#9aa4b5;max-width:130mm">Describe what you need in plain words. WyberAi builds the website, web app, mobile app or SaaS, with real code and a real database that you own.</p>
-      <div style="margin-top:14mm;display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        ${TYPES.map(t => `<div style="border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:14px 16px;background:rgba(255,255,255,.03)"><div class="mono" style="font-size:10px;color:#6b7488">${t.tag}</div><div style="font-size:19px;font-weight:900;letter-spacing:-.03em;margin-top:6px">${t.title}</div><div style="font-size:12.5px;line-height:1.5;color:#9aa4b5;margin-top:7px">${t.p}</div></div>`).join('')}
+      <div class="mono sky" style="margin-top:26mm;font-size:12px">TECH EXPO GUJARAT 2026 · BOOTH S23</div>
+      <h1 style="margin:10px 0 0;font-size:66px;line-height:1;font-weight:900;letter-spacing:-.045em">Vibe coding<br><span class="sky">with superpowers.</span></h1>
+      <p style="margin:18px 0 0;font-size:19px;line-height:1.5;font-weight:700;max-width:178mm">Vibe coding gives you a base. WyberAi gives you the whole app.</p>
+      <p style="margin:8px 0 0;font-size:15px;line-height:1.55;color:#9aa4b5;max-width:150mm">An AI agent plans it, builds it, repairs it and checks it, with login, database and API wired up. Saves <b style="color:#f2f4f8">hundreds of hours</b> of research and vibe coding.</p>
+      <div class="mono" style="margin-top:10px;display:inline-block;border:1px solid rgba(14,165,233,.5);border-radius:999px;padding:7px 14px;font-size:10px;color:#0ea5e9;letter-spacing:.1em">OUR OWN DESIGN SYSTEM · 150+ ORIGINAL COMPONENTS · 31 DESIGN DIRECTIONS</div>
+      <div class="mono" style="margin-top:12mm;font-size:11px;color:#6b7488">WHAT YOU CAN BUILD</div>
+      <div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        ${TYPES.map(t => `<div style="${CARD}"><div class="mono" style="font-size:10px;color:#6b7488">${t.tag}</div><div style="font-size:18px;font-weight:900;letter-spacing:-.03em;margin-top:6px">${t.title}</div><div style="font-size:12px;line-height:1.5;color:#9aa4b5;margin-top:6px">${t.p}</div></div>`).join('')}
       </div>
+      <div style="margin-top:10px;border:1px solid rgba(14,165,233,.5);background:rgba(14,165,233,.1);border-radius:14px;padding:14px 18px"><div class="mono sky" style="font-size:10px">REPLACE YOUR SAAS</div><div style="font-size:18px;font-weight:900;letter-spacing:-.03em;margin-top:6px">Your own, in-house.</div><div style="font-size:12.5px;line-height:1.5;color:#c3cbd8;margin-top:6px">Swap a SaaS you pay for with your own version, built around the features you actually use. You own the code.</div></div>
       <div style="position:absolute;left:0;right:0;top:232mm">
         <div class="mono" style="font-size:11px;color:#6b7488">HOW IT WORKS</div>
         <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:10px">
@@ -66,39 +82,49 @@ const brochure = async () => {
   const p2 = page(`
     <div style="position:absolute;inset:0;background:radial-gradient(ellipse 70% 40% at 20% 100%,rgba(14,165,233,.16),transparent 65%)"></div>
     <div style="position:relative">
-      <div class="mono sky" style="font-size:12px">WHAT PEOPLE BUILD</div>
-      <h2 style="margin:8px 0 0;font-size:40px;line-height:1.02;font-weight:900;letter-spacing:-.04em">Software for how <span class="sky">India</span> actually works.</h2>
+      <div class="mono sky" style="font-size:12px">SIX SUPERPOWERS, BUILT IN</div>
+      <h2 style="margin:8px 0 0;font-size:42px;line-height:1.02;font-weight:900;letter-spacing:-.04em">Vibe coding, <span class="sky">checked.</span></h2>
       <div style="margin-top:9mm;display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        ${EXAMPLES.map(([t, a, b]) => `<div style="border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:14px 16px;background:rgba(255,255,255,.03)"><div class="mono" style="font-size:10px;color:#6b7488">${t}</div><div style="font-size:17px;font-weight:900;letter-spacing:-.03em;margin-top:6px">${a}</div><div style="font-size:12px;line-height:1.5;color:#9aa4b5;margin-top:6px">${b}</div></div>`).join('')}
+        ${POWERS.map(([a, b], i) => `<div style="${CARD}"><div class="mono sky" style="font-size:10px">0${i + 1}</div><div style="font-size:17px;font-weight:900;letter-spacing:-.03em;margin-top:6px">${a}</div><div style="font-size:12px;line-height:1.5;color:#9aa4b5;margin-top:6px">${b}</div></div>`).join('')}
       </div>
-      <p style="font-size:10px;color:#6b7488;margin:8px 0 0">Examples are illustrative.</p>
-      <div style="margin-top:9mm">
-        <div class="mono" style="font-size:11px;color:#6b7488">WHY WYBERAI</div>
-        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px 16px;margin-top:10px">
-          ${[['Real code, every time.', 'WyberAi writes real React and Tailwind from scratch for every project.'], ['Self-healing builds.', 'A broken import or a cut-off file does not stop the build. It repairs it in the same run.'], ['It probes your database.', 'A Row-Level Security test against your live database before every publish.'], ['Your code. Zero lock-in.', 'Push to your own GitHub repo and connect your own domain.']].map(([a, b]) => `<div><div style="font-weight:900;font-size:14px">${a}</div><div style="font-size:11.5px;line-height:1.5;color:#9aa4b5;margin-top:3px">${b}</div></div>`).join('')}
+      <p style="font-size:10px;color:#6b7488;margin:10px 0 0">The data leak test runs right after you publish. SEO + AEO applies to websites. Free public checks at wyberai.com/tools.</p>
+      <p style="font-size:11px;line-height:1.5;color:#9aa4b5;margin:8px 0 0">WyberAi analysed 3,903 public, open-licensed GitHub repositories (design tokens, fonts and component names) to study how modern web and mobile interfaces are built.</p>
+      <div style="margin-top:10mm">
+        <div class="mono" style="font-size:11px;color:#6b7488">AND THE BASICS</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px 16px;margin-top:10px">
+          ${[['Real code, every time.', 'Real React and Tailwind written from scratch for every project.'], ['Self-healing builds.', 'A broken import or a cut-off file is repaired in the same run.'], ['Your code. Zero lock-in.', 'Push to your own GitHub repo and connect your own domain.']].map(([a, b]) => `<div><div style="font-weight:900;font-size:14px">${a}</div><div style="font-size:11.5px;line-height:1.5;color:#9aa4b5;margin-top:3px">${b}</div></div>`).join('')}
         </div>
       </div>
       <div style="position:absolute;left:0;right:0;top:218mm;display:flex;align-items:center;gap:18px;border:1px solid rgba(14,165,233,.5);background:rgba(14,165,233,.1);border-radius:18px;padding:16px 20px">
         <img src="${q}" width="96" height="96" style="border-radius:8px;background:#fff">
-        <div><div style="font-size:24px;font-weight:900;letter-spacing:-.03em">Bring your idea to booth S23.</div>
+        <div><div style="font-size:24px;font-weight:900;letter-spacing:-.03em">Come and see it at booth S23.</div>
         <div style="font-size:13px;color:#9aa4b5;margin-top:4px">Tech Expo Gujarat · 27–29 Nov 2026 · from 9:30 AM<br>Gujarat University Convention and Exhibition Centre, Ahmedabad</div>
         <div class="mono sky" style="font-size:12px;margin-top:8px">WYBERAI.COM · HELLO@WYBERAI.COM</div></div>
       </div>
-      <div style="position:absolute;left:0;right:0;top:279mm;font-size:9px;color:#6b7488">WyberAi is a product of Signalpulse Technologies LLC. Describe it. Ship it.</div>
+      <div style="position:absolute;left:0;right:0;top:279mm;font-size:9px;color:#6b7488">WyberAi is a product of Signalpulse Technologies LLC. Vibe coding with superpowers.</div>
     </div>`)
   return `<!doctype html><html><head><meta charset="utf-8">${FONT}<style>@page{size:A4;margin:0}${BASE}</style></head><body>${p1}${p2}</body></html>`
 }
 
 const card = async side => {
   const q = await qr(URL_CARD, '#05060a', '#ffffff')
-  const front = `<div class="logo" style="position:absolute;left:70px;top:70px;font-size:50px"><img src="${ICON}" width="76" height="76"><span>Wyber<b>Ai</b></span></div>
-    <div style="position:absolute;left:70px;top:230px;font-size:50px;line-height:1.02;font-weight:900;letter-spacing:-.045em">Build any digital product.<br><span class="sky">Ship it in minutes.</span></div>
-    <div class="mono" style="position:absolute;left:70px;bottom:62px;font-size:22px;color:#0ea5e9;letter-spacing:.14em">DESCRIBE IT. SHIP IT.</div>`
-  const back = `<div class="mono sky" style="position:absolute;left:70px;top:70px;font-size:22px">TECH EXPO GUJARAT 2026</div>
-    <div style="position:absolute;left:70px;top:120px;font-size:84px;font-weight:900;letter-spacing:-.05em;line-height:1">Booth <span class="sky">S23</span></div>
-    <div style="position:absolute;left:70px;top:250px;font-size:24px;line-height:1.5;color:#9aa4b5">27–29 Nov 2026 · from 9:30 AM<br>Gujarat University Convention<br>and Exhibition Centre, Ahmedabad</div>
-    <div class="mono" style="position:absolute;left:70px;bottom:62px;font-size:24px;line-height:1.6">WYBERAI.COM<br><span class="sky">HELLO@WYBERAI.COM</span></div>
-    <img src="${q}" width="190" height="190" style="position:absolute;right:70px;bottom:62px;border-radius:12px;background:#fff">`
+  const CHECKS = ['Data leak test', 'Secret-key guard', 'Security checklist', 'AI slop remover', 'Own design system', 'SEO + AEO friendly']
+  const TYPES5 = ['WEBSITES', 'WEB APPS', 'MOBILE APPS', 'SAAS', 'REPLACE YOUR SAAS']
+  const chip = (t, last) => last
+    ? `<span style="background:#0ea5e9;color:#03111c;border-radius:99px;padding:8px 18px;font-size:17px" class="mono">${t}</span>`
+    : `<span style="border:2px solid #2a3650;border-radius:99px;padding:6px 16px;font-size:17px" class="mono">${t}</span>`
+  const front = `<div class="logo" style="position:absolute;left:70px;top:62px;font-size:46px"><img src="${ICON}" width="68" height="68"><span>Wyber<b>Ai</b></span></div>
+    <div style="position:absolute;left:70px;top:176px;font-size:84px;line-height:1;font-weight:900;letter-spacing:-.05em">Vibe coding<br><span class="sky">with superpowers.</span></div>
+    <div style="position:absolute;left:70px;top:384px;font-size:27px;line-height:1.35;font-weight:700;color:#f2f4f8">Vibe coding gives you a base.<br>WyberAi gives you the whole app.</div>
+    <div class="mono" style="position:absolute;left:70px;top:480px;font-size:17px;color:#9aa4b5;letter-spacing:.08em">AN AI AGENT PLANS IT, BUILDS IT, REPAIRS IT AND CHECKS IT.</div>
+    <div style="position:absolute;left:70px;bottom:46px;display:flex;gap:10px">${TYPES5.map((t, i) => chip(t, i === 4)).join('')}</div>`
+  const back = `${PHOTO ? `<img src="${PHOTO}" style="position:absolute;left:0;top:0;width:410px;height:600px;object-fit:cover;object-position:50% 10%"><div style="position:absolute;left:0;top:0;width:410px;height:600px;background:linear-gradient(90deg,transparent 70%,#05060a 100%)"></div>` : ''}
+    <div style="position:absolute;left:${PHOTO ? 450 : 70}px;top:58px;font-size:64px;font-weight:900;letter-spacing:-.045em;line-height:1">${NAME}</div>
+    <div class="mono sky" style="position:absolute;left:${PHOTO ? 450 : 70}px;top:134px;font-size:19px;letter-spacing:.16em">WYBERAI</div>
+    <div style="position:absolute;left:${PHOTO ? 450 : 70}px;top:196px;font-size:34px;line-height:1.1;font-weight:900;letter-spacing:-.03em">Vibe coding <span class="sky">with superpowers.</span></div>
+    <div style="position:absolute;left:${PHOTO ? 450 : 70}px;top:262px;display:grid;grid-template-columns:1fr 1fr;gap:10px 22px;width:540px">${CHECKS.map(c => `<div style="font-size:22px;font-weight:700;display:flex;gap:10px;align-items:center"><i style="width:10px;height:10px;border-radius:50%;background:#0ea5e9;display:block;flex:none"></i>${c}</div>`).join('')}</div>
+    <div class="mono" style="position:absolute;left:${PHOTO ? 450 : 70}px;bottom:50px;font-size:24px;line-height:1.6">WYBERAI.COM<br><span class="sky">HELLO@WYBERAI.COM</span></div>
+    <img src="${q}" width="150" height="150" style="position:absolute;right:56px;bottom:46px;border-radius:12px;background:#fff">`
   return `<!doctype html><html><head><meta charset="utf-8">${FONT}<style>${BASE}html,body{width:1050px;height:600px;overflow:hidden}.c{position:relative;width:1050px;height:600px;background:radial-gradient(ellipse 70% 90% at 95% 5%,rgba(14,165,233,.25),transparent 65%),#05060a}</style></head><body><div class="c">${side === 'front' ? front : back}</div></body></html>`
 }
 
@@ -112,21 +138,31 @@ const tile = t => `<!doctype html><html><head><meta charset="utf-8">${FONT}<styl
 const thumb = () => `<!doctype html><html><head><meta charset="utf-8">${FONT}<style>${BASE}html,body{width:1000px;height:1000px;overflow:hidden}.c{position:relative;width:1000px;height:1000px;background:radial-gradient(ellipse 80% 60% at 85% 0%,rgba(14,165,233,.3),transparent 65%),#05060a}</style></head><body><div class="c">
   <div class="logo" style="position:absolute;left:80px;top:80px;font-size:48px"><img src="${ICON}" width="72" height="72"><span>Wyber<b>Ai</b></span></div>
   <div class="mono" style="position:absolute;left:80px;top:340px;font-size:26px;color:#0ea5e9">BROCHURE</div>
-  <div style="position:absolute;left:80px;top:390px;width:850px;font-size:88px;font-weight:900;letter-spacing:-.045em;line-height:1">Build any digital product.<br><span class="sky">Ship it in minutes.</span></div>
+  <div style="position:absolute;left:80px;top:390px;width:850px;font-size:88px;font-weight:900;letter-spacing:-.045em;line-height:1">Vibe coding<br><span class="sky">with superpowers.</span></div>
   <div class="mono" style="position:absolute;left:80px;bottom:80px;font-size:24px;color:#6b7488">BOOTH S23 · TECH EXPO GUJARAT</div></div></body></html>`
 
 const cardSquare = async () => {
   const q = await qr(URL_CARD, '#05060a', '#ffffff')
-  return `<!doctype html><html><head><meta charset="utf-8">${FONT}<style>${BASE}html,body{width:1200px;height:1200px;overflow:hidden}.c{position:relative;width:1200px;height:1200px;background:radial-gradient(ellipse 80% 55% at 90% 0%,rgba(14,165,233,.3),transparent 65%),#05060a}</style></head><body><div class="c">
-  <div class="logo" style="position:absolute;left:90px;top:90px;font-size:56px"><img src="${ICON}" width="84" height="84"><span>Wyber<b>Ai</b></span></div>
-  <div style="position:absolute;left:90px;top:260px;width:1000px;font-size:84px;font-weight:900;letter-spacing:-.045em;line-height:1">Build any digital product.<br><span class="sky">Ship it in minutes.</span></div>
-  <div class="mono" style="position:absolute;left:90px;top:520px;font-size:26px;color:#0ea5e9;letter-spacing:.14em">DESCRIBE IT. SHIP IT.</div>
-  <div style="position:absolute;left:90px;right:90px;top:640px;height:2px;background:rgba(255,255,255,.14)"></div>
-  <div class="mono sky" style="position:absolute;left:90px;top:690px;font-size:24px">TECH EXPO GUJARAT 2026</div>
-  <div style="position:absolute;left:90px;top:730px;font-size:96px;font-weight:900;letter-spacing:-.05em;line-height:1">Booth <span class="sky">S23</span></div>
-  <div style="position:absolute;left:90px;top:850px;font-size:26px;line-height:1.5;color:#9aa4b5">27–29 Nov 2026 · from 9:30 AM<br>Gujarat University Convention<br>and Exhibition Centre, Ahmedabad</div>
-  <div class="mono" style="position:absolute;left:90px;bottom:80px;font-size:26px;line-height:1.7">WYBERAI.COM<br><span class="sky">HELLO@WYBERAI.COM</span></div>
-  <img src="${q}" width="210" height="210" style="position:absolute;right:90px;bottom:80px;border-radius:14px;background:#fff">
+  const CHECKS = ['Data leak test', 'Secret-key guard', 'Security checklist', 'AI slop remover', 'Own design system', 'SEO + AEO friendly']
+  const TYPES5 = ['WEBSITES', 'WEB APPS', 'MOBILE APPS', 'SAAS', 'REPLACE YOUR SAAS']
+  const chip = (t, last) => last
+    ? `<span class="mono" style="background:#0ea5e9;color:#03111c;border-radius:99px;padding:8px 14px;font-size:14px">${t}</span>`
+    : `<span class="mono" style="border:2px solid #2a3650;border-radius:99px;padding:6px 12px;font-size:14px">${t}</span>`
+  return `<!doctype html><html><head><meta charset="utf-8">${FONT}<style>${BASE}html,body{width:1200px;height:1200px;overflow:hidden}.c{position:relative;width:1200px;height:1200px;background:radial-gradient(ellipse 70% 50% at 95% 0%,rgba(14,165,233,.28),transparent 65%),#05060a}</style></head><body><div class="c">
+  ${PHOTO ? `<img src="${PHOTO}" style="position:absolute;left:0;top:0;width:500px;height:640px;object-fit:cover;object-position:50% 10%"><div style="position:absolute;left:0;top:0;width:500px;height:640px;background:linear-gradient(90deg,transparent 72%,#05060a 100%)"></div>` : ''}
+  <div class="logo" style="position:absolute;left:${PHOTO ? 548 : 80}px;top:58px;font-size:40px"><img src="${ICON}" width="58" height="58"><span>Wyber<b>Ai</b></span></div>
+  <div style="position:absolute;left:${PHOTO ? 548 : 80}px;top:150px;font-size:74px;font-weight:900;letter-spacing:-.045em;line-height:1">${NAME}</div>
+  <div style="position:absolute;left:${PHOTO ? 548 : 80}px;top:252px;font-size:46px;line-height:1.05;font-weight:900;letter-spacing:-.04em">Vibe coding<br><span class="sky">with superpowers.</span></div>
+  <div style="position:absolute;left:${PHOTO ? 548 : 80}px;top:386px;font-size:22px;color:#9aa4b5;line-height:1.35">An AI agent plans it, builds it,<br>repairs it and checks it.</div>
+  <div style="position:absolute;left:${PHOTO ? 548 : 80}px;top:466px;display:grid;grid-template-columns:1fr 1fr;gap:12px 20px;width:600px">${CHECKS.map(c => `<div style="font-size:24px;font-weight:700;display:flex;gap:10px;align-items:center"><i style="width:11px;height:11px;border-radius:50%;background:#0ea5e9;display:block;flex:none"></i>${c}</div>`).join('')}</div>
+  <div style="position:absolute;left:80px;right:80px;top:672px;height:2px;background:rgba(255,255,255,.14)"></div>
+  <div class="mono sky" style="position:absolute;left:80px;top:706px;font-size:22px;letter-spacing:.14em">TECH EXPO GUJARAT 2026</div>
+  <div style="position:absolute;left:80px;top:744px;font-size:124px;font-weight:900;letter-spacing:-.055em;line-height:1">Booth <span class="sky">S23</span></div>
+  <div style="position:absolute;left:80px;top:884px;font-size:28px;line-height:1.45;color:#c3cbd8">27–29 Nov 2026 · from 9:30 AM<br>Gujarat University Convention and<br>Exhibition Centre, Ahmedabad</div>
+  <div style="position:absolute;left:80px;top:1040px;display:flex;gap:8px;flex-wrap:nowrap;width:790px">${TYPES5.map((t, i) => chip(t, i === 4)).join('')}</div>
+  <div class="mono" style="position:absolute;left:80px;bottom:52px;font-size:26px;line-height:1.5">WYBERAI.COM · <span class="sky">HELLO@WYBERAI.COM</span></div>
+  <img src="${q}" width="236" height="236" style="position:absolute;right:80px;top:712px;border-radius:14px;background:#fff">
+  <div class="mono" style="position:absolute;right:80px;top:964px;width:236px;text-align:center;font-size:15px;letter-spacing:.08em;line-height:1.4">SCAN TO VISIT<br>WYBERAI.COM</div>
 </div></body></html>`
 }
 
@@ -135,18 +171,23 @@ const page = await browser.newPage()
 const tmp = path.join(OUT, '_tmp.html')
 const load = async html => { fs.writeFileSync(tmp, html); await page.goto(pathToFileURL(tmp).href, { waitUntil: 'networkidle0' }); await page.evaluate(() => document.fonts.ready) }
 
+if (!process.env.ONLY || process.env.ONLY === 'brochure') {
 await load(await brochure())
 await page.pdf({ path: path.join(OUT, 'wyberai-brochure-A4.pdf'), format: 'A4', printBackground: true, preferCSSPageSize: true })
 console.log('pdf brochure')
 if (process.env.PREVIEW) { await page.setViewport({ width: 794, height: 1123, deviceScaleFactor: 1.5 }); await page.screenshot({ path: path.join(process.env.PREVIEW, 'brochure-preview.png'), fullPage: true }) }
+}
+if (!process.env.ONLY || process.env.ONLY === 'card') {
 await page.setViewport({ width: 1050, height: 600, deviceScaleFactor: 1 })
 for (const side of ['front', 'back']) { await load(await card(side)); await page.screenshot({ path: path.join(OUT, `wyberai-visiting-card-${side}.png`) }); console.log('png card', side) }
-for (const t of SERVICES) { await page.setViewport({ width: 1000, height: 1000, deviceScaleFactor: 1 }); await load(tile(t)); await page.screenshot({ path: path.join(OUT, `service-${t.slug}.png`) }); console.log('png service', t.slug) }
+if (!process.env.ONLY) for (const t of SERVICES) { await page.setViewport({ width: 1000, height: 1000, deviceScaleFactor: 1 }); await load(tile(t)); await page.screenshot({ path: path.join(OUT, `service-${t.slug}.png`) }); console.log('png service', t.slug) }
 await page.setViewport({ width: 1200, height: 1200, deviceScaleFactor: 1 })
-await load(await cardSquare()); await page.screenshot({ path: path.join(OUT, 'wyberai-visiting-card-1x1.png') }); console.log('png card square')
+
+}
 await page.setViewport({ width: 1000, height: 1000, deviceScaleFactor: 1 })
-await load(thumb()); await page.screenshot({ path: path.join(OUT, 'wyberai-brochure-thumbnail-1x1.png') }); console.log('png thumb')
+if (!process.env.ONLY || process.env.ONLY === 'brochure') { await load(thumb()); await page.screenshot({ path: path.join(OUT, 'wyberai-brochure-thumbnail-1x1.png') }); console.log('png thumb') }
 await page.setViewport({ width: 1000, height: 1000, deviceScaleFactor: 1 })
-for (const t of TYPES) { await load(tile(t)); const n = t.tag.toLowerCase().replace(/\s+/g, '-'); await page.screenshot({ path: path.join(OUT, `tile-${n}.png`) }); console.log('png tile', n) }
+if (!process.env.ONLY) for (const t of TYPES) { await load(tile(t)); const n = t.tag.toLowerCase().replace(/\s+/g, '-'); await page.screenshot({ path: path.join(OUT, `tile-${n}.png`) }); console.log('png tile', n) }
+if (process.env.ONLY === 'eventcard') { await page.setViewport({ width: 1200, height: 1200, deviceScaleFactor: 1 }); await load(await cardSquare()); await page.screenshot({ path: path.join(OUT, 'wyberai-visiting-card-EVENT-1x1.png') }); console.log('png event card') }
 fs.rmSync(tmp, { force: true })
 await browser.close()

@@ -6,7 +6,26 @@ const nextConfig = {
   // manifest (App Router routes 404 unpredictably even though the files
   // exist — reproduced with src/app/auth/callback/route.ts).
   turbopack: { root: __dirname },
-  serverExternalPackages: ['esbuild', 'googleapis', 'google-auth-library'],
+  // @sparticuz/chromium and puppeteer-core must stay external: the package ships a compressed browser in its own bin
+  // folder, and bundling it leaves that folder out of the function, so executablePath() fails. The publish-time
+  // crawler snapshot (src/lib/seo/static-snapshot.ts) and screenshots need it. Four live websites had no snapshot.
+  serverExternalPackages: ['esbuild', 'googleapis', 'google-auth-library', '@sparticuz/chromium', 'puppeteer-core'],
+  // Next streams <title>, meta and canonical into the BODY for any user agent it does not recognise as a limited bot, so
+  // crawlers and AI readers that do not run JavaScript (GPTBot, ClaudeBot, PerplexityBot, SEO scanners, curl) saw a head with
+  // no title or description (live, 18 Nov: our own /tools scanner scored a published site 36/100). Keep Next's own list
+  // (search engines and link previewers) and add the non-browser agents so they get a blocking render with metadata in <head>.
+  htmlLimitedBots: new RegExp(
+    require('next/dist/shared/lib/router/utils/html-bots').HTML_LIMITED_BOT_UA_RE.source +
+      '|bot\\b|crawl|spider|scan|audit|seo|lighthouse|preview|fetch|curl|wget|python|go-http|java\\/|axios|node-|okhttp|GPT|Claude|Perplexity|Anthropic|OpenAI|Gemini|Bytespider|Amazonbot|ahrefs|semrush|screaming|^$',
+    'i',
+  ),
+  // The browser is shipped as .br files that nothing imports, so file tracing leaves them out of the function and
+  // executablePath() fails with "input directory .../@sparticuz/chromium/bin does not exist" (Vercel runtime log,
+  // 18 Nov 2026, every publish: no crawler snapshot, no llms.txt). Include them for every route that launches Chrome.
+  outputFileTracingIncludes: {
+    '/api/publish': ['./node_modules/@sparticuz/chromium/bin/**'],
+    '/api/**': ['./node_modules/@sparticuz/chromium/bin/**'],
+  },
   productionBrowserSourceMaps: false,
   typescript: {
     ignoreBuildErrors: true,
@@ -28,6 +47,17 @@ const nextConfig = {
       { source: '/contact-us', destination: '/contact', permanent: true },
       { source: '/dashboard/projects', destination: '/dashboard', permanent: false },
       { source: '/home', destination: '/', permanent: true },
+      // The scroll-journey demo page was retired; keep old links and bookmarks working.
+      { source: '/space-journey', destination: '/', permanent: true },
+      // Retired blog posts: they described products no longer sold from the site, or carried competitor and pricing claims that had gone stale.
+      { source: '/blog/ai-workflow-automation-guide', destination: '/blog', permanent: true },
+      { source: '/blog/what-are-ai-agents-guide', destination: '/blog', permanent: true },
+      { source: '/blog/built-lovable-competitor-6-weeks', destination: '/blog', permanent: true },
+      { source: '/blog/why-we-charge-less-than-lovable', destination: '/blog', permanent: true },
+      { source: '/blog/wyber-vs-lovable', destination: '/lovable-alternatives', permanent: true },
+      // Two old posts were rewritten into one each: the Next.js tutorial claimed a default framework the builder does not use, and the second SaaS guide duplicated the first.
+      { source: '/blog/nextjs-app-in-one-hour', destination: '/blog/seo-for-ai-built-websites', permanent: true },
+      { source: '/blog/build-saas-without-code', destination: '/blog/build-saas-mvp-with-ai-2026', permanent: true },
       { source: '/app', destination: '/dashboard', permanent: false },
       { source: '/community', destination: '/gallery', permanent: true },
       // NOTE: the old `/build → /dashboard` vanity alias was removed Jul 2026:
@@ -66,8 +96,38 @@ const nextConfig = {
           // own mic; still denied to all embedded third-party frames.
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(self), geolocation=(), interest-cohort=()' },
           { key: 'X-Permitted-Cross-Domain-Policies', value: 'none' },
+          // REPORT-ONLY: nothing is blocked. It logs what a real Content-Security-Policy would have blocked (to
+          // /api/csp-report) so the policy can be tightened from real traffic before it is enforced.
+          {
+            key: 'Content-Security-Policy-Report-Only',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://connect.facebook.net https://www.redditstatic.com https://esm.sh https://cdn.jsdelivr.net https://*.sentry.io https://va.vercel-scripts.com",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+              "font-src 'self' data: https://fonts.gstatic.com",
+              "img-src 'self' data: blob: https:",
+              "connect-src 'self' https: wss:",
+              "frame-src 'self' https:",
+              "frame-ancestors 'self'",
+              "base-uri 'self'",
+              "object-src 'none'",
+              "form-action 'self' https:",
+              'report-uri /api/csp-report',
+            ].join('; '),
+          },
         ],
       },
+      // Client-facing pages and their APIs are private to one client: the secret is in the address. Never cache them
+      // (a shared cache must not hand one client's page to another), never send the address as a referrer, and keep
+      // them out of search. These come after the general rule above, so they win for the same header.
+      ...['/client/:path*', '/brief/:path*', '/preview/:path*', '/api/portal/:path*', '/api/brief/:path*'].map(source => ({
+        source,
+        headers: [
+          { key: 'Cache-Control', value: 'private, no-store, max-age=0' },
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+          { key: 'X-Robots-Tag', value: 'noindex, nofollow' },
+        ],
+      })),
     ]
   },
 }

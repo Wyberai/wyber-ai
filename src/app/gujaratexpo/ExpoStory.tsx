@@ -155,7 +155,7 @@ export function ExpoStory({ audience, picker }: { audience: AudienceId; picker: 
       <section className={s.staticHero}>
         <div className={s.wrap}>
           <div className={s.eyebrow}><span className={s.live}>●</span> TECH EXPO GUJARAT · BOOTH S23 · 27–29 NOV</div>
-          <h1 className={s.h1}>Build any digital product. <em>Ship it in minutes.</em></h1>
+          <h1 className={s.h1}>Vibe coding <em>with superpowers.</em></h1>
           <p className={s.sub}>Describe it once and WyberAi engineers it from scratch. <b>Bring your pain point to our booth and we&apos;ll build it while you watch.</b></p>
           <div style={{ margin: '24px 0' }}>{picker}</div>
           <div className={s.staticRow}>
@@ -199,6 +199,8 @@ export function ExpoStory({ audience, picker }: { audience: AudienceId; picker: 
           <div className={s.eyebrow}><span className={s.live}>●</span> TECH EXPO GUJARAT · BOOTH S23 · 27–29 NOV</div>
           <h1 className={s.storyH1}>{copy.head}</h1>
           <p className={s.storySub}>{copy.sub}</p>
+          <p className={s.boothLine}>Come to booth S23. Tell us what is broken. Watch it built in 15 minutes.</p>
+          <div className={s.heroCta}><a href="#book" className={s.btn}>Book 15 minutes at the booth</a></div>
           <div className={s.pickerWrap}>{picker}</div>
         </Chapter>
 
@@ -233,7 +235,7 @@ export function ExpoStory({ audience, picker }: { audience: AudienceId; picker: 
         {/* chapter 4: locked */}
         <Chapter p={p} win={[0.76, 0.8, 0.86, 0.9]} className={s.textBlock}>
           <h2 className={s.storyH2}>Locked.</h2>
-          <p className={s.storySub}>Before you publish, WyberAi probes your database the way an attacker would.</p>
+          <p className={s.storySub}>The moment you publish, WyberAi probes your database the way an attacker would.</p>
         </Chapter>
 
         {/* chapter 5: live */}

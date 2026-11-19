@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse, after } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { createAnthropic } from '@/lib/ai-usage'
 import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 import { createAdminClient } from '@/lib/supabase/server'
 import { rateLimit } from '@/lib/rate-limit'
@@ -10,7 +11,7 @@ import { DOORS, type Door } from '@/lib/intent/types'
 import { suggestPages } from '@/lib/intent/suggest'
 import { BUILD_PAGES } from '@/app/build/data'
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY ?? 'placeholder' })
+const client = createAnthropic('app/api/intent', { apiKey: process.env.ANTHROPIC_API_KEY ?? 'placeholder' })
 
 // Reads what an Indian visitor typed on the homepage and returns a validated
 // "intent" the page can adapt to. Flag-gated (NEXT_PUBLIC_INTENT_EXPERIMENT=1)

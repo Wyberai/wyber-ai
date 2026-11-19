@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
 import { verifyParams } from '@/lib/internal-auth'
+import { PLAN_FACTS, TOPUP_PACKS, LARGE_PLAN_CREDITS } from '@/lib/plans'
 
 /**
  * Serves the interactive credit-limit checkout UI for MCP.
@@ -91,18 +92,18 @@ function getUpgradeOptions(currentPlan: string, costNeeded: number, currentCredi
   // Plan credit grants (monthly/annual assumptions)
   const planCredits: Record<string, number> = {
     free: 0,
-    spark: 100,
-    starter: 500,
-    builder: 2000,
-    pro: 8000,
-    growth: 30000,
-    scale: 100000,
+    spark: PLAN_FACTS.spark.credits,
+    starter: PLAN_FACTS.starter.credits,
+    builder: PLAN_FACTS.builder.credits,
+    pro: PLAN_FACTS.pro.credits,
+    growth: LARGE_PLAN_CREDITS.growth,
+    scale: LARGE_PLAN_CREDITS.scale,
   }
 
   const topups: UpgradeOption[] = [
-    { planKey: 'topup_200', title: 'Quick Top-up', creditsGranted: 40 },
-    { planKey: 'topup_600', title: 'Standard Top-up', creditsGranted: 100 },
-    { planKey: 'topup_2000', title: 'Mega Top-up', creditsGranted: 200 },
+    { planKey: 'topup_200', title: 'Quick Top-up', creditsGranted: TOPUP_PACKS[0].credits },
+    { planKey: 'topup_600', title: 'Standard Top-up', creditsGranted: TOPUP_PACKS[1].credits },
+    { planKey: 'topup_2000', title: 'Mega Top-up', creditsGranted: TOPUP_PACKS[2].credits },
   ]
 
   const plans: UpgradeOption[] = []
@@ -112,7 +113,7 @@ function getUpgradeOptions(currentPlan: string, costNeeded: number, currentCredi
       planKey: 'starter_monthly',
       title: 'Starter Plan',
       creditsGranted: planCredits.starter,
-      subtitle: '500 credits/month',
+      subtitle: `${PLAN_FACTS.starter.credits.toLocaleString('en-US')} credits/month`,
     })
   }
 
@@ -121,7 +122,7 @@ function getUpgradeOptions(currentPlan: string, costNeeded: number, currentCredi
       planKey: 'pro_monthly',
       title: 'Pro Plan',
       creditsGranted: planCredits.pro,
-      subtitle: '8,000 credits/month',
+      subtitle: `${PLAN_FACTS.pro.credits.toLocaleString('en-US')} credits/month`,
     })
   }
 

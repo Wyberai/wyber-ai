@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { createAnthropic } from '@/lib/ai-usage'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { rateLimit } from '@/lib/rate-limit'
 import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY ?? 'placeholder' })
+const client = createAnthropic('app/api/launch-kit', { apiKey: process.env.ANTHROPIC_API_KEY ?? 'placeholder' })
 
 /**
  * Launch Kit: ready-to-post copy about the USER'S app (not about WyberAi) for

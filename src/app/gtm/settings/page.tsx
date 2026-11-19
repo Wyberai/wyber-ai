@@ -4,8 +4,8 @@ import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 
 const s = {
-  bg: '#09090b', card: '#111113', border: 'rgba(255,255,255,0.07)',
-  text: '#fafafa', muted: '#71717a', dim: '#52525b',
+  bg: '#05080d', card: '#0d141e', border: 'rgba(255,255,255,0.07)',
+  text: '#fafafa', muted: '#8797ab', dim: '#8797ab',
   sky: '#0EA5E9', orange: '#f97316', green: '#10b981', violet: '#8b5cf6',
 }
 
@@ -16,8 +16,8 @@ const CONNECTORS = [
       { id: 'apify_api_key', label: 'Apify', icon: '🕷️', desc: 'Scraping actors — directories, job posts, review sites', referral: 'https://apify.com', referralLabel: 'Get Apify →', color: '#ff9012' },
       { id: 'apollo_api_key', label: 'Apollo.io', icon: '🔍', desc: 'Lead search, enrichment, dialer', referral: 'https://app.apollo.io', referralLabel: 'Get Apollo free →', color: '#f59e0b' },
       { id: 'zoominfo_api_key', label: 'ZoomInfo', icon: '📊', desc: 'Enterprise B2B database', referral: 'https://zoominfo.com', referralLabel: 'Get ZoomInfo →', color: '#0EA5E9' },
-      { id: 'lusha_api_key', label: 'Lusha', icon: '👤', desc: 'Email + direct dial finder', referral: 'https://lusha.com', referralLabel: 'Get Lusha →', color: '#8b5cf6' },
-      { id: 'hunter_api_key', label: 'Hunter.io', icon: '✉️', desc: 'Email finder & verifier', referral: 'https://hunter.io', referralLabel: 'Get Hunter →', color: '#10b981' },
+      { id: 'lusha_api_key', label: 'Lusha', icon: '👤', desc: 'Email + direct dial finder', referral: 'https://lusha.com', referralLabel: 'Get Lusha →', color: '#a78bfa' },
+      { id: 'hunter_api_key', label: 'Hunter.io', icon: '✉️', desc: 'Email finder & verifier', referral: 'https://hunter.io', referralLabel: 'Get Hunter →', color: '#34d399' },
     ]
   },
   {
@@ -31,8 +31,8 @@ const CONNECTORS = [
     items: [
       { id: 'smartlead_api_key', label: 'Smartlead', icon: '📤', desc: 'Cold email sequences + warmup', referral: 'https://smartlead.ai', referralLabel: 'Get Smartlead →', color: '#0EA5E9' },
       { id: 'instantly_api_key', label: 'Instantly.ai', icon: '⚡', desc: 'High-volume cold email', referral: 'https://instantly.ai', referralLabel: 'Get Instantly →', color: '#f59e0b' },
-      { id: 'outreach_api_key', label: 'Outreach.io', icon: '🎯', desc: 'Enterprise sales engagement', referral: null, referralLabel: null, color: '#8b5cf6' },
-      { id: 'salesloft_api_key', label: 'Salesloft', icon: '📞', desc: 'Sales cadence platform', referral: null, referralLabel: null, color: '#10b981' },
+      { id: 'outreach_api_key', label: 'Outreach.io', icon: '🎯', desc: 'Enterprise sales engagement', referral: null, referralLabel: null, color: '#a78bfa' },
+      { id: 'salesloft_api_key', label: 'Salesloft', icon: '📞', desc: 'Sales cadence platform', referral: null, referralLabel: null, color: '#34d399' },
     ]
   },
   {
@@ -47,7 +47,7 @@ const CONNECTORS = [
     items: [
       { id: 'hubspot_api_key', label: 'HubSpot', icon: '🧲', desc: 'CRM + sequences sync', referral: 'https://hubspot.com', referralLabel: 'Get HubSpot →', color: '#f97316' },
       { id: 'salesforce_api_key', label: 'Salesforce', icon: '☁️', desc: 'Enterprise CRM sync', referral: null, referralLabel: null, color: '#0EA5E9' },
-      { id: 'attio_api_key', label: 'Attio', icon: '✨', desc: 'Modern CRM for startups', referral: 'https://attio.com', referralLabel: 'Get Attio →', color: '#8b5cf6' },
+      { id: 'attio_api_key', label: 'Attio', icon: '✨', desc: 'Modern CRM for startups', referral: 'https://attio.com', referralLabel: 'Get Attio →', color: '#a78bfa' },
     ]
   },
 ]
@@ -107,7 +107,7 @@ export default function GTMSettingsPage() {
                       <div style={{ flex: 1 }}>
                         <div style={{ fontSize: 13, fontWeight: 700, color: s.text, display: 'flex', alignItems: 'center', gap: 8 }}>
                           {item.label}
-                          {isConnected && <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 10, background: s.green + '15', border: `1px solid ${s.green}30`, color: s.green, fontWeight: 700 }}>Connected</span>}
+                          {isConnected && <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 10, background: s.green + '15', border: `1px solid ${s.green}30`, color: s.green, fontWeight: 700 }}>Connected</span>}
                         </div>
                         <div style={{ fontSize: 12, color: s.muted }}>{item.desc}</div>
                       </div>
@@ -130,7 +130,7 @@ export default function GTMSettingsPage() {
                           onChange={e => setKeys(k => ({ ...k, [item.id]: e.target.value }))}
                           style={{ flex: 1, background: s.bg, border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 12px', fontSize: 13, color: s.text, fontFamily: 'inherit', outline: 'none' }}
                         />
-                        <button onClick={() => saveKey(item.id)} style={{ padding: '8px 16px', borderRadius: 7, background: item.color, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', border: 'none' }}>
+                        <button onClick={() => saveKey(item.id)} style={{ padding: '8px 16px', borderRadius: 7, background: item.color, color: '#03111c', fontSize: 13, fontWeight: 700, cursor: 'pointer', border: 'none' }}>
                           {saved[item.id] ? '✓ Saved' : 'Save'}
                         </button>
                       </div>

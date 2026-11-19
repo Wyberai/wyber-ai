@@ -59,7 +59,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Score Lead",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -178,7 +178,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Write Win Summary",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -290,7 +290,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Write Follow-Up",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 120
@@ -378,7 +378,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Detect Competitor",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -492,7 +492,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Summarize Pipeline",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -573,7 +573,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Qualify Account",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -705,7 +705,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Draft Message",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -799,7 +799,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Identify At-Risk",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -905,7 +905,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Summarize Deal Update",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -994,7 +994,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Write Win-Back Email",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -1075,7 +1075,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Extract Call Insights",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -1283,7 +1283,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Draft Proposal",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -1377,7 +1377,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Write Pipeline Summary",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -1471,7 +1471,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Draft Counter Response",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 120
@@ -1559,7 +1559,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Generate Welcome Email",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -1671,7 +1671,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Write Social Captions",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -1772,7 +1772,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Personalize Email",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -1879,7 +1879,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Draft Newsletter",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -1978,7 +1978,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Analyze Sentiment",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -2110,7 +2110,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Summarize Performance",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -2298,7 +2298,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Generate Teaser Copy",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -2417,7 +2417,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Write Review Request",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 120
@@ -2523,7 +2523,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Write Social Snippets",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -2637,7 +2637,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Detect Price Changes",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -2751,7 +2751,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Write Attendee Email",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 120
@@ -2764,7 +2764,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n4",
         "type": "ai",
         "label": "Write No-Show Email",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 320
@@ -2870,7 +2870,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Draft Newsletter",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -2982,7 +2982,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Write Review Request",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -3076,7 +3076,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Analyze Performance",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -3281,7 +3281,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Write Teaser Emails",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -3406,7 +3406,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Classify Ticket",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -3525,7 +3525,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Draft Reply",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -3619,7 +3619,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Assess Eligibility",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -3845,7 +3845,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Draft Recovery Reply",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 120
@@ -4065,7 +4065,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Summarize Metrics",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -4159,7 +4159,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Score Churn Risk",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -4278,7 +4278,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Summarize Issue",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 120
@@ -4384,7 +4384,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Analyze Sentiment",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -4503,7 +4503,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Personalize Survey Email",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -4716,7 +4716,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Identify Churn Signals",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -4823,7 +4823,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Draft KB Article",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 120
@@ -5043,7 +5043,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Translate & Summarize",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 120
@@ -5149,7 +5149,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Generate Welcome Package",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -5413,7 +5413,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n4",
         "type": "ai",
         "label": "Summarize Sentiment",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 960,
           "y": 200
@@ -5499,7 +5499,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Score Resume",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -5631,7 +5631,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Draft Review Prompts",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -5869,7 +5869,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Write Celebration Message",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -6082,7 +6082,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "ai1",
         "type": "ai",
         "label": "Write Personal Message",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -6163,7 +6163,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "ai1",
         "type": "ai",
         "label": "Analyze Sentiment",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -6371,7 +6371,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "ai1",
         "type": "ai",
         "label": "Summarize Trends",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -6559,7 +6559,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "ai1",
         "type": "ai",
         "label": "Draft Reminder Email",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -6640,7 +6640,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "ai1",
         "type": "ai",
         "label": "Write Rejection Email",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -6747,7 +6747,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "ai1",
         "type": "ai",
         "label": "Generate Report Narrative",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -6859,7 +6859,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Draft Reminder Email",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -7054,7 +7054,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Generate Summary",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -7211,7 +7211,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Analyze Transaction",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -7325,7 +7325,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Score Churn Risk",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -7406,7 +7406,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Extract Invoice Data",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -7513,7 +7513,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Forecast Cash Flow",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -7632,7 +7632,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Draft Reminder Email",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -7713,7 +7713,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Extract Expense Data",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -7908,7 +7908,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Format Payment Summary",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -8002,7 +8002,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Classify Bill",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -8134,7 +8134,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Generate P&L Report",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -8215,7 +8215,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Validate Refund Request",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -8347,7 +8347,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Score Churn Risk",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -8447,7 +8447,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Extract Invoice Data",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -8566,7 +8566,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Generate Welcome Email",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -8696,7 +8696,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Summarize Daily Tasks",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -8878,7 +8878,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Classify Ticket",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -9010,7 +9010,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Generate KPI Summary",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -9192,7 +9192,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Extract Action Items",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -9380,7 +9380,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Extract Invoice Details",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -9525,7 +9525,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n4",
         "type": "ai",
         "label": "Summarize Team Updates",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -9844,7 +9844,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Generate Executive Summary",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -10044,7 +10044,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Classify Severity",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -10164,7 +10164,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Review Code Changes",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -10272,7 +10272,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Summarize Incident",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 120
@@ -10373,7 +10373,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Summarize Updates",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -10468,7 +10468,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Generate Rollback Steps",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 120
@@ -10557,7 +10557,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Extract Bug Details",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -10664,7 +10664,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Generate Debt Report",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -10847,7 +10847,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Generate Welcome Message",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -10972,7 +10972,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Summarize Alert",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 120
@@ -11091,7 +11091,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Identify Stale PRs",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -11172,7 +11172,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Draft Postmortem",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -11279,7 +11279,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Analyze Error Spike",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 120
@@ -11398,7 +11398,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Compile Digest",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -11492,7 +11492,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Generate Fix Guidance",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 120
@@ -11598,7 +11598,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Personalize Welcome",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -11723,7 +11723,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Generate Report",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -11804,7 +11804,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Classify Request",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -11936,7 +11936,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Summarize Themes",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -12030,7 +12030,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Write Release Notes",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -12274,7 +12274,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n4",
         "type": "ai",
         "label": "Draft Follow-up Email",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 320
@@ -12367,7 +12367,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Assess Severity",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -12474,7 +12474,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Analyze Changes",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -12586,7 +12586,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Personalize Message",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 120
@@ -12692,7 +12692,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Categorize & Score Request",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -12811,7 +12811,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Summarize Retro",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -12905,7 +12905,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Extract Key Insights",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -13012,7 +13012,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Generate Digest",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -13093,7 +13093,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Classify Severity",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -13225,7 +13225,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Write Changelog",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -13319,7 +13319,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Analyze Feedback",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 120
@@ -13544,7 +13544,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Analyze Contract Risks",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -13764,7 +13764,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Summarize Client Needs",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -13871,7 +13871,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Draft Renewal Summary",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -13952,7 +13952,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Calculate Invoice Amount",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -14147,7 +14147,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Extract Filing Details",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -14254,7 +14254,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Summarize Key Updates",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -14348,7 +14348,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Summarize Expiry Risk",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -14429,7 +14429,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Classify Dispute",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -14561,7 +14561,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Assess Relevance",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -14660,7 +14660,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Extract Case Details",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -14873,7 +14873,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Draft NDA",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -14980,7 +14980,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Analyze Spend Trends",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -15079,7 +15079,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Screen for Risk Clauses",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -15198,7 +15198,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "a1",
         "type": "ai",
         "label": "Generate Snippets",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -15299,7 +15299,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "a1",
         "type": "ai",
         "label": "Summarize Video",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -15393,7 +15393,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "a1",
         "type": "ai",
         "label": "Plan Weekly Content",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -15487,7 +15487,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "a1",
         "type": "ai",
         "label": "Repurpose Content",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -15588,7 +15588,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "a1",
         "type": "ai",
         "label": "Build SEO Brief",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -15682,7 +15682,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "a1",
         "type": "ai",
         "label": "Write Description",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -15814,7 +15814,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "a1",
         "type": "ai",
         "label": "Curate & Summarize",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -15908,7 +15908,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "a1",
         "type": "ai",
         "label": "Write Report",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -15989,7 +15989,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "SEO Analysis",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -16083,7 +16083,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Summarize Episode",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -16177,7 +16177,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Generate Content Ideas",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -16271,7 +16271,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Write Description",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -16378,7 +16378,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Summarize & Analyze",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -16472,7 +16472,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Create Social Posts",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 120
@@ -16573,7 +16573,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Analyze Performance",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -16667,7 +16667,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Write Thread",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -16779,7 +16779,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Rewrite for Each Platform",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -16898,7 +16898,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Draft Positive Reply",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 120
@@ -16911,7 +16911,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n4",
         "type": "ai",
         "label": "Draft Recovery Reply",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 320
@@ -17004,7 +17004,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Generate Weekly Ideas",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -17098,7 +17098,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Extract Key Insights",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -17111,7 +17111,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Write Social Captions",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -17223,7 +17223,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Analyze Trends & Gaps",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -17322,7 +17322,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Write Launch Copy",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -17441,7 +17441,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Qualify the Inquiry",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -17560,7 +17560,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Create Personal Versions",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -17667,7 +17667,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Rewrite for Each Platform",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -17786,7 +17786,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Analyze Sentiment & Threat",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -17887,7 +17887,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Score UGC Quality",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -17996,7 +17996,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Write Personalized Pitch",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -18108,7 +18108,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Format as Social Post",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 120
@@ -18209,7 +18209,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Generate Week of Content",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -18308,7 +18308,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Qualify Lead Intent",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -18440,7 +18440,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Draft Relevant Post",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -18552,7 +18552,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Summarize KPIs",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -18747,7 +18747,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Analyze Revenue Trends",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -18841,7 +18841,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Score Churn Risk",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -18960,7 +18960,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Generate Daily Recap",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -19041,7 +19041,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Analyze Sentiment",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -19173,7 +19173,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Calculate Conversions",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -19280,7 +19280,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n4",
         "type": "ai",
         "label": "Generate Insight Email",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -19384,7 +19384,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Format KPI Summary",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -19478,7 +19478,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Identify At-Risk Users",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -19597,7 +19597,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Score Campaigns",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -19691,7 +19691,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Analyze Feedback",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -19785,7 +19785,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Detect Anomalies",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -19904,7 +19904,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Summarize Trends",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -19998,7 +19998,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Identify Drop-Off",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -20092,7 +20092,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Rank Features",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -20192,7 +20192,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Score Resume",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -20311,7 +20311,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Draft Invite Email",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -20405,7 +20405,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Generate Job Post",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -20600,7 +20600,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Write Welcome Email",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -20725,7 +20725,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Summarize Feedback",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -20938,7 +20938,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Generate Report",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -21020,7 +21020,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "a1",
         "type": "ai",
         "label": "Score Resume",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -21139,7 +21139,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "a1",
         "type": "ai",
         "label": "Draft Interview Email",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -21233,7 +21233,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "a1",
         "type": "ai",
         "label": "Generate Reference Form",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -21327,7 +21327,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "a1",
         "type": "ai",
         "label": "Write Job Posts",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -21426,7 +21426,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "a1",
         "type": "ai",
         "label": "Draft Offer Letter",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -21533,7 +21533,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "a1",
         "type": "ai",
         "label": "Generate Report",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -21739,7 +21739,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "a1",
         "type": "ai",
         "label": "Summarize Feedback",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 960,
           "y": 200
@@ -21838,7 +21838,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Summarize Overdue Tasks",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -21932,7 +21932,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Pick Best Assignee",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -22044,7 +22044,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Draft Status Report",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -22125,7 +22125,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Extract Action Items",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -22219,7 +22219,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Write Client Update",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -22326,7 +22326,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Summarize Blocker",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 120
@@ -22445,7 +22445,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Generate Sprint Plan",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -22544,7 +22544,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Generate Task List",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -22670,7 +22670,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Prioritize & Assign Tasks",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -22780,7 +22780,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n4",
         "type": "ai",
         "label": "Generate Escalation Summary",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 960,
           "y": 120
@@ -22882,7 +22882,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Write Status Report",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -22965,7 +22965,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Generate Project Plan",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -23061,7 +23061,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Classify Bug Severity",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -23159,7 +23159,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Extract Action Items",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -23282,7 +23282,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n4",
         "type": "ai",
         "label": "Suggest Rebalancing",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 960,
           "y": 120
@@ -23397,7 +23397,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n4",
         "type": "ai",
         "label": "Draft Milestone Update",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 960,
           "y": 120
@@ -23498,7 +23498,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Score Churn Risk",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -23627,7 +23627,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n4",
         "type": "ai",
         "label": "Draft Thank You Email",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 320
@@ -23712,7 +23712,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Personalize Nudge",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -23795,7 +23795,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Analyze Sentiment & Urgency",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -23906,7 +23906,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Draft Renewal Email",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -24015,7 +24015,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n4",
         "type": "ai",
         "label": "Generate QBR Brief",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 960,
           "y": 200
@@ -24098,7 +24098,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Identify Adoption Gaps",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -24111,7 +24111,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n4",
         "type": "ai",
         "label": "Write Tip Email",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 960,
           "y": 200
@@ -24181,7 +24181,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Personalize Welcome",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -24290,7 +24290,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Score Churn Risk",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -24404,7 +24404,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Generate QBR Brief",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -24503,7 +24503,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Analyze Severity",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -24635,7 +24635,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Draft Recovery Email",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 120
@@ -24648,7 +24648,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n4",
         "type": "ai",
         "label": "Draft Referral Ask",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 320
@@ -24754,7 +24754,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Personalize Outreach",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -24853,7 +24853,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Build Onboarding Plan",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -24991,7 +24991,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n4",
         "type": "ai",
         "label": "Write Feature Tip",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 960,
           "y": 120
@@ -25097,7 +25097,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Compute Health Score",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -25209,7 +25209,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Assess Threat Level",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 120
@@ -25297,7 +25297,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Determine Access Level",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -25391,7 +25391,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Analyze Email Content",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -25705,7 +25705,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Risk Score Request",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -25824,7 +25824,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Classify Breach Severity",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -25949,7 +25949,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Prioritize & Summarize",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -26061,7 +26061,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Analyze Threat Level",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 120
@@ -26243,7 +26243,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Detect Phishing Signals",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -26445,7 +26445,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Analyze API Pattern",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -26564,7 +26564,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Assess Breach Severity",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -26694,7 +26694,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Generate Audit Summary",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -26894,7 +26894,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Parse & Validate CSV",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -27026,7 +27026,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Generate Summary",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -27120,7 +27120,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Detect Anomalies",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -27226,7 +27226,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Enrich & Categorize",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -27333,7 +27333,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Extract & Compare Prices",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -27445,7 +27445,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Find Duplicates",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -27557,7 +27557,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Analyze Feedback Text",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -27638,7 +27638,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Extract Invoice Data",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -27769,7 +27769,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Detect Anomalies",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -27870,7 +27870,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Parse & Clean CSV",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -28002,7 +28002,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Write KPI Summary",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -28083,7 +28083,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Research Company",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -28190,7 +28190,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Find Duplicates",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -28289,7 +28289,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Analyze Sentiment",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -28421,7 +28421,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Transform Data",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -28528,7 +28528,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n4",
         "type": "ai",
         "label": "Reconcile Records",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 960,
           "y": 200
@@ -28638,7 +28638,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Write Recovery Email",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -28733,7 +28733,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Summarize Order",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -28912,7 +28912,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Write Review Request",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -29007,7 +29007,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Classify Request",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -29229,7 +29229,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Generate Sale Copy",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -29329,7 +29329,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Extract Return Reason",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -29424,7 +29424,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Write Recovery Email",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -29697,7 +29697,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Generate Review Request",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -29791,7 +29791,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Write Social Posts",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -30106,7 +30106,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Write Sales Summary",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -30200,7 +30200,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Personalize Reminder",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -30382,7 +30382,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Summarize Patient Info",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -30577,7 +30577,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Generate Care Summary",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -30684,7 +30684,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Draft Coverage Request",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200
@@ -31000,7 +31000,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Compose Patient Message",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -31094,7 +31094,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n2",
         "type": "ai",
         "label": "Draft Re-engagement Email",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 520,
           "y": 200
@@ -31320,7 +31320,7 @@ export const WORKFLOW_GALLERY: WorkflowTemplate[] = [
         "id": "n3",
         "type": "ai",
         "label": "Generate Shift Briefing",
-        "tool": "Claude AI",
+        "tool": "WyberCode AI",
         "position": {
           "x": 740,
           "y": 200

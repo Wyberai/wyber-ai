@@ -111,6 +111,26 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
     return () => window.removeEventListener('wyber-open-publish', open);
   }, []);
 
+  // Agency mode, "Buy a domain for your client": the Clients page leaves a note for this project with the client's details,
+  // so the registrant (the legal owner of the domain) starts as the client and not the freelancer. It opens the same
+  // Publish & Share modal; nothing is bought until the freelancer completes the purchase there.
+  useEffect(() => {
+    if (!projectId) return;
+    try {
+      const key = `wyber_domain_handoff_${projectId}`;
+      const raw = sessionStorage.getItem(key);
+      if (!raw) return;
+      sessionStorage.removeItem(key);
+      const h = JSON.parse(raw) as { contact?: Record<string, unknown> };
+      if (h.contact) {
+        const clean = Object.fromEntries(Object.entries(h.contact).filter(([k, v]) => typeof v === 'string' && k in domainContact));
+        setDomainContact(c => ({ ...c, ...clean }));
+      }
+      setShowShareModal(true);
+    } catch { /* storage blocked or bad note: nothing to prefill */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId]);
+
   // Close + reset so the next open starts without a stale "done" state.
   const closeShareModal = () => { setShowShareModal(false); setRepublished(false); };
 
@@ -272,7 +292,7 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
         setPostPublishScan(null);
         fetch('/api/security/rls-scan', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ projectId }),
+          body: JSON.stringify({ projectId, silent: true }),
         }).then(r => r.ok ? r.json() : null).then((d: { score?: number; findings?: Array<{ severity?: string }> } | null) => {
           if (!d || !Array.isArray(d.findings)) return; // no Supabase connected / scan unavailable
           const criticals = d.findings.filter(f => f.severity === 'critical').length;
@@ -440,7 +460,7 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
 
   return (
     <>
-      <div style={{ height: 48, display: 'flex', alignItems: 'center', padding: '0 12px', gap: 6, borderBottom: '1px solid var(--ide-border)', background: 'var(--bg-base)', flexShrink: 0, position: 'relative', zIndex: 10 }}>
+      <div role="banner" style={{ height: 48, display: 'flex', alignItems: 'center', padding: '0 12px', gap: 6, borderBottom: '1px solid var(--ide-border)', background: 'var(--bg-base)', flexShrink: 0, position: 'relative', zIndex: 10 }}>
         <Link href="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none', marginRight: 6 }}>
           <WyberIcon />
         </Link>
@@ -477,7 +497,7 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
           <button
             onClick={() => setShowCreditPopover(v => !v)}
             title={t('creditPopoverBalance')}
-            style={{ fontSize: 11, padding: '3px 9px', borderRadius: 6, background: displayCredits <= 5 ? 'rgba(239,68,68,0.1)' : 'var(--bg-elevated)', color: displayCredits <= 5 ? '#ef4444' : 'var(--ide-text2)', border: '1px solid', borderColor: displayCredits <= 5 ? 'rgba(239,68,68,0.3)' : 'var(--ide-border)', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}
+            style={{ fontSize: 12, padding: '3px 9px', borderRadius: 6, background: displayCredits <= 5 ? 'rgba(239,68,68,0.1)' : 'var(--bg-elevated)', color: displayCredits <= 5 ? '#ef4444' : 'var(--ide-text2)', border: '1px solid', borderColor: displayCredits <= 5 ? 'rgba(239,68,68,0.3)' : 'var(--ide-border)', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}
           >{displayCredits} cr</button>
           {showCreditPopover && (
             <>
@@ -486,7 +506,7 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
               <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setShowCreditPopover(false)} />
               <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 6, zIndex: 41, width: 200, background: 'var(--bg-elevated)', border: '1px solid var(--ide-border)', borderRadius: 10, padding: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, paddingBottom: 8, borderBottom: '1px solid var(--ide-border)' }}>
-                  <span style={{ fontSize: 11, color: 'var(--ide-text3)' }}>{t('creditPopoverBalance')}</span>
+                  <span style={{ fontSize: 12, color: 'var(--ide-text3)' }}>{t('creditPopoverBalance')}</span>
                   <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--ide-text)' }}>{displayCredits} cr</span>
                 </div>
                 {[
@@ -494,12 +514,12 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
                   [t('creditPopoverEdit'), estimateCost('fast', 'edit'), estimateCost('default', 'edit')],
                   [t('creditPopoverImage'), estimateCost('default', 'image'), estimateCost('default', 'image')],
                 ].map(([label, lo, hi]) => (
-                  <div key={label as string} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: 11 }}>
+                  <div key={label as string} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: 12 }}>
                     <span style={{ color: 'var(--ide-text3)' }}>{label}</span>
                     <span style={{ color: 'var(--ide-text2)', fontWeight: 500 }}>~{lo === hi ? lo : `${lo}–${hi}`}cr</span>
                   </div>
                 ))}
-                <a href="/pricing" target="_blank" rel="noopener noreferrer" style={{ display: 'block', marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--ide-border)', fontSize: 11, color: 'var(--accent)', textDecoration: 'none' }}>
+                <a href="/pricing" target="_blank" rel="noopener noreferrer" style={{ display: 'block', marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--ide-border)', fontSize: 12, color: 'var(--accent)', textDecoration: 'none' }}>
                   {t('viewFullPricing')}
                 </a>
               </div>
@@ -576,7 +596,7 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
               <button
                 onClick={() => { saveSnapshot(snapshotLabel); setSnapshotLabel(''); }}
                 disabled={savingSnapshot}
-                style={{ background: '#0EA5E9', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 700, cursor: savingSnapshot ? 'not-allowed' : 'pointer', opacity: savingSnapshot ? 0.6 : 1, flexShrink: 0 }}
+                style={{ background: '#0EA5E9', color: '#03111c', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 700, cursor: savingSnapshot ? 'not-allowed' : 'pointer', opacity: savingSnapshot ? 0.6 : 1, flexShrink: 0 }}
               >
                 {savingSnapshot ? tc('saving') : t('saveCurrentVersion')}
               </button>
@@ -588,12 +608,12 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
                 <div key={s.id} style={{ background: 'var(--bg-elevated)', borderRadius: 10, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10, border: '1px solid var(--ide-border)' }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ide-text)' }}>{s.label || t('untitledVersion')}</div>
-                    <div style={{ fontSize: 11, color: 'var(--ide-text3)', marginTop: 2 }}>{new Date(s.created_at).toLocaleString()}</div>
+                    <div style={{ fontSize: 12, color: 'var(--ide-text3)', marginTop: 2 }}>{new Date(s.created_at).toLocaleString()}</div>
                   </div>
-                  <button onClick={() => restoreSnapshot(s.id)} disabled={!!restoringId} style={{ fontSize: 11, fontWeight: 600, color: '#0EA5E9', background: 'rgba(14,165,233,0.08)', border: '1px solid rgba(14,165,233,0.2)', borderRadius: 6, padding: '4px 10px', cursor: 'pointer' }}>
+                  <button onClick={() => restoreSnapshot(s.id)} disabled={!!restoringId} style={{ fontSize: 12, fontWeight: 600, color: '#0EA5E9', background: 'rgba(14,165,233,0.08)', border: '1px solid rgba(14,165,233,0.2)', borderRadius: 6, padding: '4px 10px', cursor: 'pointer' }}>
                     {restoringId === s.id ? t('restoring') : t('restore')}
                   </button>
-                  <button onClick={() => deleteSnapshot(s.id)} style={{ fontSize: 11, color: '#ef4444', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: 6, padding: '4px 10px', cursor: 'pointer' }}>{tc('delete')}</button>
+                  <button onClick={() => deleteSnapshot(s.id)} style={{ fontSize: 12, color: '#ef4444', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: 6, padding: '4px 10px', cursor: 'pointer' }}>{tc('delete')}</button>
                 </div>
               ))}
             </div>
@@ -622,13 +642,13 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
             ) : (
               <>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <span style={{ fontSize: 11, color: 'var(--ide-text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('liveUrlLabel')}</span>
+                  <span style={{ fontSize: 12, color: 'var(--ide-text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('liveUrlLabel')}</span>
                   <div style={{ background: 'var(--bg-elevated)', borderRadius: 8, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 8, border: '1px solid rgba(34,197,94,0.2)' }}>
                     <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', flexShrink: 0 }} />
                     <span style={{ flex: 1, fontSize: 12, color: '#22c55e', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{liveUrl}</span>
-                    <button onClick={() => handleCopy(liveUrl)} style={{ background: 'none', border: '1px solid var(--ide-border)', borderRadius: 6, color: copied ? '#22c55e' : 'var(--ide-text2)', cursor: 'pointer', padding: '3px 10px', fontSize: 11, whiteSpace: 'nowrap', transition: 'all 0.15s' }}>{copied ? tc('copied') : tc('copy')}</button>
+                    <button onClick={() => handleCopy(liveUrl)} style={{ background: 'none', border: '1px solid var(--ide-border)', borderRadius: 6, color: copied ? '#22c55e' : 'var(--ide-text2)', cursor: 'pointer', padding: '3px 10px', fontSize: 12, whiteSpace: 'nowrap', transition: 'all 0.15s' }}>{copied ? tc('copied') : tc('copy')}</button>
                     {/* Real <a>, not window.open — mobile popup blockers swallow window.open silently */}
-                    <a href={liveUrl} target="_blank" rel="noopener noreferrer" style={{ background: 'none', border: '1px solid var(--ide-border)', borderRadius: 6, color: 'var(--ide-text2)', cursor: 'pointer', padding: '3px 10px', fontSize: 11, whiteSpace: 'nowrap', textDecoration: 'none' }}>{t('open')}</a>
+                    <a href={liveUrl} target="_blank" rel="noopener noreferrer" style={{ background: 'none', border: '1px solid var(--ide-border)', borderRadius: 6, color: 'var(--ide-text2)', cursor: 'pointer', padding: '3px 10px', fontSize: 12, whiteSpace: 'nowrap', textDecoration: 'none' }}>{t('open')}</a>
                   </div>
                   {/* Stays in the modal: inline progress + a clear "done" state.
                       The old close→deploy→reopen flow read as an infinite loop. */}
@@ -653,7 +673,7 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <span style={{ fontSize: 11, color: 'var(--ide-text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('shareYourApp')}</span>
+                  <span style={{ fontSize: 12, color: 'var(--ide-text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('shareYourApp')}</span>
                   <SocialShare url={liveUrl} text={t('shareText')} />
                 </div>
 
@@ -666,8 +686,8 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
                 <div style={{ height: 1, background: 'var(--ide-border)' }} />
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  <span style={{ fontSize: 11, color: 'var(--ide-text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('connectDomainYouOwn')}</span>
-                  <span style={{ fontSize: 11, color: 'var(--ide-text3)', lineHeight: 1.5 }}>
+                  <span style={{ fontSize: 12, color: 'var(--ide-text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('connectDomainYouOwn')}</span>
+                  <span style={{ fontSize: 12, color: 'var(--ide-text3)', lineHeight: 1.5 }}>
                     {t('domainStepsInstructions')}
                   </span>
                   <div style={{ display: 'flex', gap: 8 }}>
@@ -697,18 +717,18 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
                   {dnsInstructions && customDomainStatus !== 'verified' && (
                     <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 8, padding: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
                       {dnsProvider && (
-                        <a href={dnsProvider.dashboardUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: '#38bdf8', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 5 }}>
+                        <a href={dnsProvider.dashboardUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: '#38bdf8', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 5 }}>
                           {t('detectedLabel')} {dnsProvider.name} — {t('openDnsSettingsArrow')}
                         </a>
                       )}
                       <span style={{ fontSize: 12, color: '#f59e0b', fontWeight: 600 }}>{t('addDnsRecord')}</span>
-                      <div style={{ background: 'var(--bg-base)', borderRadius: 6, padding: '8px 12px', fontFamily: 'monospace', fontSize: 11, color: 'var(--ide-text2)', display: 'flex', flexDirection: 'column', gap: 3 }}>
+                      <div style={{ background: 'var(--bg-base)', borderRadius: 6, padding: '8px 12px', fontFamily: 'monospace', fontSize: 12, color: 'var(--ide-text2)', display: 'flex', flexDirection: 'column', gap: 3 }}>
                         <span>{t('typeLabel')} <strong style={{ color: 'var(--ide-text)' }}>{dnsInstructions?.record?.type || 'CNAME'}</strong></span>
                         <span>{t('nameColonLabel')} <strong style={{ color: 'var(--ide-text)' }}>{dnsInstructions?.record?.name || '@'}</strong></span>
                         <span>{t('valueLabel')} <strong style={{ color: 'var(--ide-text)' }}>{dnsInstructions?.record?.value || 'cname.vercel-dns.com'}</strong></span>
                       </div>
                       {dnsInstructions?.record?.type === 'A' && (
-                        <span style={{ fontSize: 10, color: 'var(--ide-text2)' }}>{t('rootDomainNote')}</span>
+                        <span style={{ fontSize: 12, color: 'var(--ide-text2)' }}>{t('rootDomainNote')}</span>
                       )}
                       <button
                         onClick={() => handleCustomDomain('verify')}
@@ -717,7 +737,7 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
                       >
                         {customDomainStatus === 'verifying' ? t('checkingDns') : t('verifyDns')}
                       </button>
-                      {customDomainError && <span style={{ fontSize: 11, color: '#ef4444' }}>{customDomainError}</span>}
+                      {customDomainError && <span style={{ fontSize: 12, color: '#ef4444' }}>{customDomainError}</span>}
                     </div>
                   )}
                 </div>
@@ -725,7 +745,7 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
                 <div style={{ height: 1, background: 'var(--ide-border)' }} />
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  <span style={{ fontSize: 11, color: 'var(--ide-text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Buy a Domain</span>
+                  <span style={{ fontSize: 12, color: 'var(--ide-text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Buy a Domain</span>
                   <div style={{ display: 'flex', gap: 8 }}>
                     <input
                       style={inputStyle}
@@ -751,7 +771,7 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
                             {buyDomainResult.name} is available — ${((buyDomainResult.priceCents ?? 0) / 100).toFixed(2)}/year
                           </span>
 
-                          <span style={{ fontSize: 10, color: 'var(--ide-text3)' }}>
+                          <span style={{ fontSize: 12, color: 'var(--ide-text3)' }}>
                             Domain registration requires registrant contact info (ICANN requirement) — this is who will be listed as the owner.
                           </span>
                           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
@@ -779,7 +799,7 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
                       )}
                     </div>
                   )}
-                  {buyDomainError && <span style={{ fontSize: 11, color: '#ef4444' }}>{buyDomainError}</span>}
+                  {buyDomainError && <span style={{ fontSize: 12, color: '#ef4444' }}>{buyDomainError}</span>}
                 </div>
               </>
             )}
@@ -812,7 +832,7 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
                 <option value="viewer">Viewer</option>
               </select>
               <button onClick={sendInvite} disabled={inviting || !inviteEmail.trim()}
-                style={{ padding: '7px 16px', borderRadius: 7, border: 'none', background: '#0EA5E9', color: '#fff', fontSize: 12, fontWeight: 700, cursor: inviting ? 'not-allowed' : 'pointer', opacity: !inviteEmail.trim() ? 0.5 : 1 }}>
+                style={{ padding: '7px 16px', borderRadius: 7, border: 'none', background: '#0EA5E9', color: '#03111c', fontSize: 12, fontWeight: 700, cursor: inviting ? 'not-allowed' : 'pointer', opacity: !inviteEmail.trim() ? 0.5 : 1 }}>
                 {inviting ? '...' : 'Invite'}
               </button>
             </div>
@@ -831,10 +851,10 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 12, color: 'var(--ide-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.collaborator_email}</div>
-                    <div style={{ fontSize: 11, color: 'var(--ide-text3)', marginTop: 1 }}>{c.role} · {c.status}</div>
+                    <div style={{ fontSize: 12, color: 'var(--ide-text3)', marginTop: 1 }}>{c.role} · {c.status}</div>
                   </div>
                   <button onClick={() => removeCollaborator(c.id)}
-                    style={{ background: 'none', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 6, color: '#ef4444', cursor: 'pointer', fontSize: 11, padding: '3px 8px', fontFamily: 'var(--font-sans)' }}>
+                    style={{ background: 'none', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 6, color: '#ef4444', cursor: 'pointer', fontSize: 12, padding: '3px 8px', fontFamily: 'var(--font-sans)' }}>
                     Remove
                   </button>
                 </div>

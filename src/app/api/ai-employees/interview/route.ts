@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { createAnthropic } from '@/lib/ai-usage'
 import { createClient } from '@/lib/supabase/server'
 import { rateLimit } from '@/lib/rate-limit'
 import { getRoleBySlug } from '@/lib/employee-roles'
 import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+const anthropic = createAnthropic('app/api/ai-employees/interview', { apiKey: process.env.ANTHROPIC_API_KEY! })
 
 // Build the "candidate" persona prompt — the role answering an interview IN CHARACTER,
 // before it's hired. No tools: this is a conversation, not a work run. The candidate

@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { creditCost } from '@/lib/credits';
 import { useEditorStore } from '@/store/editor';
 import { getPaletteById, renderDesignBrief } from '@/lib/design-palettes';
+import { specNoteForId } from '@/lib/direction-picker';
 import { DirectionCards } from './DirectionCards';
 import { useT } from '@/lib/i18n/useT';
 import { COMMON_STRINGS } from '@/lib/i18n/dict/common';
@@ -45,6 +46,7 @@ interface Props {
   framework: string;
   fileContext: string;
   projectId?: string;
+  projectType?: string;
   // Passes the assembled, possibly-edited plan spec back to the caller,
   // plus the picked design direction (undefined = server prompt-matches one)
   onApprove: (planSpec: string, paletteId?: string) => void;
@@ -89,7 +91,7 @@ ${qaLines ? `\nCLARIFICATIONS FROM THE USER:\n${qaLines}` : ''}
 ORIGINAL REQUEST: ${originalPrompt}`;
 }
 
-export function PlanMode({ prompt, framework, fileContext, projectId, onApprove, onCancel }: Props) {
+export function PlanMode({ prompt, framework, fileContext, projectId, projectType, onApprove, onCancel }: Props) {
   const t = useT(EDITOR_PLAN_STRINGS);
   const tc = useT(COMMON_STRINGS);
   // 'questions': loading/showing phase-1 clarifying questions.
@@ -231,8 +233,12 @@ export function PlanMode({ prompt, framework, fileContext, projectId, onApprove,
   const approve = () => {
     if (!plan || plan.features.length === 0) return;
     let spec = planToSpec(plan, prompt, answers);
-    const pal = paletteId ? getPaletteById(paletteId) : undefined;
-    if (pal) spec += `\n\n${renderDesignBrief(pal)}`;
+    // A picked DIRECTION (a direction id) adds a one-line note; the full brief is attached once server-side
+    // (generate route → pickDirection(id)). A picked palette keeps the old behaviour exactly.
+    const dirNote = specNoteForId(paletteId);
+    const pal = paletteId && !dirNote ? getPaletteById(paletteId) : undefined;
+    if (dirNote) spec += `\n\n${dirNote}`;
+    else if (pal) spec += `\n\n${renderDesignBrief(pal)}`;
     if (projectId) {
       fetch('/api/projects/plan', {
         method: 'POST',
@@ -240,7 +246,7 @@ export function PlanMode({ prompt, framework, fileContext, projectId, onApprove,
         body: JSON.stringify({ projectId, plan, answers }),
       }).catch(() => {});
     }
-    onApprove(spec, pal?.id);
+    onApprove(spec, dirNote ? (paletteId ?? undefined) : pal?.id);
   };
 
   if (error) return (
@@ -487,7 +493,7 @@ export function PlanMode({ prompt, framework, fileContext, projectId, onApprove,
       </div>
 
       {/* Design direction — pure CSS from the curated palettes, free */}
-      <DirectionCards prompt={prompt} selectedId={paletteId} onPick={setPaletteId} />
+      <DirectionCards prompt={prompt} selectedId={paletteId} onPick={setPaletteId} projectType={projectType} />
 
       {/* Warnings */}
       {plan.warnings.length > 0 && !editing && (

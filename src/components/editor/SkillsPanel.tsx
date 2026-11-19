@@ -61,7 +61,7 @@ export function SkillsPanel({ onApply }: Props) {
           <textarea value={newSkill.content} onChange={e => setNewSkill(p => ({ ...p, content: e.target.value }))} placeholder={t('skillsInstructionsPlaceholder')} rows={3}
             style={{ padding: '6px 8px', borderRadius: 7, border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', fontSize: 11, fontFamily: 'inherit', resize: 'vertical', outline: 'none' }} />
           <div style={{ display: 'flex', gap: 6 }}>
-            <button onClick={createSkill} disabled={loading} style={{ flex: 1, padding: '7px', borderRadius: 7, background: 'var(--sky)', color: '#fff', fontWeight: 700, fontSize: 11, border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
+            <button onClick={createSkill} disabled={loading} style={{ flex: 1, padding: '7px', borderRadius: 7, background: 'var(--sky)', color: '#03111c', fontWeight: 700, fontSize: 11, border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
               {loading ? tc('saving') : t('skillsSaveButton')}
             </button>
             <button onClick={() => setCreating(false)} style={{ padding: '7px 12px', borderRadius: 7, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text2)', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit' }}>

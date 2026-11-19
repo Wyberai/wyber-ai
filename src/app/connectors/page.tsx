@@ -3,7 +3,7 @@ import { Footer } from '@/components/shared/FooterClient';
 import { ConnectorLogo } from '@/components/shared/ConnectorLogo';
 import Link from 'next/link';
 import type { Metadata } from 'next';
-export const metadata: Metadata = { title: 'Connectors — WyberAi', description: 'Connect your app to 68 services with real OAuth — Salesforce, SAP, ServiceNow, Workday, Slack, Teams, and more — via Composio.' };
+export const metadata: Metadata = { title: 'Connectors: link your app to 68 services', description: 'Connect your app to 68 services with real OAuth — Salesforce, SAP, ServiceNow, Workday, Slack, Teams, and more — via Composio.' };
 // `soon: true` entries have no Composio toolkit (verified against the live
 // catalog) and have no real auth path yet — shown but not clickable, not
 // counted in the "connectors" total below.
@@ -44,7 +44,7 @@ const CONNECTORS = [
   { name:'NetSuite', icon:'◒', color:'#EA7600', cat:'Finance', slug:'netsuite' },
   { name:'OpenAI', icon:'✦', color:'#10A37F', cat:'AI', slug:'openai' },
   { name:'Anthropic', icon:'◎', color:'#D4A574', cat:'AI', soon:true },
-  { name:'ElevenLabs', icon:'🎙', color:'#9333EA', cat:'AI', slug:'elevenlabs', url:'https://try.elevenlabs.io/si0z5cfaw6nq' },
+  { name:'ElevenLabs', icon:'🎙', color:'#c084fc', cat:'AI', slug:'elevenlabs', url:'https://try.elevenlabs.io/si0z5cfaw6nq' },
   { name:'Perplexity', icon:'🔎', color:'#20B2AA', cat:'AI', soon:true },
   { name:'Replicate', icon:'◈', color:'#374151', cat:'AI', slug:'replicate' },
   { name:'GitHub', icon:'⌥', color:'#24292E', cat:'Dev', slug:'github' },
@@ -104,7 +104,7 @@ export default function ConnectorsPage() {
                 <ConnectorLogo slug={c.slug} emoji={c.icon} color={c.color} name={c.name} />
                 <div>
                   <div style={{ fontSize:13, fontWeight:600, color:'var(--text)', letterSpacing:'-0.01em' }}>{c.name}</div>
-                  <div style={{ fontSize:10, color:'var(--text3)', marginTop:1 }}>{c.soon ? 'Coming soon' : c.cat}</div>
+                  <div style={{ fontSize: 11, color:'var(--text3)', marginTop:1 }}>{c.soon ? 'Coming soon' : c.cat}</div>
                 </div>
               </>
             )

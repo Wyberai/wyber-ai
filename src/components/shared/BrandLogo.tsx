@@ -146,7 +146,7 @@ export function BrandLogo({ domain, name, size = 32, style }: BrandLogoProps) {
     }
     // Generic fallback
     return (
-      <div style={{ width: size, height: size, borderRadius: size * 0.25, background: 'rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: size * 0.45, color: '#a1a1aa', fontWeight: 700, ...style }}>
+      <div style={{ width: size, height: size, borderRadius: size * 0.25, background: 'rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: size * 0.45, color: '#9aa8bb', fontWeight: 700, ...style }}>
         {name[0]}
       </div>
     )

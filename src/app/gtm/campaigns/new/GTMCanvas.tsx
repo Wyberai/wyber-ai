@@ -10,16 +10,16 @@ import { WyberLogo } from '@/components/shared/WyberLogo'
 import { useRouter } from 'next/navigation'
 
 const s = {
-  bg: '#09090b', card: '#111113', border: 'rgba(255,255,255,0.07)',
-  text: '#fafafa', muted: '#71717a', dim: '#52525b',
+  bg: '#05080d', card: '#0d141e', border: 'rgba(255,255,255,0.07)',
+  text: '#fafafa', muted: '#8797ab', dim: '#8797ab',
   sky: '#0EA5E9', orange: '#f97316', green: '#10b981', violet: '#8b5cf6', yellow: '#f59e0b',
 }
 
 // ─── Node type colours ────────────────────────────────────────────────────────
 const NODE_COLORS: Record<string, string> = {
-  audience: '#8b5cf6', enrich: '#0EA5E9', filter: '#71717a',
+  audience: '#8b5cf6', enrich: '#0EA5E9', filter: '#8797ab',
   email: '#10b981', call: '#f97316', linkedin: '#0077b5',
-  wait: '#52525b', branch: '#f59e0b', crm: '#ef4444',
+  wait: '#8797ab', branch: '#f59e0b', crm: '#ef4444',
   sdr_employee: '#38bdf8', suppress: '#ef4444', notify: '#8b5cf6',
   // Intelligence nodes
   ab_test: '#ec4899', meeting: '#0EA5E9', intent: '#f59e0b',
@@ -43,10 +43,10 @@ function GTMNode({ data, selected }: NodeProps) {
         <span style={{ fontSize: 12, fontWeight: 700, color }}>{d.label}</span>
       </div>
       <div style={{ padding: '8px 14px 12px', fontSize: 11, color: s.muted, lineHeight: 1.5 }}>
-        {d.subtitle && <div style={{ color: '#e4e4e7', fontWeight: 600, marginBottom: 2 }}>{d.subtitle}</div>}
+        {d.subtitle && <div style={{ color: '#e8eef7', fontWeight: 600, marginBottom: 2 }}>{d.subtitle}</div>}
         {d.description && <div>{d.description}</div>}
         {d.type === 'wait' && d.days && <div style={{ color, fontWeight: 700 }}>Wait {d.days} days</div>}
-        {d.creditCost && <div style={{ marginTop: 4, fontSize: 10, color: s.yellow, fontWeight: 600 }}>{d.creditCost}</div>}
+        {d.creditCost && <div style={{ marginTop: 4, fontSize: 11, color: s.yellow, fontWeight: 600 }}>{d.creditCost}</div>}
       </div>
       {/* Branch node gets three bottom ports */}
       {d.type === 'branch' ? (
@@ -56,7 +56,7 @@ function GTMNode({ data, selected }: NodeProps) {
             return (
               <div key={label} style={{ textAlign: 'center' }}>
                 <Handle type="source" position={Position.Bottom} id={`branch-${i}`} style={{ position: 'static', background: portColors[i], border: 'none', width: 8, height: 8, borderRadius: '50%', display: 'inline-block', marginBottom: 2 }} />
-                <div style={{ fontSize: 9, color: s.dim }}>{label}</div>
+                <div style={{ fontSize: 11, color: s.dim }}>{label}</div>
               </div>
             )
           })}
@@ -186,7 +186,7 @@ export default function GTMCanvas() {
             {aiLoading ? '✦ Generating...' : '✦ AI suggest flow'}
           </button>
           <Link href="/gtm/campaigns" style={{ padding: '7px 14px', borderRadius: 7, background: 'transparent', border: `1px solid ${s.border}`, color: s.muted, fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>Cancel</Link>
-          <button onClick={saveCampaign} disabled={saving} style={{ padding: '7px 16px', borderRadius: 7, background: s.orange, color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', border: 'none' }}>
+          <button onClick={saveCampaign} disabled={saving} style={{ padding: '7px 16px', borderRadius: 7, background: s.orange, color: '#03111c', fontSize: 12, fontWeight: 700, cursor: 'pointer', border: 'none' }}>
             {saving ? 'Saving...' : 'Save campaign →'}
           </button>
         </div>
@@ -197,7 +197,7 @@ export default function GTMCanvas() {
         <div style={{ width: 176, background: '#0f0f11', borderRight: `1px solid ${s.border}`, overflowY: 'auto', padding: '12px 8px', flexShrink: 0 }}>
           {SIDEBAR_NODES.map(group => (
             <div key={group.group} style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 9, fontWeight: 700, color: '#3f3f46', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6, paddingLeft: 4 }}>{group.group}</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#8797ab', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6, paddingLeft: 4 }}>{group.group}</div>
               {group.items.map(item => (
                 <button key={item.type} onClick={() => addNode(item)} style={{
                   display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '7px 10px',
@@ -210,7 +210,7 @@ export default function GTMCanvas() {
               ))}
             </div>
           ))}
-          <div style={{ marginTop: 12, padding: '10px', borderRadius: 8, background: 'rgba(56,189,248,0.06)', border: '1px solid rgba(56,189,248,0.15)', fontSize: 10, color: '#7dd3fc', lineHeight: 1.5 }}>
+          <div style={{ marginTop: 12, padding: '10px', borderRadius: 8, background: 'rgba(56,189,248,0.06)', border: '1px solid rgba(56,189,248,0.15)', fontSize: 11, color: '#7dd3fc', lineHeight: 1.5 }}>
             💡 Drag nodes onto the canvas to connect them. Click any node to edit.
           </div>
         </div>
@@ -281,32 +281,32 @@ function NodeEditor({ node, onClose, onChange, onDelete }: { node: any; onClose:
       {(d.type === 'email') && (
         <>
           <label style={{ display: 'block', fontSize: 11, color: s.muted, marginBottom: 4 }}>Subject line</label>
-          <input value={d.subtitle || ''} onChange={e => onChange(node.id, { subtitle: e.target.value })} placeholder="Subject line..." style={{ width: '100%', background: '#0b0d12', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none', marginBottom: 10 }} />
+          <input value={d.subtitle || ''} onChange={e => onChange(node.id, { subtitle: e.target.value })} placeholder="Subject line..." style={{ width: '100%', background: '#05080d', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none', marginBottom: 10 }} />
           <label style={{ display: 'block', fontSize: 11, color: s.muted, marginBottom: 4 }}>Email body</label>
-          <textarea value={d.description || ''} onChange={e => onChange(node.id, { description: e.target.value })} placeholder="Email body..." rows={5} style={{ width: '100%', background: '#0b0d12', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none', resize: 'vertical', marginBottom: 10 }} />
+          <textarea value={d.description || ''} onChange={e => onChange(node.id, { description: e.target.value })} placeholder="Email body..." rows={5} style={{ width: '100%', background: '#05080d', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none', resize: 'vertical', marginBottom: 10 }} />
         </>
       )}
 
       {(d.type === 'call') && (
         <>
           <label style={{ display: 'block', fontSize: 11, color: s.muted, marginBottom: 4 }}>Call script / talking points</label>
-          <textarea value={d.description || ''} onChange={e => onChange(node.id, { description: e.target.value })} placeholder="Hi {{first_name}}, I'm calling because..." rows={6} style={{ width: '100%', background: '#0b0d12', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none', resize: 'vertical', marginBottom: 10 }} />
+          <textarea value={d.description || ''} onChange={e => onChange(node.id, { description: e.target.value })} placeholder="Hi {{first_name}}, I'm calling because..." rows={6} style={{ width: '100%', background: '#05080d', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none', resize: 'vertical', marginBottom: 10 }} />
           <label style={{ display: 'block', fontSize: 11, color: s.muted, marginBottom: 4 }}>Target duration (min)</label>
-          <input type="number" value={d.duration || 5} onChange={e => onChange(node.id, { duration: e.target.value })} style={{ width: '100%', background: '#0b0d12', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none', marginBottom: 10 }} />
+          <input type="number" value={d.duration || 5} onChange={e => onChange(node.id, { duration: e.target.value })} style={{ width: '100%', background: '#05080d', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none', marginBottom: 10 }} />
         </>
       )}
 
       {(d.type === 'wait') && (
         <>
           <label style={{ display: 'block', fontSize: 11, color: s.muted, marginBottom: 4 }}>Wait days</label>
-          <input type="number" value={d.days || 3} onChange={e => onChange(node.id, { days: Number(e.target.value) })} style={{ width: '100%', background: '#0b0d12', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none' }} />
+          <input type="number" value={d.days || 3} onChange={e => onChange(node.id, { days: Number(e.target.value) })} style={{ width: '100%', background: '#05080d', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none' }} />
         </>
       )}
 
       {(d.type === 'audience' || d.type === 'enrich') && (
         <>
           <label style={{ display: 'block', fontSize: 11, color: s.muted, marginBottom: 4 }}>Description</label>
-          <textarea value={d.description || ''} onChange={e => onChange(node.id, { description: e.target.value })} rows={3} style={{ width: '100%', background: '#0b0d12', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none', resize: 'vertical', marginBottom: 10 }} />
+          <textarea value={d.description || ''} onChange={e => onChange(node.id, { description: e.target.value })} rows={3} style={{ width: '100%', background: '#05080d', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none', resize: 'vertical', marginBottom: 10 }} />
         </>
       )}
 
@@ -314,15 +314,15 @@ function NodeEditor({ node, onClose, onChange, onDelete }: { node: any; onClose:
         <>
           <div style={{ fontSize: 11, color: s.muted, marginBottom: 8, lineHeight: 1.5 }}>Split traffic between two email variants. Wyber picks the winner after 48h by open rate.</div>
           <label style={{ display: 'block', fontSize: 11, color: s.muted, marginBottom: 4 }}>Variant A — subject</label>
-          <input value={d.subject_a || ''} onChange={e => onChange(node.id, { subject_a: e.target.value })} placeholder="Subject A..." style={{ width: '100%', background: '#0b0d12', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none', marginBottom: 8 }} />
+          <input value={d.subject_a || ''} onChange={e => onChange(node.id, { subject_a: e.target.value })} placeholder="Subject A..." style={{ width: '100%', background: '#05080d', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none', marginBottom: 8 }} />
           <label style={{ display: 'block', fontSize: 11, color: s.muted, marginBottom: 4 }}>Variant B — subject</label>
-          <input value={d.subject_b || ''} onChange={e => onChange(node.id, { subject_b: e.target.value })} placeholder="Subject B..." style={{ width: '100%', background: '#0b0d12', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none', marginBottom: 8 }} />
+          <input value={d.subject_b || ''} onChange={e => onChange(node.id, { subject_b: e.target.value })} placeholder="Subject B..." style={{ width: '100%', background: '#05080d', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none', marginBottom: 8 }} />
           <label style={{ display: 'block', fontSize: 11, color: s.muted, marginBottom: 4 }}>Split ratio</label>
-          <select value={d.split || '50/50'} onChange={e => onChange(node.id, { split: e.target.value })} style={{ width: '100%', background: '#0b0d12', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none', marginBottom: 8 }}>
+          <select value={d.split || '50/50'} onChange={e => onChange(node.id, { split: e.target.value })} style={{ width: '100%', background: '#05080d', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none', marginBottom: 8 }}>
             <option>50/50</option><option>70/30</option><option>80/20</option>
           </select>
           <label style={{ display: 'block', fontSize: 11, color: s.muted, marginBottom: 4 }}>Pick winner after (hrs)</label>
-          <input type="number" value={d.winner_after_hours || 48} onChange={e => onChange(node.id, { winner_after_hours: Number(e.target.value) })} style={{ width: '100%', background: '#0b0d12', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none' }} />
+          <input type="number" value={d.winner_after_hours || 48} onChange={e => onChange(node.id, { winner_after_hours: Number(e.target.value) })} style={{ width: '100%', background: '#05080d', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none' }} />
         </>
       )}
 
@@ -330,9 +330,9 @@ function NodeEditor({ node, onClose, onChange, onDelete }: { node: any; onClose:
         <>
           <div style={{ fontSize: 11, color: s.muted, marginBottom: 8, lineHeight: 1.5 }}>Insert a meeting booking link into the sequence. Wyber detects clicks and marks the lead as converted.</div>
           <label style={{ display: 'block', fontSize: 11, color: s.muted, marginBottom: 4 }}>Calendly / booking URL</label>
-          <input value={d.booking_url || ''} onChange={e => onChange(node.id, { booking_url: e.target.value })} placeholder="https://calendly.com/yourname/30min" style={{ width: '100%', background: '#0b0d12', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none', marginBottom: 8 }} />
+          <input value={d.booking_url || ''} onChange={e => onChange(node.id, { booking_url: e.target.value })} placeholder="https://calendly.com/yourname/30min" style={{ width: '100%', background: '#05080d', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none', marginBottom: 8 }} />
           <label style={{ display: 'block', fontSize: 11, color: s.muted, marginBottom: 4 }}>CTA button text</label>
-          <input value={d.cta_text || 'Book a 30-min call →'} onChange={e => onChange(node.id, { cta_text: e.target.value })} style={{ width: '100%', background: '#0b0d12', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none' }} />
+          <input value={d.cta_text || 'Book a 30-min call →'} onChange={e => onChange(node.id, { cta_text: e.target.value })} style={{ width: '100%', background: '#05080d', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none' }} />
         </>
       )}
 
@@ -340,7 +340,7 @@ function NodeEditor({ node, onClose, onChange, onDelete }: { node: any; onClose:
         <>
           <div style={{ fontSize: 11, color: s.muted, marginBottom: 8, lineHeight: 1.5 }}>Trigger outreach when a buying signal fires — hiring in relevant roles, new funding, or tech stack change.</div>
           <label style={{ display: 'block', fontSize: 11, color: s.muted, marginBottom: 4 }}>Signal type</label>
-          <select value={d.signal_type || 'job_posting'} onChange={e => onChange(node.id, { signal_type: e.target.value })} style={{ width: '100%', background: '#0b0d12', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none', marginBottom: 8 }}>
+          <select value={d.signal_type || 'job_posting'} onChange={e => onChange(node.id, { signal_type: e.target.value })} style={{ width: '100%', background: '#05080d', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none', marginBottom: 8 }}>
             <option value="job_posting">Job posting (hiring signal)</option>
             <option value="funding">New funding round</option>
             <option value="tech_change">Tech stack change</option>
@@ -348,7 +348,7 @@ function NodeEditor({ node, onClose, onChange, onDelete }: { node: any; onClose:
             <option value="linkedin_engage">LinkedIn engagement spike</option>
           </select>
           <label style={{ display: 'block', fontSize: 11, color: s.muted, marginBottom: 4 }}>Keywords to watch</label>
-          <input value={d.keywords || ''} onChange={e => onChange(node.id, { keywords: e.target.value })} placeholder="e.g. sales engineer, GTM, RevOps" style={{ width: '100%', background: '#0b0d12', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none' }} />
+          <input value={d.keywords || ''} onChange={e => onChange(node.id, { keywords: e.target.value })} placeholder="e.g. sales engineer, GTM, RevOps" style={{ width: '100%', background: '#05080d', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none' }} />
         </>
       )}
 
@@ -356,7 +356,7 @@ function NodeEditor({ node, onClose, onChange, onDelete }: { node: any; onClose:
         <>
           <div style={{ fontSize: 11, color: s.muted, marginBottom: 8, lineHeight: 1.5 }}>Score each lead 0–100 based on fit + engagement. Only route leads above the threshold to the next step.</div>
           <label style={{ display: 'block', fontSize: 11, color: s.muted, marginBottom: 4 }}>Score threshold (min to pass)</label>
-          <input type="number" min={0} max={100} value={d.threshold || 60} onChange={e => onChange(node.id, { threshold: Number(e.target.value) })} style={{ width: '100%', background: '#0b0d12', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none', marginBottom: 8 }} />
+          <input type="number" min={0} max={100} value={d.threshold || 60} onChange={e => onChange(node.id, { threshold: Number(e.target.value) })} style={{ width: '100%', background: '#05080d', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none', marginBottom: 8 }} />
           <label style={{ display: 'block', fontSize: 11, color: s.muted, marginBottom: 4 }}>Scoring factors</label>
           {['ICP title match', 'Company size fit', 'Email opened', 'Visited website', 'Intent signal fired'].map(f => (
             <label key={f} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: s.muted, marginBottom: 6, cursor: 'pointer' }}>
@@ -371,21 +371,21 @@ function NodeEditor({ node, onClose, onChange, onDelete }: { node: any; onClose:
         <>
           <div style={{ fontSize: 11, color: s.muted, marginBottom: 8, lineHeight: 1.5 }}>Check domain health before sending. Wyber verifies SPF/DKIM/DMARC and warns if inbox placement is at risk.</div>
           <label style={{ display: 'block', fontSize: 11, color: s.muted, marginBottom: 4 }}>Sending domain</label>
-          <input value={d.domain || ''} onChange={e => onChange(node.id, { domain: e.target.value })} placeholder="mail.yourcompany.com" style={{ width: '100%', background: '#0b0d12', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none', marginBottom: 8 }} />
+          <input value={d.domain || ''} onChange={e => onChange(node.id, { domain: e.target.value })} placeholder="mail.yourcompany.com" style={{ width: '100%', background: '#05080d', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none', marginBottom: 8 }} />
           <label style={{ display: 'block', fontSize: 11, color: s.muted, marginBottom: 4 }}>Daily send cap (recommended: start low)</label>
-          <input type="number" value={d.daily_cap || 50} onChange={e => onChange(node.id, { daily_cap: Number(e.target.value) })} style={{ width: '100%', background: '#0b0d12', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none' }} />
+          <input type="number" value={d.daily_cap || 50} onChange={e => onChange(node.id, { daily_cap: Number(e.target.value) })} style={{ width: '100%', background: '#05080d', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none' }} />
         </>
       )}
 
       {d.type === 'visitor' && (
         <>
           <div style={{ fontSize: 11, color: s.muted, marginBottom: 8, lineHeight: 1.5 }}>De-anonymise website visitors. Add the Wyber tracking pixel to your site and trigger sequences when target companies visit.</div>
-          <div style={{ background: '#0b0d12', border: `1px solid ${s.border}`, borderRadius: 7, padding: '10px 12px', marginBottom: 8 }}>
-            <div style={{ fontSize: 10, color: '#52525b', marginBottom: 4 }}>Tracking pixel (paste into {'<head>'})</div>
-            <code style={{ fontSize: 10, color: '#38bdf8', wordBreak: 'break-all' }}>{'<script src="https://wyberai.com/pixel.js" data-key="YOUR_KEY"></script>'}</code>
+          <div style={{ background: '#05080d', border: `1px solid ${s.border}`, borderRadius: 7, padding: '10px 12px', marginBottom: 8 }}>
+            <div style={{ fontSize: 11, color: '#8797ab', marginBottom: 4 }}>Tracking pixel (paste into {'<head>'})</div>
+            <code style={{ fontSize: 11, color: '#38bdf8', wordBreak: 'break-all' }}>{'<script src="https://wyberai.com/pixel.js" data-key="YOUR_KEY"></script>'}</code>
           </div>
           <label style={{ display: 'block', fontSize: 11, color: s.muted, marginBottom: 4 }}>Min pages visited before trigger</label>
-          <input type="number" value={d.min_pages || 2} onChange={e => onChange(node.id, { min_pages: Number(e.target.value) })} style={{ width: '100%', background: '#0b0d12', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none' }} />
+          <input type="number" value={d.min_pages || 2} onChange={e => onChange(node.id, { min_pages: Number(e.target.value) })} style={{ width: '100%', background: '#05080d', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none' }} />
         </>
       )}
 
@@ -400,7 +400,7 @@ function NodeEditor({ node, onClose, onChange, onDelete }: { node: any; onClose:
             </label>
           ))}
           <label style={{ display: 'block', fontSize: 11, color: s.muted, marginTop: 8, marginBottom: 4 }}>Personalisation tone</label>
-          <select value={d.tone || 'concise'} onChange={e => onChange(node.id, { tone: e.target.value })} style={{ width: '100%', background: '#0b0d12', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none' }}>
+          <select value={d.tone || 'concise'} onChange={e => onChange(node.id, { tone: e.target.value })} style={{ width: '100%', background: '#05080d', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none' }}>
             <option value="concise">Concise &amp; direct</option>
             <option value="friendly">Friendly &amp; warm</option>
             <option value="executive">Executive &amp; formal</option>

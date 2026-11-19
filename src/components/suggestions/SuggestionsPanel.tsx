@@ -147,7 +147,7 @@ export function SuggestionsPanel() {
                 </div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 4 }}>
-                <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--ide-text)', letterSpacing: '-0.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--ide-text)', letterSpacing: '-0.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {busy ? 'Applying…' : done ? '✓ Applied' : pal.label}
                 </span>
                 <MicroLabel style={{ flexShrink: 0 }}>{pal.mode}</MicroLabel>
@@ -160,7 +160,7 @@ export function SuggestionsPanel() {
       <button
         onClick={shuffle}
         disabled={!!saving}
-        style={{ fontSize: 11, fontWeight: 600, padding: '7px 10px', borderRadius: 8, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--ide-text2)', cursor: saving ? 'wait' : 'pointer', fontFamily: 'inherit' }}
+        style={{ fontSize: 12, fontWeight: 600, padding: '7px 10px', borderRadius: 8, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--ide-text2)', cursor: saving ? 'wait' : 'pointer', fontFamily: 'inherit' }}
       >
         ↻ Shuffle
       </button>

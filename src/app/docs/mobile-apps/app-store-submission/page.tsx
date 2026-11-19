@@ -1,7 +1,7 @@
 import { DocsPage, DocSection, Steps, Step, Note } from '@/components/docs/DocsPage'
 import Link from 'next/link'
 
-export const metadata = { title: 'App Store & Play Store Submission — Docs' }
+export const metadata = { title: 'App Store & Play Store Submission — Docs', description: "Export your Wyber mobile app and publish it to the Apple App Store and Google Play Store using Expo's EAS Build service — no Xcode or Android Studio…" }
 
 const CODE = (s: string) => (
   <code style={{ fontSize: 12, background: 'rgba(255,255,255,0.08)', padding: '1px 6px', borderRadius: 4, fontFamily: 'monospace' }}>{s}</code>

@@ -129,7 +129,7 @@ function SkippedNotification({ payload, createdAt, read }: { payload: Record<str
           </a>
         </div>
       </div>
-      <div style={{ fontSize: 10, color: '#3f3f46', marginTop: 6, textAlign: 'right' }}>{ago}</div>
+      <div style={{ fontSize: 11, color: '#3f3f46', marginTop: 6, textAlign: 'right' }}>{ago}</div>
     </div>
   )
 }

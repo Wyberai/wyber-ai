@@ -1,19 +1,20 @@
 import type { Metadata } from 'next'
 import { VsPageTemplate } from '@/components/seo/VsPageTemplate'
 import { localeAlternates } from '@/lib/i18n/hreflang'
+import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
 export const metadata: Metadata = {
-  title: 'WyberAi vs Replit (2026) — AI App Builder vs Cloud IDE',
-  description: 'WyberAi vs Replit: predictable credit pricing vs usage-based billing, non-technical vs developer focus, and web + mobile app building Replit doesn\'t offer. Verified June 2026.',
+  title: 'WyberAi vs Replit (2026): app builder vs IDE',
+  description: 'WyberAi vs Replit: predictable credit pricing vs usage-based billing, and web plus mobile app building for non-technical users. Reviewed June 2026.',
   alternates: { canonical: 'https://wyberai.com/vs/replit', languages: localeAlternates('/vs/replit') },
-  openGraph: { title: 'WyberAi vs Replit (2026)', description: 'AI app builder vs cloud IDE. Verified June 2026.', url: 'https://wyberai.com/vs/replit' },
+  openGraph: { images: DEFAULT_OG_IMAGES, title: 'WyberAi vs Replit (2026)', description: 'AI app builder vs cloud IDE. Last reviewed June 2026.', url: 'https://wyberai.com/vs/replit' },
 }
 
 const ROWS = [
   { feature: 'Primary use case',        wyber: 'AI app builder',           other: 'Cloud IDE + AI agent',    winner: 'tie'   as const },
   { feature: 'Starter price',           wyber: '$29/mo (Starter)',                   other: '$20/mo (Core)',           winner: 'tie'   as const },
   { feature: 'Cost predictability',     wyber: 'Fixed credits',            other: 'Usage-based overages',    winner: 'wyber' as const },
-  { feature: 'Free tier',               wyber: '30 credits/month',         other: 'Free (limited)',          winner: 'tie'   as const },
+  { feature: 'Free tier',               wyber: '30 free credits on signup',         other: 'Free (limited)',          winner: 'tie'   as const },
   { feature: 'Mobile app builder',      wyber: '✓ React Native',           other: '✗',                       winner: 'wyber' as const },
   { feature: 'AI agent builder',        wyber: '✓ Built-in',               other: 'Replit Agent (IDE-based)',winner: 'wyber' as const },
   { feature: 'Workflow automation',     wyber: '✓ Built-in',               other: '✗',                       winner: 'wyber' as const },
@@ -37,7 +38,7 @@ const FAQS = [
   },
   {
     q: 'Is WyberAi cheaper than Replit?',
-    a: 'WyberAi Starter is $29/month for 150 credits vs Replit Core at $20/month. WyberAi includes mobile apps, 27 integrations, and fresh code generation that Replit doesn\'t offer. Top-ups never expire.',
+    a: 'WyberAi Starter is $29/month for 450 credits vs Replit Core at $20/month. WyberAi includes mobile apps, 68 connectors, and fresh code generation that Replit doesn\'t offer. Top-ups never expire.',
   },
   {
     q: 'Does Replit have a mobile app builder?',
@@ -60,7 +61,7 @@ export default function VsReplit() {
       competitorName="Replit"
       competitorUrl="https://replit.com"
       tagline="Replit is a powerful cloud IDE for developers. WyberAi is a no-code app builder for founders — with predictable pricing and web + mobile app building Replit doesn't cover."
-      blurb="Honest comparison of WyberAi vs Replit: AI app builder vs cloud IDE, pricing, and the six-product difference. Verified June 2026."
+      blurb="Honest comparison of WyberAi vs Replit: AI app builder vs cloud IDE, pricing, and the six-product difference. Last reviewed June 2026."
       rows={ROWS}
       faqs={FAQS}
       pillarNote="Replit is an IDE — it doesn't have dedicated mobile, agent, or workflow builders."

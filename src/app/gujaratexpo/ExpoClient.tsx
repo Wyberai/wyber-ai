@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 import Link from 'next/link'
 import s from './expo.module.css'
-import { AUDIENCES, USE_CASES, STEPS, WHY, TYPES, CASE_IMAGE, type AudienceId } from './data'
+import { AUDIENCES, USE_CASES, STEPS, WHY, POWERS, TYPES, CASE_IMAGE, type AudienceId } from './data'
 import { ExpoForm } from './ExpoForm'
 import { ExpoStory } from './ExpoStory'
 import { ExpoStoryCss } from './ExpoStoryCss'
@@ -24,6 +24,61 @@ export function ExpoClient({ initial }: { initial?: string }) {
 
   const cases = USE_CASES[audience]
   const current = AUDIENCES.find(a => a.id === audience)!
+
+  // Sticky 'Book' bar on phones: shown once the visitor has scrolled a little, hidden while the form is on screen.
+  const [stickyOn, setStickyOn] = useState(false)
+  useEffect(() => {
+    const form = document.getElementById('book')
+    let formVisible = false
+    const update = () => setStickyOn(window.scrollY > 400 && !formVisible)
+    const io = form ? new IntersectionObserver(([e]) => { formVisible = e.isIntersecting; update() }) : null
+    if (form && io) io.observe(form)
+    window.addEventListener('scroll', update, { passive: true })
+    update()
+    return () => { window.removeEventListener('scroll', update); io?.disconnect() }
+  }, [])
+
+  // Auto-scroll: starts a moment after the page loads and stops for good the moment the visitor touches, scrolls,
+  // presses a key, clicks or focuses a field, or when the booking form comes into view. It never starts for visitors
+  // who asked their device for reduced motion, or who arrived on a #link or part-way down the page.
+  const [autoOn, setAutoOn] = useState(false)
+  const stopAutoRef = useRef<() => void>(() => {})
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    if (window.location.hash || window.scrollY > 200) return
+    const SPEED = 90 // px per second
+    const book = document.getElementById('book')
+    const events = ['wheel', 'touchstart', 'pointerdown', 'keydown'] as const
+    let raf = 0, timer = 0, running = false, pos = 0, last = 0
+    const stop = () => {
+      window.clearTimeout(timer)
+      cancelAnimationFrame(raf)
+      if (running) { running = false; setAutoOn(false) }
+      events.forEach(e => window.removeEventListener(e, stop))
+      document.removeEventListener('focusin', stop)
+    }
+    stopAutoRef.current = stop
+    const tick = (t: number) => {
+      if (!running) return
+      const dt = Math.min(64, t - last) / 1000
+      last = t
+      if (Math.abs(window.scrollY - pos) > 3) { stop(); return } // the visitor moved the page themselves (scrollbar, etc.)
+      if (book && book.getBoundingClientRect().top < window.innerHeight * 0.6) { stop(); return } // do not scroll through the form
+      pos += SPEED * dt
+      window.scrollTo({ top: pos, behavior: 'instant' })
+      raf = requestAnimationFrame(tick)
+    }
+    events.forEach(e => window.addEventListener(e, stop, { passive: true }))
+    document.addEventListener('focusin', stop)
+    timer = window.setTimeout(() => {
+      pos = window.scrollY
+      running = true
+      last = performance.now()
+      setAutoOn(true)
+      raf = requestAnimationFrame(tick)
+    }, 2500)
+    return stop
+  }, [])
 
   const picker = (
     <div className={s.pills} role="tablist" aria-label="Who are you?">
@@ -138,9 +193,25 @@ export function ExpoClient({ initial }: { initial?: string }) {
           </div>
         </section>
 
+        {/* SUPERPOWERS: what WyberAi does on top of plain vibe coding */}
+        <section id="powers" className={`${s.section} ${s.sectionLine}`}>
+          <div className={s.eyebrow}>■ SUPERPOWERS</div>
+          <h2 className={s.h2}>Vibe coding.<br /><em>With superpowers.</em></h2>
+          <p className={s.lede}>Vibe coding gives you a base. WyberAi is an AI agent that plans the build, writes it, repairs its own failures and checks the result. Six superpowers are built in. Saves hundreds of hours of research and vibe coding.</p>
+          <div className={s.why}>
+            {POWERS.map(w => (
+              <div key={w.n} className={s.wr}>
+                <span className={s.n}>{w.n}</span>
+                <h3>{w.a}<em>{w.b}</em></h3>
+                <p>{w.p}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
         {/* WHY WYBERAI */}
         <section className={`${s.section} ${s.sectionLine}`}>
-          <div className={s.eyebrow}>■ WHY WYBERAI</div>
+          <div className={s.eyebrow}>■ AND THE BASICS</div>
           <h2 className={s.h2}>Real code.<br /><em>Yours to keep.</em></h2>
           <div className={s.why}>
             {WHY.map(w => (
@@ -157,11 +228,21 @@ export function ExpoClient({ initial }: { initial?: string }) {
         <section id="book" className={`${s.section} ${s.sectionLine}`}>
           <div className={s.eyebrow}>■ AT THE BOOTH</div>
           <h2 className={s.h2}>Bring your pain point.<br /><em>We&apos;ll build it live.</em></h2>
-          <p className={s.lede}>Fifteen minutes with WyberAi at Tech Expo Gujarat, booth S23 (27–29 Nov, Gujarat University Convention &amp; Exhibition Centre, Ahmedabad). Tell us the one thing your current software cannot do.</p>
+          <p className={s.lede}>Fifteen minutes with WyberAi at Tech Expo Gujarat, booth S23 (27–29 Nov, Gujarat University Convention &amp; Exhibition Centre, Ahmedabad). Most software has 100 features and you use 5. Want a web app, website, mobile app or SaaS, or to replace a tool you pay for with your own? Tell us what you need.</p>
           <ExpoForm audience={audience} onAudienceChange={setAudience} />
         </section>
 
         <footer className={s.footer}><span>wyberai.com</span><span>Describe it. Ship it.</span></footer>
+      </div>
+
+      {autoOn && (
+        <button type="button" className={s.autoStop} onClick={() => stopAutoRef.current()}>
+          Stop auto-scroll
+        </button>
+      )}
+
+      <div className={`${s.stickyBar} ${stickyOn ? s.stickyOn : ''}`}>
+        <a href="#book" className={s.btn}>Book 15 minutes at booth S23</a>
       </div>
     </div>
   )

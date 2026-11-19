@@ -43,7 +43,7 @@ canvas{position:absolute;top:0;left:0;width:100%;height:100%;display:block;outli
 <div id="hdr">
   <div id="hdr-l">
     <div class="dot"></div>
-    <span id="hdr-t">&#x1F3D7; Coding your full app &mdash; auth, dashboard, settings + every feature you asked for</span>
+    <span id="hdr-t">&#x1F3D7; Building what you asked for &mdash; this takes a minute or two</span>
   </div>
   <span id="hdr-s">&#x26A1; 0 cr</span>
   <div id="tabs">

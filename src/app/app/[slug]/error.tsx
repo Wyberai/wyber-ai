@@ -10,7 +10,7 @@ export default function PublishedAppError({ reset }: { error: Error & { digest?:
     <div
       style={{
         minHeight: '100vh',
-        background: '#09090b',
+        background: '#05080d',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -21,8 +21,8 @@ export default function PublishedAppError({ reset }: { error: Error & { digest?:
         textAlign: 'center',
       }}
     >
-      <div style={{ fontSize: 15, color: '#e4e4e7', fontWeight: 600 }}>This app is temporarily unavailable</div>
-      <div style={{ fontSize: 13, color: '#71717a', maxWidth: 320, lineHeight: 1.5 }}>
+      <div style={{ fontSize: 15, color: '#e8eef7', fontWeight: 600 }}>This app is temporarily unavailable</div>
+      <div style={{ fontSize: 13, color: '#8797ab', maxWidth: 320, lineHeight: 1.5 }}>
         We couldn’t load this app right now. Please try again in a moment.
       </div>
       <button
@@ -33,7 +33,7 @@ export default function PublishedAppError({ reset }: { error: Error & { digest?:
           borderRadius: 10,
           border: 'none',
           background: '#0EA5E9',
-          color: '#fff',
+          color: '#03111c',
           fontSize: 13,
           fontWeight: 700,
           cursor: 'pointer',

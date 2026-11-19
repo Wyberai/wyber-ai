@@ -6,11 +6,15 @@
 
 import { collectMissingStubs } from './stub-missing-imports'
 import { TAILWIND_CONFIG_FILE, DEFAULT_TOKENS_CSS, GOOGLE_FONTS_LINKS } from './design-system'
+import { extraFontLinks } from './direction-fonts'
 import { WYBER_UI_KIT_FILES } from './wyber-ui-kit'
 import { WYBER_STORE_FILES } from './wyber-store'
 import { CONNECTOR_INFRA_FILES } from './connector-infra'
+import { DATA_TABLE_FILES } from './data-table-infra'
 import { resolveDirectivesForPreview } from './image-directives'
 import { synthesizeAppTsx } from './synthesize-app'
+import { repairStringSeams } from './string-seam'
+import { repairBlankBrandPanel } from './auth-brand-panel'
 
 type FileVal = { content?: string; language?: string } | string
 
@@ -25,6 +29,16 @@ export function sanitizeFiles<T extends Record<string, FileVal>>(files: T, opts?
     const p = String(rawPath).trim().replace(/^\.?\/+/, '').replace(/\/+$/, '')
     // Drop empty, parent-traversal, or paths with empty segments ("a//b")
     if (!p || p.includes('..') || p.split('/').some(seg => seg.trim() === '')) continue
+    // A string split by a newline at a token-limit seam never compiles; rejoin it (see string-seam.ts). Heals files saved
+    // before this repair existed, at every preview build, publish and export.
+    const text = typeof val === 'string' ? val : val?.content
+    if (typeof text === 'string' && /\.(tsx?|jsx?)$/i.test(p)) {
+      const fixed = repairStringSeams(p, text)
+      // A sign-in screen whose brand panel lost its picture gets one back (see auth-brand-panel.ts).
+      const panel = repairBlankBrandPanel(p, fixed.content)
+      out[p] = fixed.repaired === 0 && panel.repaired === 0 ? val : (typeof val === 'string' ? panel.content : { ...val, content: panel.content })
+      continue
+    }
     out[p] = val
   }
 
@@ -130,6 +144,14 @@ export function sanitizeFiles<T extends Record<string, FileVal>>(files: T, opts?
     //     from these rather than regenerating them (saves ~900 tokens per build).
     for (const { path: infPath, content: infContent } of CONNECTOR_INFRA_FILES) {
       if (!(infPath in out)) out[infPath] = { content: infContent, language: 'typescript' }
+    }
+
+    // 0d. Data table — pre-built sort/search/paginate/select/export-CSV table.
+    //     Same rules: transient, user files win, tree-shaken when unused. LLM
+    //     imports and configures it rather than hand-writing table logic and
+    //     CSV-export boilerplate on every build.
+    for (const { path: dtPath, content: dtContent } of DATA_TABLE_FILES) {
+      if (!(dtPath in out)) out[dtPath] = { content: dtContent, language: 'typescript' }
     }
 
     // 1. index.css must carry the @tailwind directives AND the design-system
@@ -398,6 +420,17 @@ ReactDOM.createRoot(document.getElementById('root')${tsBang}).render(
       nextIdx = nextIdx.includes('<head>')
         ? nextIdx.replace('<head>', `<head>\n    ${APP_ID_TAG}`)
         : `${APP_ID_TAG}\n${nextIdx}`
+    }
+    // Design-direction fonts (direction-fonts.ts): load ONLY the families this build's index.css actually
+    // names. extraFontLinks returns '' for every build without a direction, so this is a strict no-op there.
+    {
+      const cssKey = Object.keys(out).find(k => /(^|\/)index\.css$/.test(k))
+      const dirFonts = cssKey ? extraFontLinks(fileContent(out[cssKey])) : ''
+      if (dirFonts && !nextIdx.includes(dirFonts)) {
+        nextIdx = nextIdx.includes('</head>')
+          ? nextIdx.replace('</head>', `    ${dirFonts}\n  </head>`)
+          : `${dirFonts}\n${nextIdx}`
+      }
     }
     // Security badge — opt-in per project (opts.securityBadge is only ever
     // passed by the publish route when the owner enabled it AND the latest

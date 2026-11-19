@@ -127,15 +127,15 @@ export default function ForecastingPage() {
                 </div>
                 <div style={{ fontSize: 11, color: "#64748b", marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{f.description.slice(0, 28)}</div>
                 {f.projectedStockOut && (
-                  <div style={{ fontSize: 10, color: urgent ? "#dc2626" : "#d97706", marginTop: 2, fontWeight: 600 }}>
+                  <div style={{ fontSize: 11, color: urgent ? "#dc2626" : "#d97706", marginTop: 2, fontWeight: 600 }}>
                     Stock-out: {f.projectedStockOut}
                   </div>
                 )}
                 {!f.projectedStockOut && f.projectedReorderDate && (
-                  <div style={{ fontSize: 10, color: "#8b5cf6", marginTop: 2 }}>Reorder: {f.projectedReorderDate}</div>
+                  <div style={{ fontSize: 11, color: "#8b5cf6", marginTop: 2 }}>Reorder: {f.projectedReorderDate}</div>
                 )}
                 {!f.projectedStockOut && !f.projectedReorderDate && (
-                  <div style={{ fontSize: 10, color: "#22c55e", marginTop: 2 }}>✓ 60+ days cover</div>
+                  <div style={{ fontSize: 11, color: "#22c55e", marginTop: 2 }}>✓ 60+ days cover</div>
                 )}
               </button>
             );

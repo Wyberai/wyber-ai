@@ -4,8 +4,8 @@ import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 
 const s = {
-  bg: '#09090b', card: '#111113', border: 'rgba(255,255,255,0.07)',
-  text: '#fafafa', muted: '#71717a', dim: '#52525b',
+  bg: '#05080d', card: '#0d141e', border: 'rgba(255,255,255,0.07)',
+  text: '#fafafa', muted: '#8797ab', dim: '#8797ab',
   orange: '#f97316', green: '#10b981', yellow: '#f59e0b', sky: '#0EA5E9', red: '#ef4444',
 }
 
@@ -122,7 +122,7 @@ export default function OutreachQueuePage() {
         {tab === 'draft' && items.length > 0 && (
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 14, flexWrap: 'wrap' }}>
             <button onClick={() => setSelected(new Set(items.map(i => i.id)))} style={{ padding: '7px 12px', borderRadius: 7, background: 'transparent', border: `1px solid ${s.border}`, color: s.muted, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Select all</button>
-            <button onClick={() => act('approve', [...selected])} disabled={busy || !selected.size} style={{ padding: '7px 14px', borderRadius: 7, background: s.green, border: 'none', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', opacity: selected.size ? 1 : 0.5 }}>✓ Approve {selected.size || ''}</button>
+            <button onClick={() => act('approve', [...selected])} disabled={busy || !selected.size} style={{ padding: '7px 14px', borderRadius: 7, background: s.green, border: 'none', color: '#03111c', fontSize: 12, fontWeight: 700, cursor: 'pointer', opacity: selected.size ? 1 : 0.5 }}>✓ Approve {selected.size || ''}</button>
             <button onClick={() => act('reject', [...selected])} disabled={busy || !selected.size} style={{ padding: '7px 14px', borderRadius: 7, background: 'transparent', border: `1px solid rgba(239,68,68,0.4)`, color: s.red, fontSize: 12, fontWeight: 700, cursor: 'pointer', opacity: selected.size ? 1 : 0.5 }}>Reject</button>
             {campaigns.length > 0 && <>
               <select value={pushCampaign} onChange={e => setPushCampaign(e.target.value)} style={{ background: s.card, border: `1px solid ${s.border}`, borderRadius: 7, padding: '7px 10px', fontSize: 12, color: s.text, outline: 'none' }}>
@@ -138,7 +138,7 @@ export default function OutreachQueuePage() {
             <select value={pushCampaign} onChange={e => setPushCampaign(e.target.value)} style={{ background: s.card, border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, outline: 'none' }}>
               {campaigns.length ? campaigns.map(c => <option key={c.id} value={c.id}>{c.name}</option>) : <option value="">No campaigns yet</option>}
             </select>
-            <button onClick={push} disabled={busy || !pushCampaign} style={{ padding: '8px 16px', borderRadius: 7, background: s.orange, border: 'none', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+            <button onClick={push} disabled={busy || !pushCampaign} style={{ padding: '8px 16px', borderRadius: 7, background: s.orange, border: 'none', color: '#03111c', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
               {busy ? 'Pushing…' : 'Push approved → provider (paused)'}
             </button>
           </div>
@@ -163,7 +163,7 @@ export default function OutreachQueuePage() {
                           </div>
                           {tab === 'draft' && !isEditing && (
                             <div style={{ display: 'flex', gap: 6 }}>
-                              <button onClick={() => act('approve', [d.id])} style={{ padding: '5px 12px', borderRadius: 6, background: s.green, border: 'none', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>✓</button>
+                              <button onClick={() => act('approve', [d.id])} style={{ padding: '5px 12px', borderRadius: 6, background: s.green, border: 'none', color: '#03111c', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>✓</button>
                               <button onClick={() => { setEditing(d.id); setEditSubject(d.subject); setEditBody(d.body) }} style={{ padding: '5px 12px', borderRadius: 6, background: 'transparent', border: `1px solid ${s.border}`, color: s.muted, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Edit</button>
                               <button onClick={() => act('reject', [d.id])} style={{ padding: '5px 12px', borderRadius: 6, background: 'transparent', border: `1px solid rgba(239,68,68,0.35)`, color: s.red, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>✕</button>
                             </div>
@@ -175,7 +175,7 @@ export default function OutreachQueuePage() {
                             <input value={editSubject} onChange={e => setEditSubject(e.target.value)} style={{ width: '100%', background: '#0c0c0e', border: `1px solid ${s.border}`, borderRadius: 8, padding: '8px 10px', fontSize: 13, color: s.text, fontFamily: 'inherit', outline: 'none', marginBottom: 8 }} />
                             <textarea value={editBody} onChange={e => setEditBody(e.target.value)} rows={6} style={{ width: '100%', background: '#0c0c0e', border: `1px solid ${s.border}`, borderRadius: 8, padding: '8px 10px', fontSize: 13, color: s.text, fontFamily: 'inherit', outline: 'none', resize: 'vertical' }} />
                             <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
-                              <button onClick={() => saveEdit(d.id)} disabled={busy} style={{ padding: '6px 14px', borderRadius: 6, background: s.green, border: 'none', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Save + approve</button>
+                              <button onClick={() => saveEdit(d.id)} disabled={busy} style={{ padding: '6px 14px', borderRadius: 6, background: s.green, border: 'none', color: '#03111c', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Save + approve</button>
                               <button onClick={() => setEditing(null)} style={{ padding: '6px 14px', borderRadius: 6, background: 'transparent', border: `1px solid ${s.border}`, color: s.muted, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
                             </div>
                           </div>

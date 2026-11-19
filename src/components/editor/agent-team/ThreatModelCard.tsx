@@ -14,7 +14,7 @@ import { EDITOR_AGENTTEAM_STRINGS } from '@/lib/i18n/dict/editor-agentteam'
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <p style={{ fontSize: 10.5, color: 'var(--ide-text3)', margin: '0 0 5px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{title}</p>
+      <p style={{ fontSize: 12.5, color: 'var(--ide-text3)', margin: '0 0 5px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{title}</p>
       {children}
     </div>
   )
@@ -24,7 +24,7 @@ function Chips({ items, color = 'var(--ide-text2)' }: { items: string[]; color?:
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
       {items.map(x => (
-        <span key={x} style={{ fontSize: 11, color, background: 'var(--bg-base, #0d0e12)', border: '1px solid var(--ide-border)', borderRadius: 5, padding: '2px 8px' }}>{x}</span>
+        <span key={x} style={{ fontSize: 12, color, background: 'var(--bg-base, #0d0e12)', border: '1px solid var(--ide-border)', borderRadius: 5, padding: '2px 8px' }}>{x}</span>
       ))}
     </div>
   )
@@ -53,7 +53,7 @@ export function ThreatModelCard() {
       >
         <span style={{
           width: 18, height: 18, borderRadius: 5, background: `${sentinel.color}22`,
-          border: `1px solid ${sentinel.color}55`, color: sentinel.color, fontSize: 10, fontWeight: 800,
+          border: `1px solid ${sentinel.color}55`, color: sentinel.color, fontSize: 12, fontWeight: 800,
           display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
         }}>{sentinel.name.charAt(0)}</span>
         <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ide-text)', flex: 1 }}>
@@ -63,7 +63,7 @@ export function ThreatModelCard() {
       </button>
       {open && (
         <div style={{ padding: '2px 12px 12px', display: 'flex', flexDirection: 'column', gap: 11 }}>
-          <div style={{ fontSize: 11, color: 'var(--ide-text3)', lineHeight: 1.55 }}>
+          <div style={{ fontSize: 12, color: 'var(--ide-text3)', lineHeight: 1.55 }}>
             {t('recomputedDesc')}
           </div>
           {tm.secretFindings.length > 0 && (

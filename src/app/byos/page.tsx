@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { ByosClient } from './ByosClient'
+import { SignalFrame } from '@/components/signal/SignalFrame'
 
 export const metadata: Metadata = {
   title: 'Stop Renting Software You Use 5% Of',
@@ -9,5 +10,5 @@ export const metadata: Metadata = {
 }
 
 export default function ByosPage() {
-  return <ByosClient />
+  return <SignalFrame><ByosClient /></SignalFrame>
 }

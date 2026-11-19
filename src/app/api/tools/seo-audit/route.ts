@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { analyzeHtml } from '@/lib/seo-audit'
 import { rateLimit } from '@/lib/rate-limit'
+import { safeFetch } from '@/lib/safe-url'
 
 // PUBLIC, no-auth SEO auditor. Fetches a marketing/app URL server-side and grades
 // on-page SEO. Guardrails: http/https only, private hosts blocked (SSRF), 6s
@@ -48,9 +49,8 @@ async function fetchText(url: string, ms: number, maxBytes: number): Promise<{ o
   const ctrl = new AbortController()
   const timer = setTimeout(() => ctrl.abort(), ms)
   try {
-    const res = await fetch(url, {
+    const res = await safeFetch(url, {
       signal: ctrl.signal,
-      redirect: 'follow',
       headers: { 'User-Agent': 'WyberAiSEOBot/1.0 (+https://wyberai.com/tools)' },
     })
     if (!res.ok) return { ok: false, text: '' }
@@ -81,7 +81,7 @@ async function head200(url: string, ms: number): Promise<boolean> {
   const ctrl = new AbortController()
   const timer = setTimeout(() => ctrl.abort(), ms)
   try {
-    const res = await fetch(url, { signal: ctrl.signal, redirect: 'follow' })
+    const res = await safeFetch(url, { signal: ctrl.signal })
     return res.ok
   } catch {
     return false

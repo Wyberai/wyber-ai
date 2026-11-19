@@ -14,6 +14,7 @@ import { PLAN_VALUE, PLAN_VALUE_INR } from '@/lib/pricing-values'
 import { templateFilesToProjectFiles } from '@/lib/template-to-project'
 import { accrueAffiliateCommission, reverseAffiliateCommissionForPayment } from '@/lib/affiliate'
 import { rewardReferrerOnFirstPayment } from '@/lib/referral'
+import { PLAN_FACTS, TOPUP_PACKS, LARGE_PLAN_CREDITS } from '@/lib/plans'
 
 function getAdmin() {
   return createClient(
@@ -32,24 +33,25 @@ function getAdmin() {
 // this ships without touching the Dodo product catalog again; new rate is
 // ~₹9.98-9.99/credit, matching Spark exactly.
 const TOPUPS: Record<string, number> = {
-  [process.env.DODO_TOPUP_200      || 'TOPUP_UNSET1']: 40,
-  [process.env.DODO_TOPUP_600      || 'TOPUP_UNSET2']: 100,
-  [process.env.DODO_TOPUP_2000     || 'TOPUP_UNSET3']: 200,
+  [process.env.DODO_TOPUP_200      || 'TOPUP_UNSET1']: TOPUP_PACKS[0].credits,
+  [process.env.DODO_TOPUP_600      || 'TOPUP_UNSET2']: TOPUP_PACKS[1].credits,
+  [process.env.DODO_TOPUP_2000     || 'TOPUP_UNSET3']: TOPUP_PACKS[2].credits,
   // India (INR) top-ups — same credit packs, separate INR-priced products.
-  [process.env.DODO_TOPUP_200_INR  || 'TOPUP_UNSET4']: 40,
-  [process.env.DODO_TOPUP_600_INR  || 'TOPUP_UNSET5']: 100,
-  [process.env.DODO_TOPUP_2000_INR || 'TOPUP_UNSET6']: 200,
+  [process.env.DODO_TOPUP_200_INR  || 'TOPUP_UNSET4']: TOPUP_PACKS[0].credits,
+  [process.env.DODO_TOPUP_600_INR  || 'TOPUP_UNSET5']: TOPUP_PACKS[1].credits,
+  [process.env.DODO_TOPUP_2000_INR || 'TOPUP_UNSET6']: TOPUP_PACKS[2].credits,
 }
 
 // Plan config, shared by the USD and INR products (same tier, same credits —
 // only the charge currency differs). Spark is the India-only entry tier.
 type PlanConfig = { credits: number; dailyCredits: number; plan: string; label: string }
-const SPARK:   PlanConfig = { credits: 50,    dailyCredits: 2,   plan: 'spark',   label: 'Spark'   }
-const STARTER: PlanConfig = { credits: 150,   dailyCredits: 6,   plan: 'starter', label: 'Starter' }
-const BUILDER: PlanConfig = { credits: 500,   dailyCredits: 20,  plan: 'builder', label: 'Builder' }
-const PRO:     PlanConfig = { credits: 1500,  dailyCredits: 60,  plan: 'pro',     label: 'Pro'     }
-const GROWTH:  PlanConfig = { credits: 4000,  dailyCredits: 160, plan: 'growth',  label: 'Growth'  }
-const SCALE:   PlanConfig = { credits: 10000, dailyCredits: 400, plan: 'scale',   label: 'Scale'   }
+// Credits come from PLAN_FACTS (src/lib/plans.ts), the single source of truth, so the site and the grant cannot drift.
+const SPARK:   PlanConfig = { credits: PLAN_FACTS.spark.credits,   dailyCredits: 2,   plan: 'spark',   label: 'Spark'   }
+const STARTER: PlanConfig = { credits: PLAN_FACTS.starter.credits, dailyCredits: 6,   plan: 'starter', label: 'Starter' }
+const BUILDER: PlanConfig = { credits: PLAN_FACTS.builder.credits, dailyCredits: 20,  plan: 'builder', label: 'Builder' }
+const PRO:     PlanConfig = { credits: PLAN_FACTS.pro.credits,     dailyCredits: 60,  plan: 'pro',     label: 'Pro'     }
+const GROWTH:  PlanConfig = { credits: LARGE_PLAN_CREDITS.growth, dailyCredits: 160, plan: 'growth',  label: 'Growth'  }
+const SCALE:   PlanConfig = { credits: LARGE_PLAN_CREDITS.scale,  dailyCredits: 400, plan: 'scale',   label: 'Scale'   }
 
 // Keyed by Dodo product ID env var. INR product IDs map to the SAME config, so
 // a rupee checkout grants credits/plan identically — without these the payment

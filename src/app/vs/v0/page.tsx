@@ -1,12 +1,13 @@
 import type { Metadata } from 'next'
 import { VsPageTemplate } from '@/components/seo/VsPageTemplate'
 import { localeAlternates } from '@/lib/i18n/hreflang'
+import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
 export const metadata: Metadata = {
-  title: 'WyberAi vs v0 by Vercel (2026) — Full-App Builder vs UI Generator',
-  description: 'v0 generates UI components. WyberAi generates full-stack web + mobile apps with self-healing builds and 27 integrations. Honest comparison verified June 2026.',
+  title: 'WyberAi vs v0 (2026): full-app builder vs UI tool',
+  description: 'v0 generates UI components. WyberAi generates full-stack web and mobile apps with self-healing builds and integrations. Last reviewed June 2026.',
   alternates: { canonical: 'https://wyberai.com/vs/v0', languages: localeAlternates('/vs/v0') },
-  openGraph: { title: 'WyberAi vs v0 by Vercel (2026)', description: 'Full-stack app builder vs UI component generator. Verified June 2026.', url: 'https://wyberai.com/vs/v0' },
+  openGraph: { images: DEFAULT_OG_IMAGES, title: 'WyberAi vs v0 by Vercel (2026)', description: 'Full-stack app builder vs UI component generator. Last reviewed June 2026.', url: 'https://wyberai.com/vs/v0' },
 }
 
 const ROWS = [
@@ -17,14 +18,14 @@ const ROWS = [
   { feature: 'Authentication',           wyber: '✓ Built-in',             other: '✗ Manual integration',  winner: 'wyber' as const },
   { feature: 'Mobile app builder',       wyber: '✓ React Native',         other: '✗',                     winner: 'wyber' as const },
   { feature: 'Self-healing builds',       wyber: '✓ Auto-fixes errors',    other: '✗',                     winner: 'wyber' as const },
-  { feature: '27 integrations',          wyber: '✓ Built-in',             other: '✗',                     winner: 'wyber' as const },
+  { feature: '68 connectors',          wyber: '✓ Built-in',             other: '✗',                     winner: 'wyber' as const },
   { feature: 'One-click deploy',         wyber: '✓ Vercel',               other: '✓ Vercel',              winner: 'tie'   as const },
   { feature: 'GitHub sync',             wyber: '✓',                       other: '✓',                     winner: 'tie'   as const },
   { feature: 'Design system quality',    wyber: 'Good',                   other: '✓ Excellent',           winner: 'other' as const },
   { feature: 'Figma import',             wyber: '✓ Built-in',            other: '✓',                     winner: 'other' as const },
   { feature: 'Code generation',     wyber: 'Always fresh AI code',         other: 'Component library',     winner: 'wyber' as const },
   { feature: 'Non-technical users',      wyber: '✓ Guided',               other: 'Developer-focused',     winner: 'wyber' as const },
-  { feature: 'Free tier',                wyber: '30 credits/month',       other: 'Limited free',          winner: 'tie'   as const },
+  { feature: 'Free tier',                wyber: '30 free credits on signup',       other: 'Limited free',          winner: 'tie'   as const },
   { feature: 'Live database security scan', wyber: '✓ Probes RLS with anon key', other: '✗', winner: 'wyber' as const },
   { feature: 'India/APAC pricing',       wyber: '✓ INR soon',             other: 'USD only',              winner: 'wyber' as const },
 ]
@@ -58,8 +59,8 @@ export default function VsV0() {
       slug="v0"
       competitorName="v0 by Vercel"
       competitorUrl="https://v0.dev"
-      tagline="v0 by Vercel generates polished UI components. WyberAi generates complete full-stack web + mobile applications with self-healing builds and 27 integrations."
-      blurb="Honest comparison of WyberAi vs v0 by Vercel: full-stack app builder vs UI generator. Verified June 2026."
+      tagline="v0 by Vercel generates polished UI components. WyberAi generates complete full-stack web + mobile applications with self-healing builds and 68 connectors."
+      blurb="Honest comparison of WyberAi vs v0 by Vercel: full-stack app builder vs UI generator. Last reviewed June 2026."
       rows={ROWS}
       faqs={FAQS}
       pillarNote="v0 generates frontend UI components only — no backend, no mobile apps."

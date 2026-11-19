@@ -3,8 +3,18 @@ import { NextRequest, after } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getTemplateReference } from '@/lib/template-reference'
+import { buildCosts, editCost, planCost } from '@/lib/pricing-facts'
 import { MODEL_IDS, creditCost, tierAllowedForPlan, resolveBuildTier, computeOverageCharge, computeEditSettlement, resolveEditTierFromTokens, type ModelTier } from '@/lib/credits'
 import { sendCreditLowEmail, sendFirstBuildEmail } from '@/lib/email'
+import { quietenPrompt } from '@/lib/quiet-prompt'
+import { isLaunchReadyApp, floorBuildTier, WEBAPP_LAUNCH_READY_CONTRACT } from '@/lib/launch-ready'
+import { UNSLOP_WEBAPP_RULES } from '@/lib/unslop'
+import { activeMobileSdk, sdkPromptNotes } from '@/lib/mobile-sdk'
+import { UNSLOP_WEBSITE_RULES } from '@/lib/unslop-website'
+import { isLaunchReadyWebsite, floorWebsiteTier, WEBSITE_LAUNCH_READY_CONTRACT } from '@/lib/website-ready'
+import { isLaunchReadySaas, floorSaasTier, SAAS_LAUNCH_READY_CONTRACT } from '@/lib/saas-ready'
+import { isReplacementBrief } from '@/lib/byos/acceptance'
+import { isLaunchReadyMobile, floorMobileTier, MOBILE_LAUNCH_READY_CONTRACT } from '@/lib/mobile-ready'
 import { notify } from '@/lib/push'
 import { userCurrency } from '@/lib/user-currency'
 import { withCacheBreakpoint } from '@/lib/anthropic-cache'
@@ -142,6 +152,11 @@ async function streamWithRetry(params: Parameters<typeof client.messages.stream>
 // Use central model map — single source of truth
 const MODELS = MODEL_IDS
 
+// The credit costs the assistant quotes, read from the same tables the billing code uses (src/lib/pricing-facts.ts).
+const GEN_BUILD_RANGE = `${buildCosts().small}–${buildCosts().xl}`
+const GEN_EDIT = editCost()
+const GEN_PLAN = planCost()
+
 const WYBER_FEATURES = `
 ABOUT WyberAi — your knowledge base:
 
@@ -165,18 +180,18 @@ DEPLOYMENT & EXPORT:
 - Free hosting: every published app is live at wyberai.com/app/your-app (custom domains supported)
 
 CREDITS & PLANS:
-- Starter ($29/mo): 150 credits/month — all features unlocked
-- Builder ($79/mo): 500 credits/month — all features unlocked
-- Pro ($199/mo): 1,500 credits/month — all features unlocked
-- Growth ($399/mo): 4,000 credits/month — all features unlocked
-- Scale ($799/mo): 10,000 credits/month — all features unlocked
+- Starter ($29/mo): 450 credits/month — all features unlocked
+- Builder ($79/mo): 1,500 credits/month — all features unlocked
+- Pro ($199/mo): 4,500 credits/month — all features unlocked
+- Growth ($399/mo): 12,000 credits/month — all features unlocked
+- Scale ($799/mo): 30,000 credits/month — all features unlocked
 - No employee caps, no agent limits, no feature gates — every plan unlocks ALL features
 - Prebuilt templates: 0 credits always
-- Web/mobile app build: 15–130 credits depending on size (exact cost always shown before generation) | App edit: 2 credits | Build plan: 5 credits
+- Web/mobile app build: ${GEN_BUILD_RANGE} credits depending on size (exact cost always shown before generation) | App edit: about ${GEN_EDIT} credits | Build plan: ${GEN_PLAN} credits
 - AI Employee run: 5 credits | Agent run: 5 credits | Workflow run: 2 credits
 - GTM campaign action: 3 credits | Lead enrichment: 1 credit per contact | Image: 3 credits
 - Always free: templates, self-healing, export, deploy, GitHub push
-- Credits never expire, top-ups never expire
+- Unused plan credits roll over while the subscription is active; top-ups never expire
 - Credit estimate shown before every generation — no surprises
 
 vs COMPETITORS:
@@ -200,7 +215,7 @@ You are the AI engine inside WyberAi Mobile — a React Native + Expo app builde
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 TECH STACK — MANDATORY
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-- React Native with Expo SDK 54 + TypeScript
+- React Native with Expo SDK ${activeMobileSdk()} + TypeScript
 - Navigation: @react-navigation/native + @react-navigation/stack or @react-navigation/bottom-tabs
 - Peer deps (REQUIRED): react-native-screens, react-native-safe-area-context, react-native-gesture-handler — wrap root with GestureHandlerRootView
 - Styling: StyleSheet.create() — NO Tailwind, NO web CSS
@@ -481,6 +496,16 @@ TOAST / ALERT MESSAGES: specific over generic.
 SOCIAL PROOF / RATINGS SCREENS: if the app shows a review count, star rating, or "Trusted by N users" line, that number must come from the user's own prompt — never invent one. If nothing was supplied, skip the stat entirely rather than guess a plausible-looking number.
 
 COPY — AVOID AI-TELLS (MANDATORY): banned words — leverage, seamless, foster, empower, delve, streamline, robust, cutting-edge, paradigm shift, game-changer, elevate, supercharge, harness, unlock, revolutionize. Banned patterns — binary contrasts ("It's not X, it's Y"), colon-reveal drama ("The best part: it just works"), weasel attribution ("studies show"). These apply to onboarding/marketing copy, not to realistic in-app mock data.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIRST-BUILD COMPLETENESS — MOBILE (MANDATORY)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FOUR STATES ON EVERY DATA SCREEN: loading (skeleton rows, not a bare spinner), empty (invitation + action, see COPY QUALITY), error (what went wrong in plain words + a "Try again" button that really re-runs the load), populated. Keep the state in real useState so each one is reachable (e.g. pull-to-refresh flips loading → populated; Try again flips error → loading).
+DESTRUCTIVE ACTIONS: delete, cancel and sign-out use Alert.alert naming the specific consequence ("Delete 'Q3 pipeline'? This removes its 14 deals.") — never a bare "Are you sure?". Reversible removals use a toast with Undo instead.
+BRAND MOMENT: the first screen (splash or onboarding) shows the app's own logo mark — built from Views in the theme palette, from its initials or a domain icon, never a default placeholder — plus the value promise. Reuse the same mark in the Home header and on Profile.
+APP IDENTITY: when you write app.json (or the comment block for it), set name, slug, icon, splash and adaptive-icon paths and a primaryColor from the theme. An app without an identity block cannot be submitted.
+SETTINGS + ACCOUNT: Profile includes Settings with notification toggles, an About row (version) and, when the app has accounts, a "Delete my account" action behind a confirmation — the app stores require in-app account deletion.
+ACCESSIBILITY: every Pressable has accessibilityRole and accessibilityLabel; touch targets are at least 44x44; text containers have no fixed heights so larger system text never clips.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 IN-APP PREVIEW — CRITICAL RULES
@@ -793,6 +818,13 @@ After ALL files, output ONE line starting with "Built:" and nothing else — no 
 `
 }
 
+// Launch-ready builds get the quiet-craft override first and the effect-only website sections cut (see src/lib/quiet-prompt.ts).
+function quietBase(kind: 'website' | 'saas' | 'webapp', base: string): string {
+  const on = kind === 'website' ? isLaunchReadyWebsite('website') : kind === 'saas' ? isLaunchReadySaas('saas') : isLaunchReadyApp('web-app')
+  if (!on) return base
+  try { return quietenPrompt(base, kind).text } catch { return base }
+}
+
 function buildWebsiteSystemPrompt(): string {
   return `
 You are the AI engine inside WyberAi Website Builder — a world-class marketing site and landing page builder that produces sites looking like they shipped from a $500k design agency in August 2026. Not templates, not Bootstrap, not generic Tailwind. You are powered by Claude and built by SignalPulse Technologies.
@@ -972,7 +1004,7 @@ const PERSONAS: { key: Persona; label: string }[] = [
 const PERSONA_COPY: Record<Persona, { subheadline: string; featureHook: string; ctaText: string }> = {
   freelancer: { subheadline: 'Invoice clients in seconds, get paid faster.', featureHook: 'Made for solo operators.', ctaText: 'Start free — no card' },
   agency: { subheadline: 'Manage 10+ clients without losing track.', featureHook: 'Built for teams of 2–15.', ctaText: 'Start agency trial' },
-  enterprise: { subheadline: 'SSO, audit logs, and custom contracts.', featureHook: 'SOC 2 Type II certified.', ctaText: 'Talk to sales' },
+  enterprise: { subheadline: 'Built for larger teams.', featureHook: 'Talk to us about your setup.', ctaText: 'Talk to sales' },
 }
 // In App.tsx:
 const [persona, setPersona] = useState<Persona>(() => (localStorage.getItem('persona') as Persona) || 'freelancer')
@@ -1317,7 +1349,7 @@ QUALITY CHECKLIST (run before "Done")
 □ Responsive at 375px?
 □ Hover + focus-visible on every interactive element?
 □ Loading="lazy" on below-fold images?
-□ Single page only — no react-router-dom, no per-page routing (multi-page mode is disabled; extra requested "pages" are anchor-scrolled sections instead)?
+□ Page structure matches the request — single page by default; if the user asked for distinct pages (About, Contact, blog), every one is built via MULTI-PAGE MODE (useHashRoute, "#/..." links, no react-router-dom, document.title per page)?
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 MULTI-MILLION DOLLAR WEBSITE MANDATES
@@ -1329,10 +1361,17 @@ RESULTS-FIRST SOCIAL PROOF:
 Every testimonial must follow the formula: RESULT → HOW → WHO. "We cut reporting time by 80% using [Product]'s automated exports. — Sarah Chen, COO at Meridian Labs." NOT "This product is amazing! — John D." Include a stat callout band with 3-4 SPECIFIC numbers (only use numbers the user gave you; if they gave none, use a capability stat like "builds in 60 seconds" not "50,000+ users").
 
 TRUST SIGNALS (mandatory on every commercial site):
-Alongside or below the hero: a small band of trust signals. Choose 2-3 that fit: "No credit card required", "SOC 2 Type II certified", "GDPR compliant", "Cancel anytime", "24/7 support", "30-day money-back guarantee", "Used by teams at [category]". Never invent specific company names or logos unless the user provided them.
+Alongside or below the hero: a small band of 2-3 trust signals, using ONLY facts the owner gave you or that the site itself makes true (for example the owner's own opening hours, city, years in business, a guarantee or policy they stated, "No credit card required" or "Cancel anytime" for a product that really works that way). NEVER state a certification, audit, legal-compliance status, support-hours promise, guarantee, customer count or named customer unless the owner stated it: no "SOC 2", "ISO 27001", "GDPR compliant", "HIPAA", "24/7 support", "money-back guarantee" or "Used by teams at" of your own invention. If the owner gave no facts, show no trust band and let the real content carry the page.
 
 FEATURE COMPLETENESS — ZERO TOLERANCE:
 Every section/page the user explicitly named in their prompt MUST be built and linked. "I need a pricing page, about page, and contact form" → all three must exist. Never skip a user-requested section.
+
+FIRST-BUILD COMPLETENESS — WEBSITE (MANDATORY):
+BRAND MARK: design ONE wordmark or logomark from the brand name (CSS/SVG in the palette — never an emoji, never a stock icon) and reuse it in the Navbar and the Footer. Build the favicon from the same SVG as a data URI: <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,..."> in index.html.
+FOOTER BASICS: every commercial site's footer links to Privacy and Terms (plus Cookies when analytics or tracking is mentioned). Build them as real pages in multi-page mode, or as clearly labelled anchored sections otherwise, with short plain-language starter text and NO note to the owner on the page: a line such as "this starter text should be reviewed" is addressed to the owner, not the visitor, so put that reminder in a code comment and in the build summary only. Never copy a real company's policy and never claim legal compliance.
+FORMS (contact, newsletter, quote, booking): visible labels, inline validation messages in plain words, a disabled-while-sending state, a success state and an error state with a working retry. With no backend, follow the CONTACT PAGE rule — never claim a message was sent.
+UNKNOWN ROUTES: in multi-page mode an unknown hash route renders a friendly not-found page with a link home — never a blank screen.
+EMPTY CONTENT: a blog, gallery or listings section with no items shows an invitation state with a next step, never an empty grid.
 
 PROGRESS: [progress: Planning [Site Name]], [progress: Design pass: archetype + structure + palette], [progress: Building [filename]], [progress: Done]
 
@@ -2092,6 +2131,14 @@ In the sidebar (usually near the bottom, above user avatar), add a "What's new" 
 UPGRADE PROMPTS (mandatory for free-tier features):
 When a free user hits a limit (e.g. "Only Pro users can export more than 10 rows"), show a specific UpgradeModal: current limit, what Pro unlocks, pricing (placeholder numbers: "Pro: $29/mo"), a primary CTA. Never show a vague "upgrade to access" — always name the specific cap and the specific unlock.
 
+FIRST-BUILD COMPLETENESS — SAAS (MANDATORY):
+FOUR STATES ON EVERY DATA SCREEN: skeleton loading, empty (specific invitation + action), error (plain-words cause + a Retry that really re-runs the load), populated. Make the error state reachable at least once in the product (e.g. a failed integration connect or API-key create) so it is real behaviour, not a dead code path.
+NOT-FOUND + ERROR BOUNDARY: useHashRoute falls back to a NotFound page (link back to Dashboard) for unknown routes. Shell wraps the page area in a small class-component ErrorBoundary that shows a recoverable error card instead of a white screen. It is a class, NOT a context — CONTEXT DISCIPLINE still holds.
+DESTRUCTIVE ACTIONS: delete workspace, remove member and revoke API key use ConfirmDialog naming the exact object and consequence; deleting a workspace also requires typing its name. Reversible removals (a row, a filter) use a toast with Undo instead of a dialog.
+ROLE-AWARE UI: drive every write control from useOrg() — viewers see disabled controls with a tooltip saying why; only owners and admins see the danger zone and billing.
+BRAND MARK: ONE logo mark component built from the product name, reused in Sidebar, every auth screen and the favicon (<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,..."> in index.html). Never the skeleton's placeholder icon.
+LEGAL LINKS: the auth screens' footer links to Terms and Privacy; each exists as a simple page with short starter text and no owner-facing note on the page (put the review reminder in a code comment and the build summary). Never claim compliance.
+
 FEATURE COMPLETENESS — ZERO TOLERANCE:
 Every feature the user explicitly named in their prompt MUST be built as a complete, working implementation. Never ship a placeholder page for a user-requested feature. If the user asked for "team invites" → the invite flow must exist. If they asked for "analytics" → the analytics page must show real charts.
 
@@ -2510,7 +2557,7 @@ CRAFT — what makes it look senior, not AI-generated:
 - Real depth: thin borders (border-border) + soft shadows, rounded via the --radius scale. Avoid heavy boxy outlines.
 - Always include: empty states, loading skeletons (shimmer, not animate-pulse — see VISUAL POLISH below), and toasts for user actions.
 - IMAGERY — REAL images via platform directives (this is what separates 2026 design from an image-less "AI page"):
-  Write <img src="{{wyber-image: <art-directed prompt> | <ratio>}}" alt="..." className="..." loading="lazy" /> wherever real imagery elevates the design. The preview shows a tasteful brand-gradient placeholder; AT PUBLISH the platform generates a REAL image and persists it permanently. Ratios: 16:9 (wide/hero), 1:1 (square), 9:16 (tall).
+  Write <img src="{{wyber-image: <art-directed prompt> | <ratio>}}" alt="..." className="..." loading="lazy" /> wherever real imagery elevates the design. The preview shows a tasteful brand-gradient placeholder; AT PUBLISH the platform generates a REAL image and persists it permanently. Ratios: 16:9 (wide/hero), 1:1 (square), 9:16 (tall). The token must be a LITERAL string written at each <img> (or in a data array as a plain string). NEVER build it with a template literal or props inside a helper component such as <Photo prompt=... /> (it is never resolved and the image breaks).
   ART-DIRECT every prompt like a creative director — subject + medium/style + light + palette mood (match your tokens) + composition. Not "coffee" but "macro editorial photograph of freshly roasted coffee beans tumbling from a copper scoop, warm amber side-light, deep espresso-brown backdrop, shallow depth of field | 16:9".
   WHERE: hero visual (image, or a GlassPanel product mock for SaaS), one image per major content section (story/about, feature deep-dives), testimonial/team contexts. Style with rounded corners + border-border + soft shadow; layer text over images only with a gradient scrim for contrast.
   HERO IMAGE IS NON-NEGOTIABLE: every hero section MUST include exactly one {{wyber-image}} directive that visually complements the hero headline/copy — art-direct its prompt from the hero's actual subject and copy. A hero with only a CSS gradient/solid background is a build defect, not a stylistic choice — the only exception is a design explicitly requested as typographic/brutalist with no imagery anywhere on the page.
@@ -2811,7 +2858,7 @@ You must NOT generate: the six generic infrastructure files above.
 
 ━━━ RULE #1 — COMPLETENESS ━━━
 Every import must have a corresponding file. Every file in [plan:] must be generated.
-For non-critical components that would exceed the output budget, output a minimal stub — never skip:
+Only for genuinely secondary components that would exceed the output budget, output a minimal stub — never skip. A stub is NEVER acceptable for a feature the user named in their prompt or for any section in the sidebar:
 <file path="src/components/Settings.tsx">
 import React from 'react'
 export default function Settings() {
@@ -2836,6 +2883,12 @@ ALL useState in App.tsx. Pass data as props, handlers as callbacks. Max 2 levels
 App.tsx contains: state declarations + the main component tree ONLY.
 Utility functions, constants, helpers (formatters, calculators, color maps, lookup tables) → src/lib/utils.ts.
 An App.tsx that accumulates utility exports grows past the platform's context window; the platform truncates it on the next edit turn, the model rewrites from a partial view, drops the utilities, and every screen that imported them breaks with "No matching export". Keep App.tsx under 200 lines.
+
+━━━ RULE #4b — EVERY SCREEN HAS FOUR STATES ━━━
+Every screen that shows a list, table, chart or fetched data renders all four: loading (skeleton, not a bare spinner), empty (kit <EmptyState> with a specific invitation + primary action), error (plain-words cause + a Retry that really re-runs the load), populated. Keep the state in App.tsx with useState so each one is reachable (e.g. Retry flips error → loading → populated). An unknown or stale section id in the state-based router renders a friendly "page not found" with a button back to the first section — never a blank screen.
+
+━━━ RULE #4c — FORMS AND DESTRUCTIVE ACTIONS ━━━
+Forms: visible labels, inline validation in plain words, submit disabled while invalid or saving, a success toast naming exactly what was saved. Destructive actions (delete, clear, reset): a confirm dialog naming the exact item and the consequence, or a toast with Undo when the action is reversible. Never a bare "Are you sure?".
 
 ━━━ RULE #5 — DATA VISUALIZATION SYSTEM ━━━
 
@@ -3837,6 +3890,9 @@ export async function POST(req: NextRequest) {
   let deductedCost = 0
   let creditsSettled = false
   let refundUserId = ''
+  // Which pass and project a refund belongs to, appended to the ledger reason so a refund can be traced afterwards (18 Nov 2026:
+  // refunds were showing next to builds that finished, and the ledger row said only "refund:empty-generation").
+  let refundContext = ''
   // Real token usage across every model call this request makes (one or more
   // — the tool-use/sequential loops can run several iterations, claude-
   // parallel dispatches several pages). Purely for the generation_usage_log
@@ -3849,7 +3905,8 @@ export async function POST(req: NextRequest) {
   const settleRefund = async (reason: string) => {
     if (creditsSettled || deductedCost <= 0) return
     creditsSettled = true
-    await refundCredits(refundUserId, deductedCost, reason)
+    console.warn(`[refund] ${reason}${refundContext} amount=${deductedCost} elapsedMs=${Date.now() - requestStartTime} outTokens=${totalOutputTokens}`)
+    await refundCredits(refundUserId, deductedCost, `${reason}${refundContext}`)
   }
   try {
     const body = await req.json()
@@ -3938,6 +3995,25 @@ export async function POST(req: NextRequest) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
     }
 
+    // ── Project ownership ─────────────────────────────────────────────
+    // `projectId` comes straight from the request body, and everything below reads and writes that project with the
+    // service-role client (project memory and knowledge, the Supabase connection, rescued files, naming). Without this
+    // check any signed-in user who learned another tenant's project id (project ids appear in public preview links)
+    // could pull that project's context into a prompt or write files into it. The caller must be able to EDIT the
+    // project: its owner, a workspace member, or an editor collaborator. An id that matches no project passes through
+    // unchanged, so nothing that worked before stops working. Support-mode admins keep their access.
+    if (typeof projectId === 'string' && projectId) {
+      const { isAdminEmail } = await import('@/lib/admin')
+      const email = (user as { email?: string | null }).email
+      if (!isAdminEmail(email)) {
+        const { createServiceClient: svc } = await import('@/lib/supabase/server')
+        const { mayActOnProject } = await import('@/lib/project-access')
+        if (!(await mayActOnProject(svc(), user.id, projectId))) {
+          return new Response(JSON.stringify({ error: 'Project not found' }), { status: 404 })
+        }
+      }
+    }
+
     // ── Free-lane abuse guard ─────────────────────────────────────────
     // `selfHeal` and the (legacy, now client-unused) 'plan' stage skip billing
     // entirely, and both flags come straight from the request body — so any
@@ -3962,6 +4038,20 @@ export async function POST(req: NextRequest) {
       if ((count ?? 0) >= FREE_PASSES_PER_HOUR) {
         return new Response(JSON.stringify({
           error: 'Auto-fix limit reached for this hour — please try again in a little while.',
+        }), { status: 429 })
+      }
+      // Daily ceiling on top of the hourly one: 60 an hour allowed up to 1,440 free (unbilled, real-cost) passes a day. The 16 Nov
+      // Anthropic balance scare came from free passes plus builds; a day of heavy building is ~100, so 150 never touches a real user.
+      const FREE_PASSES_PER_DAY = 150
+      const { count: dayCount } = await guardAdmin
+        .from('credit_usage')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('reason', 'free-pass')
+        .gte('created_at', new Date(Date.now() - 24 * 3600_000).toISOString())
+      if ((dayCount ?? 0) >= FREE_PASSES_PER_DAY) {
+        return new Response(JSON.stringify({
+          error: 'Auto-fix limit reached for today — your next paid edit or build still works.',
         }), { status: 429 })
       }
       await guardAdmin.from('credit_usage').insert({
@@ -4127,12 +4217,21 @@ export async function POST(req: NextRequest) {
     const trustedTotalPlannedFiles = stage === 'scaffold' && typeof totalPlannedFiles === 'number' && Number.isFinite(totalPlannedFiles)
       ? Math.max(totalPlannedFiles, Array.isArray(stageFiles) ? stageFiles.length : 0)
       : undefined
-    const buildTier = isNewBuild && (stage === 'full' || stage === 'scaffold')
+    const rawBuildTier = isNewBuild && (stage === 'full' || stage === 'scaffold')
       ? resolveBuildTier({
           totalPlannedFiles: trustedTotalPlannedFiles,
           isComplex: newBuildComplexity,
         })
       : undefined
+    // Launch-ready web apps (flag off by default) are always priced as at least a large build, at the fast-tier
+    // price the editor shows beforehand, so the number shown and the number charged are the same table.
+    const launchReadyBuild = isNewBuild && (isLaunchReadyApp(projectType) || isLaunchReadyWebsite(projectType) || isLaunchReadySaas(projectType) || isLaunchReadyMobile(projectType))
+    const buildTier = launchReadyBuild && rawBuildTier
+      ? (isLaunchReadyWebsite(projectType) ? floorWebsiteTier(rawBuildTier)
+        : isLaunchReadySaas(projectType) ? floorSaasTier(rawBuildTier)
+        : isLaunchReadyMobile(projectType) ? floorMobileTier(rawBuildTier)
+        : floorBuildTier(rawBuildTier))
+      : rawBuildTier
     // Pricing is decoupled from which model literally executes the build.
     // resolveModelTier's automatic routing always resolves to 'fast' (Sonnet)
     // now — generation never auto-escalates to Opus (real Claude-API cost is
@@ -4257,9 +4356,9 @@ export async function POST(req: NextRequest) {
           try {
             const { runWyberCode, classifyWyberCodeFailure } = await import('@/lib/model-providers/wybercode')
             const wcSystemPrompt = projectType === 'mobile' ? buildMobileSystemPrompt()
-              : projectType === 'website' ? buildWebsiteSystemPrompt()
-              : projectType === 'saas' ? buildSaasSystemPrompt()
-              : buildSystemPrompt()
+              : projectType === 'website' ? quietBase('website', buildWebsiteSystemPrompt())
+              : projectType === 'saas' ? quietBase('saas', buildSaasSystemPrompt())
+              : quietBase('webapp', buildSystemPrompt()) + (isLaunchReadyApp(projectType) ? WEBAPP_LAUNCH_READY_CONTRACT + UNSLOP_WEBAPP_RULES : '')
             const result = await runWyberCode({
               systemPrompt: wcSystemPrompt, userPrompt: prompt, fileContext, projectType, isNewBuild,
             })
@@ -4457,6 +4556,7 @@ export async function POST(req: NextRequest) {
       // Record what we took so any failure/empty path can refund it.
       deductedCost = cost
       refundUserId = user.id
+      refundContext = `|${stage}|${actionType}|p=${String(projectId || '').slice(0, 8)}`
 
       // Log usage (fire-and-forget)
       admin.from('credit_usage').insert({
@@ -4734,9 +4834,9 @@ ${code}
       if (usageLogged) return
       if (!(totalOutputTokens > 0 || totalInputTokens > 0)) return
       usageLogged = true
-      // $/MTok, checked against Anthropic's published pricing 2026-08-01
-      // (Sonnet's intro rate runs through 2026-08-31, then reverts to
-      // $3/$15 — recalibrate this table then too). gpt/wybercode don't
+      // $/MTok, checked against Anthropic's published pricing 2026-11-09
+      // (Sonnet 5's $2/$10 introductory price became the standard price; the
+      // planned rise to $3/$15 on 2026-09-01 did not happen). gpt/wybercode don't
       // bill through Anthropic; left at 0 rather than guessed.
       //
       // cacheWrite/cacheRead were MISSING entirely until now — this route
@@ -4753,7 +4853,7 @@ ${code}
       // $65.27 true). Every "real cost" number this table has ever produced
       // was wrong by roughly that multiplier.
       const RATE_PER_MTOK: Record<string, { input: number; output: number; cacheWrite: number; cacheRead: number }> = {
-        fast: { input: 2, output: 10, cacheWrite: 2.5, cacheRead: 0.2 },
+        fast: { input: 2, output: 10, cacheWrite: 2.5, cacheRead: 0.1 }, // Sonnet 5.5; cache hits are 0.05x input per Anthropic's pricing page, checked 2026-11-09
         default: { input: 5, output: 25, cacheWrite: 6.25, cacheRead: 0.5 },
         premium: { input: 5, output: 25, cacheWrite: 6.25, cacheRead: 0.5 },
         fable: { input: 10, output: 50, cacheWrite: 12.5, cacheRead: 1 },
@@ -5105,7 +5205,21 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
     // BUILD must not reuse one house style. For new web builds, nudge the model
     // toward a distinct aesthetic direction (palette + type + layout). It is a
     // STARTING POINT only and yields to any explicit user style/brand/colors.
-    if (!hasExisting && projectType === 'mobile' && stage !== 'plan') {
+    // MOBILE DESIGN DIRECTIONS (same flag as web, default OFF): a direction dealt by fit (src/lib/mobile-directions.ts)
+    // replaces the random DESIGN SEED and LAYOUT SEED below, because it carries exact theme.ts values and structure.
+    let mobileDirectionApplied = false
+    if (isNewBuild && (stage === 'full' || stage === 'scaffold') && projectType === 'mobile' && (await import('@/lib/direction-flag')).directionsEnabled()) {
+      try {
+        const { renderMobileBrief, pickMobileDirectionSmart } = await import('@/lib/mobile-directions')
+        const { direction, source } = await pickMobileDirectionSmart(prompt, { id: typeof paletteId === 'string' ? paletteId : null })
+        perRequestParts.push(renderMobileBrief(direction))
+        mobileDirectionApplied = true
+        console.log(`[design-direction] ${direction.id} via ${source} projectType=mobile`)
+      } catch (err) {
+        console.warn('[design-direction] mobile failed, using random seeds:', err)
+      }
+    }
+    if (isNewBuild && (stage === 'full' || stage === 'scaffold') && projectType === 'mobile' && !mobileDirectionApplied) {
       const MOBILE_DIRECTIONS = [
         "Cash App-bold: near-black base, ONE vivid accent (lime/green or electric blue), huge numbers, minimal chrome.",
         "Headspace-calm: warm light base (cream/off-white), soft rounded cards, a gentle accent (coral/peach or teal), lots of breathing room.",
@@ -5137,7 +5251,12 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
       const mobileLayoutSeed = MOBILE_LAYOUT_SEEDS[Math.floor(Math.random() * MOBILE_LAYOUT_SEEDS.length)]
       perRequestParts.push(`\n\n━━━ LAYOUT SEED (fresh build — structural freshness) ━━━\nUnless the user asked for a specific navigation or home-screen layout, take THIS as your structural starting point: ${mobileLayoutSeed}`)
     }
-    if (!hasExisting && projectType !== 'mobile' && stage !== 'plan') {
+    // isNewBuild, not !hasExisting: every new project is auto-seeded with a starter scaffold, so fileContext is never small and the length
+    // heuristic (hasExisting) is true on the very first message. Guarding the design layer with it meant the palette brief, the design
+    // directions and the layout seeds never ran on a first web build (found 18 Nov 2026 from production logs: no [design-direction] line).
+    // Only the passes that set the design (a one-shot build or the scaffold), so a staged build's fill and wire passes do not re-deal
+    // a different random palette.
+    if (isNewBuild && (stage === 'full' || stage === 'scaffold') && projectType !== 'mobile') {
       // Inject a complete, hand-tuned, domain-matched HSL token palette as a
       // concrete DESIGN BRIEF (not vague adjectives). Guarantees every fresh
       // build starts from a beautiful, accessible, distinct palette; freshness
@@ -5146,8 +5265,30 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
       const { pickPalette, getPaletteById, renderDesignBrief } = await import('@/lib/design-palettes')
       // An explicit paletteId (user picked a direction in Plan Mode / theme UI)
       // wins; unknown or absent ids fall back to the prompt-matched random pick.
-      const palette = (typeof paletteId === 'string' ? getPaletteById(paletteId) : undefined) ?? pickPalette(prompt)
-      perRequestParts.push(renderDesignBrief(palette))
+      // DESIGN DIRECTIONS (flag, default OFF): deal a researched direction (docs/web-design-direction-research.md)
+      // instead of keyword-picking a palette. The direction brief carries its own tokens, fonts, hero medium,
+      // motion and hard rules, so the generic layout seed below (which hard-codes aurora/glow/spotlight heroes)
+      // is skipped when one applies. An explicit paletteId that is a direction id (Plan Mode) wins.
+      let directionApplied = false
+      if ((await import('@/lib/direction-flag')).directionsEnabled()) {
+        try {
+          const { renderDirectionBrief } = await import('@/lib/direction-brief')
+          const { pickDirectionSmart } = await import('@/lib/direction-classifier')
+          // An explicit id (Plan Mode) wins; otherwise a Haiku 5.5 classifier picks from the direction catalog
+          // (92% accepted on unseen prompts vs 73% for keywords); any failure/timeout falls back to the keyword deal.
+          const { direction, source } = await pickDirectionSmart(prompt, { id: typeof paletteId === 'string' ? paletteId : null, projectType })
+          perRequestParts.push(renderDirectionBrief(direction))
+          directionApplied = true
+          console.log(`[design-direction] ${direction.id} via ${source} projectType=${projectType ?? 'unknown'}`)
+        } catch (err) {
+          // Never let the optional layer break a build: fall back to the existing palette brief.
+          console.warn('[design-direction] failed, using palette brief:', err)
+        }
+      }
+      if (!directionApplied) {
+        const palette = (typeof paletteId === 'string' ? getPaletteById(paletteId) : undefined) ?? pickPalette(prompt)
+        perRequestParts.push(renderDesignBrief(palette))
+      }
 
       // LAYOUT & MOTION SEED — the palette brief handles color freshness; this
       // handles STRUCTURAL freshness so two builds with similar palettes still
@@ -5171,8 +5312,10 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
         'Website: asymmetric editorial grid — 12-col grid used unevenly (7/5, 8/4 splits), BentoGrid with one 2x2 MediaFrame cell, pull-quote TestimonialCard offset from center, footnote-style MonoLabels. Dashboard: mixed-density bento widgets. Motion: staggered grid entrances, nothing else.',
         'Website: brutalist statement — zero radius, thick borders, oversized ALL-CAPS display hero, accent-block sections, Marquee ticker between sections, raw DataRow lists. Dashboard: spreadsheet-honest tables, visible grid. Motion: instant hovers, one Marquee, NO scroll fades.',
       ]
-      const layoutSeed = LAYOUT_SEEDS[Math.floor(Math.random() * LAYOUT_SEEDS.length)]
-      perRequestParts.push(`\n\n━━━ LAYOUT & MOTION SEED (fresh build — structural freshness) ━━━\nUnless the user asked for a specific layout, take THIS as your structural starting point: ${layoutSeed}`)
+      if (!directionApplied) {
+        const layoutSeed = LAYOUT_SEEDS[Math.floor(Math.random() * LAYOUT_SEEDS.length)]
+        perRequestParts.push(`\n\n━━━ LAYOUT & MOTION SEED (fresh build — structural freshness) ━━━\nUnless the user asked for a specific layout, take THIS as your structural starting point: ${layoutSeed}`)
+      }
     }
 
     if (stage === 'plan') {
@@ -5250,13 +5393,18 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
       stageMaxTokens = planIsComplex ? 6000 : 2000
     } else {
       const basePrompt = projectType === 'mobile'
-        ? buildMobileSystemPrompt()
+        ? buildMobileSystemPrompt() + sdkPromptNotes()
         : projectType === 'website'
-        ? buildWebsiteSystemPrompt()
+        ? quietBase('website', buildWebsiteSystemPrompt())
         : projectType === 'saas'
-        ? buildSaasSystemPrompt()
-        : buildSystemPrompt()
+        ? quietBase('saas', buildSaasSystemPrompt())
+        : quietBase('webapp', buildSystemPrompt())
       staticSystemPrompt = basePrompt
+        + (isLaunchReadyApp(projectType) ? WEBAPP_LAUNCH_READY_CONTRACT + UNSLOP_WEBAPP_RULES : '')
+        + (isLaunchReadyWebsite(projectType) ? WEBSITE_LAUNCH_READY_CONTRACT + UNSLOP_WEBSITE_RULES : '')
+        // A Replace-your-SaaS build is the owner's own tool, not a product sold to customers: no plans, checkout or webhook contract.
+        + (isLaunchReadySaas(projectType) ? (isReplacementBrief(prompt) ? UNSLOP_WEBAPP_RULES : SAAS_LAUNCH_READY_CONTRACT + UNSLOP_WEBAPP_RULES) : '')
+        + (isLaunchReadyMobile(projectType) ? MOBILE_LAUNCH_READY_CONTRACT : '')
         + (projectType === 'mobile' ? '' : wyberDNA)
         + (useToolUse ? toolUseOutputRule : outputRule)
       // Both staged-pass prompts below override rule 9's "end with a question"
@@ -5478,8 +5626,134 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
       // got cut off mid-generation. HIGH-complexity one-shot builds go
       // straight to the sequential loop below instead, which has real
       // max_tokens continuation and no fixed page ceiling.
-      let handledByParallel = false
-      if (useToolUse && isNewBuild && newBuildComplexity !== true && process.env.CLAUDE_PARALLEL_BUILD !== 'off') {
+      // ── Spec-driven website build (flag WEBSITE_SPEC_BUILD=on, default OFF) ─────────────────────────────────────
+      // Understand the intent, plan the design and sections in code, have the model write only the copy slots, and render the site
+      // from the Wyber UI kit (src/lib/website-spec). ANY failure (plan, copy validation, timeout) falls through to the existing
+      // free-form build below, so this can only add a path, never remove one.
+      let handledBySpec = false
+      if (isNewBuild && stage === 'full' && !selfHeal && projectType === 'website' && isLaunchReadyWebsite(projectType) && (await import('@/lib/website-spec/flag')).websiteSpecEnabled()) {
+        try {
+          const { generateWebsite } = await import('@/lib/website-spec')
+          const SPEC_TIMEOUT_MS = Number(process.env.WEBSITE_SPEC_TIMEOUT_MS) || 220000
+          let specTimer: ReturnType<typeof setTimeout> | undefined
+          const specResult = await Promise.race([
+            generateWebsite(
+              { prompt, seed: String(projectId ?? buildId ?? prompt) },
+              {
+                writeCopy: async (system, user) => {
+                  const m = await client.messages.create({ model, max_tokens: 8000, system, messages: [{ role: 'user', content: user }] })
+                  const text = m.content.map(b => (b.type === 'text' ? b.text : '')).join('')
+                  return { text, inputTokens: m.usage.input_tokens ?? 0, outputTokens: m.usage.output_tokens ?? 0 }
+                },
+              },
+            ),
+            new Promise<never>((_, reject) => { specTimer = setTimeout(() => reject(new Error(`website-spec exceeded ${SPEC_TIMEOUT_MS}ms`)), SPEC_TIMEOUT_MS) }),
+          ]).finally(() => { if (specTimer) clearTimeout(specTimer) })
+          totalInputTokens += specResult.usage.inputTokens
+          totalOutputTokens += specResult.usage.outputTokens
+          if (specResult.ok) {
+            const specText = `[progress: Planning your site (${specResult.spec.brief.intent}, ${specResult.spec.direction.name})]\n` + specResult.text
+            // Same security review every other build path gets: the rendered files go through the Sentinel rules. A blocking finding
+            // (a secret in the source, a service-role client) means this path is not used and the free-form build takes over.
+            const specFiles = parseGenerationOutput(specText).files
+            const specVetoes = specFiles.flatMap(f => reviewEmittedFile(f.path, f.content, '', { nextId: createFindingIdGenerator() })).filter(vetoEligible)
+            if (specVetoes.length) {
+              console.log(`[website-spec] security review blocked the rendered site (${specVetoes.map(v => v.ruleId).join(', ')}), falling back to the free-form build`)
+            } else {
+              generatedText = specText
+              let i = 0
+              const specChunk = 400
+              readable = new ReadableStream<Uint8Array>({
+                start(c) {
+                  emitAgent(c, { agent: 'coder', status: 'start', detail: 'rendering your site from the plan' })
+                  emitAgent(c, { agent: 'security', status: 'start', detail: 'reviewing every file as it lands' })
+                  for (const f of specFiles) sentinelReview(c, f.path, f.content)
+                },
+                pull(c) {
+                  if (i >= specText.length) {
+                    emitAgent(c, { agent: 'coder', status: 'done' })
+                    sentinelDone(c)
+                    c.close()
+                    return
+                  }
+                  c.enqueue(encoder.encode(specText.slice(i, i + specChunk)))
+                  i += specChunk
+                },
+              })
+              handledBySpec = true
+            }
+            console.log(`[website-spec] ok buildId=${buildId ?? ''} intent=${specResult.spec.brief.intent} direction=${specResult.spec.direction.id} files=${specResult.paths.length} notes=${specResult.notes.join(' | ')} output=${specResult.usage.outputTokens} elapsed_ms=${Date.now() - requestStartTime}`)
+          } else {
+            console.log(`[website-spec] falling back to the free-form build: ${specResult.reason.slice(0, 300)}`)
+          }
+        } catch (specErr) {
+          console.log('[website-spec] threw, falling back to the free-form build:', String(specErr))
+        }
+      }
+
+      // ── Spec-driven web app build (flag WEBAPP_SPEC_BUILD=on, default OFF) ───────────────────────────────────────
+      // Same recipe for web apps (src/lib/app-spec): the model writes the DOMAIN MODEL (entities, fields, sample rows, metrics) as JSON,
+      // a fixed, tested runtime renders every screen, so the launch-ready contract is met by construction. Any failure falls through.
+      if (!handledBySpec && isNewBuild && stage === 'full' && !selfHeal && projectType !== 'mobile' && projectType !== 'website' && projectType !== 'saas' && isLaunchReadyApp(projectType) && (await import('@/lib/app-spec/flag')).webappSpecEnabled()) {
+        try {
+          const { generateApp } = await import('@/lib/app-spec')
+          const APP_SPEC_TIMEOUT_MS = Number(process.env.WEBAPP_SPEC_TIMEOUT_MS) || 150000
+          let appTimer: ReturnType<typeof setTimeout> | undefined
+          const appResult = await Promise.race([
+            generateApp(
+              { prompt, seed: String(projectId ?? buildId ?? prompt) },
+              {
+                writeModel: async (system, user) => {
+                  const m = await client.messages.create({ model, max_tokens: 10000, system, messages: [{ role: 'user', content: user }] })
+                  const text = m.content.map(b => (b.type === 'text' ? b.text : '')).join('')
+                  return { text, inputTokens: m.usage.input_tokens ?? 0, outputTokens: m.usage.output_tokens ?? 0 }
+                },
+              },
+            ),
+            new Promise<never>((_, reject) => { appTimer = setTimeout(() => reject(new Error(`app-spec exceeded ${APP_SPEC_TIMEOUT_MS}ms`)), APP_SPEC_TIMEOUT_MS) }),
+          ]).finally(() => { if (appTimer) clearTimeout(appTimer) })
+          totalInputTokens += appResult.usage.inputTokens
+          totalOutputTokens += appResult.usage.outputTokens
+          if (appResult.ok) {
+            const appText = `[progress: Planning your app (${appResult.spec.brief.intent}, ${appResult.spec.direction.name})]\n` + appResult.text
+            const appFiles = parseGenerationOutput(appText).files
+            const appVetoes = appFiles.flatMap(f => reviewEmittedFile(f.path, f.content, '', { nextId: createFindingIdGenerator() })).filter(vetoEligible)
+            if (appVetoes.length) {
+              console.log(`[app-spec] security review blocked the rendered app (${appVetoes.map(v => v.ruleId).join(', ')}), falling back to the free-form build`)
+            } else {
+              generatedText = appText
+              let i = 0
+              const appChunk = 400
+              readable = new ReadableStream<Uint8Array>({
+                start(c) {
+                  emitAgent(c, { agent: 'coder', status: 'start', detail: 'rendering your app from the plan' })
+                  emitAgent(c, { agent: 'security', status: 'start', detail: 'reviewing every file as it lands' })
+                  for (const f of appFiles) sentinelReview(c, f.path, f.content)
+                },
+                pull(c) {
+                  if (i >= appText.length) {
+                    emitAgent(c, { agent: 'coder', status: 'done' })
+                    sentinelDone(c)
+                    c.close()
+                    return
+                  }
+                  c.enqueue(encoder.encode(appText.slice(i, i + appChunk)))
+                  i += appChunk
+                },
+              })
+              handledBySpec = true
+              console.log(`[app-spec] ok buildId=${buildId ?? ''} intent=${appResult.spec.brief.intent} direction=${appResult.spec.direction.id} entities=${appResult.model.entities.length} files=${appResult.paths.length} output=${appResult.usage.outputTokens} elapsed_ms=${Date.now() - requestStartTime}`)
+            }
+          } else {
+            console.log(`[app-spec] falling back to the free-form build: ${appResult.reason.slice(0, 300)}`)
+          }
+        } catch (appErr) {
+          console.log('[app-spec] threw, falling back to the free-form build:', String(appErr))
+        }
+      }
+
+      let handledByParallel = handledBySpec
+      if (!handledBySpec && useToolUse && isNewBuild && newBuildComplexity !== true && process.env.CLAUDE_PARALLEL_BUILD !== 'off') {
         try {
           const { runClaudeParallel, classifyClaudeParallelFailure, MODEL_ID: parallelModelId } = await import('@/lib/model-providers/claude-parallel')
           // 45s (the old default) is shorter than what this path's own config
@@ -6295,7 +6569,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
                   { role: 'assistant' as const, content: assistantSoFar },
                   {
                     role: 'user' as const,
-                    content: `Your previous response was cut off by the token limit. It ended with:\n\n"${cutoffTail}"\n\nContinue the raw output EXACTLY from that cut-off point. Do not repeat any text already written, do not add any preamble, acknowledgement, or explanation — resume mid-stream as if there had been no interruption, preserving the exact <file>/<edit> tag structure in progress.`,
+                    content: `Your previous response was cut off by the token limit. It ended with:\n\n"${cutoffTail}"\n\nContinue the raw output EXACTLY from that cut-off point. Do not repeat any text already written, do not add any preamble, acknowledgement, or explanation — resume mid-stream as if there had been no interruption, preserving the exact <file>/<edit> tag structure in progress. If the cut-off fell inside a quoted string, continue that string on the SAME line: begin with its next characters and do not start with a newline.`,
                   },
                 ]),
                 ...thinkingParam,

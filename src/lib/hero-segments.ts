@@ -31,8 +31,8 @@ export const HERO_SEGMENT_STRINGS: Record<HeroSegment, Partial<HomeStrings>> = {
     heroLine1: 'Build it fast.',
     heroLine2: 'Ship it locked.',
     heroLead:
-      "Every build gets a live database security scan — we probe your app with an attacker's anon key before you publish, and critical leaks block the gate. Same prompt-to-app speed as the other builders. Minus the leaked-keys postmortem.",
-    heroPlaceholder: 'Describe your app… we scan every build before it ships',
+      "Every build gets a live database security scan — we probe your app with an attacker's anon key the moment you publish, and warn you straight away about anything exposed. Same prompt-to-app speed as the other builders. Minus the leaked-keys postmortem.",
+    heroPlaceholder: 'Describe your app… we scan every app the moment you publish',
   },
   // Arrivals via the "Made with WyberAi" badge on a published app
   // (app/[slug]/page.tsx tags utm_source=made-with-badge): they've just USED
@@ -42,7 +42,7 @@ export const HERO_SEGMENT_STRINGS: Record<HeroSegment, Partial<HomeStrings>> = {
     heroLine1: 'That app you just used?',
     heroLine2: 'Built from one prompt.',
     heroLead:
-      'No dev team. Someone described it in plain English and WyberAi engineered the rest — web or mobile, self-healing builds, a live database security scan before it shipped. Your idea can be live before you close this tab.',
+      'No dev team. Someone described it in plain English and WyberAi engineered the rest — web or mobile, self-healing builds, a live database security scan the moment it shipped. Your idea can be live before you close this tab.',
     heroPlaceholder: 'Describe your app… yours could be next',
   },
   // Dev shops / agencies from GTM outreach (tag links utm_campaign=devshop or

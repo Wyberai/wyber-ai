@@ -18,8 +18,8 @@ export interface VsContent {
 // feature labels themselves are translated.
 export const V0_CONTENT: Record<Locale, VsContent> = {
   en: {
-    tagline: 'v0 by Vercel generates polished UI components. WyberAi generates complete full-stack web + mobile applications with self-healing builds and 27 integrations.',
-    blurb: 'Honest comparison of WyberAi vs v0 by Vercel: full-stack app builder vs UI generator. Verified June 2026.',
+    tagline: 'v0 by Vercel generates polished UI components. WyberAi generates complete full-stack web + mobile applications with self-healing builds and 68 connectors.',
+    blurb: 'Honest comparison of WyberAi vs v0 by Vercel: full-stack app builder vs UI generator. Last reviewed June 2026.',
     pillarNote: 'v0 generates frontend UI components only — no backend, no mobile apps.',
     rows: [
       { feature: 'Primary output', wyber: 'Full-stack web app', other: 'UI components / pages', winner: 'wyber' },
@@ -29,14 +29,14 @@ export const V0_CONTENT: Record<Locale, VsContent> = {
       { feature: 'Authentication', wyber: '✓ Built-in', other: '✗ Manual integration', winner: 'wyber' },
       { feature: 'Mobile app builder', wyber: '✓ React Native', other: '✗', winner: 'wyber' },
       { feature: 'Self-healing builds', wyber: '✓ Auto-fixes errors', other: '✗', winner: 'wyber' },
-      { feature: '27 integrations', wyber: '✓ Built-in', other: '✗', winner: 'wyber' },
+      { feature: '68 connectors', wyber: '✓ Built-in', other: '✗', winner: 'wyber' },
       { feature: 'One-click deploy', wyber: '✓ Vercel', other: '✓ Vercel', winner: 'tie' },
       { feature: 'GitHub sync', wyber: '✓', other: '✓', winner: 'tie' },
       { feature: 'Design system quality', wyber: 'Good', other: '✓ Excellent', winner: 'other' },
       { feature: 'Figma import', wyber: '✓ Built-in', other: '✓', winner: 'other' },
       { feature: 'Code generation', wyber: 'Always fresh AI code', other: 'Component library', winner: 'wyber' },
       { feature: 'Non-technical users', wyber: '✓ Guided', other: 'Developer-focused', winner: 'wyber' },
-      { feature: 'Free tier', wyber: '30 credits/month', other: 'Limited free', winner: 'tie' },
+      { feature: 'Free tier', wyber: '30 free credits on signup', other: 'Limited free', winner: 'tie' },
       { feature: 'Live database security scan', wyber: '✓ Probes RLS with anon key', other: '✗', winner: 'wyber' },
       { feature: 'India/APAC pricing', wyber: '✓ INR soon', other: 'USD only', winner: 'wyber' },
     ],

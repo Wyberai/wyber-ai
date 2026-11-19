@@ -3,6 +3,13 @@
 // self-heal lane (wyber-autofix), narrated as QA agent events.
 // Pure module: no React, no network.
 
+import { isLaunchReadyApp, launchReadyIssues } from '@/lib/launch-ready'
+import { slopIssues } from '@/lib/unslop'
+import { isLaunchReadyWebsite, websiteReadyIssues } from '@/lib/website-ready'
+import { isLaunchReadySaas, saasReadyIssues } from '@/lib/saas-ready'
+import { replacementIssues, hasReplacementChecklist } from '@/lib/byos/acceptance'
+import { isLaunchReadyMobile, mobileReadyIssues } from '@/lib/mobile-ready'
+
 type FileVal = { content?: string } | string
 
 const content = (v: FileVal | undefined): string =>
@@ -37,7 +44,7 @@ function resolveLocal(spec: string, fromPath: string, paths: Set<string>): boole
 }
 
 export interface QaIssue {
-  kind: 'broken-import' | 'missing-entry'
+  kind: 'broken-import' | 'missing-entry' | 'launch-ready'
   detail: string
   /** Prompt for the free self-heal lane to fix this issue. */
   fixPrompt: string
@@ -86,6 +93,22 @@ export function runQaChecks(files: Record<string, FileVal>, projectType?: string
       fixPrompt: `${entry} is missing, so the app cannot render. Output the COMPLETE <file> block for ${entry}, wiring together the components that already exist.`,
     })
   }
+
+  // Launch-ready web apps (flag off by default): missing contract items go back through the same free fix lane.
+  if (isLaunchReadyApp(projectType) && paths.size > 0) issues.push(...launchReadyIssues(files), ...slopIssues(files))
+
+  // Replace-your-SaaS builds list their features in src/replacement-checklist.ts; each must appear on a screen.
+  issues.push(...replacementIssues(files))
+
+  // Launch-ready mobile apps (flag off by default).
+  if (isLaunchReadyMobile(projectType) && paths.size > 0) issues.push(...mobileReadyIssues(files))
+
+  // Launch-ready SaaS products (flag off by default).
+  // Not for Replace-your-SaaS builds: those are the owner's own tool, checked by the replacement check above.
+  if (isLaunchReadySaas(projectType) && paths.size > 0 && !hasReplacementChecklist(files)) issues.push(...saasReadyIssues(files))
+
+  // Launch-ready websites (flag off by default).
+  if (isLaunchReadyWebsite(projectType) && paths.size > 0) issues.push(...websiteReadyIssues(files))
 
   return issues
 }

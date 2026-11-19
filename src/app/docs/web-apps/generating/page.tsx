@@ -1,7 +1,7 @@
 import { DocsPage, DocSection, Steps, Step, ScreenshotPlaceholder, Note } from '@/components/docs/DocsPage'
 import Link from 'next/link'
 
-export const metadata = { title: 'Generating a Web App — Docs' }
+export const metadata = { title: 'Generating a Web App — Docs', description: "Describe the app you want in plain English and Wyber generates a full-stack React app — complete with UI, logic, and an optional Supabase backend." }
 
 export default function Page() {
   return (

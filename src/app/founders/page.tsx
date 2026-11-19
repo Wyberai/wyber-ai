@@ -2,7 +2,7 @@ import { NavbarClient as Navbar } from '@/components/shared/NavbarClient';
 import { Footer } from '@/components/shared/FooterClient';
 import Link from 'next/link';
 import type { Metadata } from 'next';
-export const metadata: Metadata = { title: 'WyberAi for Founders', description: 'Ship before you pitch. Build your MVP without a technical co-founder.' };
+export const metadata: Metadata = { title: 'WyberAi for Founders', description: 'Ship before you pitch. Build your MVP without a technical co-founder: describe the idea in plain English, get a working app, and put it live.' };
 const FEATURES = [
   { icon: '⚡', title: 'MVP in hours, not months', desc: 'Describe your product in plain English. Get a working full-stack app with auth, database, and live preview today.' },
   { icon: '💰', title: 'No technical co-founder needed', desc: 'Build the first version yourself. Keep 100% of your equity. Bring in developers when you have real traction and a clear spec.' },
@@ -36,7 +36,7 @@ export default function FoundersPage() {
         </div>
         <div style={{ padding:'48px', borderRadius:20, background:'linear-gradient(135deg, var(--sky3), var(--bg2))', border:'1px solid var(--border)', textAlign:'center' }}>
           <h2 style={{ fontFamily:'var(--font-display)', fontSize:'clamp(24px,3.5vw,40px)', fontWeight: 700, color:'var(--text)', letterSpacing:'-0.025em', marginBottom:12 }}>Your idea deserves to be built</h2>
-          <p style={{ fontSize:15, color:'var(--text2)', marginBottom:28 }}>30 free credits/month. No credit card. No co-founder required.</p>
+          <p style={{ fontSize:15, color:'var(--text2)', marginBottom:28 }}>30 free credits to start. No credit card. No co-founder required.</p>
           <Link href="/signup" className="wy-btn-primary">Start for free →</Link>
         </div>
       </div>

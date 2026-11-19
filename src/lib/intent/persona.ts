@@ -7,7 +7,7 @@ import type { Door } from './types'
 // A visitor who has not answered sees only the question. Everything hidden for a persona stays on the
 // site. The control group, and anyone outside the experiment, see the page exactly as it always was.
 
-export const SECTION_IDS = ['hero', 'projects', 'examples', 'websites', 'byos', 'telemetry', 'userbuilds', 'gallery', 'mission', 'products', 'proof', 'mcp', 'pricing', 'journey', 'faq', 'final', 'ph'] as const
+export const SECTION_IDS = ['hero', 'projects', 'examples', 'websites', 'byos', 'telemetry', 'userbuilds', 'gallery', 'mission', 'products', 'proof', 'mcp', 'pricing', 'faq', 'final', 'ph'] as const
 export type SectionId = (typeof SECTION_IDS)[number]
 
 export type ProjectTarget = 'app' | 'mobile' | 'website' | 'saas'

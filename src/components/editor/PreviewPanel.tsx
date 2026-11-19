@@ -1,8 +1,10 @@
 'use client'
+import { AnimatedMark } from '@/components/shared/WyberLoader'
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useEditorStore } from '@/store/editor'
 import { Confetti } from '@/components/shared/Confetti'
 import { sanitizeFiles } from '@/lib/sanitize-files'
+import { repairStringSeams } from '@/lib/string-seam'
 import { isPlaceholderApp } from '@/lib/starter-templates'
 import { extractImageDirectives, replaceTokenInFiles } from '@/lib/image-directives'
 import { applyTextEdit, applyClassEdit, stepClass, setColorClass, type StepFamily } from '@/lib/visual-edit-apply'
@@ -16,6 +18,8 @@ import { DEVICES, DEFAULT_DEVICE_ID, getDevice } from '@/lib/devices'
 import { bundleFiles, generateHTML } from '@/lib/wyber-preview/engine'
 import { WYBER_GAME_SRC } from '@/lib/build-game'
 import { EDITOR_PREVIEW_SANDBOX, sandboxPreviewHtml, usePreviewStorageBridge } from '@/lib/preview-sandbox'
+import { evaluateSnapshot, buildProbeFixPrompt, getProbeSpec } from '@/lib/verification/probe'
+import { requestProbe, BUILD_PROBE_ENABLED } from '@/lib/verification/run-probe'
 
 // Keys only — hooks (useT) can't run at module scope, so the actual translated
 // text is resolved inside the component (see `messages` below), the same
@@ -33,6 +37,19 @@ interface SelectedEl {
   loc: string | null
   /** the tagged ancestor's own text — used when the clicked node itself is untagged */
   locText: string | null
+}
+
+// The preview frame is sandboxed without allow-same-origin. Loaded from a blob: URL, a click on an in-app hash link (#/page) counts as a
+// cross-document navigation and is blocked, so a generated app's sidebar did nothing in the editor (found 15 Nov on a Typeform replacement).
+// Published apps use srcdoc, where hash navigation works; the editor now loads the same HTML through srcdoc.
+let previewLoadSeq = 0
+function loadPreviewFrame(frame: HTMLIFrameElement, url: string) {
+  const tok = String(++previewLoadSeq)
+  frame.dataset.loadTok = tok
+  fetch(url)
+    .then(r => r.text())
+    .then(text => { if (frame.dataset.loadTok === tok) frame.srcdoc = text })
+    .catch(() => { if (frame.dataset.loadTok === tok) frame.src = url })
 }
 
 // Cheap, stable content hash (djb2). Used to detect when a file actually changed
@@ -180,7 +197,8 @@ export function PreviewPanel() {
         const fileMap: Record<string, string> = {}
         for (const [path, file] of Object.entries(buildFiles)) {
           const content = (file as { content?: string })?.content
-          if (content) fileMap[path] = content
+          // Rejoin a string split by a newline at a token-limit seam (string-seam.ts); heals projects saved with one.
+          if (content) fileMap[path] = repairStringSeams(path, content).content
         }
         const { js, css, error: bundleErr } = await bundleFiles(fileMap)
         if (js) builtHtml = generateHTML(js, css, project?.id || '')
@@ -307,6 +325,41 @@ export function PreviewPanel() {
   // treated as build-breaking within a grace window after this (see handler).
   const loadedAt = useRef(0)
 
+  // First-build verification probe (flag-gated, off by default). ChatPanel
+  // fires 'wyber-probe-request' once a first build finishes; we wait for the
+  // rebuilt preview to settle, ask the bridge to walk the nav, and hand any
+  // findings to the existing wyber-autofix lane — whose own repair caps
+  // (MAX_AUTOFIX / MAX_TOTAL_REPAIR_PASSES) bound the cost. Runs at most once
+  // per request and never throws into the editor.
+  const probeBusy = useRef(false)
+  useEffect(() => {
+    if (!BUILD_PROBE_ENABLED) return
+    const onProbe = async (e: Event) => {
+      const spec = getProbeSpec((e as CustomEvent).detail?.projectType)
+      if (!spec || probeBusy.current) return
+      probeBusy.current = true
+      try {
+        for (let waited = 0; waited < 12000 && Date.now() - loadedAt.current < 2500; waited += 500) {
+          await new Promise(r => setTimeout(r, 500))
+        }
+        const snapshot = await requestProbe(iframeRef.current)
+        const issues = evaluateSnapshot(snapshot, spec)
+        console.log('[probe] views=%d issues=%d', snapshot?.views.length ?? 0, issues.length, issues)
+        if (issues.length > 0) {
+          window.dispatchEvent(new CustomEvent('wyber-autofix', {
+            detail: { continuation: true, prompt: buildProbeFixPrompt(issues) },
+          }))
+        }
+      } catch (err) {
+        console.warn('[probe] skipped:', err)
+      } finally {
+        probeBusy.current = false
+      }
+    }
+    window.addEventListener('wyber-probe-request', onProbe)
+    return () => window.removeEventListener('wyber-probe-request', onProbe)
+  }, [])
+
   useEffect(() => {
     if (iframeRef.current && html) {
       // The frame is opaque-origin (lib/preview-sandbox.ts), so runtime errors
@@ -314,7 +367,7 @@ export function PreviewPanel() {
       // from here. Start the startup grace window now — errors can be relayed
       // before 'load' fires — and restart it on load.
       loadedAt.current = Date.now()
-      iframeRef.current.src = html
+      loadPreviewFrame(iframeRef.current, html)
       const iframe = iframeRef.current
       const markLoaded = () => { loadedAt.current = Date.now() }
       iframe.addEventListener('load', markLoaded, { once: true })
@@ -443,7 +496,7 @@ export function PreviewPanel() {
 
   // Re-assign iframe src when view mode switches (new iframe element mounts)
   useEffect(() => {
-    if (iframeRef.current && html) iframeRef.current.src = html
+    if (iframeRef.current && html) loadPreviewFrame(iframeRef.current, html)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewMode])
 
@@ -708,54 +761,54 @@ Change requested: ${editInstruction.trim()}`
   ) : 1
 
   return (
-    <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', background: 'var(--bg-base, #09090b)', position: 'relative' }}>
+    <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', background: 'var(--bg-base, #05080d)', position: 'relative' }}>
       <Confetti trigger={confettiTrigger} />
       {/* Toolbar */}
       <div style={{ height: 36, display: 'flex', alignItems: 'center', padding: '0 12px', gap: 8, borderBottom: '1px solid var(--ide-border, rgba(255,255,255,0.06))', background: 'var(--bg-surface, #111118)', flexShrink: 0 }}>
-        <div style={{ width: 7, height: 7, borderRadius: '50%', flexShrink: 0, background: (building || fixing || (error && !healFailed)) ? '#f59e0b' : healFailed ? '#ef4444' : html ? '#22c55e' : '#3f3f46', boxShadow: html && !error ? '0 0 6px rgba(34,197,94,0.4)' : (building || fixing || (error && !healFailed)) ? '0 0 6px rgba(245,158,11,0.4)' : 'none', transition: 'all 0.3s', animation: (fixing || (error && !healFailed)) ? 'pulse 1s ease infinite' : 'none' }} />
-        <span style={{ flex: 1, fontSize: 11, color: 'var(--ide-text3, #52525b)', fontFamily: 'var(--brand-mono, monospace)' }}>
+        <div style={{ width: 7, height: 7, borderRadius: '50%', flexShrink: 0, background: (building || fixing || (error && !healFailed)) ? '#f59e0b' : healFailed ? '#ef4444' : html ? '#22c55e' : '#8797ab', boxShadow: html && !error ? '0 0 6px rgba(34,197,94,0.4)' : (building || fixing || (error && !healFailed)) ? '0 0 6px rgba(245,158,11,0.4)' : 'none', transition: 'all 0.3s', animation: (fixing || (error && !healFailed)) ? 'pulse 1s ease infinite' : 'none' }} />
+        <span style={{ flex: 1, fontSize: 12, color: 'var(--ide-text3, #8797ab)', fontFamily: 'var(--brand-mono, monospace)' }}>
           {/* Auto-fix is presented as a normal build step — never surfaced as "self-healing"
               or a build error unless it genuinely can't recover (healFailed). */}
           {isGenerating ? t('writingLabel') : building ? `${messages[msgIdx]} (${seconds}s)` : (fixing || (error && !healFailed)) ? messages[msgIdx] : healFailed ? t('buildFailedFallback') : elapsed ? `${t('builtInPrefix')}${elapsed}s` : hasApp ? t('readyLabel') : t('describeToBuildLabel')}
         </span>
         {html && !building && !error && (
           <button onClick={toggleEditMode} title={t('selectElementTitle')}
-            style={{ background: editMode ? 'rgba(14,165,233,0.15)' : 'none', border: `1px solid ${editMode ? 'rgba(14,165,233,0.4)' : 'rgba(255,255,255,0.08)'}`, borderRadius: 5, color: editMode ? '#0EA5E9' : '#52525b', cursor: 'pointer', padding: '2px 10px', fontSize: 11, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+            style={{ background: editMode ? 'rgba(14,165,233,0.15)' : 'none', border: `1px solid ${editMode ? 'rgba(14,165,233,0.4)' : 'rgba(255,255,255,0.08)'}`, borderRadius: 5, color: editMode ? '#0EA5E9' : '#8797ab', cursor: 'pointer', padding: '2px 10px', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/></svg>
             {editMode ? t('selectingLabel') : t('selectLabel')}
           </button>
         )}
         {html && !building && (
           <button onClick={() => build(true)} title={t('rebuildTitle')}
-            style={{ background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, color: '#52525b', cursor: 'pointer', padding: '2px 8px', fontSize: 11 }}>&#8634;</button>
+            style={{ background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, color: '#8797ab', cursor: 'pointer', padding: '2px 8px', fontSize: 12 }}>&#8634;</button>
         )}
         {/* Bundler toggle — server-side is default; WASM is the fallback */}
         <button onClick={toggleBeta} title={betaBundler ? 'Using server bundler — click to switch to in-browser WASM' : 'Using WASM bundler — click to switch back to server'}
-          style={{ background: !betaBundler ? 'rgba(245,158,11,0.1)' : 'none', border: `1px solid ${!betaBundler ? 'rgba(245,158,11,0.35)' : 'rgba(255,255,255,0.07)'}`, borderRadius: 5, color: !betaBundler ? '#fbbf24' : '#3f3f46', cursor: 'pointer', padding: '2px 8px', fontSize: 10, fontWeight: 700, letterSpacing: '0.03em' }}>
+          style={{ background: !betaBundler ? 'rgba(245,158,11,0.1)' : 'none', border: `1px solid ${!betaBundler ? 'rgba(245,158,11,0.35)' : 'rgba(255,255,255,0.07)'}`, borderRadius: 5, color: !betaBundler ? '#fbbf24' : '#8797ab', cursor: 'pointer', padding: '2px 8px', fontSize: 12, fontWeight: 700, letterSpacing: '0.03em' }}>
           {!betaBundler ? '⚠ WASM' : '⚡'}
         </button>
         {/* Real <a>, not window.open: mobile browsers' popup blockers silently
             swallow window.open, which is why "open in new tab" never worked. */}
         {html && !building && !error && (
           <a href={html} target="_blank" rel="noopener noreferrer" title={t('openNewTabTitle')}
-            style={{ background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, color: '#52525b', cursor: 'pointer', padding: '2px 8px', fontSize: 11, textDecoration: 'none', lineHeight: '15px' }}>&#8599;</a>
+            style={{ background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, color: '#8797ab', cursor: 'pointer', padding: '2px 8px', fontSize: 12, textDecoration: 'none', lineHeight: '15px' }}>&#8599;</a>
         )}
         {/* Desktop / Mobile view toggle — only once a preview exists */}
         {html && !building && !error && (
           <>
             <div style={{ display: 'flex', gap: 1, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 5, padding: 1 }}>
               <button onClick={() => setViewModeAndPersist('desktop')} title="Desktop view"
-                style={{ background: viewMode === 'desktop' ? 'rgba(255,255,255,0.1)' : 'none', border: 'none', borderRadius: 4, color: viewMode === 'desktop' ? '#d4d4d8' : '#52525b', cursor: 'pointer', padding: '3px 7px', display: 'flex', alignItems: 'center' }}>
+                style={{ background: viewMode === 'desktop' ? 'rgba(255,255,255,0.1)' : 'none', border: 'none', borderRadius: 4, color: viewMode === 'desktop' ? '#d4d4d8' : '#8797ab', cursor: 'pointer', padding: '3px 7px', display: 'flex', alignItems: 'center' }}>
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
               </button>
               <button onClick={() => setViewModeAndPersist('mobile')} title="Mobile / game view"
-                style={{ background: viewMode === 'mobile' ? 'rgba(255,255,255,0.1)' : 'none', border: 'none', borderRadius: 4, color: viewMode === 'mobile' ? '#d4d4d8' : '#52525b', cursor: 'pointer', padding: '3px 7px', display: 'flex', alignItems: 'center' }}>
+                style={{ background: viewMode === 'mobile' ? 'rgba(255,255,255,0.1)' : 'none', border: 'none', borderRadius: 4, color: viewMode === 'mobile' ? '#d4d4d8' : '#8797ab', cursor: 'pointer', padding: '3px 7px', display: 'flex', alignItems: 'center' }}>
                 <svg width="9" height="11" viewBox="0 0 16 22" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="1" width="14" height="20" rx="3"/><circle cx="8" cy="18" r="0.5" fill="currentColor"/></svg>
               </button>
             </div>
             {viewMode === 'mobile' && (
               <select value={previewDeviceId} onChange={e => setPreviewDeviceId(e.target.value)}
-                style={{ background: '#1a1a22', color: '#d4d4d8', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, fontSize: 10, padding: '2px 4px', cursor: 'pointer', outline: 'none', maxWidth: 120 }}>
+                style={{ background: '#14202e', color: '#d4d4d8', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, fontSize: 12, padding: '2px 4px', cursor: 'pointer', outline: 'none', maxWidth: 120 }}>
                 {DEVICES.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
               </select>
             )}
@@ -763,7 +816,7 @@ Change requested: ${editInstruction.trim()}`
         )}
         {hasApp && !building && !html && !error && (
           <button onClick={() => build(true)}
-            style={{ background: 'rgba(14,165,233,0.1)', border: '1px solid rgba(14,165,233,0.3)', borderRadius: 5, color: '#0EA5E9', cursor: 'pointer', padding: '2px 10px', fontSize: 11, fontWeight: 600 }}>
+            style={{ background: 'rgba(14,165,233,0.1)', border: '1px solid rgba(14,165,233,0.3)', borderRadius: 5, color: '#0EA5E9', cursor: 'pointer', padding: '2px 10px', fontSize: 12, fontWeight: 600 }}>
             {t('buildPreviewBtn')}
           </button>
         )}
@@ -772,13 +825,13 @@ Change requested: ${editInstruction.trim()}`
       {/* Paused-database banner — Supabase free projects pause after ~1 week
           of inactivity; without this the app just silently stops persisting. */}
       {hasSupabaseConn && dbHealth === 'paused' && (
-        <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '6px 12px', background: 'rgba(127,29,29,0.92)', borderBottom: '1px solid rgba(248,113,113,0.25)', fontSize: 11, color: '#fecaca' }}>
+        <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '6px 12px', background: 'rgba(127,29,29,0.92)', borderBottom: '1px solid rgba(248,113,113,0.25)', fontSize: 12, color: '#fecaca' }}>
           <span>{t('dbPausedPre')}<strong>{t('dbPausedWord')}</strong>{t('dbPausedPost')}</span>
-          <button onClick={restoreDb} style={{ background: '#ef4444', border: 'none', borderRadius: 6, color: 'white', cursor: 'pointer', fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap', padding: '4px 12px' }}>{t('restoreNowBtn')}</button>
+          <button onClick={restoreDb} style={{ background: '#ef4444', border: 'none', borderRadius: 6, color: '#03111c', cursor: 'pointer', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap', padding: '4px 12px' }}>{t('restoreNowBtn')}</button>
         </div>
       )}
       {hasSupabaseConn && dbHealth === 'restoring' && (
-        <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', background: 'rgba(120,53,15,0.9)', borderBottom: '1px solid rgba(251,191,36,0.2)', fontSize: 11, color: '#fef3c7' }}>
+        <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', background: 'rgba(120,53,15,0.9)', borderBottom: '1px solid rgba(251,191,36,0.2)', fontSize: 12, color: '#fef3c7' }}>
           <div style={{ width: 11, height: 11, border: '2px solid rgba(251,191,36,0.25)', borderTopColor: '#fbbf24', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
           <span>{t('restoringDbMsg')}</span>
         </div>
@@ -790,11 +843,11 @@ Change requested: ${editInstruction.trim()}`
           Reload just re-navigates the iframe to the same build (cheap); if
           the loop is in the code itself, Rebuild/self-heal is the next step. */}
       {hung && (
-        <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '6px 12px', background: 'rgba(127,29,29,0.92)', borderBottom: '1px solid rgba(248,113,113,0.25)', fontSize: 11, color: '#fecaca' }}>
+        <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '6px 12px', background: 'rgba(127,29,29,0.92)', borderBottom: '1px solid rgba(248,113,113,0.25)', fontSize: 12, color: '#fecaca' }}>
           <span>{t('hungPre')}<strong>{t('hungWord')}</strong>{t('hungPost')}</span>
           <button
-            onClick={() => { setHung(false); lastHeartbeat.current = Date.now(); if (iframeRef.current && html) iframeRef.current.src = html }}
-            style={{ background: '#ef4444', border: 'none', borderRadius: 6, color: 'white', cursor: 'pointer', fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap', padding: '4px 12px' }}
+            onClick={() => { setHung(false); lastHeartbeat.current = Date.now(); if (iframeRef.current && html) loadPreviewFrame(iframeRef.current, html) }}
+            style={{ background: '#ef4444', border: 'none', borderRadius: 6, color: '#03111c', cursor: 'pointer', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap', padding: '4px 12px' }}
           >{t('reloadPreviewBtn')}</button>
         </div>
       )}
@@ -803,7 +856,7 @@ Change requested: ${editInstruction.trim()}`
           touches `error`/the preview; the app itself keeps running exactly as
           it would have without this banner. */}
       {corsNotice && (
-        <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '6px 12px', background: 'rgba(120,53,15,0.9)', borderBottom: '1px solid rgba(251,191,36,0.2)', fontSize: 11, color: '#fef3c7' }}>
+        <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '6px 12px', background: 'rgba(120,53,15,0.9)', borderBottom: '1px solid rgba(251,191,36,0.2)', fontSize: 12, color: '#fef3c7' }}>
           <span>{t('corsPre')}{corsNotice.url ? <code style={{ background: 'rgba(0,0,0,0.2)', padding: '1px 5px', borderRadius: 4 }}>{corsNotice.url}</code> : t('corsExternalApiFallback')}{t('corsPost')}</span>
           <button onClick={() => setCorsNotice(null)} style={{ background: 'none', border: 'none', color: '#fef3c7', cursor: 'pointer', fontSize: 14, lineHeight: 1, padding: '0 4px', opacity: 0.7 }}>&times;</button>
         </div>
@@ -819,12 +872,12 @@ Change requested: ${editInstruction.trim()}`
         // wyber-store is the platform's local-first persistence: data survives
         // a refresh, so "resets on page refresh" would be false (live: a todo
         // build kept its tasks across reload while showing this banner).
-        const hasBackend = allContent.includes('supabase') || allContent.includes('createClient') || allContent.includes('firebase') || allContent.includes('/api/public/cloud-insert') || allContent.includes('wyber-store')
+        const hasBackend = allContent.includes('supabase') || allContent.includes('createClient') || allContent.includes('firebase') || allContent.includes('/api/public/cloud-insert') || allContent.includes('wyber-store') || /\blocalStorage\b|\bindexedDB\b|\bidb\b|persist\(/.test(allContent)
         if (!hasData || hasBackend) return null
         return (
-          <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '6px 12px', background: 'rgba(120,53,15,0.9)', borderBottom: '1px solid rgba(251,191,36,0.2)', fontSize: 11, color: '#fef3c7' }}>
+          <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '6px 12px', background: 'rgba(120,53,15,0.9)', borderBottom: '1px solid rgba(251,191,36,0.2)', fontSize: 12, color: '#fef3c7' }}>
             <span>{t('storageWarning')}</span>
-            <button onClick={() => window.dispatchEvent(new CustomEvent('wyber-open-supabase'))} style={{ background: 'none', border: 'none', color: '#fbbf24', cursor: 'pointer', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap', padding: 0 }}>{t('connectSupabaseBtn')}</button>
+            <button onClick={() => window.dispatchEvent(new CustomEvent('wyber-open-supabase'))} style={{ background: 'none', border: 'none', color: '#fbbf24', cursor: 'pointer', fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap', padding: 0 }}>{t('connectSupabaseBtn')}</button>
           </div>
         )
       })()}
@@ -832,14 +885,14 @@ Change requested: ${editInstruction.trim()}`
       {/* Visual-edit inspector card — direct source edits, 0 credits */}
       {editMode && selectedEl && (
         <div style={{ padding: '10px 12px', background: 'rgba(14,165,233,0.05)', borderBottom: '1px solid var(--brand-border-accent, rgba(14,165,233,0.2))', display: 'flex', flexDirection: 'column', gap: 9, flexShrink: 0, maxHeight: 260, overflowY: 'auto' }}>
-          <div style={{ fontSize: 11, color: 'var(--brand-accent, #0EA5E9)', display: 'flex', alignItems: 'center', gap: 6 }}>
-            <code style={{ background: 'rgba(14,165,233,0.12)', padding: '1px 6px', borderRadius: 4, fontSize: 11 }}>&lt;{selectedEl.tag}&gt;</code>
+          <div style={{ fontSize: 12, color: 'var(--brand-accent, #0EA5E9)', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <code style={{ background: 'rgba(14,165,233,0.12)', padding: '1px 6px', borderRadius: 4, fontSize: 12 }}>&lt;{selectedEl.tag}&gt;</code>
             <MicroLabel style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textTransform: 'none' }}>
               {selectedEl.loc ?? selectedEl.selector}
             </MicroLabel>
             {editStatus === 'applied' && <MicroLabel color="var(--ide-green, #22c55e)">{t('savedFreeLabel')}</MicroLabel>}
             {editStatus === 'notfound' && <MicroLabel color="var(--ide-amber, #f59e0b)">{t('cantMatchSourceLabel')}</MicroLabel>}
-            <button onClick={() => setSelectedEl(null)} title={t('deselectTitle')} style={{ background: 'none', border: 'none', color: 'var(--ide-text3, #71717a)', cursor: 'pointer', fontSize: 13, lineHeight: 1, padding: '0 2px' }}>×</button>
+            <button onClick={() => setSelectedEl(null)} title={t('deselectTitle')} style={{ background: 'none', border: 'none', color: 'var(--ide-text3, #8797ab)', cursor: 'pointer', fontSize: 13, lineHeight: 1, padding: '0 2px' }}>×</button>
           </div>
 
           {/* Text */}
@@ -850,10 +903,10 @@ Change requested: ${editInstruction.trim()}`
                 onChange={e => setTextDraft(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') applyText() }}
                 placeholder={t('editTextPlaceholder')}
-                style={{ flex: 1, background: 'var(--bg-elevated, #18181b)', border: '1px solid var(--ide-border, rgba(255,255,255,0.1))', borderRadius: 7, color: 'var(--ide-text, #fafafa)', fontSize: 12, padding: '6px 10px', outline: 'none' }}
+                style={{ flex: 1, background: 'var(--bg-elevated, #111b28)', border: '1px solid var(--ide-border, rgba(255,255,255,0.1))', borderRadius: 7, color: 'var(--ide-text, #fafafa)', fontSize: 12, padding: '6px 10px', outline: 'none' }}
               />
               <button onClick={applyText} disabled={textDraft === selectedEl.text}
-                style={{ background: textDraft !== selectedEl.text ? 'var(--brand-accent, #0EA5E9)' : 'var(--bg-overlay, #27272a)', color: 'white', border: 'none', borderRadius: 7, padding: '6px 12px', fontSize: 11, fontWeight: 700, cursor: textDraft !== selectedEl.text ? 'pointer' : 'not-allowed' }}>
+                style={{ background: textDraft !== selectedEl.text ? 'var(--brand-accent, #0EA5E9)' : 'var(--bg-overlay, #162231)', color: 'white', border: 'none', borderRadius: 7, padding: '6px 12px', fontSize: 12, fontWeight: 700, cursor: textDraft !== selectedEl.text ? 'pointer' : 'not-allowed' }}>
                 {t('setTextBtn')}
               </button>
             </div>
@@ -878,8 +931,8 @@ Change requested: ${editInstruction.trim()}`
             {([['text-size', 'sizeLabel'], ['p', 'padLabel'], ['rounded', 'radiusLabel']] as const).map(([family, labelKey]) => (
               <span key={family} style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
                 <MicroLabel>{t(labelKey)}</MicroLabel>
-                <button onClick={() => applyStep(family, -1)} style={{ width: 18, height: 18, borderRadius: 4, border: '1px solid var(--ide-border, rgba(255,255,255,0.1))', background: 'transparent', color: 'var(--ide-text2, #a1a1aa)', cursor: 'pointer', fontSize: 11, lineHeight: 1, padding: 0 }}>−</button>
-                <button onClick={() => applyStep(family, 1)} style={{ width: 18, height: 18, borderRadius: 4, border: '1px solid var(--ide-border, rgba(255,255,255,0.1))', background: 'transparent', color: 'var(--ide-text2, #a1a1aa)', cursor: 'pointer', fontSize: 11, lineHeight: 1, padding: 0 }}>+</button>
+                <button onClick={() => applyStep(family, -1)} style={{ width: 18, height: 18, borderRadius: 4, border: '1px solid var(--ide-border, rgba(255,255,255,0.1))', background: 'transparent', color: 'var(--ide-text2, #9aa8bb)', cursor: 'pointer', fontSize: 12, lineHeight: 1, padding: 0 }}>−</button>
+                <button onClick={() => applyStep(family, 1)} style={{ width: 18, height: 18, borderRadius: 4, border: '1px solid var(--ide-border, rgba(255,255,255,0.1))', background: 'transparent', color: 'var(--ide-text2, #9aa8bb)', cursor: 'pointer', fontSize: 12, lineHeight: 1, padding: 0 }}>+</button>
               </span>
             ))}
           </div>
@@ -891,31 +944,31 @@ Change requested: ${editInstruction.trim()}`
               onChange={e => setEditInstruction(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') sendAiEdit() }}
               placeholder={t('biggerChangePlaceholder')}
-              style={{ flex: 1, background: 'var(--bg-elevated, #18181b)', border: '1px solid var(--ide-border, rgba(255,255,255,0.1))', borderRadius: 7, color: 'var(--ide-text, #fafafa)', fontSize: 12, padding: '6px 10px', outline: 'none' }}
+              style={{ flex: 1, background: 'var(--bg-elevated, #111b28)', border: '1px solid var(--ide-border, rgba(255,255,255,0.1))', borderRadius: 7, color: 'var(--ide-text, #fafafa)', fontSize: 12, padding: '6px 10px', outline: 'none' }}
             />
             <button onClick={sendAiEdit} disabled={!editInstruction.trim()}
               title={t('aiEditRateTitle')}
-              style={{ background: editInstruction.trim() ? 'var(--brand-accent, #0EA5E9)' : 'var(--bg-overlay, #27272a)', color: 'white', border: 'none', borderRadius: 7, padding: '6px 12px', fontSize: 11, fontWeight: 700, cursor: editInstruction.trim() ? 'pointer' : 'not-allowed', whiteSpace: 'nowrap' }}>
+              style={{ background: editInstruction.trim() ? 'var(--brand-accent, #0EA5E9)' : 'var(--bg-overlay, #162231)', color: 'white', border: 'none', borderRadius: 7, padding: '6px 12px', fontSize: 12, fontWeight: 700, cursor: editInstruction.trim() ? 'pointer' : 'not-allowed', whiteSpace: 'nowrap' }}>
               {t('aiEditPrefix')}{creditCost('small-edit', 'fast')}cr
             </button>
           </div>
         </div>
       )}
       {editMode && !selectedEl && selectionConsumer !== 'wyberman' && (
-        <div style={{ padding: '7px 12px', background: 'rgba(14,165,233,0.06)', borderBottom: '1px solid rgba(14,165,233,0.2)', fontSize: 11, color: '#0EA5E9', flexShrink: 0, textAlign: 'center' }}>
+        <div style={{ padding: '7px 12px', background: 'rgba(14,165,233,0.06)', borderBottom: '1px solid rgba(14,165,233,0.2)', fontSize: 12, color: '#0EA5E9', flexShrink: 0, textAlign: 'center' }}>
           {t('clickToEditHint')}
         </div>
       )}
 
       {/* Content */}
-      <div ref={contentAreaRef} style={{ flex: 1, minHeight: 0, position: 'relative', background: 'var(--bg-base, #09090b)',
+      <div ref={contentAreaRef} style={{ flex: 1, minHeight: 0, position: 'relative', background: 'var(--bg-base, #05080d)',
         ...(viewMode === 'mobile' ? { display: 'flex', alignItems: 'center', justifyContent: 'center' } : {})
       }}>
         {!hasApp && !isGenerating && (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
-            <svg width="40" height="40" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="rgba(14,165,233,0.06)" stroke="rgba(14,165,233,0.12)" strokeWidth="1"/><path d="M20 7L11 16L20 25" stroke="#0EA5E9" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            <div style={{ fontSize: 14, fontWeight: 600, color: '#e4e4e7' }}>{t('emptyPreviewTitle')}</div>
-            <div style={{ fontSize: 12, color: '#a1a1aa', maxWidth: 240, textAlign: 'center', lineHeight: 1.5 }}>{t('emptyPreviewDesc')}</div>
+            <AnimatedMark size={40} state="idle" />
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#e8eef7' }}>{t('emptyPreviewTitle')}</div>
+            <div style={{ fontSize: 12, color: '#9aa8bb', maxWidth: 240, textAlign: 'center', lineHeight: 1.5 }}>{t('emptyPreviewDesc')}</div>
           </div>
         )}
 
@@ -927,7 +980,7 @@ Change requested: ${editInstruction.trim()}`
             in the chat bubble and the status strip above — a real user saw
             FOUR simultaneous "building" indicators and rightly called it out. */}
         {isGenerating && isFirstBuild.current && (
-          <div style={{ position: 'absolute', inset: 0, zIndex: 5, background: '#09090b' }}>
+          <div style={{ position: 'absolute', inset: 0, zIndex: 5, background: '#05080d' }}>
             <iframe
               title="Build game"
               srcDoc={WYBER_GAME_SRC}
@@ -945,44 +998,44 @@ Change requested: ${editInstruction.trim()}`
             preview exists, rebuilds keep it on screen (no blank-out flicker)
             with just a small pill announcing the update. */}
         {(building || fixing || (error && !healFailed)) && !isGenerating && !html && (
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, background: '#09090b', zIndex: 5 }}>
-            <div style={{ width: 28, height: 28, border: '2px solid rgba(245,158,11,0.15)', borderTopColor: '#f59e0b', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-            <div style={{ fontSize: 14, color: '#e4e4e7', fontWeight: 600 }}>{messages[msgIdx]}</div>
-            <div style={{ fontSize: 11, color: '#52525b' }}>Building your app…</div>
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, background: '#05080d', zIndex: 5 }}>
+            <AnimatedMark size={44} />
+            <div role="status" style={{ fontSize: 14, color: '#e8eef7', fontWeight: 600 }}>{messages[msgIdx]}</div>
+            <div style={{ fontSize: 12, color: '#8797ab' }}>Building your app…</div>
           </div>
         )}
         {(building || fixing || (error && !healFailed)) && !isGenerating && html && (
           <div style={{ position: 'absolute', bottom: 14, left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(17,17,24,0.92)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, padding: '6px 14px', zIndex: 6, animation: 'healIn 0.25s ease' }}>
-            <div style={{ width: 12, height: 12, border: '2px solid rgba(245,158,11,0.2)', borderTopColor: '#f59e0b', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-            <span style={{ fontSize: 11, color: '#e4e4e7', fontWeight: 600 }}>Updating preview…</span>
+            <div style={{ width: 12, height: 12, border: '2px solid rgba(14,165,233,0.2)', borderTopColor: '#0ea5e9', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+            <span style={{ fontSize: 12, color: '#e8eef7', fontWeight: 600 }}>Updating preview…</span>
           </div>
         )}
 
         {/* Heal gave up but a previous build works — keep that on screen and
             surface the failure as a strip instead of nuking the preview. */}
         {error && !building && healFailed && revertedToGood && (
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '6px 12px', background: 'rgba(127,29,29,0.94)', borderBottom: '1px solid rgba(248,113,113,0.3)', fontSize: 11, color: '#fecaca', zIndex: 7 }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '6px 12px', background: 'rgba(127,29,29,0.94)', borderBottom: '1px solid rgba(248,113,113,0.3)', fontSize: 12, color: '#fecaca', zIndex: 7 }}>
             <span>⚠ The latest update didn&apos;t build — showing your last working preview.</span>
             <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-              <button onClick={tryToFix} disabled={fixing} style={{ background: '#ef4444', border: 'none', borderRadius: 6, color: 'white', cursor: fixing ? 'wait' : 'pointer', fontSize: 11, fontWeight: 700, padding: '3px 10px' }}>{fixing ? 'Fixing…' : 'Try to fix'}</button>
-              <button onClick={() => build(true)} style={{ background: 'none', border: '1px solid rgba(254,202,202,0.35)', borderRadius: 6, color: '#fecaca', cursor: 'pointer', fontSize: 11, fontWeight: 600, padding: '3px 10px' }}>Retry</button>
+              <button onClick={tryToFix} disabled={fixing} style={{ background: '#ef4444', border: 'none', borderRadius: 6, color: '#03111c', cursor: fixing ? 'wait' : 'pointer', fontSize: 12, fontWeight: 700, padding: '3px 10px' }}>{fixing ? 'Fixing…' : 'Try to fix'}</button>
+              <button onClick={() => build(true)} style={{ background: 'none', border: '1px solid rgba(254,202,202,0.35)', borderRadius: 6, color: '#fecaca', cursor: 'pointer', fontSize: 12, fontWeight: 600, padding: '3px 10px' }}>Retry</button>
             </div>
           </div>
         )}
 
         {error && !building && healFailed && !revertedToGood && (
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, padding: 24, background: '#09090b', zIndex: 5 }}>
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, padding: 24, background: '#05080d', zIndex: 5 }}>
             <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(239,68,68,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round"><path d="M12 9v4M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
             </div>
-            <div style={{ fontSize: 13, color: '#a1a1aa', textAlign: 'center', fontWeight: 600 }}>This build hit an error</div>
-            <div style={{ fontSize: 11, color: '#71717a', textAlign: 'center', maxWidth: 420, fontFamily: 'monospace', whiteSpace: 'pre-wrap', wordBreak: 'break-word', maxHeight: 120, overflow: 'auto', background: 'rgba(255,255,255,0.02)', padding: '8px 12px', borderRadius: 6 }}>{error.slice(0, 400)}</div>
+            <div style={{ fontSize: 13, color: '#9aa8bb', textAlign: 'center', fontWeight: 600 }}>This build hit an error</div>
+            <div style={{ fontSize: 12, color: '#8797ab', textAlign: 'center', maxWidth: 420, fontFamily: 'monospace', whiteSpace: 'pre-wrap', wordBreak: 'break-word', maxHeight: 120, overflow: 'auto', background: 'rgba(255,255,255,0.02)', padding: '8px 12px', borderRadius: 6 }}>{error.slice(0, 400)}</div>
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={tryToFix} disabled={fixing}
                 style={{ padding: '8px 20px', borderRadius: 8, border: 'none', background: fixing ? 'var(--bg-elevated)' : '#0EA5E9', color: 'white', fontSize: 12, fontWeight: 700, cursor: fixing ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
                 {fixing ? 'Sending to AI...' : '✦ Try to fix'}
               </button>
-              <button onClick={() => build(true)} style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#a1a1aa', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Retry build</button>
+              <button onClick={() => build(true)} style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#9aa8bb', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Retry build</button>
             </div>
           </div>
         )}
@@ -1000,7 +1053,7 @@ Change requested: ${editInstruction.trim()}`
             }}>
               <iframe ref={iframeRef} title="Wyber Preview"
                 sandbox={EDITOR_PREVIEW_SANDBOX}
-                style={{ width: previewDevice.width, height: previewDevice.height, border: 'none', borderRadius: previewDevice.radius, background: '#09090b', display: 'block' }} />
+                style={{ width: previewDevice.width, height: previewDevice.height, border: 'none', borderRadius: previewDevice.radius, background: '#05080d', display: 'block' }} />
               {/* Dynamic Island */}
               {previewDevice.notch === 'island' && (
                 <div style={{ position: 'absolute', top: PHONE_BEZEL + 11, left: '50%', transform: 'translateX(-50%)', width: 118, height: 34, background: '#000', borderRadius: 20, pointerEvents: 'none', zIndex: 10 }} />
@@ -1012,7 +1065,7 @@ Change requested: ${editInstruction.trim()}`
               {/* Status bar */}
               <div style={{ position: 'absolute', top: PHONE_BEZEL, left: PHONE_BEZEL, right: PHONE_BEZEL, height: previewDevice.insets.top, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px', paddingTop: 4, fontSize: 13, fontWeight: 600, color: previewDevice.statusBar === 'light' ? '#fff' : '#0A0A0B', pointerEvents: 'none', zIndex: 9 }}>
                 <span>{previewDevice.os === 'ios' ? '9:41' : '12:30'}</span>
-                <span style={{ display: 'flex', gap: 4, alignItems: 'center', fontSize: 11 }}>
+                <span style={{ display: 'flex', gap: 4, alignItems: 'center', fontSize: 12 }}>
                   <span>●●●</span>
                   <span>{previewDevice.os === 'ios' ? 'ᯤ' : 'WiFi'}</span>
                   <span style={{ display: 'inline-block', width: 22, height: 11, border: `1.5px solid ${previewDevice.statusBar === 'light' ? '#fff' : '#0A0A0B'}`, borderRadius: 3, position: 'relative' }}>
@@ -1031,7 +1084,7 @@ Change requested: ${editInstruction.trim()}`
             ref={iframeRef}
             title="Wyber Preview"
             sandbox={EDITOR_PREVIEW_SANDBOX}
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none', display: html && (!error || (healFailed && revertedToGood)) ? 'block' : 'none', background: '#09090b' }}
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none', display: html && (!error || (healFailed && revertedToGood)) ? 'block' : 'none', background: '#05080d' }}
           />
         )}
       </div>

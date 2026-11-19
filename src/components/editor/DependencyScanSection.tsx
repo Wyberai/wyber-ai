@@ -34,7 +34,7 @@ export function DependencyScanSection({ projectId }: { projectId: string }) {
     <div style={{ borderTop: '1px solid var(--ide-border)', paddingTop: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div>
         <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ide-text)', marginBottom: 4 }}>📦 Dependency vulnerabilities</div>
-        <div style={{ fontSize: 11, color: 'var(--ide-text3)', lineHeight: 1.5 }}>Checks every package in package.json against OSV.dev's public advisory database — real CVEs, not a guess.</div>
+        <div style={{ fontSize: 12, color: 'var(--ide-text3)', lineHeight: 1.5 }}>Checks every package in package.json against OSV.dev's public advisory database — real CVEs, not a guess.</div>
       </div>
 
       <button onClick={scanDeps} disabled={depScanning}
@@ -54,7 +54,7 @@ export function DependencyScanSection({ projectId }: { projectId: string }) {
               <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ide-text)' }}>
                 {depReport.vulnerabilityCount === 0 ? 'No known vulnerabilities' : `known ${depReport.vulnerabilityCount === 1 ? 'vulnerability' : 'vulnerabilities'}`}
               </div>
-              <div style={{ fontSize: 11, color: 'var(--ide-text3)', marginTop: 2 }}>
+              <div style={{ fontSize: 12, color: 'var(--ide-text3)', marginTop: 2 }}>
                 {depReport.packagesScanned} package{depReport.packagesScanned === 1 ? '' : 's'} scanned
                 {depReport.packagesSkipped > 0 ? ` · ${depReport.packagesSkipped} skipped (unresolvable version range)` : ''}
               </div>
@@ -64,11 +64,11 @@ export function DependencyScanSection({ projectId }: { projectId: string }) {
           {depReport.findings.map((f, i) => (
             <div key={i} style={{ padding: '11px 13px', borderRadius: 8, border: `1px solid ${DEP_SEV_COLOR[f.severity]}40`, background: `${DEP_SEV_COLOR[f.severity]}0c` }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
-                <span style={{ fontSize: 10, fontWeight: 700, color: DEP_SEV_COLOR[f.severity], textTransform: 'uppercase', letterSpacing: '0.06em' }}>{f.severity}</span>
-                <a href={f.url} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: '#0EA5E9', textDecoration: 'none' }}>{f.id} ↗</a>
+                <span style={{ fontSize: 12, fontWeight: 700, color: DEP_SEV_COLOR[f.severity], textTransform: 'uppercase', letterSpacing: '0.06em' }}>{f.severity}</span>
+                <a href={f.url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: '#0EA5E9', textDecoration: 'none' }}>{f.id} ↗</a>
               </div>
               <div style={{ fontSize: 12.5, color: 'var(--ide-text)', marginBottom: 4, fontWeight: 500 }}>{f.package}@{f.version}</div>
-              <div style={{ fontSize: 11, color: 'var(--ide-text3)', lineHeight: 1.5 }}>{f.summary}</div>
+              <div style={{ fontSize: 12, color: 'var(--ide-text3)', lineHeight: 1.5 }}>{f.summary}</div>
             </div>
           ))}
         </>

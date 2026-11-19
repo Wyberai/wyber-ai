@@ -1,12 +1,13 @@
 import type { Metadata } from 'next'
 import { ExpoClient } from './ExpoClient'
+import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
 export const metadata: Metadata = {
-  title: 'Build any digital product. Ship it in minutes.',
-  description: 'Bring your pain point to the WyberAi booth (S23) at Tech Expo Gujarat. We build it while you watch. Book 15 minutes.',
-  openGraph: {
-    title: 'Bring your pain point. We will build it live.',
-    description: 'Web app, mobile app, website or SaaS, built from plain words. Meet WyberAi at Tech Expo Gujarat, booth S23.',
+  title: 'Vibe coding with superpowers.',
+  description: 'Vibe coding gives you a base. WyberAi gives you the whole app: an AI agent that plans, builds, repairs and checks it. Websites, web apps, mobile apps, SaaS, or your own version of a SaaS you rent. It tests your database, locks out exposed keys, makes your site readable to Google and AI, and flags the made-by-AI look. Build it live at the WyberAi booth (S23), Tech Expo Gujarat. Book 15 minutes.',
+  openGraph: { images: DEFAULT_OG_IMAGES,
+    title: 'Vibe coding with superpowers.',
+    description: 'Own your software, stop renting it. Web app, website, mobile app or SaaS from plain words, with the checks vibe coding skips. Meet WyberAi at Tech Expo Gujarat, booth S23.',
   },
 }
 

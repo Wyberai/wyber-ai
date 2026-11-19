@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 import { useState, useEffect, Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { SignalFrame } from '@/components/signal/SignalFrame'
 
 function MfaChallenge() {
   const supabase = createClient()
@@ -51,38 +52,32 @@ function MfaChallenge() {
     router.refresh()
   }
 
-  const box = { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F6F8FB', fontFamily: 'var(--font-sans)', padding: 24 } as const
-  if (!ready) return <div style={{ ...box, color: '#5A6472', fontSize: 14 }}>Checking…</div>
+  if (!ready) return <SignalFrame bare><div className="sg-wrap"><p className="sg-hint" style={{ padding: '120px 0' }}>Checking…</p></div></SignalFrame>
 
   const isRecovery = mode === 'recovery'
+  const disabled = busy || (!isRecovery && code.length !== 6) || (isRecovery && !code)
   return (
-    <div style={box}>
-      <div style={{ maxWidth: 400, width: '100%', background: '#fff', border: '1px solid #E5E9F0', borderRadius: 16, padding: 32, textAlign: 'center', boxShadow: '0 8px 40px rgba(11,22,39,0.06)' }}>
-        <div style={{ fontSize: 28, marginBottom: 8 }}>🔒</div>
-        <h1 style={{ fontSize: 19, fontWeight: 700, color: '#0B1627', margin: '0 0 6px' }}>Two-factor authentication</h1>
-        <p style={{ fontSize: 13.5, color: '#5A6472', margin: '0 0 20px', lineHeight: 1.6 }}>
-          {isRecovery ? 'Enter one of your recovery codes. This will turn off 2FA so you can sign in and re-enroll.' : 'Enter the 6-digit code from your authenticator app.'}
-        </p>
-        <input
-          value={code}
-          onChange={e => setCode(isRecovery ? e.target.value : e.target.value.replace(/\D/g, '').slice(0, 6))}
-          placeholder={isRecovery ? 'xxxxx-xxxxx' : '000000'}
-          inputMode={isRecovery ? 'text' : 'numeric'}
-          autoFocus
-          onKeyDown={e => e.key === 'Enter' && (isRecovery ? useRecovery() : (code.length === 6 && verifyTotp()))}
-          style={{ width: '100%', padding: '12px', borderRadius: 10, border: '1px solid #E5E9F0', background: '#F6F8FB', color: '#0B1627', fontSize: isRecovery ? 16 : 22, letterSpacing: isRecovery ? '0.1em' : '0.4em', textAlign: 'center', fontFamily: 'monospace', outline: 'none', boxSizing: 'border-box', marginBottom: 12 }}
-        />
-        {error && <div style={{ fontSize: 12.5, color: '#DC2626', marginBottom: 12 }}>{error}</div>}
-        <button onClick={isRecovery ? useRecovery : verifyTotp} disabled={busy || (!isRecovery && code.length !== 6) || (isRecovery && !code)}
-          style={{ width: '100%', padding: '12px', borderRadius: 10, background: '#0EA5E9', color: '#fff', fontWeight: 700, fontSize: 14, border: 'none', cursor: 'pointer', opacity: busy || (!isRecovery && code.length !== 6) || (isRecovery && !code) ? 0.5 : 1, fontFamily: 'inherit' }}>
-          {busy ? 'Verifying…' : isRecovery ? 'Use recovery code' : 'Verify'}
-        </button>
-        <button onClick={() => { setMode(isRecovery ? 'totp' : 'recovery'); setCode(''); setError('') }}
-          style={{ marginTop: 14, fontSize: 12.5, color: '#5A6472', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'underline' }}>
-          {isRecovery ? 'Use authenticator code instead' : 'Lost your device? Use a recovery code'}
-        </button>
+    <SignalFrame bare>
+      <div className="sg-wrap">
+        <div className="sg-auth" style={{ gridTemplateColumns: 'minmax(0, 440px)', justifyContent: 'center' }}>
+          <form className="sg-acard" onSubmit={e => { e.preventDefault(); if (!disabled) (isRecovery ? useRecovery() : verifyTotp()) }}>
+            <span className="sg-mono sg-eyebrow">Two-step check</span>
+            <h1 style={{ marginTop: 10 }}>Two-factor authentication</h1>
+            <p className="sg-sub2">{isRecovery ? 'Enter one of your recovery codes. This turns off 2FA so you can sign in and set it up again.' : 'Enter the 6 digit code from your authenticator app.'}</p>
+            <label className="sg-lb" htmlFor="sg-mfa">{isRecovery ? 'Recovery code' : 'Code'}</label>
+            <input id="sg-mfa" className="sg-field" value={code} autoFocus autoComplete="one-time-code"
+              onChange={e => setCode(isRecovery ? e.target.value : e.target.value.replace(/D/g, '').slice(0, 6))}
+              placeholder={isRecovery ? 'xxxxx-xxxxx' : '000000'} inputMode={isRecovery ? 'text' : 'numeric'}
+              style={{ textAlign: 'center', fontFamily: 'var(--font-mono, monospace)', letterSpacing: isRecovery ? '0.1em' : '0.4em', fontSize: isRecovery ? 17 : 24 }} />
+            <p className="sg-ferr" role="alert">{error}</p>
+            <button className="sg-btn" type="submit" style={{ width: '100%' }} disabled={disabled}>{busy ? 'Verifying…' : isRecovery ? 'Use recovery code' : 'Verify'}</button>
+            <button type="button" className="sg-linkbtn" style={{ display: 'block', margin: '8px auto 0' }} onClick={() => { setMode(isRecovery ? 'totp' : 'recovery'); setCode(''); setError('') }}>
+              {isRecovery ? 'Use authenticator code instead' : 'Lost your device? Use a recovery code'}
+            </button>
+          </form>
+        </div>
       </div>
-    </div>
+    </SignalFrame>
   )
 }
 

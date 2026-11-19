@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { createAnthropic } from '@/lib/ai-usage'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { estimateFeatureCost, type BuildSizeTier } from '@/lib/credits'
 import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
@@ -11,7 +12,7 @@ import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 // tagged with a real cost estimate. Same pattern as /api/projects/auto-name:
 // a single cheap Haiku call, no streaming, best-effort (never blocks or
 // breaks the upgrade flow on failure — see the catch-all below).
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY ?? 'placeholder' })
+const client = createAnthropic('app/api/credits/next-feature-suggestions', { apiKey: process.env.ANTHROPIC_API_KEY ?? 'placeholder' })
 
 interface Suggestion {
   title: string

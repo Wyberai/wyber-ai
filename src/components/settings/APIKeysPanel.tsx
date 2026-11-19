@@ -38,7 +38,7 @@ export function APIKeysPanel() {
           <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>API Keys</div>
           <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>Access the WyberAi API and MCP server</div>
         </div>
-        <button onClick={() => setCreating(!creating)} style={{ padding: '7px 14px', borderRadius: 8, background: 'var(--sky)', color: '#fff', fontWeight: 700, fontSize: 12, border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>+ New key</button>
+        <button onClick={() => setCreating(!creating)} style={{ padding: '7px 14px', borderRadius: 8, background: 'var(--sky)', color: '#03111c', fontWeight: 700, fontSize: 12, border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>+ New key</button>
       </div>
 
       <div style={{ padding: '12px', borderRadius: 10, background: 'var(--bg2)', border: '1px solid var(--border)' }}>
@@ -54,10 +54,10 @@ export function APIKeysPanel() {
         <div style={{ padding: '12px', borderRadius: 10, background: 'rgba(52,211,153,0.06)', border: '1px solid rgba(52,211,153,0.3)' }}>
           <div style={{ fontSize: 12, fontWeight: 600, color: '#34D399', marginBottom: 6 }}>⚠ Copy now — won't be shown again</div>
           <div style={{ display: 'flex', gap: 6 }}>
-            <code style={{ flex: 1, padding: '7px 10px', borderRadius: 7, background: 'var(--bg)', border: '1px solid var(--border)', fontSize: 10, color: 'var(--text)', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{newKey}</code>
+            <code style={{ flex: 1, padding: '7px 10px', borderRadius: 7, background: 'var(--bg)', border: '1px solid var(--border)', fontSize: 11, color: 'var(--text)', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{newKey}</code>
             <button onClick={copy} style={{ padding: '7px 12px', borderRadius: 7, background: copied ? '#34D399' : 'var(--sky)', color: '#fff', fontWeight: 700, fontSize: 11, border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>{copied ? '✓' : 'Copy'}</button>
           </div>
-          <button onClick={() => setNewKey('')} style={{ marginTop: 6, fontSize: 10, color: 'var(--text3)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>Dismiss</button>
+          <button onClick={() => setNewKey('')} style={{ marginTop: 6, fontSize: 11, color: 'var(--text3)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>Dismiss</button>
         </div>
       )}
 
@@ -65,7 +65,7 @@ export function APIKeysPanel() {
         <div style={{ display: 'flex', gap: 6 }}>
           <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Key name (e.g. Claude Desktop)" onKeyDown={e => e.key === 'Enter' && createKey()}
             style={{ flex: 1, padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg2)', color: 'var(--text)', fontSize: 12, fontFamily: 'inherit', outline: 'none' }} />
-          <button onClick={createKey} disabled={loading} style={{ padding: '8px 14px', borderRadius: 8, background: 'var(--sky)', color: '#fff', fontWeight: 700, fontSize: 12, border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>{loading ? '...' : 'Create'}</button>
+          <button onClick={createKey} disabled={loading} style={{ padding: '8px 14px', borderRadius: 8, background: 'var(--sky)', color: '#03111c', fontWeight: 700, fontSize: 12, border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>{loading ? '...' : 'Create'}</button>
         </div>
       )}
 
@@ -77,10 +77,10 @@ export function APIKeysPanel() {
             <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#34D399', flexShrink: 0 }} />
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)' }}>{k.name}</div>
-              <div style={{ fontSize: 10, color: 'var(--text3)', fontFamily: 'monospace' }}>{k.key_preview}</div>
+              <div style={{ fontSize: 11, color: 'var(--text3)', fontFamily: 'monospace' }}>{k.key_preview}</div>
             </div>
-            <div style={{ fontSize: 10, color: 'var(--text3)' }}>{new Date(k.created_at).toLocaleDateString()}</div>
-            <button onClick={() => revokeKey(k.id)} style={{ fontSize: 10, color: '#EF4444', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>Revoke</button>
+            <div style={{ fontSize: 11, color: 'var(--text3)' }}>{new Date(k.created_at).toLocaleDateString()}</div>
+            <button onClick={() => revokeKey(k.id)} style={{ fontSize: 11, color: '#EF4444', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>Revoke</button>
           </div>
         ))}
       </div>

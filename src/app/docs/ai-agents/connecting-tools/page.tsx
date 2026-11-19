@@ -1,7 +1,7 @@
 import { DocsPage, DocSection, Steps, Step, ScreenshotPlaceholder, Note } from '@/components/docs/DocsPage'
 import Link from 'next/link'
 
-export const metadata = { title: 'Connecting Tools (OAuth) — Docs' }
+export const metadata = { title: 'Connecting Tools (OAuth) — Docs', description: "Wyber uses Composio to connect your agent to 250+ external services — GitHub, Gmail, Slack, Notion, and more — via a standard OAuth flow. You authorize…" }
 
 export default function Page() {
   return (

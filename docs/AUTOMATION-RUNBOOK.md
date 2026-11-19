@@ -26,6 +26,7 @@ All times India time. The full list with plain descriptions is on `/admin/today`
 |---|---|---|
 | `/api/cron/ops-agents` | every 3 hours | The agents write new drafts for your approval. Nothing is sent. |
 | `/api/cron/crm-brief` | daily 8:30 | Refreshes the CRM from every source, emails the daily brief. |
+| `/api/cron/uptime` | every 5 minutes | Checks that the email service (Continuum) answers. Emails you through the Resend fallback if it goes down, hourly while it stays down, and when it recovers. See `docs/RUNBOOK-continuum.md`. |
 | `/api/cron/watchdog` | daily 8:15 | Checks the automation is healthy, including a tiny live test of the AI key. Emails only when something is wrong. |
 | `/api/cron/weekly-report` | Mondays 9:00 | The weekly report email. |
 | `/api/cron/expo-sequence` | daily 10:00 | The expo email sequence (reminder, thanks, follow-up) to booth leads who are due one. |

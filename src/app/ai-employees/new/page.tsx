@@ -124,31 +124,31 @@ function NewEmployeePage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0b0d12', fontFamily: 'var(--font-display)', color: '#e4e4e7' }}>
-      <nav style={{ borderBottom: '1px solid #1a1a22', background: '#0d0d11', padding: '0 32px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 50 }}>
+    <div style={{ minHeight: '100vh', background: '#05080d', fontFamily: 'var(--font-display)', color: '#e8eef7' }}>
+      <nav style={{ borderBottom: '1px solid #14202e', background: '#0a1018', padding: '0 32px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 50 }}>
         <Link href="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none' }}>
           <WyberLogo markSize={24} wordmarkSize={14} />
         </Link>
-        <Link href="/ai-employees" style={{ fontSize: 12, color: '#52525b', textDecoration: 'none', padding: '5px 12px', borderRadius: 7, border: '1px solid #1e1e26' }}>← AI Employees</Link>
+        <Link href="/ai-employees" style={{ fontSize: 12, color: '#8797ab', textDecoration: 'none', padding: '5px 12px', borderRadius: 7, border: '1px solid #1b2a3b' }}>← AI Employees</Link>
       </nav>
 
       <div style={{ maxWidth: 680, margin: '0 auto', padding: '48px 32px 80px' }}>
         <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.04em', color: '#fff', margin: '0 0 6px' }}>Hire an AI employee</h1>
-        <p style={{ color: '#52525b', fontSize: 14, margin: '0 0 36px' }}>Give them a name, tell them what to do, pick their tools. They start working immediately.</p>
+        <p style={{ color: '#8797ab', fontSize: 14, margin: '0 0 36px' }}>Give them a name, tell them what to do, pick their tools. They start working immediately.</p>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
 
           {/* Name — one field that's clear */}
           <div>
-            <label style={{ display: 'block', fontSize: 14, fontWeight: 700, color: '#e4e4e7', marginBottom: 6 }}>What should we call this employee?</label>
+            <label style={{ display: 'block', fontSize: 14, fontWeight: 700, color: '#e8eef7', marginBottom: 6 }}>What should we call this employee?</label>
             <input value={name} onChange={e => { setName(e.target.value); if (!role || role === name) setRole(e.target.value) }} placeholder="e.g. Marketing Manager, Sales SDR, Inbox Assistant" required style={inputStyle} />
             <input type="hidden" value={role || name} />
           </div>
 
           {/* Instructions — with scaffolding */}
           <div>
-            <label style={{ display: 'block', fontSize: 14, fontWeight: 700, color: '#e4e4e7', marginBottom: 6 }}>What should they do?</label>
-            <p style={{ fontSize: 12, color: '#52525b', margin: '0 0 10px', lineHeight: 1.5 }}>Describe their responsibilities like you would in a job description. The more specific, the better they perform.</p>
+            <label style={{ display: 'block', fontSize: 14, fontWeight: 700, color: '#e8eef7', marginBottom: 6 }}>What should they do?</label>
+            <p style={{ fontSize: 12, color: '#8797ab', margin: '0 0 10px', lineHeight: 1.5 }}>Describe their responsibilities like you would in a job description. The more specific, the better they perform.</p>
             {!instructions && (
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
                 {[
@@ -157,7 +157,7 @@ function NewEmployeePage() {
                   'Track overdue invoices and send payment reminders',
                   'Review new job applications and rank top candidates',
                 ].map(s => (
-                  <button key={s} type="button" onClick={() => setInstructions(s)} style={{ fontSize: 11, padding: '5px 10px', borderRadius: 6, background: '#111115', border: '1px solid #2a2a35', color: '#71717a', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}>{s}</button>
+                  <button key={s} type="button" onClick={() => setInstructions(s)} style={{ fontSize: 11, padding: '5px 10px', borderRadius: 6, background: '#0d141e', border: '1px solid #2a2a35', color: '#8797ab', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}>{s}</button>
                 ))}
               </div>
             )}
@@ -168,13 +168,13 @@ function NewEmployeePage() {
               required rows={4}
               style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.6 }}
             />
-            <div style={{ fontSize: 11, color: '#3f3f46', marginTop: 4 }}>{instructions.length} characters</div>
+            <div style={{ fontSize: 11, color: '#8797ab', marginTop: 4 }}>{instructions.length} characters</div>
           </div>
 
           {/* Tools — friendly names with descriptions */}
           <div>
-            <label style={{ display: 'block', fontSize: 14, fontWeight: 700, color: '#e4e4e7', marginBottom: 6 }}>Which tools should they use?</label>
-            <p style={{ fontSize: 12, color: '#52525b', margin: '0 0 10px' }}>Select the apps this employee will connect to. You can <Link href="/settings?tab=integrations" style={{ color: SKY }}>connect them in Settings</Link> later.</p>
+            <label style={{ display: 'block', fontSize: 14, fontWeight: 700, color: '#e8eef7', marginBottom: 6 }}>Which tools should they use?</label>
+            <p style={{ fontSize: 12, color: '#8797ab', margin: '0 0 10px' }}>Select the apps this employee will connect to. You can <Link href="/settings?tab=integrations" style={{ color: SKY }}>connect them in Settings</Link> later.</p>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 8 }}>
               {[
                 { id: 'GMAIL', label: 'Gmail', icon: '📧' },
@@ -190,7 +190,7 @@ function NewEmployeePage() {
                 { id: 'LINEAR', label: 'Linear', icon: '🔷' },
                 { id: 'STRIPE', label: 'Stripe', icon: '💳' },
               ].map(t => (
-                <button key={t.id} type="button" onClick={() => toggleTool(t.id)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', borderRadius: 8, border: `1px solid ${tools.includes(t.id) ? SKY : '#2a2a35'}`, background: tools.includes(t.id) ? 'rgba(14,165,233,0.08)' : '#111115', color: tools.includes(t.id) ? '#e4e4e7' : '#52525b', cursor: 'pointer', fontSize: 12, fontWeight: 500, fontFamily: 'inherit', textAlign: 'left' }}>
+                <button key={t.id} type="button" onClick={() => toggleTool(t.id)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', borderRadius: 8, border: `1px solid ${tools.includes(t.id) ? SKY : '#2a2a35'}`, background: tools.includes(t.id) ? 'rgba(14,165,233,0.08)' : '#0d141e', color: tools.includes(t.id) ? '#e8eef7' : '#8797ab', cursor: 'pointer', fontSize: 12, fontWeight: 500, fontFamily: 'inherit', textAlign: 'left' }}>
                   <span style={{ fontSize: 16 }}>{t.icon}</span>
                   {t.label}
                 </button>
@@ -200,10 +200,10 @@ function NewEmployeePage() {
 
           {/* Schedule — simplified */}
           <div>
-            <label style={{ display: 'block', fontSize: 14, fontWeight: 700, color: '#e4e4e7', marginBottom: 6 }}>How often should they work?</label>
+            <label style={{ display: 'block', fontSize: 14, fontWeight: 700, color: '#e8eef7', marginBottom: 6 }}>How often should they work?</label>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
               {SCHEDULE_OPTIONS.map(opt => (
-                <button key={opt.value} type="button" onClick={() => setScheduleType(opt.value)} style={{ padding: '12px', borderRadius: 10, border: `1px solid ${scheduleType === opt.value ? SKY : '#2a2a35'}`, background: scheduleType === opt.value ? 'rgba(14,165,233,0.08)' : '#111115', color: scheduleType === opt.value ? '#e4e4e7' : '#52525b', cursor: 'pointer', fontSize: 12, fontWeight: 600, fontFamily: 'inherit', textAlign: 'center' }}>
+                <button key={opt.value} type="button" onClick={() => setScheduleType(opt.value)} style={{ padding: '12px', borderRadius: 10, border: `1px solid ${scheduleType === opt.value ? SKY : '#2a2a35'}`, background: scheduleType === opt.value ? 'rgba(14,165,233,0.08)' : '#0d141e', color: scheduleType === opt.value ? '#e8eef7' : '#8797ab', cursor: 'pointer', fontSize: 12, fontWeight: 600, fontFamily: 'inherit', textAlign: 'center' }}>
                   {opt.label}
                 </button>
               ))}
@@ -215,7 +215,7 @@ function NewEmployeePage() {
                     {DAYS.map((d, i) => <option key={d} value={i}>{d}</option>)}
                   </select>
                 )}
-                <span style={{ fontSize: 12, color: '#52525b' }}>at</span>
+                <span style={{ fontSize: 12, color: '#8797ab' }}>at</span>
                 <select value={scheduleHour} onChange={e => setScheduleHour(Number(e.target.value))} style={{ ...inputStyle, padding: '8px 12px', fontSize: 13, width: 'auto' }}>
                   {HOURS.map(h => <option key={h} value={h}>{h.toString().padStart(2, '0')}:00 UTC</option>)}
                 </select>
@@ -226,10 +226,10 @@ function NewEmployeePage() {
           {error && <p style={{ fontSize: 13, color: RED, margin: 0 }}>{error}</p>}
 
           <div style={{ display: 'flex', gap: 12, paddingTop: 8 }}>
-            <button type="submit" disabled={saving} style={{ flex: 1, padding: '13px 0', borderRadius: 10, background: saving ? '#1a1a22' : SKY, border: 'none', color: saving ? '#52525b' : '#fff', fontSize: 15, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
+            <button type="submit" disabled={saving} style={{ flex: 1, padding: '13px 0', borderRadius: 10, background: saving ? '#14202e' : SKY, border: 'none', color: saving ? '#8797ab' : '#fff', fontSize: 15, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
               {saving ? 'Hiring…' : 'Hire employee →'}
             </button>
-            <Link href="/ai-employees" style={{ padding: '13px 20px', borderRadius: 10, border: '1px solid #2a2a35', color: '#52525b', fontSize: 14, textDecoration: 'none', display: 'flex', alignItems: 'center' }}>Cancel</Link>
+            <Link href="/ai-employees" style={{ padding: '13px 20px', borderRadius: 10, border: '1px solid #2a2a35', color: '#8797ab', fontSize: 14, textDecoration: 'none', display: 'flex', alignItems: 'center' }}>Cancel</Link>
           </div>
         </form>
       </div>
@@ -240,8 +240,8 @@ function NewEmployeePage() {
 const RED = '#ef4444'
 const inputStyle: React.CSSProperties = {
   width: '100%', boxSizing: 'border-box',
-  background: '#111115', border: '1px solid #2a2a35', borderRadius: 10,
-  padding: '11px 14px', fontSize: 14, color: '#e4e4e7', outline: 'none', fontFamily: 'inherit',
+  background: '#0d141e', border: '1px solid #2a2a35', borderRadius: 10,
+  padding: '11px 14px', fontSize: 14, color: '#e8eef7', outline: 'none', fontFamily: 'inherit',
 }
 
 // Wrap with Suspense because useSearchParams requires it in Next.js App Router
@@ -251,7 +251,7 @@ function NewEmployeePageInner() {
 
 export default function NewEmployeePageWrapper() {
   return (
-    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#0b0d12', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3f3f46', fontFamily: 'var(--font-display)' }}>Loading…</div>}>
+    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#05080d', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8797ab', fontFamily: 'var(--font-display)' }}>Loading…</div>}>
       <NewEmployeePageInner />
     </Suspense>
   )

@@ -44,6 +44,21 @@ export function IDELayout({ initialProject, initialProfile, indiaFeatures = fals
   const [isNarrow, setIsNarrow] = useState(false);
   const [mobileView, setMobileView] = useState<'preview' | 'chat'>('chat');
   const { isGenerating, hasGeneratedFiles } = useEditorStore();
+  // The balance is read once when the page loads, so a second open tab kept showing the old number after credits were spent or added elsewhere.
+  // Re-read it whenever the tab becomes visible again (the same endpoint the chat panel uses after a build).
+  useEffect(() => {
+    const refresh = () => {
+      if (document.visibilityState !== 'visible') return;
+      fetch('/api/credits/deduct', { method: 'GET' })
+        .then(r => r.json())
+        .then(d => { if (typeof d?.credits === 'number') setCredits(d.credits); })
+        .catch(() => {});
+    };
+    document.addEventListener('visibilitychange', refresh);
+    window.addEventListener('focus', refresh);
+    return () => { document.removeEventListener('visibilitychange', refresh); window.removeEventListener('focus', refresh); };
+  }, [setCredits]);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const mq = window.matchMedia('(max-width: 820px)');
@@ -187,7 +202,7 @@ export function IDELayout({ initialProject, initialProfile, indiaFeatures = fals
       {isNarrow ? (
         // Narrow: one panel at a time + bottom tab bar (preview is always reachable).
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
-          <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: mobileView === 'preview' ? 'flex' : 'none', flexDirection: 'column' }}>
+          <div role="main" aria-label="Preview" style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: mobileView === 'preview' ? 'flex' : 'none', flexDirection: 'column' }}>
             <PreviewPanel />
           </div>
           <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: mobileView === 'chat' ? 'flex' : 'none', flexDirection: 'column' }}>
@@ -203,12 +218,12 @@ export function IDELayout({ initialProject, initialProfile, indiaFeatures = fals
           <div style={{ display: 'flex', flexShrink: 0, borderTop: '1px solid var(--ide-border)', background: 'var(--bg-base)' }}>
             {([['chat', t('ideTabChat')], ['preview', tc('preview')]] as const).map(([key, label]) => (
               <button
-                key={key}
+                key={key} type="button" aria-pressed={mobileView === key}
                 onClick={() => setMobileView(key)}
                 style={{
                   flex: 1, padding: '12px 0', fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer',
                   background: mobileView === key ? 'var(--bg-elevated, rgba(255,255,255,0.06))' : 'transparent',
-                  color: mobileView === key ? 'var(--accent, #0EA5E9)' : 'var(--text-muted, #71717a)',
+                  color: mobileView === key ? 'var(--accent, #0EA5E9)' : 'var(--text-muted, #8797ab)',
                   borderTop: mobileView === key ? '2px solid var(--accent, #0EA5E9)' : '2px solid transparent',
                 }}
               >{label}</button>
@@ -224,12 +239,12 @@ export function IDELayout({ initialProject, initialProfile, indiaFeatures = fals
               <div style={{ flex: 1, overflow: 'hidden' }}><CodeEditor /></div>
             </div>
           )}
-          <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          <div role="main" aria-label="Preview" style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
             <PreviewPanel />
           </div>
         </div>
         <ResizableDivider onResize={resizeRight} />
-        <div style={{ width: rightPanelWidth, flexShrink: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', borderLeft: '1px solid var(--ide-border)' }}>
+        <div role="complementary" aria-label="Assistant and tools" style={{ width: rightPanelWidth, flexShrink: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', borderLeft: '1px solid var(--ide-border)' }}>
           <RightPanel
             projectId={initialProject?.id}
             userId={initialProfile?.id}
