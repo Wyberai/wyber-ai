@@ -5626,8 +5626,55 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
       // got cut off mid-generation. HIGH-complexity one-shot builds go
       // straight to the sequential loop below instead, which has real
       // max_tokens continuation and no fixed page ceiling.
-      let handledByParallel = false
-      if (useToolUse && isNewBuild && newBuildComplexity !== true && process.env.CLAUDE_PARALLEL_BUILD !== 'off') {
+      // ── Spec-driven website build (flag WEBSITE_SPEC_BUILD=on, default OFF) ─────────────────────────────────────
+      // Understand the intent, plan the design and sections in code, have the model write only the copy slots, and render the site
+      // from the Wyber UI kit (src/lib/website-spec). ANY failure (plan, copy validation, timeout) falls through to the existing
+      // free-form build below, so this can only add a path, never remove one.
+      let handledBySpec = false
+      if (isNewBuild && stage === 'full' && !selfHeal && projectType === 'website' && isLaunchReadyWebsite(projectType) && (await import('@/lib/website-spec/flag')).websiteSpecEnabled()) {
+        try {
+          const { generateWebsite } = await import('@/lib/website-spec')
+          const SPEC_TIMEOUT_MS = Number(process.env.WEBSITE_SPEC_TIMEOUT_MS) || 150000
+          let specTimer: ReturnType<typeof setTimeout> | undefined
+          const specResult = await Promise.race([
+            generateWebsite(
+              { prompt, seed: String(projectId ?? buildId ?? prompt) },
+              {
+                writeCopy: async (system, user) => {
+                  const m = await client.messages.create({ model, max_tokens: 8000, system, messages: [{ role: 'user', content: user }] })
+                  const text = m.content.map(b => (b.type === 'text' ? b.text : '')).join('')
+                  return { text, inputTokens: m.usage.input_tokens ?? 0, outputTokens: m.usage.output_tokens ?? 0 }
+                },
+              },
+            ),
+            new Promise<never>((_, reject) => { specTimer = setTimeout(() => reject(new Error(`website-spec exceeded ${SPEC_TIMEOUT_MS}ms`)), SPEC_TIMEOUT_MS) }),
+          ]).finally(() => { if (specTimer) clearTimeout(specTimer) })
+          totalInputTokens += specResult.usage.inputTokens
+          totalOutputTokens += specResult.usage.outputTokens
+          if (specResult.ok) {
+            const specText = `[progress: Planning your site (${specResult.spec.brief.intent}, ${specResult.spec.direction.name})]\n` + specResult.text
+            generatedText = specText
+            let i = 0
+            const specChunk = 400
+            readable = new ReadableStream<Uint8Array>({
+              pull(c) {
+                if (i >= specText.length) { c.close(); return }
+                c.enqueue(encoder.encode(specText.slice(i, i + specChunk)))
+                i += specChunk
+              },
+            })
+            handledBySpec = true
+            console.log(`[website-spec] ok buildId=${buildId ?? ''} intent=${specResult.spec.brief.intent} direction=${specResult.spec.direction.id} files=${specResult.paths.length} notes=${specResult.notes.join(' | ')} output=${specResult.usage.outputTokens} elapsed_ms=${Date.now() - requestStartTime}`)
+          } else {
+            console.log(`[website-spec] falling back to the free-form build: ${specResult.reason.slice(0, 300)}`)
+          }
+        } catch (specErr) {
+          console.log('[website-spec] threw, falling back to the free-form build:', String(specErr))
+        }
+      }
+
+      let handledByParallel = handledBySpec
+      if (!handledBySpec && useToolUse && isNewBuild && newBuildComplexity !== true && process.env.CLAUDE_PARALLEL_BUILD !== 'off') {
         try {
           const { runClaudeParallel, classifyClaudeParallelFailure, MODEL_ID: parallelModelId } = await import('@/lib/model-providers/claude-parallel')
           // 45s (the old default) is shorter than what this path's own config

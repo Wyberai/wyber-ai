@@ -108,7 +108,7 @@ describe('render', () => {
         expect(failing).toEqual([])
       })
       it('the hero image is a literal directive and the contact path is guarded by owner facts', () => {
-        if (spec.images.some(i => i.id === 'hero')) expect(app).toMatch(/\{\{wyber-image: [^}]+ \| \d+\/\d+\}\}/)
+        if (spec.images.some(i => i.id === 'hero')) expect(app).toMatch(/\{\{wyber-image: [^}]+ \| (?:16:9|9:16|1:1)\}\}/)
         expect(app).toContain('const hasContact = hasWa || hasMail')
         expect(app).toContain('{hasContact && (')
       })
@@ -131,4 +131,88 @@ describe('render', () => {
       })
     })
   }
+})
+
+import fs from 'node:fs'
+import path from 'node:path'
+import { generateWebsite, parseFactsFromPrompt, parseJsonObject } from './generate'
+import { factsSuffix } from '../website-facts'
+import { websiteSpecEnabled } from './flag'
+
+describe('generate (model injected)', () => {
+  const d = DEMOS[0]
+  const reply = (obj: unknown) => ({ text: '```json\n' + JSON.stringify(obj) + '\n```', inputTokens: 1000, outputTokens: 2000 })
+
+  it('plans, asks for copy once, validates, renders and returns <file> blocks with the entry file last', async () => {
+    let calls = 0
+    const r = await generateWebsite({ prompt: d.prompt, seed: 's1', facts: d.facts }, { writeCopy: async () => { calls++; return reply(d.copy) } })
+    expect(calls).toBe(1)
+    expect(r.ok).toBe(true)
+    if (!r.ok) return
+    expect(r.usage).toEqual({ inputTokens: 1000, outputTokens: 2000 })
+    expect(r.paths[r.paths.length - 1]).toBe('src/App.tsx')
+    expect(r.text).toMatch(/<file path="src\/App\.tsx">\n[\s\S]+\n<\/file>\n$/)
+    expect(r.text).toContain('<file path="src/owner-details.ts">')
+  })
+
+  it('repairs once when the first reply breaks the rules, and tells the model what was wrong', async () => {
+    const bad = structuredClone(d.copy)
+    bad.hero.headline = 'The best clinic in the city!'
+    const asked: string[] = []
+    const r = await generateWebsite({ prompt: d.prompt, seed: 's1', facts: d.facts }, {
+      writeCopy: async (_s, u) => { asked.push(u); return reply(asked.length === 1 ? bad : d.copy) },
+    })
+    expect(r.ok).toBe(true)
+    expect(asked).toHaveLength(2)
+    expect(asked[1]).toMatch(/hero\.headline/)
+  })
+
+  it('gives up after two bad replies so the free-form build can take over', async () => {
+    const r = await generateWebsite({ prompt: d.prompt, seed: 's1', facts: d.facts }, { writeCopy: async () => ({ text: 'sorry, I cannot', inputTokens: 5, outputTokens: 5 }) })
+    expect(r.ok).toBe(false)
+    if (!r.ok) { expect(r.reason).toMatch(/^copy:/); expect(r.usage.inputTokens).toBe(10) }
+  })
+
+  it('a thrown model error is a clean failure, not an exception', async () => {
+    const r = await generateWebsite({ prompt: d.prompt, seed: 's1', facts: d.facts }, { writeCopy: async () => { throw new Error('overloaded') } })
+    expect(r.ok).toBe(false)
+  })
+
+  it('reads the facts the "Make it yours" step appends, and nothing else', () => {
+    const p = 'Website for a dental clinic' + factsSuffix({ name: 'Smile Dental', area: 'Navrangpura, Ahmedabad', whatsapp: '98765 43210', hours: 'Mon to Sat, 10am to 7pm' })
+    expect(parseFactsFromPrompt(p)).toEqual({ name: 'Smile Dental', city: 'Navrangpura, Ahmedabad', whatsapp: '919876543210', hours: 'Mon to Sat, 10am to 7pm' })
+    expect(parseFactsFromPrompt('Website for a dental clinic')).toEqual({})
+  })
+
+  it('tolerates fenced and chatty JSON', () => {
+    expect(parseJsonObject('Here you go:\n```json\n{"a":1}\n```')).toEqual({ a: 1 })
+    expect(() => parseJsonObject('no json')).toThrow()
+  })
+})
+
+describe('route wiring', () => {
+  const route = fs.readFileSync(path.join(__dirname, '..', '..', 'app', 'api', 'generate', 'route.ts'), 'utf8')
+  it('is off unless WEBSITE_SPEC_BUILD=on', () => {
+    expect(websiteSpecEnabled()).toBe(false)
+  })
+  it('runs only for new launch-ready website builds and falls back on any failure', () => {
+    expect(route).toMatch(/isNewBuild && stage === 'full' && !selfHeal && projectType === 'website' && isLaunchReadyWebsite\(projectType\)/)
+    expect(route).toContain('falling back to the free-form build')
+    expect(route).toContain('let handledByParallel = handledBySpec')
+    expect(route).toMatch(/!handledBySpec && useToolUse/)
+  })
+})
+
+import { parseGenerationOutput } from '../file-parser'
+describe('the platform reads what the spec path writes', () => {
+  it('parseGenerationOutput recovers every file byte for byte, including image directives', async () => {
+    const d = DEMOS[1]
+    const r = await generateWebsite({ prompt: d.prompt, seed: d.seed, facts: d.facts }, { writeCopy: async () => ({ text: JSON.stringify(d.copy), inputTokens: 1, outputTokens: 1 }) })
+    if (!r.ok) throw new Error(r.reason)
+    const { files } = parseGenerationOutput(r.text)
+    const expected = renderWebsite(r.spec, d.copy).files
+    expect(files.map(f => f.path).sort()).toEqual(Object.keys(expected).sort())
+    for (const f of files) expect(f.content.trim()).toBe(expected[f.path].trim())
+    expect(files.find(f => f.path === 'src/App.tsx')!.content).toMatch(/\{\{wyber-image: [^}]+ \| 16:9\}\}/)
+  })
 })

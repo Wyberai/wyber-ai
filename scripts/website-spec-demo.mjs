@@ -46,7 +46,7 @@ for (const demo of DEMOS) {
   spec._tokens = tokens
   for (const [p, content] of Object.entries(site.files)) {
     let body = content
-    if (p === 'src/App.tsx') body = body.replace(/\{\{wyber-image: ([^|}]+)\| ([0-9/]+)\}\}/g, (_, brief, ratio) => placeholder(spec, brief.trim(), ratio))
+    if (p === 'src/App.tsx') body = body.replace(/\{\{wyber-image: ([^|}]+)\| ([0-9:]+)\}\}/g, (_, brief, ratio) => placeholder(spec, brief.trim(), ratio.replace(':', '/')))
     const target = path.join(dir, p)
     fs.mkdirSync(path.dirname(target), { recursive: true })
     fs.writeFileSync(target, body)

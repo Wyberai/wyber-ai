@@ -11,7 +11,9 @@ const TOKEN_ORDER = [
 const FALLBACK = "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif"
 const q = (s: string) => s.replace(/["{}|]/g, ' ').replace(/\s+/g, ' ').trim()
 
-export function imageDirective(slot: ImageSlot): string { return `{{wyber-image: ${q(slot.brief)} | ${slot.ratio}}}` }
+/** The directive parser only knows 1:1, 9:16 and 16:9; anything else falls back to wide. CSS crops to the slot ratio. */
+export function directiveRatio(ratio: string): string { return ratio === '4/5' || ratio === '9/16' ? '9:16' : ratio === '1/1' ? '1:1' : '16:9' }
+export function imageDirective(slot: ImageSlot): string { return `{{wyber-image: ${q(slot.brief)} | ${directiveRatio(slot.ratio)}}}` }
 
 export function renderIndexCss(spec: BuildSpec): string {
   const d = getDirectionById(spec.direction.id)
