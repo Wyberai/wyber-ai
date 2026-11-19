@@ -5752,6 +5752,56 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
         }
       }
 
+      // ── Spec-driven SaaS and Replace-your-SaaS build (flag SAAS_SPEC_BUILD=on, default OFF) ─────────────────────
+      // Marketing site + product + SaaS contract from fixed, tested templates (src/lib/saas-spec); the model writes only data (product model, plans, copy).
+      // A replacement brief becomes an internal tool covering its checklist. Any failure, or a blocking security finding, falls through.
+      if (!handledBySpec && isNewBuild && stage === 'full' && !selfHeal && projectType === 'saas' && isLaunchReadySaas(projectType) && (await import('@/lib/saas-spec/flag')).saasSpecEnabled()) {
+        try {
+          const { runSaasSpec } = await import('@/lib/saas-spec/run')
+          const SAAS_SPEC_TIMEOUT_MS = Number(process.env.SAAS_SPEC_TIMEOUT_MS) || 240000
+          let saasTimer: ReturnType<typeof setTimeout> | undefined
+          const saasResult = await Promise.race([
+            runSaasSpec({ prompt, seed: String(projectId ?? buildId ?? prompt) }, async (system, user) => {
+              const m = await client.messages.create({ model, max_tokens: 12000, system, messages: [{ role: 'user', content: user }] })
+              return { text: m.content.map(b => (b.type === 'text' ? b.text : '')).join(''), inputTokens: m.usage.input_tokens ?? 0, outputTokens: m.usage.output_tokens ?? 0 }
+            }),
+            new Promise<never>((_, reject) => { saasTimer = setTimeout(() => reject(new Error(`saas-spec exceeded ${SAAS_SPEC_TIMEOUT_MS}ms`)), SAAS_SPEC_TIMEOUT_MS) }),
+          ]).finally(() => { if (saasTimer) clearTimeout(saasTimer) })
+          totalInputTokens += saasResult.usage.inputTokens
+          totalOutputTokens += saasResult.usage.outputTokens
+          if (saasResult.ok) {
+            const saasText = `[progress: ${saasResult.label}]
+` + saasResult.text
+            const saasFiles = parseGenerationOutput(saasText).files
+            const saasVetoes = saasFiles.flatMap(f => reviewEmittedFile(f.path, f.content, '', { nextId: createFindingIdGenerator() })).filter(vetoEligible)
+            if (saasVetoes.length) {
+              console.log(`[saas-spec] security review blocked the rendered files (${saasVetoes.map(v => v.ruleId).join(', ')}), falling back to the free-form build`)
+            } else {
+              generatedText = saasText
+              let i = 0
+              readable = new ReadableStream<Uint8Array>({
+                start(c) {
+                  emitAgent(c, { agent: 'coder', status: 'start', detail: 'rendering your product from the plan' })
+                  emitAgent(c, { agent: 'security', status: 'start', detail: 'reviewing every file as it lands' })
+                  for (const f of saasFiles) sentinelReview(c, f.path, f.content)
+                },
+                pull(c) {
+                  if (i >= saasText.length) { emitAgent(c, { agent: 'coder', status: 'done' }); sentinelDone(c); c.close(); return }
+                  c.enqueue(encoder.encode(saasText.slice(i, i + 400)))
+                  i += 400
+                },
+              })
+              handledBySpec = true
+              console.log(`[saas-spec] ok buildId=${buildId ?? ''} ${saasResult.summary} files=${saasResult.paths.length} output=${saasResult.usage.outputTokens} elapsed_ms=${Date.now() - requestStartTime}`)
+            }
+          } else {
+            console.log(`[saas-spec] falling back to the free-form build: ${saasResult.reason.slice(0, 300)}`)
+          }
+        } catch (saasErr) {
+          console.log('[saas-spec] threw, falling back to the free-form build:', String(saasErr))
+        }
+      }
+
       let handledByParallel = handledBySpec
       if (!handledBySpec && useToolUse && isNewBuild && newBuildComplexity !== true && process.env.CLAUDE_PARALLEL_BUILD !== 'off') {
         try {
