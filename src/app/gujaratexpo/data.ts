@@ -119,12 +119,12 @@ export const STEPS = [
 // the database scan runs right after a publish (not before); exposed secret keys block a publish and an export;
 // the security checklist and the public checks at /tools run on demand. See src/lib/security-claims.test.ts.
 export const POWERS = [
-  { n: '01', a: 'X-ray ', b: 'vision.', p: 'A real Row-Level Security test against your live database, not a linter guessing at your schema. It runs right after every publish, and a critical leak is flagged the moment it is found.' },
-  { n: '02', a: 'Key ', b: 'lock.', p: 'If a secret key or service password is exposed in your code, publishing and export stop until it is removed.' },
-  { n: '03', a: 'Security ', b: 'armour.', p: 'Run a full security checklist from the editor at any time, against the files WyberAi actually wrote.' },
-  { n: '04', a: 'Be ', b: 'seen.', p: 'On websites, an SEO pass with automatic fixes and an AI-readable copy of every page. A site that only loads through JavaScript can look empty to ChatGPT and Perplexity.' },
-  { n: '05', a: 'Anti-slop ', b: 'radar.', p: 'A scanner counts the signs of an autopilot, made-by-AI site and quotes every one it finds. Paste any web address at wyberai.com/tools, free and without signing up.' },
-  { n: '06', a: 'Not a ', b: 'template.', p: 'A design direction chosen for your kind of business, so what you get does not look like anyone else’s. Fresh code every time.' },
+  { n: '01', a: 'Data leak ', b: 'test.', p: 'A real Row-Level Security test against your live database, not a linter guessing at your schema. It runs right after every publish, and a critical leak is flagged the moment it is found.' },
+  { n: '02', a: 'Secret-key ', b: 'guard.', p: 'If a secret key or service password is exposed in your code, publishing and export stop until it is removed.' },
+  { n: '03', a: 'Security ', b: 'checklist.', p: 'Run a full security checklist from the editor at any time, against the files WyberAi actually wrote.' },
+  { n: '04', a: 'AI slop ', b: 'remover.', p: 'Rules against the generic made-by-AI look are built into the builder, and a scanner counts the signs on any site and quotes every one it finds. Paste any web address at wyberai.com/tools, free and without signing up.' },
+  { n: '05', a: 'Not a ', b: 'template.', p: 'A design direction chosen for your kind of business, so what you get does not look like anyone else\u2019s. Fresh code every time.' },
+  { n: '06', a: 'SEO + AEO ', b: 'friendly.', p: 'On websites, an SEO pass with automatic fixes and an AI-readable copy of every page, so Google and AI answer engines can read the site. A site that only loads through JavaScript can look empty to them.' },
 ]
 
 export const WHY = [
@@ -137,17 +137,17 @@ export const WHY = [
 
 export const STORY_COPY: Record<AudienceId, { head: string; sub: string; chat: string }> = {
   software: {
-    head: "Vibe coding doesn't have to be boring or vulnerable.",
+    head: 'Vibe coding with superpowers.',
     sub: 'Timesheets. Chat threads. A status sheet nobody trusts. Say what is broken. Get software.',
     chat: 'Show the rupee value next to every invoice.',
   },
   business: {
-    head: "Vibe coding doesn't have to be boring or vulnerable.",
+    head: 'Vibe coding with superpowers.',
     sub: 'Challans. Cheques. GST printouts. A ledger only one can read. Say what is broken. Get software.',
     chat: 'Make anything close to the one-year limit red.',
   },
   student: {
-    head: "Vibe coding doesn't have to be boring or vulnerable.",
+    head: 'Vibe coding with superpowers.',
     sub: 'A timetable. Sticky notes. Placement notices. Six reminder apps. Say what you need. Get software.',
     chat: 'Add a prep notes section for every company.',
   },

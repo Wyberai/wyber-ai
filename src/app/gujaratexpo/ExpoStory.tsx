@@ -155,7 +155,7 @@ export function ExpoStory({ audience, picker }: { audience: AudienceId; picker: 
       <section className={s.staticHero}>
         <div className={s.wrap}>
           <div className={s.eyebrow}><span className={s.live}>●</span> TECH EXPO GUJARAT · BOOTH S23 · 27–29 NOV</div>
-          <h1 className={s.h1}>Vibe coding doesn&apos;t have to be <em>boring or vulnerable.</em></h1>
+          <h1 className={s.h1}>Vibe coding <em>with superpowers.</em></h1>
           <p className={s.sub}>Describe it once and WyberAi engineers it from scratch. <b>Bring your pain point to our booth and we&apos;ll build it while you watch.</b></p>
           <div style={{ margin: '24px 0' }}>{picker}</div>
           <div className={s.staticRow}>

@@ -196,8 +196,8 @@ export function ExpoClient({ initial }: { initial?: string }) {
         {/* SUPERPOWERS: what WyberAi does on top of plain vibe coding */}
         <section id="powers" className={`${s.section} ${s.sectionLine}`}>
           <div className={s.eyebrow}>■ SUPERPOWERS</div>
-          <h2 className={s.h2}>Not boring.<br /><em>Not vulnerable.</em></h2>
-          <p className={s.lede}>Anyone can describe an app to an AI. These are the checks WyberAi adds so what you get is worth launching.</p>
+          <h2 className={s.h2}>Vibe coding.<br /><em>With superpowers.</em></h2>
+          <p className={s.lede}>Vibe coding gives you a base. WyberAi is an AI agent that plans the build, writes it, repairs its own failures and checks the result. Six superpowers are built in.</p>
           <div className={s.why}>
             {POWERS.map(w => (
               <div key={w.n} className={s.wr}>

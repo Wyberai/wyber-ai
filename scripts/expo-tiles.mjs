@@ -16,12 +16,12 @@ const SERVICES = [
   ['service-replace-your-saas', 'Replace your SaaS', 'Your own, in-house. Swap a SaaS you pay for with your own version, built around the features you use.'],
 ]
 const POWERS = [
-  ['power-xray-vision', 'X-ray vision', 'We probe your live database like an attacker, right after you publish.'],
-  ['power-key-lock', 'Key lock', 'An exposed secret key stops a publish and an export.'],
-  ['power-security-armour', 'Security armour', 'A full security checklist from the editor, any time.'],
-  ['power-anti-slop-radar', 'Anti-slop radar', 'Flags the made-by-AI look and quotes what it found.'],
+  ['power-data-leak-test', 'Data leak test', 'We probe your live database like an attacker, right after you publish.'],
+  ['power-secret-key-guard', 'Secret-key guard', 'An exposed secret key stops a publish and an export.'],
+  ['power-security-checklist', 'Security checklist', 'A full security checklist from the editor, any time.'],
+  ['power-ai-slop-remover', 'AI slop remover', 'Rules against the generic made-by-AI look, and a scanner that quotes what it finds.'],
   ['power-not-a-template', 'Not a template', 'A design direction for your kind of business.'],
-  ['power-be-seen', 'Be seen', 'Readable by Google and by AI assistants.'],
+  ['power-seo-aeo-friendly', 'SEO + AEO friendly', 'On websites: readable by Google and by AI answer engines.'],
 ]
 const TILES = [...SERVICES, ...POWERS]
 const html = (t, d) => `<!doctype html><html><head><meta charset="utf-8"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
@@ -33,7 +33,7 @@ const html = (t, d) => `<!doctype html><html><head><meta charset="utf-8"><link h
 .bar{position:absolute;left:80px;top:320px;width:120px;height:10px;border-radius:5px;background:${SKY}}
 .f{position:absolute;left:80px;bottom:70px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:28px;letter-spacing:.14em;color:#6b7488}
 </style></head><body><div class="glow"></div><div class="mk">${mark}</div><div class="bar"></div>
-<div class="t" style="--fs:${t.length <= 8 ? 150 : t.length <= 12 ? 120 : t.length <= 15 ? 96 : 80}px">${t}</div><div class="d">${d}</div><div class="f">WYBERAI &nbsp;·&nbsp; NOT BORING. NOT VULNERABLE.</div></body></html>`
+<div class="t" style="--fs:${t.length <= 8 ? 150 : t.length <= 12 ? 120 : t.length <= 15 ? 96 : t.length <= 17 ? 84 : 76}px">${t}</div><div class="d">${d}</div><div class="f">WYBERAI &nbsp;·&nbsp; VIBE CODING WITH SUPERPOWERS</div></body></html>`
 
 const browser = await puppeteer.launch({ executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe', headless: true, args: ['--no-sandbox'] })
 for (const [file, t, d] of TILES) {
