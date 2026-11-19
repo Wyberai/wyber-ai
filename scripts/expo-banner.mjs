@@ -7,7 +7,7 @@ import fs from 'node:fs'
 const OUT = path.join(os.homedir(), 'OneDrive', 'Desktop', 'Wyber Ai', 'Gujarat Tech Expo', 'booth-artwork', '2-UPLOAD-TO-XPRO', 'xpro-banner-1600x400.png')
 const SKY = '#0ea5e9'
 const mark = `<svg width="64" height="64" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="${SKY}"/><path d="M20 7L11 16L20 25" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M23 11L28 16L23 21" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.4"/></svg>`
-const tiles = [['Data leak test', 'database probed'], ['Secret-key guard', 'keys stay out'], ['Security checklist', 'full checklist'], ['AI slop remover', 'no generic AI look'], ['Not a template', 'a design for you'], ['SEO + AEO friendly', 'Google and AI']]
+const tiles = [['Data leak test', 'database probed'], ['Secret-key guard', 'keys stay out'], ['Security checklist', 'full checklist'], ['AI slop remover', 'no generic AI look'], ['Own design system', 'built in-house'], ['SEO + AEO friendly', 'Google and AI']]
 const html = `<!doctype html><html><head><meta charset="utf-8"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
 <style>*{box-sizing:border-box}html,body{margin:0;width:1600px;height:400px;background:#05060a;color:#f2f4f8;font-family:Inter,sans-serif;overflow:hidden}
 .glow{position:absolute;right:-120px;top:-160px;width:620px;height:620px;border-radius:50%;background:radial-gradient(closest-side,rgba(14,165,233,.28),transparent)}

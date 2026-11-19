@@ -47,7 +47,7 @@ const POWERS = [
   ['Secret-key guard', 'If a secret key or service password is exposed in your code, publishing and export stop until it is removed.'],
   ['Security checklist', 'Run a full security checklist from the editor at any time, against the files WyberAi actually wrote.'],
   ['AI slop remover', 'Rules against the generic made-by-AI look are built into the builder, and a scanner quotes every sign it finds.'],
-  ['Not a template', 'A design direction chosen for your kind of business, so it does not look like anyone else\u2019s.'],
+  ['Own design system', 'Over 150 original components and 31 design directions, built in-house and used on every build, so it does not look like the default AI output.'],
   ['SEO + AEO friendly', 'On websites, an SEO pass with automatic fixes and an AI-readable copy of every page, for Google and AI answer engines.'],
 ]
 const CARD = 'border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:14px 16px;background:rgba(255,255,255,.03)'

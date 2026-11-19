@@ -20,7 +20,7 @@ const POWERS = [
   ['power-secret-key-guard', 'Secret-key guard', 'An exposed secret key stops a publish and an export.'],
   ['power-security-checklist', 'Security checklist', 'A full security checklist from the editor, any time.'],
   ['power-ai-slop-remover', 'AI slop remover', 'Rules against the generic made-by-AI look, and a scanner that quotes what it finds.'],
-  ['power-not-a-template', 'Not a template', 'A design direction for your kind of business.'],
+  ['power-own-design-system', 'Own design system', 'Over 150 original components and 31 design directions, built in-house.'],
   ['power-seo-aeo-friendly', 'SEO + AEO friendly', 'On websites: readable by Google and by AI answer engines.'],
 ]
 const TILES = [...SERVICES, ...POWERS]

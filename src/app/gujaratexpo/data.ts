@@ -123,7 +123,7 @@ export const POWERS = [
   { n: '02', a: 'Secret-key ', b: 'guard.', p: 'If a secret key or service password is exposed in your code, publishing and export stop until it is removed.' },
   { n: '03', a: 'Security ', b: 'checklist.', p: 'Run a full security checklist from the editor at any time, against the files WyberAi actually wrote.' },
   { n: '04', a: 'AI slop ', b: 'remover.', p: 'Rules against the generic made-by-AI look are built into the builder, and a scanner counts the signs on any site and quotes every one it finds. Paste any web address at wyberai.com/tools, free and without signing up.' },
-  { n: '05', a: 'Not a ', b: 'template.', p: 'A design direction chosen for your kind of business, so what you get does not look like anyone else\u2019s. Fresh code every time.' },
+  { n: '05', a: 'Our own ', b: 'design system.', p: 'Over 150 original components and 31 design directions, built in-house and used on every build, so it does not look like the default AI output. Fresh code every time.' },
   { n: '06', a: 'SEO + AEO ', b: 'friendly.', p: 'On websites, an SEO pass with automatic fixes and an AI-readable copy of every page, so Google and AI answer engines can read the site. A site that only loads through JavaScript can look empty to them.' },
 ]
 
