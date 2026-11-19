@@ -197,7 +197,7 @@ export function ExpoClient({ initial }: { initial?: string }) {
         <section id="powers" className={`${s.section} ${s.sectionLine}`}>
           <div className={s.eyebrow}>■ SUPERPOWERS</div>
           <h2 className={s.h2}>Vibe coding.<br /><em>With superpowers.</em></h2>
-          <p className={s.lede}>Vibe coding gives you a base. WyberAi is an AI agent that plans the build, writes it, repairs its own failures and checks the result. Six superpowers are built in.</p>
+          <p className={s.lede}>Vibe coding gives you a base. WyberAi is an AI agent that plans the build, writes it, repairs its own failures and checks the result. Six superpowers are built in. Saves hundreds of hours of research and vibe coding.</p>
           <div className={s.why}>
             {POWERS.map(w => (
               <div key={w.n} className={s.wr}>

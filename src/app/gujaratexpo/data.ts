@@ -103,7 +103,7 @@ export const TYPES = [
   { tag: 'WEB APP', title: 'Tools for your team', p: 'Trackers, approvals, invoices and dashboards that replace sheets and chat threads.' },
   { tag: 'MOBILE APP', title: 'An app people install', p: 'Orders, attendance or delivery proof on a phone, for your team or your customers.' },
   { tag: 'SAAS', title: 'A product you sell', p: 'Logins, a database and a link customers can sign up on. Ready to put in front of buyers.' },
-  { tag: 'REPLACE', title: 'Your own, in-house', p: 'Swap a SaaS you pay for with your own in-house version, built around the features you actually use.' },
+  { tag: 'REPLACE', title: 'Replace your SaaS', p: 'Your own, in-house. Swap a SaaS you pay for with your own version, built around the features you actually use. You own the code.' },
 ]
 
 export const STEPS = [
@@ -130,7 +130,7 @@ export const POWERS = [
 export const WHY = [
   { n: '01', a: 'Fresh code, ', b: 'every time.', p: 'No drag-and-drop and no stale templates. WyberAi writes real React and Tailwind from scratch for every project.' },
   { n: '02', a: 'Self-healing ', b: 'builds.', p: 'A broken import or a cut-off file does not stop the build. WyberAi finds the failure and repairs it in the same run.' },
-  { n: '03', a: 'Your code. ', b: 'Zero lock-in.', p: 'Push to your own GitHub repo, connect your own domain, and fork it or hire developers later. Auth, database and API routes come wired up, and the database runs on WyberCloud, free for 2 years.' },
+  { n: '03', a: 'Your code. Your GitHub. ', b: 'Your domain.', p: 'Push to your own GitHub repo, connect your own domain, and fork it or hire developers later. Auth, database and API routes come wired up, and the database runs on WyberCloud, free for 2 years.' },
 ]
 
 /* ---------- story: the clutter that becomes software ---------- */
