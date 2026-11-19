@@ -98,3 +98,30 @@ export function buildCopyPrompt(spec: BuildSpec, businessPrompt: string): { syst
   ].join('\n')
   return { system, user }
 }
+
+const pickStrings = <T extends object>(o: unknown, keys: (keyof T & string)[]): Partial<T> => {
+  const out: Record<string, unknown> = {}
+  if (o && typeof o === 'object') for (const k of keys) { const v = (o as Record<string, unknown>)[k]; if (v !== undefined) out[k] = v }
+  return out as Partial<T>
+}
+
+/** Keeps only the slots the plan asked for. A model reply can carry extra keys (a live one added "owner-details"); they never reach the page. */
+export function normalizeCopy(spec: BuildSpec, raw: unknown): SiteCopy {
+  const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>
+  const sections: SiteCopy['sections'] = {}
+  const rs = (r.sections && typeof r.sections === 'object' ? r.sections : {}) as Record<string, unknown>
+  for (const s of spec.sections) {
+    const c = rs[s.id] as Record<string, unknown> | undefined
+    if (!c || typeof c !== 'object') continue
+    const sec = pickStrings<SiteCopy['sections'][string]>(c, ['eyebrow', 'title', 'description', 'paragraphs', 'button', 'imageAlt', 'imageBrief']) as SiteCopy['sections'][string]
+    if (Array.isArray(c.items)) sec.items = c.items.map(it => pickStrings<{ title: string; text: string; meta: string }>(it, ['title', 'text', 'meta']) as { title: string; text: string; meta?: string })
+    if (Array.isArray(c.faq)) sec.faq = c.faq.map(f => pickStrings<{ question: string; answer: string }>(f, ['question', 'answer']) as { question: string; answer: string })
+    sections[s.id] = sec
+  }
+  return {
+    brand: r.brand as string,
+    seo: pickStrings<SiteCopy['seo']>(r.seo, ['title', 'description']) as SiteCopy['seo'],
+    hero: pickStrings<SiteCopy['hero']>(r.hero, ['eyebrow', 'headline', 'accent', 'sub', 'cta', 'secondary', 'imageAlt', 'imageBrief']) as SiteCopy['hero'],
+    sections,
+  }
+}

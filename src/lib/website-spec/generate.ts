@@ -1,7 +1,7 @@
 import { askForJson } from '../build-spec/ask'
-import { parseFactsFromPrompt } from '../build-spec/facts'
+import { parseFactsFromPrompt, stripFactsSuffix } from '../build-spec/facts'
 import type { ModelCall, ModelReply } from '../build-spec/types'
-import { buildCopyPrompt, validateCopy } from './copy'
+import { buildCopyPrompt, normalizeCopy, validateCopy } from './copy'
 import { planWebsite } from './plan'
 import { renderWebsite, type Translations } from './render'
 import { buildTranslatePrompt, completeTranslation, translatable, validateTranslation } from './translate'
@@ -41,13 +41,13 @@ export async function generateWebsite(input: GenerateInput, deps: GenerateDeps):
   if (spec.brief.note) notes.push(spec.brief.note)
   if (spec.brief.unsupported.length) notes.push('Not built yet: ' + spec.brief.unsupported.join(', '))
 
-  const { system, user } = buildCopyPrompt(spec, input.prompt)
+  const { system, user } = buildCopyPrompt(spec, stripFactsSuffix(input.prompt))
   const written = await askForJson<SiteCopy>({
     call: deps.writeCopy, system, user, onUsage,
     validate: v => validateCopy(spec, v as SiteCopy).map(i => `${i.path}: ${i.message}`),
   })
   if (!written.ok) return { ok: false, reason: 'copy: ' + written.problems.slice(0, 12).map(p => '- ' + p).join('\n'), usage }
-  const copy = written.value
+  const copy = normalizeCopy(spec, written.value)
 
   // Other languages: written by the same model, checked for shape, best effort. A language that fails is left out and the site
   // still ships in English (and any remaining languages); the launch-ready language check then raises it for the free repair pass.

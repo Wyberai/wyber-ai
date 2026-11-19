@@ -239,3 +239,27 @@ describe('motion plan comes from the direction and is actually used', () => {
     expect(app).toContain('"accent": "whole family"')
   })
 })
+
+import { factsSuffix } from '../website-facts'
+import { stripFactsSuffix } from '../build-spec/facts'
+describe('copy slots: only the planned keys reach the page (live build: a stray "owner-details" key)', () => {
+  const d = DEMOS[1]
+  it('the facts instruction meant for the legacy builder is not shown to the copy writer', () => {
+    const p = d.prompt + factsSuffix({ name: 'Annapurna Rice Exports', area: 'Hyderabad', whatsapp: '90000 00002', hours: 'Mon to Sat' })
+    expect(p).toMatch(/put them in owner-details/)
+    expect(stripFactsSuffix(p)).toBe(d.prompt)
+  })
+  it('extra keys in the model reply are dropped, and the page source never carries them', async () => {
+    const polluted = { ...d.copy, 'owner-details': { name: 'X', whatsapp: '919000000002' }, secretNote: 'nope', hero: { ...d.copy.hero, bogus: 1 } }
+    const seen: string[] = []
+    const r = await generateWebsite({ prompt: d.prompt + factsSuffix({ name: 'Annapurna', area: 'Hyderabad', whatsapp: '', hours: '' }) + ' English only.', seed: d.seed }, {
+      writeCopy: async (_s, u) => { seen.push(u); return { text: JSON.stringify(polluted), inputTokens: 1, outputTokens: 1 } },
+    })
+    expect(r.ok).toBe(true)
+    if (!r.ok) return
+    expect(r.text).not.toContain('"owner-details"')
+    expect(r.text).not.toContain('secretNote')
+    expect(r.text).not.toContain('bogus')
+    expect(seen[0]).not.toMatch(/put them in owner-details/)
+  })
+})

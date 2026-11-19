@@ -64,3 +64,9 @@ export function parseFactsSuffix(prompt: string): OwnerFacts {
 export function parseFactsFromPrompt(prompt: string): OwnerFacts {
   return mergeFacts(parseFactsSuffix(prompt), extractFactsFromText(prompt))
 }
+
+/** The "Make it yours" suffix tells the legacy builder to write an owner-details file. The copy writer must not see it: a live build
+ *  copied that instruction into its JSON as an "owner-details" key, which then showed up in the page source and failed a launch check. */
+export function stripFactsSuffix(prompt: string): string {
+  return (prompt || '').replace(/\n*Business facts to use exactly as given[^\n]*/g, '').trim()
+}
