@@ -6,6 +6,7 @@ import { getTemplateReference } from '@/lib/template-reference'
 import { buildCosts, editCost, planCost } from '@/lib/pricing-facts'
 import { MODEL_IDS, creditCost, tierAllowedForPlan, resolveBuildTier, computeOverageCharge, computeEditSettlement, resolveEditTierFromTokens, type ModelTier } from '@/lib/credits'
 import { sendCreditLowEmail, sendFirstBuildEmail } from '@/lib/email'
+import { quietenPrompt } from '@/lib/quiet-prompt'
 import { isLaunchReadyApp, floorBuildTier, WEBAPP_LAUNCH_READY_CONTRACT } from '@/lib/launch-ready'
 import { UNSLOP_WEBAPP_RULES } from '@/lib/unslop'
 import { activeMobileSdk, sdkPromptNotes } from '@/lib/mobile-sdk'
@@ -815,6 +816,13 @@ Every feature the user explicitly named in their prompt MUST be implemented and 
 
 After ALL files, output ONE line starting with "Built:" and nothing else — no narration, no "heads up", no "note:", no suggestions, no questions. Zero words after that line.
 `
+}
+
+// Launch-ready builds get the quiet-craft override first and the effect-only website sections cut (see src/lib/quiet-prompt.ts).
+function quietBase(kind: 'website' | 'saas' | 'webapp', base: string): string {
+  const on = kind === 'website' ? isLaunchReadyWebsite('website') : kind === 'saas' ? isLaunchReadySaas('saas') : isLaunchReadyApp('web-app')
+  if (!on) return base
+  try { return quietenPrompt(base, kind).text } catch { return base }
 }
 
 function buildWebsiteSystemPrompt(): string {
@@ -4348,9 +4356,9 @@ export async function POST(req: NextRequest) {
           try {
             const { runWyberCode, classifyWyberCodeFailure } = await import('@/lib/model-providers/wybercode')
             const wcSystemPrompt = projectType === 'mobile' ? buildMobileSystemPrompt()
-              : projectType === 'website' ? buildWebsiteSystemPrompt()
-              : projectType === 'saas' ? buildSaasSystemPrompt()
-              : buildSystemPrompt() + (isLaunchReadyApp(projectType) ? WEBAPP_LAUNCH_READY_CONTRACT + UNSLOP_WEBAPP_RULES : '')
+              : projectType === 'website' ? quietBase('website', buildWebsiteSystemPrompt())
+              : projectType === 'saas' ? quietBase('saas', buildSaasSystemPrompt())
+              : quietBase('webapp', buildSystemPrompt()) + (isLaunchReadyApp(projectType) ? WEBAPP_LAUNCH_READY_CONTRACT + UNSLOP_WEBAPP_RULES : '')
             const result = await runWyberCode({
               systemPrompt: wcSystemPrompt, userPrompt: prompt, fileContext, projectType, isNewBuild,
             })
@@ -5387,10 +5395,10 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
       const basePrompt = projectType === 'mobile'
         ? buildMobileSystemPrompt() + sdkPromptNotes()
         : projectType === 'website'
-        ? buildWebsiteSystemPrompt()
+        ? quietBase('website', buildWebsiteSystemPrompt())
         : projectType === 'saas'
-        ? buildSaasSystemPrompt()
-        : buildSystemPrompt()
+        ? quietBase('saas', buildSaasSystemPrompt())
+        : quietBase('webapp', buildSystemPrompt())
       staticSystemPrompt = basePrompt
         + (isLaunchReadyApp(projectType) ? WEBAPP_LAUNCH_READY_CONTRACT + UNSLOP_WEBAPP_RULES : '')
         + (isLaunchReadyWebsite(projectType) ? WEBSITE_LAUNCH_READY_CONTRACT + UNSLOP_WEBSITE_RULES : '')

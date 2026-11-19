@@ -4,7 +4,7 @@ import path from 'node:path'
 import { creditCost } from './credits'
 import {
   WEBSITE_LAUNCH_READY_CONTRACT, WEBSITE_MIN_TIER, checkWebsiteReady, floorWebsiteTier, isLaunchReadyWebsite,
-  websiteLaunchReadyCost, websiteLaunchReadyCostText, websiteReadyIssues, websiteReadySummary, sectionCount, englishWordCount,
+  websiteLaunchReadyCost, websiteLaunchReadyCostText, websiteReadyIssues, websiteReadySummary, sectionCount, englishWordCount, kitImportCount,
 } from './website-ready'
 import { UNSLOP_WEBSITE_RULES } from './unslop-website'
 import { runQaChecks } from './agents/qa-checks'
@@ -59,6 +59,7 @@ const GOOD: Record<string, string> = {
   'index.html': `<title>Asha Dental, Ahmedabad</title><meta name="description" content="x"/><link rel="canonical" href="https://ashadental.example/"/><script type="application/ld+json">{"@type":"LocalBusiness"}</script>`,
   'public/robots.txt': 'User-agent: *', 'public/sitemap.xml': '<urlset/>',
   'src/App.tsx': `
+    import { Navbar, Footer, SectionHeading, FeatureCard } from './wyber-ui'
     <h1>Gentle dental care in Ahmedabad</h1>
     {OWNER.whatsapp ? <a href={'https://wa.me/' + OWNER.whatsapp}>WhatsApp</a> : null}
     <form onSubmit={submit}><label htmlFor="n">Name</label><input id="n" className="focus-visible:ring-2"/><input name="company_website" tabIndex={-1} aria-hidden/>
@@ -73,6 +74,18 @@ const GOOD: Record<string, string> = {
     ${LONG_COPY}
   `,
 }
+
+describe('kit import check (quiet craft)', () => {
+  it('fails a site that hand-wrote its header, footer and FAQ instead of using the kit', () => {
+    const files = { ...GOOD, 'src/App.tsx': GOOD['src/App.tsx'].replace(/import \{[^}]*\} from '\.\/wyber-ui'/, '') }
+    expect(checkWebsiteReady(files).items.filter(i => !i.ok).map(i => i.id)).toEqual(['uses-kit'])
+    expect(websiteReadyIssues(files)[0].fixPrompt).toMatch(/Wyber UI kit/)
+  })
+  it('counts distinct imports, with aliases, across files', () => {
+    expect(kitImportCount(`import { A, B as C } from './wyber-ui'\nimport { A, D } from '../wyber-ui'`)).toBe(3)
+    expect(kitImportCount(`import { A } from 'react'`)).toBe(0)
+  })
+})
 
 describe('content depth (W16)', () => {
   it('is in the contract and in the definition of done', () => {

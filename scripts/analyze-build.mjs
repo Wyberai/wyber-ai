@@ -25,7 +25,9 @@ await build({
 const { KIT_EFFECT_COMPONENTS, scanSlopSource } = await import('file://' + out.replace(/\\/g, '/'))
 
 const body = v => (typeof v === 'string' ? v : v && typeof v.content === 'string' ? v.content : '')
-const entries = Object.entries(files).filter(([p]) => /\.(tsx?|jsx?|css|html)$/.test(p) && !/wyber-ui|wyber-grow|node_modules/.test(p))
+// Platform scaffold every export carries (connect modal, data table, connector store, owner details): not what the build wrote.
+const SCAFFOLD = /(^|\/)(ConnectModal|ConnectorCard|DataTable|SourceBadge)\.tsx$|src\/lib\/|wyber-store|owner-details|src\/main\.tsx$/
+const entries = Object.entries(files).filter(([p]) => /\.(tsx?|jsx?|css|html)$/.test(p) && !/wyber-ui|wyber-grow|node_modules/.test(p) && !SCAFFOLD.test(p))
 const code = entries.map(([, v]) => body(v)).join('\n')
 
 // kit imports: import { A, B as C } from './wyber-ui' or '../wyber-ui'
@@ -36,7 +38,7 @@ for (const m of code.matchAll(/import\s*\{([^}]+)\}\s*from\s*['"][./]*\/?wyber-u
 const effects = [...kitNames].filter(n => KIT_EFFECT_COMPONENTS.includes(n))
 const hex = (code.match(/#[0-9a-fA-F]{6}\b/g) || []).length
 const tokens = /(bg-primary|text-foreground|border-border|bg-background|text-muted-foreground)/.test(code)
-const slop = scanSlopSource(files)
+const slop = scanSlopSource(Object.fromEntries(entries))
 const result = {
   label,
   files: entries.length,

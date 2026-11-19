@@ -258,10 +258,22 @@ export function englishWordCount(code: string): number {
   return words
 }
 
+/** Distinct names imported from the Wyber UI kit across the site's files (import { A, B as C } from './wyber-ui'). */
+export function kitImportCount(code: string): number {
+  const names = new Set<string>()
+  for (const m of code.matchAll(/import\s*\{([^}]+)\}\s*from\s*['"][./]*\/?wyber-ui['"]/g)) {
+    for (const part of m[1].split(',')) { const n = part.trim().split(/\s+as\s+/)[0].trim(); if (n) names.add(n) }
+  }
+  return names.size
+}
+
 const CHECKS: Check[] = [
   { id: 'sections-depth', label: 'At least six content sections',
     fix: 'The site is too thin. Build at least six sections between header and footer: services (each with its own description), how it works, what we care about, FAQ, area and a closing contact band, all written from general knowledge of this kind of business with no invented facts.',
     test: c => sectionCount(c) >= 6 },
+  { id: 'uses-kit', label: 'Built from the Wyber UI kit',
+    fix: "Replace the hand-written header, footer, section headings, cards and FAQ with the Wyber UI kit's components: import { Navbar, Footer, SectionHeading, FeatureCard, FAQAccordionIcon, CTASection, Button, Input, Textarea, Reveal } from './wyber-ui' (use only the ones this site needs) and delete the hand-written copies. Do not add gradients, glow or blur.",
+    test: c => kitImportCount(c) >= 4 },
   { id: 'faq', label: 'A FAQ with real questions',
     fix: 'Add a FAQ section with 5 to 6 questions people actually ask this kind of business, answered carefully and generally (no guarantees, no prices, no medical, legal or financial promises).',
     test: c => /faq|frequently asked|common questions/i.test(stripCode(c)) },

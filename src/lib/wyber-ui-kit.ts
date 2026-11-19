@@ -298,9 +298,8 @@ export function Button({ variant = 'primary', size = 'md', className, children, 
 } & Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'children'>) {
   return (
     <motion.button
-      whileHover={{ y: -1 }}
-      whileTap={{ scale: 0.97 }}
-      transition={springFast}
+      whileTap={{ scale: 0.98 }}
+      transition={{ duration: 0.12, ease: easeOut }}
       className={cn(
         'inline-flex select-none items-center justify-center gap-2 font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50',
         BUTTON_VARIANTS[variant], BUTTON_SIZES[size], className,
@@ -351,7 +350,7 @@ export function Card({ className, hover = false, children }: { className?: strin
   return (
     <div className={cn(
       'rounded-xl border border-border bg-card text-card-foreground p-6 shadow-[0_1px_2px_hsl(var(--foreground)/0.04)]',
-      hover && 'transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_32px_hsl(var(--foreground)/0.08)] hover:border-primary/30',
+      hover && 'transition-colors duration-200 hover:border-primary/40',
       className,
     )}>
       {children}
@@ -657,11 +656,11 @@ export function FeatureCard({ icon, title, description, className }: {
   icon?: React.ReactNode; title: string; description?: string; className?: string
 }) {
   return (
-    <SpotlightCard className={cn('h-full transition-colors duration-300 hover:border-primary/30', className)}>
+    <Card className={cn('h-full transition-colors duration-200 hover:border-primary/30', className)}>
       {icon && <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">{icon}</div>}
       <div className="text-sm font-semibold text-foreground">{title}</div>
       {description && <div className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{description}</div>}
-    </SpotlightCard>
+    </Card>
   )
 }
 
@@ -720,7 +719,7 @@ export function PricingCard({ name, price, period = '/month', description, featu
   cta?: string; featured?: boolean; onSelect?: () => void; className?: string
 }) {
   return (
-    <Card className={cn('relative flex h-full flex-col', featured && 'border-primary/40 shadow-[0_0_0_1px_hsl(var(--primary)/0.4),0_16px_48px_hsl(var(--primary)/0.12)]', className)}>
+    <Card className={cn('relative flex h-full flex-col', featured && 'border-primary ring-1 ring-primary', className)}>
       {featured && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2">
           <Badge variant="solid">Most popular</Badge>
@@ -761,7 +760,7 @@ export function Navbar({ brand, links = [], cta, className }: {
   return (
     <header className={cn(
       'fixed inset-x-0 top-0 z-40 transition-all duration-300',
-      scrolled ? 'border-b border-border/60 bg-background/75 backdrop-blur-xl' : 'bg-transparent',
+      scrolled ? 'border-b border-border bg-background' : 'bg-background',
       className,
     )}>
       <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
@@ -785,7 +784,7 @@ export function Navbar({ brand, links = [], cta, className }: {
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.25, ease: easeOut }}
-            className="overflow-hidden border-b border-border bg-background/95 backdrop-blur-xl md:hidden"
+            className="overflow-hidden border-b border-border bg-background md:hidden"
           >
             <div className="flex flex-col gap-1 px-6 pb-6 pt-2">
               {links.map(l => (
@@ -842,12 +841,7 @@ export function CTASection({ title, description, primaryCta = 'Get started', sec
 }) {
   return (
     <Reveal className={className}>
-      <div
-        className="relative overflow-hidden rounded-3xl px-8 py-16 text-center md:px-16 md:py-20"
-        style={{ backgroundImage: 'var(--gradient-hero, linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.75)))' }}
-      >
-        <BackgroundGrid variant="dots" fade={false} className="opacity-20" />
-        <NoiseOverlay opacity={0.07} />
+      <div className="relative overflow-hidden rounded-2xl bg-primary px-8 py-16 text-center md:px-16 md:py-20">
         <div className="relative mx-auto max-w-2xl">
           <h2 className="font-display text-3xl font-bold tracking-tight text-primary-foreground md:text-5xl">{title}</h2>
           {description && <p className="mt-4 text-base leading-relaxed text-primary-foreground/80 md:text-lg">{description}</p>}
