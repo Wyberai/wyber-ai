@@ -589,7 +589,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
           {projects.length > 0 && <>
             <div style={{ fontSize: 12, fontWeight: 700, color: '#8797ab', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '12px 10px 5px' }}>{t('recentLabel')}</div>
             {projects.slice(0, 4).map(p => (
-              <Link key={p.id} href={`/project/${p.id}`} className="dash-recent-link"
+              <Link key={p.id} href={`/project/${p.id}`} prefetch={false} className="dash-recent-link"
                 style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', borderRadius: 7, color: DIM, fontSize: 12, textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 1 }}>
                 <IconDot />
                 {p.name || tc('untitled')}
@@ -751,7 +751,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
               <motion.div layout style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }}>
                 {visibleProjects.slice(0, 11).map(p => (
                   <motion.div key={p.id} layout initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
-                  <Link href={`/project/${p.id}`} style={{ textDecoration: 'none' }}>
+                  <Link href={`/project/${p.id}`} prefetch={false} style={{ textDecoration: 'none' }}>
                     <div className="dash-project-card" style={{ height: 168, borderRadius: 12, border: `1px solid ${BORDER}`, background: CARD_BG, overflow: 'hidden', cursor: 'pointer', position: 'relative' }}>
 
                       {/* Action buttons */}
