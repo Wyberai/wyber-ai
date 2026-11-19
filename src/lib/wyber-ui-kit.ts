@@ -6898,28 +6898,43 @@ export const WYBER_UI_KIT_FILES: Record<string, string> = {
 // buildMobileSystemPrompt at all (React Native has no DOM/Tailwind to run it).
 // Every name below is cross-checked against WYBER_UI_KIT_SOURCE exports by the
 // same test that guards WYBER_UI_KIT_PROMPT.
+// QUIET CRAFT (19 Nov 2026). The kit and the anti-slop rules (unslop.ts, unslop-website.ts, the design directions) used to disagree: the kit's
+// own priority lists led with aurora, mesh, glow orbs and holographic cards, which the anti-slop rules forbid, and the rules won, so builds
+// since 13 Nov stopped importing the kit (2 of 19; 0 of 10 websites). One system now: STRUCTURE comes from the kit (navigation, footer,
+// forms, tables, dialogs, cards, pricing, testimonials), LOOK comes from the design direction, and EFFECT components are off unless the
+// direction names them. This list is that boundary; the test pins it so the two systems cannot drift apart again.
+export const KIT_EFFECT_COMPONENTS: readonly string[] = [
+  'AnimatedGridLines', 'AuroraBackground', 'BackgroundGrid', 'BlurReveal', 'CheckerboardGrid', 'ClayCard', 'ConfettiBurst', 'CTAGradientBanner',
+  'CursorFollowBlob', 'CursorGlow', 'DiagonalStripes', 'DottedSpotlight', 'FlipCard', 'FloatingDockNav', 'GlassPanel', 'GlowOrbCard',
+  'GlowOrbsField', 'GradientBorder', 'GradientText', 'GradientUnderline', 'HeroOrbit', 'HolographicCard', 'ImageRevealCard', 'InfiniteLogoMarquee',
+  'KineticHeadline', 'LiquidBlob', 'LiquidUnderline', 'MagneticButton', 'Marquee', 'MeshGradient', 'NoiseOverlay', 'NotchCard', 'Parallax',
+  'PinnedStory', 'RotatingBadgeText', 'ScreenshotTilt', 'ScrollStack', 'SpotlightCard', 'SpotlightSection', 'SplitFlapCounter', 'SplitTextReveal',
+  'StackedDepthCards', 'StarField', 'StickyShowcase', 'TextMaskReveal', 'TextScramble', 'ThinkingOrbs', 'TiltCard', 'Typewriter', 'VignetteOverlay',
+  'WavesBackground', 'WordCycler',
+]
+
 export const WYBER_UI_KIT_PRIMARY_BY_TYPE: Record<'website' | 'saas' | 'webapp', string> = {
-  website: `PRIORITIZE THESE for this build (marketing/landing site) — reach for them before scanning the full catalog below; it's still there for anything not covered here.
-Hero & motion: HeroHeadline, TextScramble, GradientText, HeroOrbit, SplitHero
-Backgrounds: AuroraBackground, MeshGradient, GlowOrbsField, SpotlightSection
-Sections: Navbar, Footer, CTASection, CTAGradientBanner, PricingCard, PricingToggle, TestimonialWall, LogoCloud, FAQAccordionIcon, StickyCTABar, StatsBanner
-Text & scroll FX: SplitTextReveal, HighlightMarker, KineticHeadline, StickyShowcase, ScrollStack, Parallax, PinnedStory
-Feature showcases: BentoGrid, BentoCard, FeatureCard, HolographicCard, GlowOrbCard, SpotlightCard, TiltCard, DeviceFrameSet, ScreenshotTilt
-Interactions: MagneticButton, InfiniteLogoMarquee, HoverImageGrid`,
-  saas: `PRIORITIZE THESE for this build (SaaS dashboard/app) — reach for them before scanning the full catalog below; it's still there for anything not covered here.
+  website: `PRIORITIZE THESE for this build (marketing/landing site). The kit gives the structure, the DESIGN DIRECTION gives the look; reach for these before scanning the catalog below.
+Frame & navigation: Navbar, CondensingNavbar, Footer, StickyCTABar, SectionHeading, MonoLabel, HairlineFrame
+Hero & type: HeroHeadline, EditorialHeadline, SplitHero, MediaFrame
+Sections: CTASection, FeatureCard, BentoGrid, BentoCard, StatsBanner, StatBlock, LogoCloud, TestimonialCard, TestimonialWall, PricingCard, PricingToggle, FAQAccordionIcon, Accordion
+Basics: Button, Badge, Card, Input, Textarea
+Motion (one quiet reveal per section, never on everything): Reveal, Stagger, StaggerItem`,
+  saas: `PRIORITIZE THESE for this build (SaaS dashboard/app). The kit gives the structure, the DESIGN DIRECTION gives the look; reach for these before scanning the catalog below.
 Navigation: SidebarNav, Breadcrumbs, CommandPalette, PillTabNav, NotificationBell, BackToTop
 Data display: StickyTable, KanbanCard, ProgressRing, Sparkline, MiniBarChart, AvatarStack, FilterChipBar, ComparisonTable, RatingStars, StatCounterGrid, DataRow, StatBlock, AnimatedNumber
-Forms: FloatingLabelInput, OtpInput, StepperWizard, ChipToggleGroup, CustomCheckbox, CustomRadio, SearchWithSuggestions, RangeSlider
+Forms: FloatingLabelInput, OtpInput, StepperWizard, ChipToggleGroup, CustomCheckbox, CustomRadio, SearchWithSuggestions, RangeSlider, FileDropzone
 Feedback & overlays: ToastStack, ConfirmModal, Drawer, Tooltip, PopoverMenu, ContextMenu, Dialog, EmptyState, ShimmerSkeletonCard, SpinnerRing, ProgressBar
-Surfaces & basics: Card, GlassPanel, SpotlightCard, ExpandableCard, Button, Badge, Switch, Tabs
-AI/agent features (if this product has any AI/assistant/automation surface): AIAssistantPanel, PromptInputBar, AIPlanCard, ThinkingOrbs, AIActionBar, ReasoningTrace, AIDiffBlock, FloatingAssistantWidget — reach for these instead of hand-rolling a chat box; a plain white-card dashboard with no signature surface is a build defect, not a valid minimal choice`,
-  webapp: `PRIORITIZE THESE for this build (general web app) — reach for them before scanning the full catalog below; it's still there for anything not covered here.
-Core: Button, Card, GlassPanel, SpotlightCard, EmptyState, Tabs, Dialog, Accordion, Switch, Input, Textarea
-Data: DataRow, StatBlock, AnimatedNumber, ProgressRing, Sparkline, AvatarStack, FilterChipBar
-Feedback: ToastStack, ConfirmModal, Drawer, Tooltip, PopoverMenu, AnnouncementBar
-Forms: StepperWizard, CustomCheckbox, CustomRadio, RangeSlider
-Layout & hero: AuroraBackground, BackgroundGrid, HeroHeadline, SectionHeading, FeatureCard, BentoGrid, BentoCard, Navbar, Footer, CTASection
-AI/agent features (if this product has any AI/assistant/automation surface): AIAssistantPanel, PromptInputBar, AIPlanCard, ThinkingOrbs, AIActionBar, ReasoningTrace, AIDiffBlock, FloatingAssistantWidget`,
+Plans: PricingCard, PricingToggle, PlanComparisonMatrix
+Surfaces & basics: Card, ExpandableCard, Button, Badge, Switch, Tabs
+AI/agent features (only if this product has an AI, assistant or automation surface): AIAssistantPanel, PromptInputBar, AIPlanCard, AIActionBar, ReasoningTrace, AIDiffBlock, FloatingAssistantWidget`,
+  webapp: `PRIORITIZE THESE for this build (general web app). The kit gives the structure, the DESIGN DIRECTION gives the look; reach for these before scanning the catalog below.
+Core: Button, Card, EmptyState, Tabs, Dialog, Accordion, Switch, Input, Textarea
+Data: DataRow, StatBlock, AnimatedNumber, ProgressRing, Sparkline, AvatarStack, FilterChipBar, StickyTable
+Feedback: ToastStack, ConfirmModal, Drawer, Tooltip, PopoverMenu
+Forms: StepperWizard, CustomCheckbox, CustomRadio, RangeSlider, FloatingLabelInput
+Layout: HeroHeadline, SectionHeading, FeatureCard, BentoGrid, BentoCard, Navbar, Footer, CTASection
+AI/agent features (only if this product has an AI, assistant or automation surface): AIAssistantPanel, PromptInputBar, AIPlanCard, AIActionBar, ReasoningTrace, AIDiffBlock, FloatingAssistantWidget`,
 }
 
 // Compact API reference injected into the generation system prompt — the ONLY
@@ -6927,9 +6942,14 @@ AI/agent features (if this product has any AI/assistant/automation surface): AIA
 // if you change an export or prop above, update this block in the same commit
 // (the test cross-checks every export name listed here exists in the source).
 export const WYBER_UI_KIT_PROMPT = `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-WYBER UI KIT — PRE-BUILT PREMIUM COMPONENTS (USE THESE — do NOT hand-write equivalents)
+WYBER UI KIT — OUR OWN DESIGN SYSTEM: STRUCTURE FROM THE KIT, LOOK FROM THE DESIGN DIRECTION
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-The platform injects src/wyber-ui.tsx into every build: ~163 production-grade, motion-enabled components already themed by YOUR design tokens. Import them instead of writing your own buttons/cards/heroes — they make the app feel premium at zero token cost. Unused imports are tree-shaken.
+The platform injects src/wyber-ui.tsx into every build: about 165 components themed by YOUR design tokens. QUIET CRAFT RULES (they win over anything further down this reference):
+1. Build STRUCTURE from the kit: navigation, footer, section headings, cards, forms, tables, tabs, dialogs, toasts, accordions, pricing, testimonials, stats. Import them; do not hand-write equivalents.
+2. The LOOK comes from the DESIGN DIRECTION block: its palette, type, spacing and moves. The kit adapts to your tokens; do not add decoration the direction did not ask for.
+3. EFFECT components are OFF unless the DESIGN DIRECTION block names that effect: ${KIT_EFFECT_COMPONENTS.join(', ')}. Using one the direction did not allow is wrong; the anti-slop rules forbid glossy blobs, orbs, aurora, holographic cards and gradient text.
+4. Motion: Reveal, Stagger, StaggerItem and AnimatedNumber only, one quiet reveal per section, never on every element.
+5. Where the catalog below says "use" or "THE centerpiece" for an EFFECT component, rule 3 overrides it. Unused imports are tree-shaken.
 
 Import (relative — from src/App.tsx use './wyber-ui', from src/components/* use '../wyber-ui'):
 import { Button, SpotlightCard, BentoGrid, BentoCard, Reveal, Stagger, StaggerItem, SectionHeading, HeroHeadline, NoiseOverlay, StickyShowcase, ScrollStack, Parallax, SplitTextReveal, ScrollProgress, TiltCard, LiquidUnderline, Navbar, Footer, CTASection, PricingCard, TestimonialCard, FeatureCard, StatBlock, AnimatedNumber, Marquee, AuroraBackground, BackgroundGrid, GradientBorder, GlassPanel, Card, Badge, Input, Textarea, Tabs, Dialog, Accordion, Switch, Skeleton, EmptyState, MonoLabel, SectionNumber, EditorialHeadline, HairlineFrame, MediaFrame, PinnedStory, DataRow, CursorGlow, cn } from './wyber-ui'

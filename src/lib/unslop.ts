@@ -41,6 +41,8 @@ US8 MOTION: transition only color, background, border, opacity and transform, an
 US9 NO REPLACEMENT DECORATION: do not swap one trend for another (no glass, grain, noise, neon or bento grids to fill the space). Dashboards and tools rarely need generated images: their moments come from the product's own content.
 
 US10 TEMPLATE CHECK before the "Built:" line: if you swapped this product's name for another product's, would the screen still fit? If yes, push the direction harder in the copy, the data and the signature detail. Confirm silently: no hue gradients, glows or emoji; one ramp, three text roles, one accent; spacing on the scale; weights 400 to 600; sentence case; no exclamation marks; tabular numbers; one icon set; one easing curve.
+
+US11 STRUCTURE FROM THE KIT: build navigation, tables, forms, dialogs, toasts, tabs, cards and empty states from the Wyber UI kit structural components (import them; do not hand-write equivalents). The kit takes this product's tokens, so it will look like this product. The kit's effect components (aurora, mesh, glow orbs, holographic, gradient text, spotlight, tilt, marquee, glass, noise) stay off.
 `
 
 // ── Source check ─────────────────────────────────────────────────────────────

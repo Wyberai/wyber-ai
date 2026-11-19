@@ -19,4 +19,6 @@ UW7 SHAPE AND SPACE: spacing from 4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 80, 96, 
 UW8 NAVIGATION: logo as the business name in text plus at most a simple flat mark (no gradient tile, no sparkle), the existing links, ONE button; a login-style link is quiet text. On phones the links collapse into one menu button and a sticky bar offers the main contact action.
 UW9 MOTION: one entrance on load (a short fade and rise of 6-12px with a 40-60ms stagger); hover is a color or surface step; press scales to 0.97. Transition only color, background, border, opacity, transform; never transition-all; no parallax, no looping or floating elements, no animated width, height, top or left. One easing curve: cubic-bezier(0.22, 1, 0.36, 1). Honour prefers-reduced-motion.
 UW10 TEMPLATE CHECK before the "Built:" line: swap this business's name for another's; if the page would still fit, push the direction harder in the headline, the photos and the signature detail.
+
+UW11 STRUCTURE FROM THE KIT: build the navigation, footer, section headings, cards, forms, pricing, testimonials and FAQ from the Wyber UI kit structural components (import them; do not hand-write equivalents). The kit takes this business's tokens, so it will look like this business. The kit's effect components (aurora, mesh, glow orbs, holographic, gradient text, spotlight, tilt, marquee) stay off.
 `
