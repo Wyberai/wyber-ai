@@ -44,13 +44,13 @@ html,body{margin:0;padding:0;width:${wMM}mm;height:${hMM}mm;background:${BG};col
 
 // ---------- Backdrop 6 x 6 ft = 1828.8 mm square ----------
 // The six powers, held to what the code does (see src/app/gujaratexpo/data.ts POWERS): the database test runs right after a publish.
-const POWERS = ['Database attack test', 'Exposed-key blocker', 'Security checklist', 'Made-by-AI detector', 'Not a template', 'Seen by Google + AI']
+const POWERS = ['Data leak test', 'Secret-key guard', 'Security checklist', 'AI slop remover', 'Not a template', 'SEO + AEO friendly']
 const ICON = {
-  'Database attack test': '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
-  'Exposed-key blocker': '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+  'Data leak test': '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  'Secret-key guard': '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
   'Security checklist': '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/>',
-  'Seen by Google + AI': '<circle cx="11" cy="11" r="6"/><path d="M16 16l5 5"/>',
-  'Made-by-AI detector': '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><path d="M12 12L19 5"/>',
+  'SEO + AEO friendly': '<circle cx="11" cy="11" r="6"/><path d="M16 16l5 5"/>',
+  'AI slop remover': '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><path d="M12 12L19 5"/>',
   'Not a template': '<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="5" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><rect x="3" y="14" width="8" height="7" rx="1.5"/>',
 }
 const icon = (t, size) => `<svg width="${size}mm" height="${size}mm" viewBox="0 0 24 24" fill="none" stroke="${SKY}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display:block;flex:none">${ICON[t]}</svg>`
