@@ -44,13 +44,13 @@ html,body{margin:0;padding:0;width:${wMM}mm;height:${hMM}mm;background:${BG};col
 
 // ---------- Backdrop 6 x 6 ft = 1828.8 mm square ----------
 // The six powers, held to what the code does (see src/app/gujaratexpo/data.ts POWERS): the database test runs right after a publish.
-const POWERS = ['X-ray vision', 'Key lock', 'Security armour', 'Anti-slop radar', 'Not a template', 'Be seen']
+const POWERS = ['Database attack test', 'Exposed-key blocker', 'Security checklist', 'Made-by-AI detector', 'Not a template', 'Seen by Google + AI']
 const ICON = {
-  'X-ray vision': '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
-  'Key lock': '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
-  'Security armour': '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/>',
-  'Be seen': '<circle cx="11" cy="11" r="6"/><path d="M16 16l5 5"/>',
-  'Anti-slop radar': '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><path d="M12 12L19 5"/>',
+  'Database attack test': '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  'Exposed-key blocker': '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+  'Security checklist': '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/>',
+  'Seen by Google + AI': '<circle cx="11" cy="11" r="6"/><path d="M16 16l5 5"/>',
+  'Made-by-AI detector': '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><path d="M12 12L19 5"/>',
   'Not a template': '<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="5" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><rect x="3" y="14" width="8" height="7" rx="1.5"/>',
 }
 const icon = (t, size) => `<svg width="${size}mm" height="${size}mm" viewBox="0 0 24 24" fill="none" stroke="${SKY}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display:block;flex:none">${ICON[t]}</svg>`
@@ -67,8 +67,8 @@ async function backdrop() {
   return page(W, W, `
     <div class="abs" style="left:${M}mm;top:${M}mm">${logo(150, 118)}</div>
     <div class="abs" style="right:${M}mm;top:${M}mm;width:330mm">${qrPlate(330, qr)}
-      <div style="${mono(24, MUTED, 'margin-top:20mm;line-height:1.45;text-align:center')}">SCAN QR TO VIEW<br>STALL DETAILS</div>
-      <div style="${mono(30, SKY, 'margin-top:14mm;text-align:center;letter-spacing:.05em')}">wyberai.com</div></div>
+      <div style="${mono(28, INK, 'margin-top:20mm;line-height:1.4;text-align:center')}">SCAN QR TO VIEW<br>STALL DETAILS</div>
+      <div style="${mono(40, SKY, 'margin-top:16mm;text-align:center;letter-spacing:.03em')}">wyberai.com</div></div>
     <div class="abs" style="left:${M}mm;top:430mm;font-weight:900;font-size:140mm;line-height:.99;letter-spacing:-0.045em;white-space:nowrap">Vibe coding<br>with <span class="sky">superpowers.</span></div>
     <div class="abs" style="left:${M}mm;top:790mm;font-size:60mm;font-weight:700;letter-spacing:-0.015em">Websites. Web apps. Mobile apps. SaaS.</div>
     <div class="abs" style="left:${M}mm;top:880mm;font-size:60mm;font-weight:700;letter-spacing:-0.015em;color:${SKY}">Or replace the SaaS you rent.</div>`)
@@ -84,8 +84,8 @@ async function backdropB() {
   return page(W, W, `
     <div class="abs" style="left:${M}mm;top:${M}mm">${logo(150, 118)}</div>
     <div class="abs" style="right:${M}mm;top:${M}mm;width:330mm">${qrPlate(330, qr)}
-      <div style="${mono(24, MUTED, 'margin-top:20mm;line-height:1.45;text-align:center')}">SCAN QR TO VIEW<br>STALL DETAILS</div>
-      <div style="${mono(30, SKY, 'margin-top:14mm;text-align:center;letter-spacing:.05em')}">wyberai.com</div></div>
+      <div style="${mono(28, INK, 'margin-top:20mm;line-height:1.4;text-align:center')}">SCAN QR TO VIEW<br>STALL DETAILS</div>
+      <div style="${mono(40, SKY, 'margin-top:16mm;text-align:center;letter-spacing:.03em')}">wyberai.com</div></div>
     <div class="abs" style="left:${M}mm;top:440mm;font-weight:900;font-size:168mm;line-height:.98;letter-spacing:-0.045em">Build any<br>digital product.<br><span class="sky">Ship it<br>in minutes.</span></div>
     <div class="abs" style="left:${M}mm;top:1130mm;width:1400mm;font-size:52mm;line-height:1.32;font-weight:500;color:${MUTED}">Describe what you need in plain words. WyberAi builds the website, web app, mobile app or SaaS.</div>
     <div class="abs" style="left:${M}mm;top:1440mm;width:1609mm;display:flex;gap:30mm">${tileHtml}</div>
@@ -98,17 +98,17 @@ async function tableFront() {
   const W = 4 * FT, H = 2.6 * FT, M = 56
   const qr = await qrSvg()
   const gw = (W - 2 * M - 2 * 16) / 3
-  const pills = POWERS.map(t => `<div style="width:${gw}mm;height:72mm;border:1.4mm solid #2a3650;border-radius:16mm;background:#0e131c;display:flex;align-items:center;gap:12mm;padding:0 16mm;box-sizing:border-box">${icon(t, 28)}<div style="font-weight:800;font-size:23mm;letter-spacing:-0.02em;white-space:nowrap">${t}</div></div>`).join('')
+  const pills = POWERS.map(t => `<div style="width:${gw}mm;height:84mm;border:1.4mm solid #2a3650;border-radius:16mm;background:#0e131c;display:flex;align-items:center;gap:10mm;padding:0 12mm;box-sizing:border-box">${icon(t, 30)}<div style="font-weight:800;font-size:25mm;letter-spacing:-0.02em;white-space:nowrap">${t}</div></div>`).join('')
   return page(W, H, `
     <div class="abs" style="left:${M}mm;top:${M}mm">${logo(78, 60)}</div>
     <div class="abs" style="right:${M}mm;top:${M}mm;width:260mm">${qrPlate(260, qr)}
-      <div style="${mono(16, MUTED, 'margin-top:10mm;text-align:center')}">SCAN QR TO VIEW STALL DETAILS</div></div>
+      <div style="${mono(18, INK, 'margin-top:10mm;text-align:center;white-space:nowrap')}">SCAN QR FOR DETAILS</div></div>
     <div class="abs" style="left:${M}mm;top:170mm;font-weight:900;font-size:49mm;line-height:1.02;letter-spacing:-0.04em">Vibe coding gives you a base.<br><span class="sky">WyberAi gives you the whole app.</span></div>
     <div class="abs" style="left:${M}mm;top:278mm;font-size:25mm;font-weight:700;letter-spacing:-0.01em">An <span class="sky">AI agent</span> plans it, builds it, repairs it and checks it.</div>
-    <div class="abs" style="left:${M}mm;top:318mm;font-size:19mm;font-weight:500;color:${MUTED}">Login, database and API come wired up. Then six checks run:</div>
-    <div class="abs" style="left:${M}mm;top:392mm;width:${W - 2 * M}mm;display:flex;flex-wrap:wrap;gap:16mm">${pills}</div>
-    <div class="abs" style="left:${M}mm;top:588mm;font-weight:800;font-size:30mm;letter-spacing:-0.02em">Saves <span class="sky">hundreds of hours</span> of research and vibe coding.</div>
-    <div class="abs" style="left:${M}mm;top:652mm;${mono(18, MUTED, 'letter-spacing:.1em')}">YOUR CODE. YOUR GITHUB. YOUR DOMAIN.</div>
+    <div class="abs" style="left:${M}mm;top:334mm;${mono(22, SKY, 'letter-spacing:.12em')}">SIX SUPERPOWERS, BUILT IN</div>
+    <div class="abs" style="left:${M}mm;top:376mm;width:${W - 2 * M}mm;display:flex;flex-wrap:wrap;gap:14mm">${pills}</div>
+    <div class="abs" style="left:${M}mm;top:588mm;font-weight:800;font-size:34mm;letter-spacing:-0.02em">Saves <span class="sky">hundreds of hours</span> of research and vibe coding.</div>
+    <div class="abs" style="left:${M}mm;top:660mm;${mono(21, INK, 'letter-spacing:.08em')}">YOUR CODE. YOUR GITHUB. YOUR DOMAIN.</div>
     <div class="abs" style="right:${M}mm;bottom:${M}mm;${mono(26, SKY, 'letter-spacing:.06em')}">wyberai.com</div>`)
 }
 
