@@ -86,7 +86,7 @@ const RULES: Rule[] = [
     find: c => matches(/\bblur-(?:2xl|3xl)\b|\bblur-\[\d{2,}px\]|mesh-orb|radial-gradient\(/g, c) },
   { id: 'grain-glass', label: 'Grain, noise or glass effects', weight: 3,
     fix: 'Remove grain, noise and glass (backdrop-blur cards); use a plain raised surface with a hairline.',
-    find: c => matches(/\bgrain\b|feTurbulence|backdrop-blur-(?:md|lg|xl|2xl)|noise-overlay/g, c) },
+    find: c => matches(/(?:class(?:Name)?=["'`{][^"'`]*\bgrain\b)|\.grain\b|\bgrain-(?:overlay|layer|bg)\b|feTurbulence|backdrop-blur-(?:md|lg|xl|2xl)|noise-overlay/g, c) },
   { id: 'emoji', label: 'Emoji in the interface', weight: 8,
     fix: 'Replace every emoji with a lucide icon (16 or 18px, stroke 1.5, muted color) or nothing.',
     find: c => matches(EMOJI, c) },

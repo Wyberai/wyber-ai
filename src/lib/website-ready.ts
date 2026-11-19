@@ -186,7 +186,7 @@ const NAME_GENERIC = new Set([
   'photography', 'supplier', 'suppliers', 'exporter', 'exporters', 'broker', 'cleaning', 'dental', 'dentist', 'yoga', 'rice', 'steel',
   'interior', 'interiors', 'designer', 'design', 'wedding', 'cake', 'cakes', 'classes', 'class', 'tutorials', 'real', 'estate', 'home',
   'salon', 'gym', 'fitness', 'restaurant', 'cafe', 'kitchen', 'legal', 'law', 'lawyer', 'lawyers', 'medical', 'care', 'repair', 'repairs',
-  'trading', 'traders', 'export', 'import', 'packaging', 'education', 'tuition', 'portfolio', 'website', 'site', 'business', 'local',
+  'family', 'meetup', 'startup', 'event', 'conference', 'summit', 'workshop', 'festival', 'expo', 'trading', 'traders', 'export', 'import', 'packaging', 'education', 'tuition', 'portfolio', 'website', 'site', 'business', 'local',
 ])
 
 function ownerValue(code: string, key: string): string {
@@ -330,10 +330,10 @@ const CHECKS: Check[] = [
     test: c => /<title>[^<]{5,}/.test(c) && /name=["']description["']/.test(c) && /rel=["']canonical["'][^>]*https:\/\//.test(c) },
   { id: 'json-ld', label: 'JSON-LD business markup',
     fix: 'Add a LocalBusiness or Organization JSON-LD block in index.html, built only from owner-details facts.',
-    test: c => /application\/ld\+json/.test(c) && /LocalBusiness|Organization|Person|Product/.test(c) },
+    test: c => /application\/ld\+json/.test(c) && /"@type"\s*:\s*"(?:LocalBusiness|Organization|Person|Product|Dentist|Bakery|Restaurant|CafeOrCoffeeShop|Store|Event|Blog|WebSite|[A-Z]\w*(?:Business|Service|Location|Agent|Agency|Organization|Application))"/.test(c) },
   { id: 'h1', label: 'A page heading (h1)',
     fix: 'Give each page exactly one <h1> stating what the business does and where.',
-    test: c => /<h1[\s>]/.test(c) },
+    test: c => /<h1[\s>]|<HeroHeadline[\s>]|<EditorialHeadline[^>]*\bas="h1"/.test(c) },
   { id: 'alt', label: 'Every image has alt text',
     fix: 'Add descriptive alt text to every <img> (alt="" only for decoration).',
     test: c => !/<img(?![^>]*\balt=)[^>]*>/i.test(c) },

@@ -2516,10 +2516,10 @@ export function CondensingNavbar({ brand, links = [], cta, condensedAt = 80, cla
       transition={springFast}
       // framer-motion cannot tween a color that contains a CSS variable (it throws an
       // unhandled rejection), so the background fades with a plain CSS transition.
-      style={{ backgroundColor: scrolled ? 'hsl(var(--background) / 0.85)' : 'hsl(var(--background) / 0)' }}
+      style={{ backgroundColor: 'hsl(var(--background))' }}
       className={cn(
-        'fixed inset-x-0 top-0 z-50 backdrop-blur-xl transition-[background-color] duration-300',
-        scrolled ? 'border-b border-border shadow-sm' : 'border-b border-transparent',
+        'fixed inset-x-0 top-0 z-50 transition-[border-color] duration-300',
+        scrolled ? 'border-b border-border' : 'border-b border-transparent',
         className,
       )}
     >
