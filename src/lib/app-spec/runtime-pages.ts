@@ -2,10 +2,10 @@
 
 export const ENTITY_PAGE_TSX = String.raw`import { useMemo, useState } from 'react'
 import { Download, MessageCircle, Pencil, Plus, Printer, Search, Trash2, Upload } from 'lucide-react'
-import { Badge, Button, Card, EmptyState, Input } from '../wyber-ui'
+import { Badge, Button, Card, Drawer, EmptyState, Input } from '../wyber-ui'
 import { APP, type Entity, type Row } from '../schema'
 import { list } from '../lib/db'
-import { computedValue, formatMoney, formatValue, hasSample, isFinal, isOverdue, reminderEligible, reminderLink, titleOf } from '../lib/logic'
+import { childrenOf, computedValue, formatMoney, formatValue, hasSample, isFinal, isOverdue, reminderEligible, reminderLink, titleOf } from '../lib/logic'
 import { downloadCsv, toCsv } from '../lib/csv'
 import type { Api } from './api'
 import FormDialog from './FormDialog'
@@ -34,6 +34,11 @@ export default function EntityPage(props: { entity: Entity; api: Api }) {
   const [editing, setEditing] = useState<Row | null>(null)
   const [adding, setAdding] = useState(false)
   const [importing, setImporting] = useState(false)
+  const [openId, setOpenId] = useState<string | null>(null)
+  const [childAdd, setChildAdd] = useState<{ entity: Entity; initial: Record<string, string> } | null>(null)
+  const [childEdit, setChildEdit] = useState<{ entity: Entity; row: Row } | null>(null)
+  const pad = APP.layout.density === 'compact' ? 'py-2' : 'py-3.5'
+  const board = APP.intent === 'pipeline' && Boolean(entity.status) && entity === APP.entities[0]
 
   // Columns: what names the row, its status, due date, amount and contact first, then the rest, five in all.
   const pool = entity.fields.filter(f => f.list !== false)
@@ -94,6 +99,8 @@ export default function EntityPage(props: { entity: Entity; api: Api }) {
   )
 
   const tabular = APP.layout.list === 'table'
+  const opened = openId ? all.find(r => r.id === openId) || null : null
+  const kids = childrenOf(entity)
 
   return (
     <div className="space-y-6">
@@ -170,13 +177,13 @@ export default function EntityPage(props: { entity: Entity; api: Api }) {
                 </thead>
                 <tbody>
                   {rows.map(r => (
-                    <tr key={r.id} className="border-b border-border last:border-0">
+                    <tr key={r.id} className="border-b border-border last:border-0 hover:bg-muted/50">
                       <td className="px-3 py-3" data-noprint>
                         <input type="checkbox" aria-label={'Select ' + titleOf(entity, r)} checked={picked.includes(r.id)} onChange={() => toggle(r.id)} className="h-4 w-4 accent-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring" />
                       </td>
                       {shown.map(f => (
-                        <td key={f.id} className={f.id === entity.title ? 'px-3 py-3 font-medium text-foreground' : 'px-3 py-3 text-muted-foreground'}>
-                          {cell(f, r)}
+                        <td key={f.id} className={f.id === entity.title ? 'px-3 ' + pad + ' font-medium text-foreground' : 'px-3 ' + pad + ' text-muted-foreground'}>
+                          {f.id === entity.title ? <button type="button" onClick={() => setOpenId(r.id)} aria-label={'Open ' + titleOf(entity, r)} className="text-left underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring">{cell(f, r)}</button> : cell(f, r)}
                           {f.id === entity.title && r.demo ? <Badge variant="outline" className="ml-2">Demo</Badge> : null}
                           {f.id === entity.title && isOverdue(entity, r) ? <Badge variant="destructive" className="ml-2">Overdue</Badge> : null}
                         </td>
@@ -195,7 +202,7 @@ export default function EntityPage(props: { entity: Entity; api: Api }) {
                 <Card className="p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="truncate font-medium text-foreground">{titleOf(entity, r)}</p>
+                      <button type="button" onClick={() => setOpenId(r.id)} aria-label={'Open ' + titleOf(entity, r)} className="block max-w-full truncate text-left font-medium text-foreground underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring">{titleOf(entity, r)}</button>
                       <div className="mt-1 flex flex-wrap gap-2">
                         {r.demo ? <Badge variant="outline">Demo</Badge> : null}
                         {isOverdue(entity, r) ? <Badge variant="destructive">Overdue</Badge> : null}
@@ -217,6 +224,87 @@ export default function EntityPage(props: { entity: Entity; api: Api }) {
         </>
       )}
 
+      {board && statusField && all.length > 0 ? (
+        <section aria-label="Stages" data-noprint className="space-y-3">
+          <h2 className="font-display text-lg font-semibold text-foreground">By stage</h2>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {(statusField.options || []).map(stage => {
+              const inStage = rows.filter(r => String(r[statusField.id]) === stage)
+              return (
+                <div key={stage} className="rounded-xl border border-border bg-muted/40 p-3">
+                  <div className="mb-2 flex items-center justify-between">
+                    <h3 className="text-sm font-medium text-foreground">{stage}</h3>
+                    <span className="text-xs text-muted-foreground">{inStage.length}</span>
+                  </div>
+                  <ul className="space-y-2">
+                    {inStage.map(r => (
+                      <li key={r.id} className="rounded-lg border border-border bg-card p-3">
+                        <button type="button" onClick={() => setOpenId(r.id)} className="block w-full truncate text-left text-sm font-medium text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring">{titleOf(entity, r)}</button>
+                        {entity.amount ? <p className="mt-0.5 text-xs text-muted-foreground">{formatMoney(Number(r[entity.amount]) || 0)}</p> : null}
+                        <label className="sr-only" htmlFor={'move-' + r.id}>{'Move ' + titleOf(entity, r) + ' to a stage'}</label>
+                        <select id={'move-' + r.id} value={stage} onChange={e => api.update(entity.id, r.id, { ...r, [statusField.id]: e.target.value })} className="mt-2 h-9 w-full rounded-md border border-input bg-background px-2 text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                          {(statusField.options || []).map(o => <option key={o} value={o}>{'Move to: ' + o}</option>)}
+                        </select>
+                      </li>
+                    ))}
+                    {inStage.length === 0 ? <li className="px-1 py-2 text-xs text-muted-foreground">Empty</li> : null}
+                  </ul>
+                </div>
+              )
+            })}
+          </div>
+        </section>
+      ) : null}
+
+      <Drawer open={opened !== null} onClose={() => setOpenId(null)} title={opened ? titleOf(entity, opened) : ''}>
+        {opened ? (
+          <div className="space-y-5 overflow-y-auto">
+            <dl className="grid grid-cols-1 gap-3 text-sm">
+              {entity.fields.map(f => (
+                <div key={f.id}><dt className="text-xs text-muted-foreground">{f.label}</dt><dd className="text-foreground">{formatValue(store, entity, f, opened) || '-'}</dd></div>
+              ))}
+              {(entity.computed || []).map(c => <div key={c.id}><dt className="text-xs text-muted-foreground">{c.label}</dt><dd className="text-foreground">{formatMoney(computedValue(store, entity, c, opened))}</dd></div>)}
+            </dl>
+            {kids.map(k => {
+              const mine = list(store, k.entity.id).filter(x => x[k.ref.id] === opened.id)
+              return (
+                <section key={k.entity.id + k.ref.id} aria-label={k.entity.label}>
+                  <div className="mb-2 flex items-center justify-between">
+                    <h3 className="text-sm font-medium text-foreground">{k.entity.label}</h3>
+                    <Button variant="outline" size="sm" onClick={() => setChildAdd({ entity: k.entity, initial: { [k.ref.id]: opened.id } })}><Plus size={14} aria-hidden="true" />{'Add ' + k.entity.singular.toLowerCase()}</Button>
+                  </div>
+                  {mine.length === 0 ? <p className="text-sm text-muted-foreground">None yet.</p> : (
+                    <ul className="divide-y divide-border rounded-lg border border-border">
+                      {mine.map(x => (
+                        <li key={x.id} className="flex items-center justify-between gap-2 px-3 py-2 text-sm">
+                          <span className="truncate text-foreground">{titleOf(k.entity, x)}</span>
+                          <span className="flex items-center gap-2">
+                            {k.entity.amount ? <span className="text-muted-foreground">{formatMoney(Number(x[k.entity.amount]) || 0)}</span> : null}
+                            <button type="button" aria-label={'Edit ' + titleOf(k.entity, x)} onClick={() => setChildEdit({ entity: k.entity, row: x })} className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring"><Pencil size={14} aria-hidden="true" /></button>
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </section>
+              )
+            })}
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" onClick={() => { setEditing(opened); setOpenId(null) }}><Pencil size={14} aria-hidden="true" />Edit</Button>
+              {reminderEligible(entity, opened) && reminderLink(store, entity, opened) ? <a href={reminderLink(store, entity, opened)} target="_blank" rel="noreferrer" className="inline-flex h-9 items-center gap-2 rounded-lg border border-border px-3 text-sm text-foreground hover:bg-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring"><MessageCircle size={14} aria-hidden="true" />WhatsApp reminder</a> : null}
+            </div>
+          </div>
+        ) : null}
+      </Drawer>
+      {childAdd ? (
+        <FormDialog entity={childAdd.entity} store={store} row={null} initial={childAdd.initial} open onClose={() => setChildAdd(null)}
+          onSave={values => { api.create(childAdd.entity.id, values); setChildAdd(null) }} />
+      ) : null}
+      {childEdit ? (
+        <FormDialog entity={childEdit.entity} store={store} row={childEdit.row} open onClose={() => setChildEdit(null)}
+          onSave={values => { api.update(childEdit.entity.id, childEdit.row.id, values); setChildEdit(null) }} />
+      ) : null}
+
       <FormDialog entity={entity} store={store} row={editing} open={adding || editing !== null} onClose={() => { setAdding(false); setEditing(null) }}
         onSave={values => { if (editing) api.update(entity.id, editing.id, values); else api.create(entity.id, values); setAdding(false); setEditing(null) }} />
       <CsvImport entity={entity} store={store} open={importing} onClose={() => setImporting(false)} onImport={rowsIn => api.importRows(entity.id, rowsIn)} />
@@ -225,11 +313,11 @@ export default function EntityPage(props: { entity: Entity; api: Api }) {
 }
 `
 
-export const HOME_TSX = String.raw`import { ArrowRight, Plus } from 'lucide-react'
+export const HOME_TSX = String.raw`import { ArrowRight, MessageCircle, Plus } from 'lucide-react'
 import { Button, Card, StatBlock } from '../wyber-ui'
 import { APP } from '../schema'
 import { list } from '../lib/db'
-import { formatMoney, hasSample, isEmpty, metricValue } from '../lib/logic'
+import { attention, dueLabel, formatMoney, hasSample, isEmpty, metricValue, reminderEligible, reminderLink, titleOf } from '../lib/logic'
 import type { Api } from './api'
 
 export default function HomePage({ api }: { api: Api }) {
@@ -247,6 +335,28 @@ export default function HomePage({ api }: { api: Api }) {
       })}
     </section>
   )
+  const due = attention(store)
+  const needs = due.length > 0 ? (
+    <section aria-label="Needs attention" className="space-y-3">
+      <h2 className="font-display text-lg font-semibold text-foreground">Needs attention</h2>
+      <ul className="divide-y divide-border rounded-xl border border-border bg-card">
+        {due.map(d => (
+          <li key={d.entity.id + d.row.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium text-foreground">{titleOf(d.entity, d.row)}</p>
+              <p className="text-xs text-muted-foreground">{d.entity.singular + ' - ' + dueLabel(d.days)}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              {reminderEligible(d.entity, d.row) && reminderLink(store, d.entity, d.row) ? (
+                <a href={reminderLink(store, d.entity, d.row)} target="_blank" rel="noreferrer" className="inline-flex h-9 items-center gap-2 rounded-lg border border-border px-3 text-sm text-foreground hover:bg-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring"><MessageCircle size={14} aria-hidden="true" />Remind</a>
+              ) : null}
+              <Button variant="outline" size="sm" onClick={() => api.go(d.entity.id)}>Open<ArrowRight size={14} aria-hidden="true" /></Button>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
+  ) : null
   const shortcuts = (
     <section aria-label="Shortcuts" className="grid gap-4 sm:grid-cols-2">
       {APP.entities.map(e => (
@@ -288,7 +398,7 @@ export default function HomePage({ api }: { api: Api }) {
           <Button variant="outline" size="sm" onClick={api.removeSample}>Remove sample data</Button>
         </Card>
       ) : null}
-      {APP.layout.home === 'metrics-first' ? <>{metrics}{shortcuts}</> : <>{shortcuts}{metrics}</>}
+      {APP.layout.home === 'metrics-first' ? <>{metrics}{needs}{shortcuts}</> : <>{needs}{shortcuts}{metrics}</>}
     </div>
   )
 }

@@ -29,6 +29,8 @@ await page.screenshot({ path: `${out}/${name}-3-home.png` })
 console.log('open', await clickText('aside button', entityLabel))
 await wait(700)
 await page.screenshot({ path: `${out}/${name}-4-list.png` })
+const openBtn = await page.$('button[aria-label^="Open"]')
+if (openBtn) { await openBtn.click(); await wait(700); await page.screenshot({ path: `${out}/${name}-4b-detail.png` }); await page.keyboard.press('Escape'); await wait(400) }
 const edit = await page.$('button[aria-label^="Edit"]')
 if (edit) { await edit.click(); await wait(600); await page.screenshot({ path: `${out}/${name}-5-form.png` }); await page.keyboard.press('Escape'); await wait(400) }
 console.log('import', await clickText('button', 'Import CSV'))

@@ -187,6 +187,26 @@ describe('generated runtime, executed', () => {
     expect(logic.reminderEligible(ent, ramesh)).toBe(true)
   })
 
+  it('needs-attention lists overdue and soon-due rows, most urgent first, and never settled ones', async () => {
+    const { db, logic } = await loadRuntime('khata')
+    const s = logic.withSample(db.load())
+    const due = logic.attention(s)
+    expect(due.length).toBeGreaterThan(0)
+    expect(due.every((d: any) => d.days <= 7)).toBe(true) // eslint-disable-line @typescript-eslint/no-explicit-any
+    expect(due.map((d: any) => d.days)).toEqual([...due.map((d: any) => d.days)].sort((a: number, b: number) => a - b)) // eslint-disable-line @typescript-eslint/no-explicit-any
+    expect(due.some((d: any) => d.row.customer === 'Mohan Desai')).toBe(false) // eslint-disable-line @typescript-eslint/no-explicit-any
+    expect(logic.dueLabel(-3)).toBe('Overdue by 3 days')
+    expect(logic.dueLabel(0)).toBe('Due today')
+    expect(logic.dueLabel(1)).toBe('Due in 1 day')
+  })
+
+  it('a record knows its children (a bill has lines)', async () => {
+    const { APP, logic } = await loadRuntime('khata')
+    const kids = logic.childrenOf(APP.entities[0])
+    expect(kids.some((k: any) => k.entity.id === 'lines' && k.ref.type === 'ref')).toBe(true) // eslint-disable-line @typescript-eslint/no-explicit-any
+    expect(logic.childrenOf(APP.entities.find((e: any) => e.id === 'lines'))).toEqual([]) // eslint-disable-line @typescript-eslint/no-explicit-any
+  })
+
   it('saves and reloads through localStorage, logs changes, deletes and restores, and wipes', async () => {
     const { db, store } = await loadRuntime('gym')
     let s = db.load()

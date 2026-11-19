@@ -17,7 +17,7 @@ const iconFor = (label: string) => ICONS.find(([re]) => re.test(label.toLowerCas
 
 export function renderSchema(spec: AppSpec, model: AppModel, currency: string): string {
   const app = {
-    id: slug(model.appName), name: model.appName, tagline: model.tagline, homeIntro: model.homeIntro, currency,
+    id: slug(model.appName), intent: spec.brief.intent, name: model.appName, tagline: model.tagline, homeIntro: model.homeIntro, currency,
     layout: { list: spec.layout.list, density: spec.layout.density, home: spec.layout.home },
     entities: model.entities, metrics: model.metrics,
   }
@@ -40,7 +40,7 @@ export type Row = Record<string, any> & { id: string; demo?: boolean }
 export type Draft = Record<string, any>
 
 export const APP: {
-  id: string; name: string; tagline: string; homeIntro: string; currency: string
+  id: string; intent: string; name: string; tagline: string; homeIntro: string; currency: string
   layout: { list: 'table' | 'cards'; density: 'compact' | 'roomy'; home: 'metrics-first' | 'shortcuts-first' }
   entities: Entity[]; metrics: Metric[]
 } = ${JSON.stringify(app, null, 2)}

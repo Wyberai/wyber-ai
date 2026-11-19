@@ -263,6 +263,35 @@ export function reminderLink(store: Store, entity: Entity, row: Row): string {
   return 'https://wa.me/' + phone + '?text=' + encodeURIComponent(text)
 }
 
+/** Rows with a due date that is overdue or within a week, most urgent first. Worked out from the saved rows, never made up. */
+export function attention(store: Store): { entity: Entity; row: Row; days: number }[] {
+  const out: { entity: Entity; row: Row; days: number }[] = []
+  const now = Date.parse(today())
+  for (const e of APP.entities) {
+    if (!e.due) continue
+    for (const r of list(store, e.id)) {
+      const d = r[e.due]
+      if (!d || isFinal(e, r)) continue
+      const days = Math.round((Date.parse(String(d)) - now) / 86400000)
+      if (days <= 7) out.push({ entity: e, row: r, days })
+    }
+  }
+  return out.sort((a, b) => a.days - b.days).slice(0, 8)
+}
+
+export function dueLabel(days: number): string {
+  if (days < 0) return 'Overdue by ' + Math.abs(days) + (Math.abs(days) === 1 ? ' day' : ' days')
+  if (days === 0) return 'Due today'
+  return 'Due in ' + days + (days === 1 ? ' day' : ' days')
+}
+
+/** Entities that hold a ref field pointing at this one (a bill's lines, a member's payments). */
+export function childrenOf(entity: Entity): { entity: Entity; ref: Field }[] {
+  const out: { entity: Entity; ref: Field }[] = []
+  for (const e of APP.entities) for (const f of e.fields) if (f.type === 'ref' && f.ref === entity.id) out.push({ entity: e, ref: f })
+  return out
+}
+
 export function reminderEligible(entity: Entity, row: Row): boolean {
   return Boolean(entity.contact && (entity.due || entity.amount) && row[entity.contact] && !isFinal(entity, row))
 }

@@ -48,14 +48,14 @@ function check(entity: Entity, values: Draft): Record<string, string> {
   return errors
 }
 
-export default function FormDialog(props: { entity: Entity; store: Store; row: Row | null; open: boolean; onClose: () => void; onSave: (values: Draft) => void }) {
-  const { entity, store, row, open, onClose, onSave } = props
+export default function FormDialog(props: { entity: Entity; store: Store; row: Row | null; open: boolean; onClose: () => void; onSave: (values: Draft) => void; initial?: Draft }) {
+  const { entity, store, row, open, onClose, onSave, initial } = props
   const [values, setValues] = useState<Draft>({})
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   useEffect(() => {
-    if (open) { setErrors({}); setValues(row ? { ...row } : defaults(entity)) }
-  }, [open, row, entity])
+    if (open) { setErrors({}); setValues(row ? { ...row } : { ...defaults(entity), ...(initial || {}) }) }
+  }, [open, row, entity, initial])
 
   const set = (id: string, v: unknown) => setValues(prev => ({ ...prev, [id]: v }))
 
