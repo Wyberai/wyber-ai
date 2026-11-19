@@ -35,6 +35,7 @@ function placeholder(spec, brief, ratio) {
 const summary = []
 for (const demo of DEMOS) {
   const spec = m.planWebsite(demo.prompt, { seed: demo.seed, facts: demo.facts })
+  if (process.env.DEMO_MOTION) spec.motion = { ...spec.motion, ...JSON.parse(process.env.DEMO_MOTION) }
   if (process.env.DEMO_LAYOUT) spec.layout = { ...spec.layout, ...JSON.parse(process.env.DEMO_LAYOUT) }
   const issues = m.validateCopy(spec, demo.copy)
   if (issues.length) { console.error(demo.key, 'COPY ISSUES', issues); process.exitCode = 2; continue }

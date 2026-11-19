@@ -1,9 +1,18 @@
 import { imageDirective, subjectFor } from './render-images'
 import { UI } from './ui-strings'
-import { DEFAULT_LAYOUT, type BuildSpec, type ImageSlot, type LangId, type LayoutPlan, type PlannedSection, type SiteCopy } from './types'
+import { DEFAULT_LAYOUT, DEFAULT_MOTION, type BuildSpec, type ImageSlot, type LangId, type LayoutPlan, type MotionPlan, type PlannedSection, type SiteCopy } from './types'
 
-type Ctx = { spec: BuildSpec; copy: SiteCopy; lay: LayoutPlan; used: Set<string> }
+type Ctx = { spec: BuildSpec; copy: SiteCopy; lay: LayoutPlan; mo: MotionPlan; used: Set<string> }
 const U = (c: Ctx, ...names: string[]) => names.forEach(n => c.used.add(n))
+/** The tag a motion-aware block renders as: the kit's Reveal/Stagger when the direction moves, a plain div when it does not. */
+const tag = (c: Ctx, kind: 'reveal' | 'stagger' | 'item'): string => {
+  if (kind === 'reveal') { if (!c.mo.reveal) return 'div'; U(c, 'Reveal'); return 'Reveal' }
+  if (!c.mo.stagger) return 'div'
+  U(c, kind === 'stagger' ? 'Stagger' : 'StaggerItem')
+  return kind === 'stagger' ? 'Stagger' : 'StaggerItem'
+}
+/** The hero headline, with its accent phrase marked when the plan asks for it. */
+const H = (c: Ctx): string => { if (!c.mo.highlight) return '{COPY.hero.headline}'; U(c, 'HighlightMarker'); return '{hl(COPY.hero.headline, COPY.hero.accent)}' }
 const cp = (id: string) => `COPY.sections[${JSON.stringify(id)}]`
 
 function heroMedia(c: Ctx, slot: ImageSlot | undefined): string {
@@ -23,7 +32,7 @@ function hero(c: Ctx): string {
   if (c.spec.hero === 'editorial') {
     U(c, 'EditorialHeadline')
     return `<section className="mx-auto max-w-6xl px-6 pb-12 pt-36 md:pt-44">
-          <EditorialHeadline as="h1" eyebrow={COPY.hero.eyebrow}>{COPY.hero.headline}</EditorialHeadline>
+          <EditorialHeadline as="h1" eyebrow={COPY.hero.eyebrow}>${H(c)}</EditorialHeadline>
           <div className="mt-10 grid gap-8 md:grid-cols-12">
             <p className="max-w-xl text-lg leading-relaxed text-muted-foreground md:col-span-6">{COPY.hero.sub}</p>
             <div className="md:col-span-6 md:justify-self-end">${buttons}</div>
@@ -35,7 +44,7 @@ function hero(c: Ctx): string {
     U(c, 'HeroHeadline')
     const text = `<section className="mx-auto max-w-5xl px-6 pb-16 ${slot && c.lay.heroMediaFirst ? 'pt-12' : 'pt-36 md:pt-44'} text-center">
           {COPY.hero.eyebrow && <p className="mb-4 font-mono text-sm text-muted-foreground">{COPY.hero.eyebrow}</p>}
-          <HeroHeadline>{COPY.hero.headline}</HeroHeadline>
+          <HeroHeadline>${H(c)}</HeroHeadline>
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">{COPY.hero.sub}</p>
           <div className="flex justify-center">${buttons}</div>
         </section>`
@@ -48,7 +57,7 @@ function hero(c: Ctx): string {
   return `<section className="mx-auto grid max-w-6xl items-center gap-12 px-6 pb-20 pt-32 md:grid-cols-12 md:pt-40">
           <div className="${slot ? 'md:col-span-6' : 'md:col-span-12 max-w-3xl'}${flip ? ' md:order-2' : ''}">
             {COPY.hero.eyebrow && <p className="mb-4 font-mono text-sm text-muted-foreground">{COPY.hero.eyebrow}</p>}
-            <HeroHeadline>{COPY.hero.headline}</HeroHeadline>
+            <HeroHeadline>${H(c)}</HeroHeadline>
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">{COPY.hero.sub}</p>
             ${buttons}
           </div>
@@ -69,17 +78,17 @@ function heading(c: Ctx, s: PlannedSection, align: 'left' | 'center' = 'center')
 function services(c: Ctx, s: PlannedSection): string {
   const k = cp(s.id)
   if (s.variant === 'list') {
-    U(c, 'Reveal')
+    const RV = tag(c, 'reveal')
     return `${heading(c, s, 'left')}
           <div className="mt-12 border-t border-border">
             {${k}.items!.map((it: any, i: number) => (
-              <Reveal key={i}>
+              <${RV} key={i}>
                 <div className="grid gap-3 border-b border-border py-8 md:grid-cols-12 md:gap-8">
                   <div className="font-mono text-sm text-muted-foreground md:col-span-1">{(i < 9 ? '0' : '') + (i + 1)}</div>
                   <h3 className="font-display text-2xl md:col-span-4">{it.title}</h3>
                   <p className="leading-relaxed text-muted-foreground md:col-span-7">{it.text}</p>
                 </div>
-              </Reveal>
+              </${RV}>
             ))}
           </div>`
   }
@@ -92,73 +101,71 @@ function services(c: Ctx, s: PlannedSection): string {
             ))}
           </BentoGrid>`
   }
-  U(c, 'Stagger', 'StaggerItem', 'FeatureCard')
+  U(c, 'FeatureCard')
+  const ST = tag(c, 'stagger'), SI = tag(c, 'item')
   return `${heading(c, s)}
-          <Stagger className="grid gap-4 md:grid-cols-3">
+          <${ST} className="grid gap-4 md:grid-cols-3">
             {${k}.items!.map((it: any, i: number) => (
-              <StaggerItem key={i}><FeatureCard title={it.title} description={it.text} /></StaggerItem>
+              <${SI} key={i}><FeatureCard title={it.title} description={it.text} /></${SI}>
             ))}
-          </Stagger>`
+          </${ST}>`
 }
 
 function rows(c: Ctx, s: PlannedSection): string {
   const k = cp(s.id)
-  U(c, 'Reveal')
+  const RV = tag(c, 'reveal')
   return `${heading(c, s, 'left')}
           <div className="mt-12 border-t border-border">
             {${k}.items!.map((it: any, i: number) => (
-              <Reveal key={i}>
+              <${RV} key={i}>
                 <div className="grid gap-2 border-b border-border py-6 md:grid-cols-12 md:gap-8">
                   <h3 className="font-display text-xl md:col-span-4">{it.title}</h3>
                   <p className="leading-relaxed text-muted-foreground md:col-span-6">{it.text}</p>
                   {it.meta && <p className="font-mono text-sm text-muted-foreground md:col-span-2 md:text-right">{it.meta}</p>}
                 </div>
-              </Reveal>
+              </${RV}>
             ))}
           </div>`
 }
 
 function steps(c: Ctx, s: PlannedSection, n: number): string {
   const k = cp(s.id)
-  U(c, 'SectionNumber', 'Stagger', 'StaggerItem')
   if (c.lay.steps === 'timeline') {
+    U(c, 'ScrollTimeline')
     return `<div className="grid gap-12 md:grid-cols-12">
           <div className="md:col-span-5">${heading(c, s, 'left')}</div>
-          <ol className="space-y-10 border-l border-border pl-8 md:col-span-7">
-            {${k}.items!.map((it: any, i: number) => (
-              <li key={i} className="relative">
-                <span aria-hidden="true" className="absolute -left-10 top-2 h-3 w-3 rounded-full bg-primary" />
-                <SectionNumber n={i + 1} />
-                <h3 className="mt-3 font-display text-xl">{it.title}</h3>
-                <p className="mt-2 leading-relaxed text-muted-foreground">{it.text}</p>
-              </li>
-            ))}
-          </ol>
+          <div className="md:col-span-7">
+            <ScrollTimeline items={${k}.items!.map((it: any, i: number) => ({ title: it.title, description: it.text, date: (i < 9 ? '0' : '') + (i + 1) }))} />
+          </div>
         </div>`
   }
+  U(c, 'SectionNumber')
+  const ST = tag(c, 'stagger'), SI = tag(c, 'item')
   const cols = n >= 4 ? 'md:grid-cols-4' : 'md:grid-cols-3'
   return `${heading(c, s, 'left')}
-          <Stagger className="mt-12 grid gap-10 ${cols}">
+          <${ST} className="mt-12 grid gap-10 ${cols}">
             {${k}.items!.map((it: any, i: number) => (
-              <StaggerItem key={i}>
+              <${SI} key={i}>
                 <SectionNumber n={i + 1} />
                 <h3 className="mt-4 font-display text-xl">{it.title}</h3>
                 <p className="mt-2 leading-relaxed text-muted-foreground">{it.text}</p>
-              </StaggerItem>
+              </${SI}>
             ))}
-          </Stagger>`
+          </${ST}>`
 }
 
 function about(c: Ctx, s: PlannedSection): string {
   const k = cp(s.id)
   const slot = c.spec.images.find(i => i.id === 'about')
-  U(c, 'Reveal')
+  const RV = tag(c, 'reveal')
   if (slot) U(c, 'MediaFrame')
+  if (c.mo.dropCap) U(c, 'DropCap')
   const flip = c.lay.aboutFlip
+  const para = c.mo.dropCap ? "{i === 0 && lang === 'en' ? <DropCap className=\"!text-lg !text-muted-foreground\">{p}</DropCap> : <p>{p}</p>}" : '<p>{p}</p>'
   return `<div className="grid gap-12 md:grid-cols-12">
             <div className="md:col-span-${slot ? '6' : '5'}${flip ? ' md:order-2' : ''}">${heading(c, s, 'left')}</div>
             <div className="space-y-5 text-lg leading-relaxed text-muted-foreground md:col-span-${slot ? '6' : '7'}${flip ? ' md:order-1' : ''}">
-              {${k}.paragraphs!.map((p: string, i: number) => <Reveal key={i}><p>{p}</p></Reveal>)}
+              {${k}.paragraphs!.map((p: string, i: number) => <${RV} key={i}>${para}</${RV}>)}
               ${slot ? `<MediaFrame src="${imageDirective(slot, subjectFor(c.spec, c.copy, slot))}" alt={${k}.imageAlt ?? ''} ratio="${slot.ratio}" className="mt-8 max-w-sm" />` : ''}
             </div>
           </div>`
@@ -238,7 +245,11 @@ export function navLabels(spec: BuildSpec): Record<string, string> {
 export function renderApp(spec: BuildSpec, copy: SiteCopy, translations: Translations = {}): string {
   const lay = spec.layout ?? DEFAULT_LAYOUT
   const used = new Set<string>(['Footer', 'Input', 'Textarea', 'Button', 'Card', spec.header === 'condensing' ? 'CondensingNavbar' : 'Navbar'])
-  const c: Ctx = { spec, copy, lay, used }
+  const mo: MotionPlan = spec.motion && typeof spec.motion === 'object' ? spec.motion : DEFAULT_MOTION
+  const c: Ctx = { spec, copy, lay, mo, used }
+  if (mo.progress) U(c, 'ScrollProgress')
+  if (mo.stickyCta) U(c, 'StickyCTABar')
+  if (mo.backToTop && !mo.stickyCta) U(c, 'BackToTop')
   const bodies = spec.sections.map((s, i) => `<section id="${s.id}" className="${sectionClass(lay, i)}"><div className="mx-auto max-w-6xl px-6">
           ${body(c, s)}
         </div></section>`)
@@ -249,6 +260,16 @@ export function renderApp(spec: BuildSpec, copy: SiteCopy, translations: Transla
     return s.kind === 'contact' ? `...(hasContact ? [${item}] : [])` : item
   }).join(',\n    ')
   const Header = spec.header === 'condensing' ? 'CondensingNavbar' : 'Navbar'
+  const hlCode = mo.highlight
+    ? `function hl(text: string, accent?: string): React.ReactNode {
+  if (!accent) return text
+  const i = text.indexOf(accent)
+  if (i < 0) return text
+  return <>{text.slice(0, i)}<HighlightMarker>{accent}</HighlightMarker>{text.slice(i + accent.length)}</>
+}
+
+`
+    : ''
   const names = [...used].sort()
 
   const all: Record<string, SiteCopy & { nav?: Record<string, string> }> = { en: { ...copy, nav: navLabels(spec) } }
@@ -285,7 +306,7 @@ const hasMail = Boolean(OWNER.email)
 const hasContact = hasWa || hasMail
 const go = (href: string) => { if (href) window.location.href = href }
 
-function EnquiryForm({ button, t }: { button: string; t: Record<string, string> }) {
+${hlCode}function EnquiryForm({ button, t }: { button: string; t: Record<string, string> }) {
   const submit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const f = new FormData(e.currentTarget)
@@ -332,6 +353,7 @@ ${langToggleCode}  const headerCta = (langToggle || hasContact) ? (
   ) : undefined
   return (
     <div className="min-h-screen bg-background text-foreground">
+      ${mo.progress ? '<ScrollProgress />' : ''}
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-background focus:px-4 focus:py-2">{T.skip}</a>
       <${Header}
         brand={BRAND}
@@ -342,6 +364,8 @@ ${langToggleCode}  const headerCta = (langToggle || hasContact) ? (
         ${heroJsx}
         ${bodies.join('\n        ')}
       </main>
+      ${mo.stickyCta ? '{hasContact && <StickyCTABar message={BRAND} ctaLabel={COPY.hero.cta} onCta={() => go(primaryHref)} />}' : ''}
+      ${mo.backToTop && !mo.stickyCta ? '<BackToTop />' : ''}
       <Footer
         brand={BRAND}
         description={lang === 'en' ? COPY.seo.description : COPY.hero.sub}

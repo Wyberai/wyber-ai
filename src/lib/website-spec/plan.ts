@@ -1,23 +1,13 @@
 import { dealDirections } from '../direction-brief'
 import { getDirectionById, type Direction } from '../design-directions'
+import { seededRandom } from '../build-spec/random'
+import { languagesFor } from '../build-spec/languages'
 import { BLUEPRINTS, classifyIntent } from './intents'
 import type {
-  BuildSpec, HeaderVariant, HeroVariant, ImageSlot, IntentBrief, LangId, LayoutPlan, OwnerFacts, PlannedSection, ServicesVariant,
+  BuildSpec, HeaderVariant, HeroVariant, ImageSlot, IntentBrief, LangId, LayoutPlan, MotionPlan, OwnerFacts, PlannedSection, ServicesVariant,
 } from './types'
 
-/** Small deterministic generator so the same project id always gets the same direction and variants. */
-export function seededRandom(seed: string): () => number {
-  let h = 1779033703 ^ seed.length
-  for (let i = 0; i < seed.length; i++) { h = Math.imul(h ^ seed.charCodeAt(i), 3432918353); h = (h << 13) | (h >>> 19) }
-  let a = h >>> 0
-  return () => {
-    a = (a + 0x6D2B79F5) >>> 0
-    let t = a
-    t = Math.imul(t ^ (t >>> 15), t | 1)
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
-    return (((t ^ (t >>> 14)) >>> 0) / 4294967296)
-  }
-}
+export { seededRandom, languagesFor }
 
 const SCHEMA_BY_INDUSTRY: [RegExp, string][] = [
   [/homestay|guest ?house|hotel|resort|haveli|villa|hostel/, 'LodgingBusiness'],
@@ -81,24 +71,32 @@ export function pickWebsiteDirection(prompt: string, o: PlanOptions): Direction 
   return pool[Math.floor(rnd() * pool.length)]
 }
 
+/** The direction's own motion note decides what moves; the seed varies the optional extras so two sites never share a rhythm. */
+export function motionFor(d: Direction, seed: string): MotionPlan {
+  const r = seededRandom(seed + ':motion')
+  const note = d.motion
+  // "None beyond hover" is still; "Almost none: a gentle rise" and "...nothing else moves" still move, quietly
+  const still = /^\s*none\b/i.test(note)
+  const quiet = /almost none|subtle|quiet|otherwise static/i.test(note)
+  const editorial = EDITORIAL.has(d.group)
+  const stickyCta = r() < 0.5
+  return {
+    reveal: !still,
+    stagger: !still && !quiet,
+    progress: !still && (editorial || r() < 0.4),
+    highlight: !still && (editorial || r() < 0.5),
+    dropCap: editorial,
+    stickyCta,
+    // the back-to-top button and the sticky bar share the bottom edge, so only one of them appears
+    backToTop: !stickyCta,
+  }
+}
+
 export function layoutFor(d: Direction, seed: string): LayoutPlan {
   const r = seededRandom(seed + ':layout')
   const coin = () => r() < 0.5
   const rhythm: LayoutPlan['rhythm'] = EDITORIAL.has(d.group) ? 'rules' : d.palette.mode === 'dark' ? 'bands' : (['bands', 'plain', 'rules'] as const)[Math.floor(r() * 3)]
   return { heroFlip: coin(), heroMediaFirst: coin(), rhythm, steps: coin() ? 'timeline' : 'columns', faq: coin() ? 'split' : 'centered', contactFlip: coin(), aboutFlip: coin() }
-}
-
-/** The same cities the launch-ready language check looks for, plus an explicit ask. Hindi for all of them, Gujarati for Gujarat. */
-const INDIAN = /\b(ahmedabad|surat|vadodara|rajkot|gandhinagar|pune|mumbai|delhi|bengaluru|bangalore|hyderabad|chennai|kolkata|jaipur|jodhpur|udaipur|lucknow|indore|bhopal|india)\b|₹|\+91/i
-const GUJARAT = /\b(ahmedabad|surat|vadodara|rajkot|gandhinagar|gujarat|gujarati)\b/i
-export function languagesFor(prompt: string, facts: OwnerFacts): LangId[] {
-  const text = `${prompt} ${facts.city ?? ''}`
-  const wantsEnglishOnly = /\b(english only|only in english|no hindi|no translation)\b/i.test(text)
-  if (wantsEnglishOnly) return ['en']
-  const langs: LangId[] = ['en']
-  if (INDIAN.test(text) || /\b(hindi|bilingual|multilingual)\b/i.test(text)) langs.push('hi')
-  if (GUJARAT.test(text)) langs.push('gu')
-  return langs
 }
 
 export function planWebsite(prompt: string, o: PlanOptions): BuildSpec {
@@ -145,7 +143,7 @@ export function planWebsite(prompt: string, o: PlanOptions): BuildSpec {
     direction: { id: d.id, name: d.name, group: d.group, mode: d.palette.mode, heroMedia: d.rules.heroMedia },
     header: headerVariantFor(d),
     hero,
-    motion: /\b(no scroll|instant|none)\b/i.test(d.motion) ? 'none' : 'reveal',
+    motion: motionFor(d, o.seed),
     sections,
     images,
     seo: { schemaType, slug, titleMax: 60, descMin: 110, descMax: 158, faqSchema: sections.some(s => s.kind === 'faq') },

@@ -3042,15 +3042,18 @@ export function HighlightMarker({ children, color = 'primary', delay = 0, classN
 }) {
   const reduced = useReducedMotion()
   const markClass = color === 'accent' ? 'bg-accent/35' : 'bg-primary/30'
+  // Watch the wrapper, not the marker: a marker scaled to zero width has no area, so an IntersectionObserver on it never fires
+  // and the mark stayed invisible (found in a local render, 19 Nov 2026).
+  const ref = useRef<HTMLSpanElement>(null)
+  const inView = useInView(ref, { once: true, margin: '-10%' })
   return (
-    <span className={cn('relative inline-block', className)}>
+    <span ref={ref} className={cn('relative inline-block', className)}>
       <span className="relative z-10">{children}</span>
       <motion.span
         aria-hidden="true"
         className={cn('absolute inset-x-0 bottom-[0.06em] h-[0.4em] origin-left rounded-[2px]', markClass)}
         initial={reduced ? { scaleX: 1 } : { scaleX: 0 }}
-        whileInView={{ scaleX: 1 }}
-        viewport={{ once: true, margin: '-10%' }}
+        animate={{ scaleX: reduced || inView ? 1 : 0 }}
         transition={{ duration: reduced ? 0 : 0.6, delay, ease: easeOut }}
       />
     </span>
@@ -5519,7 +5522,7 @@ export function StickyCTABar({ message, ctaLabel = 'Get started', onCta, thresho
           exit={{ y: reduceMotion ? 0 : 80, opacity: 0 }}
           transition={springFast}
           className={cn(
-            'fixed inset-x-0 bottom-0 z-50 flex items-center justify-between gap-4 border-t border-border bg-card/95 px-6 py-4 shadow-[0_-8px_24px_hsl(var(--foreground)/0.08)] backdrop-blur',
+            'fixed inset-x-0 bottom-0 z-50 flex items-center justify-between gap-4 border-t border-border bg-card px-6 py-4',
             className
           )}
         >

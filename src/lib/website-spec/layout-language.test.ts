@@ -28,7 +28,7 @@ describe('layout variants', () => {
     const rb = renderWebsite(b, d.copy).files['src/App.tsx']
     expect(ra).not.toBe(rb)
     expect(rb).toContain('md:order-2')
-    expect(rb).toContain('border-l border-border pl-8')
+    expect(rb).toContain('<ScrollTimeline items=')
     expect(rb).toContain('md:sticky md:top-28')
     expect(ra).not.toContain('md:sticky md:top-28')
     for (const files of [renderWebsite(a, d.copy).files, renderWebsite(b, d.copy).files]) {
@@ -180,5 +180,62 @@ describe('the spec path gets the same security review as every other build path'
     expect(block).toContain('sentinelReview(c, f.path, f.content)')
     expect(block).toContain('sentinelDone(c)')
     expect(block).toMatch(/specVetoes\.length/)
+  })
+})
+
+import { motionFor } from './plan'
+import { DEFAULT_MOTION, validateCopy as vc } from './index'
+describe('motion plan comes from the direction and is actually used', () => {
+  const d = DEMOS[0]
+  const base = planWebsite(d.prompt, { seed: d.seed, facts: d.facts })
+  const render = (motion: object) => renderWebsite({ ...base, motion: { ...DEFAULT_MOTION, ...motion } }, d.copy).files['src/App.tsx']
+
+  it('a direction whose notes say nothing moves gets no reveals; the others do', () => {
+    const still = DIRECTIONS.find(x => /^\s*(none|static)\b|None beyond hover/i.test(x.motion))
+    expect(still, 'a still direction exists').toBeTruthy()
+    expect(motionFor(still!, 'x').reveal).toBe(false)
+    const moving = DIRECTIONS.find(x => /fade|rise|slide|reveal/i.test(x.motion) && !/^\s*none/i.test(x.motion))!
+    expect(motionFor(moving, 'x').reveal).toBe(true)
+    expect(render({ reveal: false, stagger: false })).not.toMatch(/<Reveal|<Stagger/)
+    expect(render({ reveal: true, stagger: true })).toMatch(/<Stagger/)
+  })
+  it('editorial directions get the progress bar, the highlight and the drop cap', () => {
+    const editorial = DIRECTIONS.find(x => x.group === 'editorial' && !/^\s*none/i.test(x.motion))!
+    const m = motionFor(editorial, 'y')
+    expect(m.progress && m.highlight && m.dropCap).toBe(true)
+  })
+  it('each optional piece appears only when the plan asks for it', () => {
+    const on = render({ progress: true, highlight: true, dropCap: true, stickyCta: true, backToTop: false })
+    expect(on).toContain('<ScrollProgress />')
+    expect(on).toContain('<StickyCTABar')
+    expect(on).toContain('HighlightMarker')
+    expect(on).toContain('<DropCap ')
+    expect(on).not.toContain('<BackToTop')
+    const off = render({ progress: false, highlight: false, dropCap: false, stickyCta: false, backToTop: true })
+    expect(off).not.toContain('ScrollProgress')
+    expect(off).not.toContain('StickyCTABar')
+    expect(off).not.toContain('HighlightMarker')
+    expect(off).not.toContain('DropCap')
+    expect(off).toContain('<BackToTop />')
+  })
+  it('the sticky bar and the back-to-top button never both appear (they share the bottom edge)', () => {
+    for (let i = 0; i < 40; i++) {
+      const m = motionFor(DIRECTIONS[i % DIRECTIONS.length], 'seed' + i)
+      expect(m.stickyCta && m.backToTop).toBe(false)
+    }
+  })
+  it('the headline accent must be copied exactly from the headline, 1 to 3 words', () => {
+    const ok = structuredClone(d.copy); ok.hero.accent = 'whole family'
+    expect(vc({ ...base, motion: { ...DEFAULT_MOTION, highlight: true } }, ok).map(i => i.path)).not.toContain('hero.accent')
+    for (const bad of ['whole families', 'Dental care for the whole family, in', 'x']) {
+      const c = structuredClone(d.copy); c.hero.accent = bad
+      expect(vc(base, c).map(i => i.path), bad).toContain('hero.accent')
+    }
+  })
+  it('the accent is marked in the headline and omitted safely when it is not in it', () => {
+    const c = structuredClone(d.copy); c.hero.accent = 'whole family'
+    const app = renderWebsite({ ...base, motion: { ...DEFAULT_MOTION, highlight: true } }, c).files['src/App.tsx']
+    expect(app).toContain('function hl(text: string, accent?: string)')
+    expect(app).toContain('"accent": "whole family"')
   })
 })

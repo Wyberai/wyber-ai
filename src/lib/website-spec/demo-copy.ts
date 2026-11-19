@@ -20,6 +20,7 @@ export const DEMOS: DemoSite[] = [
       hero: {
         eyebrow: 'Ahmedabad',
         headline: 'Dental care for the whole family, in Ahmedabad.',
+        accent: 'whole family',
         sub: 'Check-ups, braces and root canal treatment from a family clinic. Every step is explained before it starts, so you always know what comes next.',
         cta: 'Book a visit',
         secondary: 'See what we do',

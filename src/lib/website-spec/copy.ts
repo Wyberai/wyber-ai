@@ -1,11 +1,7 @@
 import type { BuildSpec, SiteCopy } from './types'
 
-/** Claims a model likes to invent. The owner never gave them, so copy that contains them is rejected and rewritten. */
-export const BANNED_CLAIMS =
-  /(\bbest\b|#1|\bnumber one\b|\bleading\b|\bworld-class\b|\bpremier\b|award[- ]winning|\bcertified\b|\bguarantee[sd]?\b|\bmoney-back\b|\btrusted by\b|\b\d{2,}\+?\s*(years|clients|customers|patients|students|happy|projects)\b|\bover \d+\b|!)/i
-
-/** Words and digits that must never reach an image prompt. */
-export const IMAGE_BRIEF_BANNED = /(\d|\bwhatsapp\b|\bphone\b|\bcall\b|\bbook(?:ing)?\b|\benquir\w*\b|\bsigns?\b|\bsignage\b|\bposters?\b|\blogos?\b|\bbanners?\b|\bbrand name\b|\bwatermark\b|\bcaption\b|\bwritten\b|\bwords?\b|\btext\b)/i
+import { BANNED_CLAIMS, IMAGE_BRIEF_BANNED } from '../build-spec/claims'
+export { BANNED_CLAIMS, IMAGE_BRIEF_BANNED }
 
 export interface CopyIssue { path: string; message: string }
 
@@ -34,6 +30,10 @@ export function validateCopy(spec: BuildSpec, copy: SiteCopy): CopyIssue[] {
   text('seo.title', copy.seo?.title, 20, spec.seo.titleMax)
   text('seo.description', copy.seo?.description, spec.seo.descMin, spec.seo.descMax)
   text('hero.headline', copy.hero?.headline, 8, 90)
+  if (copy.hero?.accent !== undefined) {
+    const a = copy.hero.accent
+    if (typeof a !== 'string' || !copy.hero.headline?.includes(a) || a.trim().split(/\s+/).length > 3 || a.length < 3) add('hero.accent', 'must be 1 to 3 consecutive words copied exactly from the headline')
+  }
   text('hero.sub', copy.hero?.sub, 40, 220)
   text('hero.cta', copy.hero?.cta, 2, 28)
   text('hero.secondary', copy.hero?.secondary, 2, 28)
@@ -89,7 +89,8 @@ export function buildCopyPrompt(spec: BuildSpec, businessPrompt: string): { syst
     `Intent: ${spec.brief.intent}. Goal action: ${spec.brief.goalAction}. Industry: ${spec.brief.industry}.`,
     `Owner facts: ${JSON.stringify(f)}`,
     'Return JSON with: brand (a plain descriptor if no name is given), seo {title (max ' + spec.seo.titleMax + ' chars), description (' + spec.seo.descMin + ' to ' + spec.seo.descMax + ' chars)},',
-    'hero {eyebrow?, headline, sub, cta, secondary, imageAlt, imageBrief}, sections {<id>: {title, description?, items? [{title,text,meta?}], faq? [{question,answer}], paragraphs? [..], button?, imageAlt?, imageBrief?}}.',
+    'hero {eyebrow?, headline, accent?, sub, cta, secondary, imageAlt, imageBrief}, sections {<id>: {title, description?, items? [{title,text,meta?}], faq? [{question,answer}], paragraphs? [..], button?, imageAlt?, imageBrief?}}.',
+    spec.motion.highlight ? 'hero.accent: the 1 to 3 consecutive words of the headline that carry its meaning, copied exactly (they get an underline marker).' : 'Omit hero.accent.',
     'imageBrief (where an image slot is listed below): 50 to 320 characters describing ONE concrete photographable scene of THIS business drawn from the owner brief (the place, the objects, the light). Scene only: no digits, no contact wording, no signs, posters, logos or lettering of any kind. imageAlt describes that same scene.',
     spec.images.length ? 'Image slots: ' + spec.images.map(i => (i.altFrom === 'hero' ? 'hero' : `sections.${i.altFrom}`) + ` (${i.ratio})`).join(', ') + '.' : 'There are no image slots: omit imageBrief and imageAlt.',
     'Sections to write:',

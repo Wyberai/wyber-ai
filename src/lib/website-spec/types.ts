@@ -10,15 +10,8 @@ export type ModuleId = 'enquiry' | 'whatsapp' | 'language' | 'map' | 'catalogue'
 /** Modules the renderer can build today. A planned module outside this list is reported, never faked. */
 export const SUPPORTED_MODULES: readonly ModuleId[] = ['enquiry', 'whatsapp', 'map', 'catalogue']
 
-export interface OwnerFacts {
-  name?: string
-  city?: string
-  address?: string
-  phone?: string
-  whatsapp?: string
-  email?: string
-  hours?: string
-}
+import type { LangId, OwnerFacts } from '../build-spec/types'
+export type { LangId, OwnerFacts }
 
 export interface IntentBrief {
   intent: IntentId
@@ -99,8 +92,25 @@ export interface LayoutPlan {
 }
 export const DEFAULT_LAYOUT: LayoutPlan = { heroFlip: false, heroMediaFirst: false, rhythm: 'bands', steps: 'columns', faq: 'centered', contactFlip: false, aboutFlip: false }
 
+/** What moves, decided from the direction's own motion notes. Nothing here loops, and everything respects reduced motion. */
+export interface MotionPlan {
+  /** Sections ease in as they enter (Reveal). False for directions whose notes say nothing moves. */
+  reveal: boolean
+  /** Card grids and steps arrive one after another (Stagger). */
+  stagger: boolean
+  /** A thin reading-progress bar along the top of the page. */
+  progress: boolean
+  /** One headline phrase gets an underline-marker that draws in once. */
+  highlight: boolean
+  /** The first paragraph of the about section opens with a drop cap. */
+  dropCap: boolean
+  /** A call-to-action bar slides up after the first screen (only when there is a contact path). */
+  stickyCta: boolean
+  backToTop: boolean
+}
+export const DEFAULT_MOTION: MotionPlan = { reveal: true, stagger: true, progress: false, highlight: false, dropCap: false, stickyCta: false, backToTop: true }
+
 /** Languages the site offers. English is always first; the rest are written by a translation step. */
-export type LangId = 'en' | 'hi' | 'gu'
 
 export interface BuildSpec {
   version: 1
@@ -111,7 +121,7 @@ export interface BuildSpec {
   direction: { id: string; name: string; group: string; mode: 'light' | 'dark'; heroMedia: string }
   header: HeaderVariant
   hero: HeroVariant
-  motion: 'reveal' | 'none'
+  motion: MotionPlan
   sections: PlannedSection[]
   images: ImageSlot[]
   seo: SeoPlan
@@ -137,6 +147,6 @@ export interface SiteCopy {
   /** Navigation labels by section id. Filled for English from the blueprint; a translation carries its own. */
   nav?: Record<string, string>
   seo: { title: string; description: string }
-  hero: { eyebrow?: string; headline: string; sub: string; cta: string; secondary: string; imageAlt: string; imageBrief?: string }
+  hero: { eyebrow?: string; headline: string; sub: string; cta: string; secondary: string; imageAlt: string; imageBrief?: string; accent?: string }
   sections: Record<string, SectionCopy>
 }
