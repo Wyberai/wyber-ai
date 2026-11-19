@@ -16,6 +16,9 @@ const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'wdemo-'))
 const demoOut = path.join(tmp, 'd.mjs')
 await build({ stdin: { contents: "export { DEMOS } from './src/lib/website-spec/demo-copy'", resolveDir: process.cwd(), sourcefile: 'e.ts', loader: 'ts' }, bundle: true, platform: 'node', format: 'esm', outfile: demoOut, logLevel: 'silent' })
 const { DEMOS } = await import(pathToFileURL(demoOut).href)
+const trOut = path.join(tmp, 't.mjs')
+await build({ stdin: { contents: "export { DEMO_HI_RICE } from './src/lib/website-spec/demo-translations'", resolveDir: process.cwd(), sourcefile: 't.ts', loader: 'ts' }, bundle: true, platform: 'node', format: 'esm', outfile: trOut, logLevel: 'silent' })
+const { DEMO_HI_RICE } = await import(pathToFileURL(trOut).href)
 const kitOut = path.join(tmp, 'k.mjs')
 await build({ stdin: { contents: "export { WYBER_UI_KIT_SOURCE } from './src/lib/wyber-ui-kit'", resolveDir: process.cwd(), sourcefile: 'k.ts', loader: 'ts' }, bundle: true, platform: 'node', format: 'esm', outfile: kitOut, logLevel: 'silent' })
 const KIT = (await import(pathToFileURL(kitOut).href)).WYBER_UI_KIT_SOURCE
@@ -32,9 +35,11 @@ function placeholder(spec, brief, ratio) {
 const summary = []
 for (const demo of DEMOS) {
   const spec = m.planWebsite(demo.prompt, { seed: demo.seed, facts: demo.facts })
+  if (process.env.DEMO_LAYOUT) spec.layout = { ...spec.layout, ...JSON.parse(process.env.DEMO_LAYOUT) }
   const issues = m.validateCopy(spec, demo.copy)
   if (issues.length) { console.error(demo.key, 'COPY ISSUES', issues); process.exitCode = 2; continue }
-  const site = m.renderWebsite(spec, demo.copy)
+  const translations = demo.key === 'rice' ? { hi: m.completeTranslation(spec, demo.copy, DEMO_HI_RICE) } : {}
+  const site = m.renderWebsite(spec, demo.copy, translations)
   const dir = path.join(outRoot, demo.key)
   fs.cpSync(base, dir, { recursive: true, filter: s => !/node_modules|[\\/]dist$/.test(s) })
   for (const rm of ['src/App.tsx', 'src/components/AskUs.tsx']) fs.rmSync(path.join(dir, rm), { force: true })

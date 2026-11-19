@@ -87,8 +87,26 @@ export interface SeoPlan {
   faqSchema: boolean
 }
 
+/** Structure choices that make two sites with the same blueprint read differently. Seeded, biased by the direction. */
+export interface LayoutPlan {
+  heroFlip: boolean
+  heroMediaFirst: boolean
+  rhythm: 'bands' | 'rules' | 'plain'
+  steps: 'columns' | 'timeline'
+  faq: 'centered' | 'split'
+  contactFlip: boolean
+  aboutFlip: boolean
+}
+export const DEFAULT_LAYOUT: LayoutPlan = { heroFlip: false, heroMediaFirst: false, rhythm: 'bands', steps: 'columns', faq: 'centered', contactFlip: false, aboutFlip: false }
+
+/** Languages the site offers. English is always first; the rest are written by a translation step. */
+export type LangId = 'en' | 'hi' | 'gu'
+
 export interface BuildSpec {
   version: 1
+  /** Optional so specs saved before these fields existed still render. */
+  layout?: LayoutPlan
+  languages?: LangId[]
   brief: IntentBrief
   direction: { id: string; name: string; group: string; mode: 'light' | 'dark'; heroMedia: string }
   header: HeaderVariant
@@ -116,6 +134,8 @@ export interface SectionCopy {
 
 export interface SiteCopy {
   brand: string
+  /** Navigation labels by section id. Filled for English from the blueprint; a translation carries its own. */
+  nav?: Record<string, string>
   seo: { title: string; description: string }
   hero: { eyebrow?: string; headline: string; sub: string; cta: string; secondary: string; imageAlt: string; imageBrief?: string }
   sections: Record<string, SectionCopy>

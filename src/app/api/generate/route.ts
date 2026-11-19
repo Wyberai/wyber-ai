@@ -5634,7 +5634,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
       if (isNewBuild && stage === 'full' && !selfHeal && projectType === 'website' && isLaunchReadyWebsite(projectType) && (await import('@/lib/website-spec/flag')).websiteSpecEnabled()) {
         try {
           const { generateWebsite } = await import('@/lib/website-spec')
-          const SPEC_TIMEOUT_MS = Number(process.env.WEBSITE_SPEC_TIMEOUT_MS) || 150000
+          const SPEC_TIMEOUT_MS = Number(process.env.WEBSITE_SPEC_TIMEOUT_MS) || 220000
           let specTimer: ReturnType<typeof setTimeout> | undefined
           const specResult = await Promise.race([
             generateWebsite(

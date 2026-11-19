@@ -2,7 +2,7 @@ import { dealDirections } from '../direction-brief'
 import { getDirectionById, type Direction } from '../design-directions'
 import { BLUEPRINTS, classifyIntent } from './intents'
 import type {
-  BuildSpec, HeaderVariant, HeroVariant, ImageSlot, IntentBrief, OwnerFacts, PlannedSection, ServicesVariant,
+  BuildSpec, HeaderVariant, HeroVariant, ImageSlot, IntentBrief, LangId, LayoutPlan, OwnerFacts, PlannedSection, ServicesVariant,
 } from './types'
 
 /** Small deterministic generator so the same project id always gets the same direction and variants. */
@@ -81,6 +81,26 @@ export function pickWebsiteDirection(prompt: string, o: PlanOptions): Direction 
   return pool[Math.floor(rnd() * pool.length)]
 }
 
+export function layoutFor(d: Direction, seed: string): LayoutPlan {
+  const r = seededRandom(seed + ':layout')
+  const coin = () => r() < 0.5
+  const rhythm: LayoutPlan['rhythm'] = EDITORIAL.has(d.group) ? 'rules' : d.palette.mode === 'dark' ? 'bands' : (['bands', 'plain', 'rules'] as const)[Math.floor(r() * 3)]
+  return { heroFlip: coin(), heroMediaFirst: coin(), rhythm, steps: coin() ? 'timeline' : 'columns', faq: coin() ? 'split' : 'centered', contactFlip: coin(), aboutFlip: coin() }
+}
+
+/** The same cities the launch-ready language check looks for, plus an explicit ask. Hindi for all of them, Gujarati for Gujarat. */
+const INDIAN = /\b(ahmedabad|surat|vadodara|rajkot|gandhinagar|pune|mumbai|delhi|bengaluru|bangalore|hyderabad|chennai|kolkata|jaipur|jodhpur|udaipur|lucknow|indore|bhopal|india)\b|₹|\+91/i
+const GUJARAT = /\b(ahmedabad|surat|vadodara|rajkot|gandhinagar|gujarat|gujarati)\b/i
+export function languagesFor(prompt: string, facts: OwnerFacts): LangId[] {
+  const text = `${prompt} ${facts.city ?? ''}`
+  const wantsEnglishOnly = /\b(english only|only in english|no hindi|no translation)\b/i.test(text)
+  if (wantsEnglishOnly) return ['en']
+  const langs: LangId[] = ['en']
+  if (INDIAN.test(text) || /\b(hindi|bilingual|multilingual)\b/i.test(text)) langs.push('hi')
+  if (GUJARAT.test(text)) langs.push('gu')
+  return langs
+}
+
 export function planWebsite(prompt: string, o: PlanOptions): BuildSpec {
   const facts = o.facts ?? {}
   const brief: IntentBrief = classifyIntent(prompt, facts)
@@ -119,6 +139,8 @@ export function planWebsite(prompt: string, o: PlanOptions): BuildSpec {
 
   return {
     version: 1,
+    layout: layoutFor(d, o.seed),
+    languages: languagesFor(prompt, facts),
     brief,
     direction: { id: d.id, name: d.name, group: d.group, mode: d.palette.mode, heroMedia: d.rules.heroMedia },
     header: headerVariantFor(d),

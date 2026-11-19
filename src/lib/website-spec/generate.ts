@@ -1,7 +1,9 @@
 import { buildCopyPrompt, validateCopy, type CopyIssue } from './copy'
+import { extractFactsFromText, mergeFacts } from './facts'
 import { planWebsite } from './plan'
-import { renderWebsite } from './render'
-import type { BuildSpec, OwnerFacts, SiteCopy } from './types'
+import { renderWebsite, type Translations } from './render'
+import { buildTranslatePrompt, completeTranslation, translatable, validateTranslation } from './translate'
+import type { BuildSpec, LangId, OwnerFacts, SiteCopy } from './types'
 
 export interface ModelReply { text: string; inputTokens: number; outputTokens: number }
 export interface GenerateDeps {
@@ -20,8 +22,13 @@ export type GenerateResult =
   | { ok: true; text: string; spec: BuildSpec; usage: { inputTokens: number; outputTokens: number }; notes: string[]; paths: string[] }
   | { ok: false; reason: string; usage: { inputTokens: number; outputTokens: number } }
 
-/** Inverts factsSuffix() in website-facts.ts: "business name: X; area: Y; WhatsApp: N; opening hours: H". Nothing else is read. */
+/** Facts for the owner-details file: the exact "Make it yours" suffix first, then anything the owner typed into the brief. */
 export function parseFactsFromPrompt(prompt: string): OwnerFacts {
+  return mergeFacts(parseFactsSuffix(prompt), extractFactsFromText(prompt))
+}
+
+/** Inverts factsSuffix() in website-facts.ts: "business name: X; area: Y; WhatsApp: N; opening hours: H". */
+export function parseFactsSuffix(prompt: string): OwnerFacts {
   const m = (prompt || '').match(/Business facts to use exactly as given[^:]*:\s*([^\n]+?)\.?\s*$/m)
   if (!m) return {}
   const facts: OwnerFacts = {}
@@ -45,6 +52,12 @@ export function parseJsonObject(text: string): unknown {
   const end = t.lastIndexOf('}')
   if (start < 0 || end <= start) throw new Error('no JSON object in reply')
   return JSON.parse(t.slice(start, end + 1))
+}
+
+const TRANSLATE_TIMEOUT_MS = 70000
+function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+  let t: ReturnType<typeof setTimeout>
+  return Promise.race([p, new Promise<never>((_, rej) => { t = setTimeout(() => rej(new Error("timeout")), ms) })]).finally(() => clearTimeout(t))
 }
 
 const fmt = (issues: CopyIssue[]) => issues.slice(0, 12).map(i => `- ${i.path}: ${i.message}`).join('\n')
@@ -81,8 +94,34 @@ export async function generateWebsite(input: GenerateInput, deps: GenerateDeps):
   }
   if (!copy) return { ok: false, reason: 'copy: ' + fmt(issues), usage }
 
+  // Other languages: written by the same model, checked for shape, best effort. A language that fails is left out and the site
+  // still ships in English (and any remaining languages); the launch-ready language check then raises it for the free repair pass.
+  const translations: Translations = {}
+  const others = (spec.languages ?? ['en']).filter((l): l is Exclude<LangId, 'en'> => l !== 'en')
+  if (others.length) {
+    const base = translatable(spec, copy)
+    await Promise.all(others.map(async lang => {
+      const { system, user } = buildTranslatePrompt(spec, copy, lang)
+      let problems: string[] = []
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          const ask = attempt === 0
+            ? user
+            : `${user}\n\nYour previous reply had these problems:\n${problems.slice(0, 10).map(p => '- ' + p).join('\n')}\nReturn the complete corrected JSON object only.`
+          const r = await withTimeout(deps.writeCopy(system, ask), TRANSLATE_TIMEOUT_MS)
+          usage.inputTokens += r.inputTokens
+          usage.outputTokens += r.outputTokens
+          const parsed = parseJsonObject(r.text)
+          problems = validateTranslation(spec, base, parsed)
+          if (!problems.length) { translations[lang] = completeTranslation(spec, copy, parsed as SiteCopy); return }
+        } catch (e) { problems = [String(e).slice(0, 120)] }
+      }
+      notes.push(lang + ' translation skipped: ' + problems.slice(0, 2).join('; '))
+    }))
+  }
+
   let files: Record<string, string>
-  try { files = renderWebsite(spec, copy).files } catch (e) { return { ok: false, reason: 'render: ' + String(e), usage } }
+  try { files = renderWebsite(spec, copy, translations).files } catch (e) { return { ok: false, reason: 'render: ' + String(e), usage } }
 
   // Entry file last, like the sequential path, so a cut-off never loses it.
   const order = Object.keys(files).sort((a, b) => (a === 'src/App.tsx' ? 1 : 0) - (b === 'src/App.tsx' ? 1 : 0))
