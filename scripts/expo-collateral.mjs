@@ -104,8 +104,8 @@ const brochure = async () => {
 const card = async side => {
   const q = await qr(URL_CARD, '#05060a', '#ffffff')
   const front = `<div class="logo" style="position:absolute;left:70px;top:70px;font-size:50px"><img src="${ICON}" width="76" height="76"><span>Wyber<b>Ai</b></span></div>
-    <div style="position:absolute;left:70px;top:230px;font-size:50px;line-height:1.02;font-weight:900;letter-spacing:-.045em">Build any digital product.<br><span class="sky">Ship it in minutes.</span></div>
-    <div class="mono" style="position:absolute;left:70px;bottom:62px;font-size:22px;color:#0ea5e9;letter-spacing:.14em">DESCRIBE IT. SHIP IT.</div>`
+    <div style="position:absolute;left:70px;top:215px;font-size:78px;line-height:1;font-weight:900;letter-spacing:-.045em">Vibe coding<br><span class="sky">with superpowers.</span></div>
+    <div class="mono" style="position:absolute;left:70px;bottom:62px;font-size:20px;color:#9aa4b5;letter-spacing:.1em">AN AI AGENT PLANS IT, BUILDS IT,<br>REPAIRS IT AND CHECKS IT.</div>`
   const back = `<div class="mono sky" style="position:absolute;left:70px;top:70px;font-size:22px">TECH EXPO GUJARAT 2026</div>
     <div style="position:absolute;left:70px;top:120px;font-size:84px;font-weight:900;letter-spacing:-.05em;line-height:1">Booth <span class="sky">S23</span></div>
     <div style="position:absolute;left:70px;top:250px;font-size:24px;line-height:1.5;color:#9aa4b5">27–29 Nov 2026 · from 9:30 AM<br>Gujarat University Convention<br>and Exhibition Centre, Ahmedabad</div>
@@ -131,8 +131,8 @@ const cardSquare = async () => {
   const q = await qr(URL_CARD, '#05060a', '#ffffff')
   return `<!doctype html><html><head><meta charset="utf-8">${FONT}<style>${BASE}html,body{width:1200px;height:1200px;overflow:hidden}.c{position:relative;width:1200px;height:1200px;background:radial-gradient(ellipse 80% 55% at 90% 0%,rgba(14,165,233,.3),transparent 65%),#05060a}</style></head><body><div class="c">
   <div class="logo" style="position:absolute;left:90px;top:90px;font-size:56px"><img src="${ICON}" width="84" height="84"><span>Wyber<b>Ai</b></span></div>
-  <div style="position:absolute;left:90px;top:260px;width:1000px;font-size:84px;font-weight:900;letter-spacing:-.045em;line-height:1">Build any digital product.<br><span class="sky">Ship it in minutes.</span></div>
-  <div class="mono" style="position:absolute;left:90px;top:520px;font-size:26px;color:#0ea5e9;letter-spacing:.14em">DESCRIBE IT. SHIP IT.</div>
+  <div style="position:absolute;left:90px;top:260px;width:1000px;font-size:100px;font-weight:900;letter-spacing:-.045em;line-height:1">Vibe coding<br><span class="sky">with superpowers.</span></div>
+  <div class="mono" style="position:absolute;left:90px;top:520px;font-size:22px;color:#9aa4b5;letter-spacing:.1em">AN AI AGENT PLANS IT, BUILDS IT, REPAIRS IT AND CHECKS IT.</div>
   <div style="position:absolute;left:90px;right:90px;top:640px;height:2px;background:rgba(255,255,255,.14)"></div>
   <div class="mono sky" style="position:absolute;left:90px;top:690px;font-size:24px">TECH EXPO GUJARAT 2026</div>
   <div style="position:absolute;left:90px;top:730px;font-size:96px;font-weight:900;letter-spacing:-.05em;line-height:1">Booth <span class="sky">S23</span></div>
@@ -147,20 +147,22 @@ const page = await browser.newPage()
 const tmp = path.join(OUT, '_tmp.html')
 const load = async html => { fs.writeFileSync(tmp, html); await page.goto(pathToFileURL(tmp).href, { waitUntil: 'networkidle0' }); await page.evaluate(() => document.fonts.ready) }
 
+if (!process.env.ONLY || process.env.ONLY === 'brochure') {
 await load(await brochure())
 await page.pdf({ path: path.join(OUT, 'wyberai-brochure-A4.pdf'), format: 'A4', printBackground: true, preferCSSPageSize: true })
 console.log('pdf brochure')
 if (process.env.PREVIEW) { await page.setViewport({ width: 794, height: 1123, deviceScaleFactor: 1.5 }); await page.screenshot({ path: path.join(process.env.PREVIEW, 'brochure-preview.png'), fullPage: true }) }
-if (process.env.ONLY !== 'brochure') {
+}
+if (!process.env.ONLY || process.env.ONLY === 'card') {
 await page.setViewport({ width: 1050, height: 600, deviceScaleFactor: 1 })
 for (const side of ['front', 'back']) { await load(await card(side)); await page.screenshot({ path: path.join(OUT, `wyberai-visiting-card-${side}.png`) }); console.log('png card', side) }
-for (const t of SERVICES) { await page.setViewport({ width: 1000, height: 1000, deviceScaleFactor: 1 }); await load(tile(t)); await page.screenshot({ path: path.join(OUT, `service-${t.slug}.png`) }); console.log('png service', t.slug) }
+if (!process.env.ONLY) for (const t of SERVICES) { await page.setViewport({ width: 1000, height: 1000, deviceScaleFactor: 1 }); await load(tile(t)); await page.screenshot({ path: path.join(OUT, `service-${t.slug}.png`) }); console.log('png service', t.slug) }
 await page.setViewport({ width: 1200, height: 1200, deviceScaleFactor: 1 })
 await load(await cardSquare()); await page.screenshot({ path: path.join(OUT, 'wyberai-visiting-card-1x1.png') }); console.log('png card square')
 }
 await page.setViewport({ width: 1000, height: 1000, deviceScaleFactor: 1 })
-await load(thumb()); await page.screenshot({ path: path.join(OUT, 'wyberai-brochure-thumbnail-1x1.png') }); console.log('png thumb')
+if (!process.env.ONLY || process.env.ONLY === 'brochure') await load(thumb()); await page.screenshot({ path: path.join(OUT, 'wyberai-brochure-thumbnail-1x1.png') }); console.log('png thumb')
 await page.setViewport({ width: 1000, height: 1000, deviceScaleFactor: 1 })
-if (process.env.ONLY !== 'brochure') for (const t of TYPES) { await load(tile(t)); const n = t.tag.toLowerCase().replace(/\s+/g, '-'); await page.screenshot({ path: path.join(OUT, `tile-${n}.png`) }); console.log('png tile', n) }
+if (!process.env.ONLY) for (const t of TYPES) { await load(tile(t)); const n = t.tag.toLowerCase().replace(/\s+/g, '-'); await page.screenshot({ path: path.join(OUT, `tile-${n}.png`) }); console.log('png tile', n) }
 fs.rmSync(tmp, { force: true })
 await browser.close()
