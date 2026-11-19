@@ -1,6 +1,7 @@
 import { fontsHrefFor, renderTokensCss } from '../build-spec/tokens'
 import { llmsTxt, renderIndexHtml, robotsTxt, sitemapXml } from './seo'
 import { renderApp, navLabels, type Translations } from './render-app'
+import { WYBER_SECTIONS_PATH, WYBER_SECTIONS_SOURCE } from '../wyber-sections'
 import type { BuildSpec, LangId, SiteCopy } from './types'
 
 export { directiveRatio, IMAGE_HYGIENE, imageDirective } from './render-images'
@@ -37,6 +38,8 @@ export function renderWebsite(spec: BuildSpec, copy: SiteCopy, translations: Tra
   const langs: LangId[] = ["en", ...(spec.languages ?? []).filter((l): l is LangId => l !== "en" && Boolean(translations[l]))]
   return {
     files: {
+      // The sections are platform-owned, like the UI kit, but a site that uses them keeps its own copy so it renders the same later.
+      ...(spec.layout?.sx ? { [WYBER_SECTIONS_PATH]: WYBER_SECTIONS_SOURCE } : {}),
       'src/App.tsx': renderApp(spec, copy, translations),
       'src/index.css': renderIndexCss(spec, langs),
       'src/owner-details.ts': renderOwnerDetails(spec),

@@ -53,7 +53,7 @@ export interface Blueprint {
 
 export type HeroVariant = 'split' | 'editorial' | 'stacked'
 export type HeaderVariant = 'navbar' | 'condensing'
-export type ServicesVariant = 'cards' | 'list' | 'bento'
+export type ServicesVariant = 'cards' | 'list' | 'bento' | 'grid'
 
 export interface ImageSlot {
   id: string
@@ -81,7 +81,21 @@ export interface SeoPlan {
 }
 
 /** Structure choices that make two sites with the same blueprint read differently. Seeded, biased by the direction. */
+/** Which Wyber Sections composition each part of the page uses (src/lib/wyber-sections.ts). Absent on specs saved before the sections existed: those render the older kit blocks. */
+export interface SectionStyles {
+  header: 'bar' | 'centered' | 'index'
+  hero: 'split' | 'editorial' | 'centered' | 'full' | 'minimal'
+  features: 'index' | 'cards' | 'bento' | 'grid'
+  steps: 'columns' | 'timeline'
+  about: 'split' | 'band'
+  faq: 'split' | 'boxed'
+  cta: 'band' | 'split'
+  contact: 'split' | 'centered'
+  footer: 'giant' | 'slim'
+}
+
 export interface LayoutPlan {
+  sx?: SectionStyles
   heroFlip: boolean
   heroMediaFirst: boolean
   rhythm: 'bands' | 'rules' | 'plain'

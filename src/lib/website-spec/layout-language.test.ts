@@ -67,7 +67,7 @@ describe('languages', () => {
     broken.sections.buyers.items = broken.sections.buyers.items!.slice(0, 2)
     delete broken.sections.faq
     const problems = validateTranslation(spec, base, broken).join(' | ')
-    expect(problems).toMatch(/buyers\.items must have 3/)
+    expect(problems).toMatch(/buyers\.items must have 4/)
     expect(problems).toMatch(/faq is missing/)
     expect(validateTranslation(spec, base, 'nope')).toEqual(['reply is not an object'])
   })
@@ -188,7 +188,9 @@ import { DEFAULT_MOTION, validateCopy as vc } from './index'
 describe('motion plan comes from the direction and is actually used', () => {
   const d = DEMOS[0]
   const base = planWebsite(d.prompt, { seed: d.seed, facts: d.facts })
-  const render = (motion: object) => renderWebsite({ ...base, motion: { ...DEFAULT_MOTION, ...motion } }, d.copy).files['src/App.tsx']
+  const legacy = { ...base, layout: { ...base.layout!, sx: undefined }, sections: base.sections.map(x => ({ ...x, variant: x.kind === 'services' ? ('cards' as const) : undefined })) }
+  const render = (motion: object) => renderWebsite({ ...legacy, motion: { ...DEFAULT_MOTION, ...motion } }, d.copy).files['src/App.tsx']
+  const renderNew = (motion: object) => renderWebsite({ ...base, motion: { ...DEFAULT_MOTION, ...motion } }, d.copy).files['src/App.tsx']
 
   it('a direction whose notes say nothing moves gets no reveals; the others do', () => {
     const still = DIRECTIONS.find(x => /^\s*(none|static)\b|None beyond hover/i.test(x.motion))
@@ -198,6 +200,14 @@ describe('motion plan comes from the direction and is actually used', () => {
     expect(motionFor(moving, 'x').reveal).toBe(true)
     expect(render({ reveal: false, stagger: false })).not.toMatch(/<Reveal|<Stagger/)
     expect(render({ reveal: true, stagger: true })).toMatch(/<Stagger/)
+  })
+  it('the sections path hands the motion plan to each section as a reveal flag, and keeps the extras', () => {
+    expect(renderNew({ reveal: false })).toContain('reveal={false}')
+    expect(renderNew({ reveal: true })).toContain('reveal={true}')
+    const on = renderNew({ progress: true, stickyCta: true, backToTop: false })
+    expect(on).toContain('<ScrollProgress />')
+    expect(on).toContain('<StickyCTABar')
+    expect(on).toContain("from './wyber-sections'")
   })
   it('editorial directions get the progress bar, the highlight and the drop cap', () => {
     const editorial = DIRECTIONS.find(x => x.group === 'editorial' && !/^\s*none/i.test(x.motion))!

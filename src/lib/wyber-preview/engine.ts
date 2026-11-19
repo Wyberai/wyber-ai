@@ -23,6 +23,7 @@ import { GOOGLE_FONTS_LINKS, PREVIEW_TAILWIND_CONFIG, TOKEN_VARS_CSS } from '@/l
 import { extraFontLinks } from '@/lib/direction-fonts'
 import { resolveDirectivesForPreview } from '@/lib/image-directives'
 import { WYBER_UI_KIT_FILES } from '@/lib/wyber-ui-kit'
+import { WYBER_SECTIONS_FILES } from '@/lib/wyber-sections'
 import { WYBER_STORE_FILES } from '@/lib/wyber-store'
 import { CONNECTOR_INFRA_FILES } from '@/lib/connector-infra'
 import { injectWyberLoc, WYBER_BRIDGE_SCRIPT } from '@/lib/wyber-preview/bridge'
@@ -191,7 +192,7 @@ async function bundleFilesInternal(
     // Inject the Wyber UI kit (premium pre-built components) into the virtual
     // FS so apps can `import { Button } from './wyber-ui'`. User files always
     // win; unused kit exports are tree-shaken out of the bundle.
-    for (const [kitPath, kitContent] of Object.entries(WYBER_UI_KIT_FILES)) {
+    for (const [kitPath, kitContent] of Object.entries({ ...WYBER_UI_KIT_FILES, ...WYBER_SECTIONS_FILES })) {
       const np = normalizeFilePath(kitPath)
       if (!normalizedFiles[np]) normalizedFiles[np] = kitContent
     }
