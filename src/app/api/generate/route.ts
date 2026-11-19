@@ -5653,17 +5653,35 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
           totalOutputTokens += specResult.usage.outputTokens
           if (specResult.ok) {
             const specText = `[progress: Planning your site (${specResult.spec.brief.intent}, ${specResult.spec.direction.name})]\n` + specResult.text
-            generatedText = specText
-            let i = 0
-            const specChunk = 400
-            readable = new ReadableStream<Uint8Array>({
-              pull(c) {
-                if (i >= specText.length) { c.close(); return }
-                c.enqueue(encoder.encode(specText.slice(i, i + specChunk)))
-                i += specChunk
-              },
-            })
-            handledBySpec = true
+            // Same security review every other build path gets: the rendered files go through the Sentinel rules. A blocking finding
+            // (a secret in the source, a service-role client) means this path is not used and the free-form build takes over.
+            const specFiles = parseGenerationOutput(specText).files
+            const specVetoes = specFiles.flatMap(f => reviewEmittedFile(f.path, f.content, '', { nextId: createFindingIdGenerator() })).filter(vetoEligible)
+            if (specVetoes.length) {
+              console.log(`[website-spec] security review blocked the rendered site (${specVetoes.map(v => v.ruleId).join(', ')}), falling back to the free-form build`)
+            } else {
+              generatedText = specText
+              let i = 0
+              const specChunk = 400
+              readable = new ReadableStream<Uint8Array>({
+                start(c) {
+                  emitAgent(c, { agent: 'coder', status: 'start', detail: 'rendering your site from the plan' })
+                  emitAgent(c, { agent: 'security', status: 'start', detail: 'reviewing every file as it lands' })
+                  for (const f of specFiles) sentinelReview(c, f.path, f.content)
+                },
+                pull(c) {
+                  if (i >= specText.length) {
+                    emitAgent(c, { agent: 'coder', status: 'done' })
+                    sentinelDone(c)
+                    c.close()
+                    return
+                  }
+                  c.enqueue(encoder.encode(specText.slice(i, i + specChunk)))
+                  i += specChunk
+                },
+              })
+              handledBySpec = true
+            }
             console.log(`[website-spec] ok buildId=${buildId ?? ''} intent=${specResult.spec.brief.intent} direction=${specResult.spec.direction.id} files=${specResult.paths.length} notes=${specResult.notes.join(' | ')} output=${specResult.usage.outputTokens} elapsed_ms=${Date.now() - requestStartTime}`)
           } else {
             console.log(`[website-spec] falling back to the free-form build: ${specResult.reason.slice(0, 300)}`)

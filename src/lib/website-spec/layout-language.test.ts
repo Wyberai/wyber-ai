@@ -158,3 +158,27 @@ describe('the Hindi rice demo', () => {
     expect(validateTranslation(spec, translatable(spec, d.copy), DEMO_HI_RICE)).toEqual([])
   })
 })
+
+import { reviewEmittedFile, createFindingIdGenerator } from '../agents/security-rules'
+import fs from 'node:fs'
+import path from 'node:path'
+describe('the spec path gets the same security review as every other build path', () => {
+  it('no rendered demo file trips a blocking Sentinel rule', () => {
+    for (const d of DEMOS) {
+      const spec = planWebsite(d.prompt, { seed: d.seed, facts: d.facts })
+      const files = renderWebsite(spec, d.copy).files
+      const next = createFindingIdGenerator()
+      const blocking = Object.entries(files).flatMap(([p, c]) => reviewEmittedFile(p, c, '', { nextId: next })).filter(f => f.blocking)
+      expect(blocking.map(f => f.ruleId), d.key).toEqual([])
+    }
+  })
+  it('route.ts reviews the rendered files and emits the agent events before streaming them', () => {
+    const route = fs.readFileSync(path.join(__dirname, '..', '..', 'app', 'api', 'generate', 'route.ts'), 'utf8')
+    const block = route.slice(route.indexOf('Spec-driven website build'), route.indexOf('let handledByParallel = handledBySpec'))
+    expect(block).toContain('reviewEmittedFile(f.path, f.content')
+    expect(block).toContain("agent: 'security', status: 'start'")
+    expect(block).toContain('sentinelReview(c, f.path, f.content)')
+    expect(block).toContain('sentinelDone(c)')
+    expect(block).toMatch(/specVetoes\.length/)
+  })
+})
