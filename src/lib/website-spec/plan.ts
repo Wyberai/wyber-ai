@@ -97,7 +97,9 @@ export function sectionStylesFor(d: Direction, seed: string): SectionStyles {
   const r = seededRandom(seed + ':sections')
   const g = SX_BY_GROUP[d.group] ?? SX_BY_GROUP.human
   const pick = <T,>(a: T[]): T => a[Math.floor(r() * a.length)]
-  const heroes = HERO_IMAGE_MEDIA.has(d.rules.heroMedia) ? g.hero : g.hero.filter(h => h !== 'full')
+  // A direction whose hero media is a photograph must not draw the type-only hero (it has no image slot, so the site would ship with no
+  // photography at all: live 23 Nov, a brief that asked for "photo-led" got a text-only page). A type-led direction must not draw a photo hero.
+  const heroes = HERO_IMAGE_MEDIA.has(d.rules.heroMedia) ? g.hero.filter(h => h !== 'minimal') : g.hero.filter(h => h !== 'full')
   return { header: pick(g.header), hero: pick(heroes.length ? heroes : ['minimal' as const]), features: pick(g.features), steps: pick(g.steps), about: pick(g.about), faq: pick(g.faq), cta: pick(g.cta), contact: pick(g.contact), footer: pick(g.footer) }
 }
 

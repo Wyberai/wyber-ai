@@ -253,6 +253,16 @@ function heroSections(c: Ctx): string {
         </section>`
 }
 
+/** A wide detail photograph, made from the same scene brief as the hero (a different view). Empty when the hero has no photograph. */
+function detailBand(c: Ctx): string {
+  const heroSlot = c.spec.images.find(i => i.id === 'hero')
+  if (!heroSlot) return ''
+  S(c, 'PhotoBand')
+  const detail = imageDirective(heroSlot, 'A close, detailed view of the hands, tools and materials in the same setting as this scene, no faces: ' + subjectFor(c.spec, c.copy, heroSlot))
+  return `
+        <PhotoBand media={<img src="${detail}" alt={COPY.hero.imageAlt ?? ''} loading="lazy" decoding="async" />} reveal={${c.mo.reveal}} />`
+}
+
 function sectionSections(c: Ctx, s: PlannedSection, tone: Tone): string {
   const sx = c.lay.sx!
   const k = cp(s.id)
@@ -265,7 +275,9 @@ function sectionSections(c: Ctx, s: PlannedSection, tone: Tone): string {
     case 'rows': {
       const name = s.kind === 'rows' ? 'FeaturesIndex' : FEATURE_NAME[s.variant ?? 'list']
       S(c, name)
-      return wrap(`<${name} ${head} description={${k}.description} items={${k}.items!} ${common} />`)
+      const firstList = c.spec.sections.find(x => x.kind === 'services' || x.kind === 'rows')?.id === s.id
+      const band = firstList && !c.spec.sections.some(x => x.kind === 'about') ? detailBand(c) : ''
+      return wrap(`<${name} ${head} description={${k}.description} items={${k}.items!} ${common} />`) + band
     }
     case 'steps': {
       const name = sx.steps === 'timeline' ? 'StepsTimeline' : 'StepsColumns'
@@ -277,14 +289,7 @@ function sectionSections(c: Ctx, s: PlannedSection, tone: Tone): string {
       const name = sx.about === 'band' ? 'AboutBand' : 'AboutSplit'
       S(c, name)
       const media = slot ? ` media={${mediaImg(c, slot, `${k}.imageAlt ?? ''`, false)}}` : ''
-      // A wide detail photograph straight after the about section, made from the same scene brief as the hero (a different view).
-      const heroSlot = c.spec.images.find(i => i.id === 'hero')
-      let band = ''
-      if (heroSlot) {
-        S(c, 'PhotoBand')
-        const detail = imageDirective(heroSlot, 'A close, detailed view of the hands, tools and materials in the same setting as this scene, no faces: ' + subjectFor(c.spec, c.copy, heroSlot))
-        band = `\n        <PhotoBand media={<img src="${detail}" alt={COPY.hero.imageAlt ?? ''} loading="lazy" decoding="async" />} reveal={${c.mo.reveal}} />`
-      }
+      const band = detailBand(c)
       return wrap(`<${name} ${head} paragraphs={${k}.paragraphs!}${media} flip={${c.lay.aboutFlip}} ${common} />`) + band
     }
     case 'faq': {

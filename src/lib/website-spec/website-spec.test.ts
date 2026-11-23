@@ -271,3 +271,18 @@ describe('photo moments on a photo-led website', () => {
     expect(found).toBeGreaterThan(0)
   })
 })
+
+describe('a photo-led direction always ships photography', () => {
+  it('never draws the type-only hero, always has a hero photo slot, and the detail band appears with or without an About section', () => {
+    const food = 'Website for Amma\'s Pickles, a small-batch home pickle kitchen in Nagpur. Warm, appetising and photo-led.'
+    for (let i = 0; i < 40; i++) {
+      const spec = planWebsite(food, { seed: 'photo' + i, directionId: 'ed-brand-world' })
+      expect(spec.direction.id).toBe('ed-brand-world')
+      expect(spec.layout?.sx?.hero).not.toBe('minimal')
+      expect(spec.images.some(x => x.id === 'hero')).toBe(true)
+      const copy = DEMOS[0].copy
+      const src = renderWebsite(spec, copy).files['src/App.tsx'] ?? ''
+      expect(src, 'seed ' + i).toContain('<PhotoBand')
+    }
+  })
+})
