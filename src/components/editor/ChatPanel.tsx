@@ -2112,17 +2112,19 @@ const storeProjectId = useEditorStore.getState().project?.id;
           .filter(i => i.kind !== 'missing-entry')
           .filter(i => AGENT_TEAM_ENABLED || i.kind === 'launch-ready')
         // Launch-ready web apps: tell the owner plainly what the source check found (it reads code, it does not run the app).
+        // When a fix pass follows, stay quiet: it ends with one "finished the last checks" line instead of a list of what was missing first.
+        const fixFollows = qaIssues.length > 0
         if (isLaunchReadyApp(projectType)) {
-          say(launchReadySummary(checkLaunchReady(updatedFiles)))
+          if (!fixFollows) say(launchReadySummary(checkLaunchReady(updatedFiles)))
         } else if (isLaunchReadyWebsite(projectType)) {
-          say(websiteReadySummary(checkWebsiteReady(updatedFiles)))
+          if (!fixFollows) say(websiteReadySummary(checkWebsiteReady(updatedFiles)))
           // A site with no contact facts cannot be reached: say so once, and how to fix it.
           const contactMsg = contactNudge(updatedFiles)
           if (contactMsg) say(contactMsg)
         } else if (isLaunchReadySaas(projectType) && !hasReplacementChecklist(updatedFiles)) {
-          say(saasReadySummary(checkSaasReady(updatedFiles)))
+          if (!fixFollows) say(saasReadySummary(checkSaasReady(updatedFiles)))
         } else if (isLaunchReadyMobile(projectType)) {
-          say(mobileReadySummary(checkMobileReady(updatedFiles)))
+          if (!fixFollows) say(mobileReadySummary(checkMobileReady(updatedFiles)))
         }
         // Replace-your-SaaS builds: tell the owner how many of the listed features really appear on a screen.
         const replacement = checkReplacement(updatedFiles)
@@ -2456,7 +2458,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
       if (opts?.continuation && finalContent === t('doneCheckPreviewMsg')) {
         finalContent = t('continuationDoneMsg');
         // A launch-ready fix pass says what it was asked to add, not a generic "done".
-        if (opts?.qaFix && qaSummaryRef.current) finalContent = `✓ Added what was missing: ${qaSummaryRef.current}.`;
+        if (opts?.qaFix && qaSummaryRef.current) finalContent = '✓ Finished the last checks.';
       }
       // A cut stream means the turn ends mid-work — say so, or the preamble
       // reads as a finished summary ("…Let me look at App.tsx:") and the user
@@ -2965,8 +2967,8 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
         // claiming the build (or even this bubble) is finished.
         const screenNamesSoFar = liveFilesOneShot.map(p => p.split('/').pop()?.replace(/\.(tsx?|jsx?)$/, '') ?? p);
         const partialMsg = screenNamesSoFar.length > 0
-          ? `${screenNamesSoFar.length} file${screenNamesSoFar.length === 1 ? '' : 's'} in — wiring up the rest now, a few more updates coming below.`
-          : 'Wiring up the rest now — a few more updates coming below.';
+          ? 'Finishing the rest.'
+          : 'Finishing the rest.';
         updateMessage(chainId, { content: partialMsg, status: 'done', filesChanged: liveFilesOneShot });
         persistMessage('assistant', partialMsg, liveFilesOneShot);
       } else if (oneShotOk) {

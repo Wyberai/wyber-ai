@@ -199,7 +199,8 @@ describe('contact path fix (14 Nov): no dead buttons, no notes to the owner', ()
 
   it('nudges once when no WhatsApp, phone or email is set, and stays quiet when one is', () => {
     const empty = { 'src/owner-details.ts': `export const OWNER = { name: "Smilecraft", whatsapp: "", phone: "", email: "" }` }
-    expect(contactNudge(empty)).toMatch(/visitors cannot reach you yet/)
+    expect(contactNudge(empty)).toMatch(/visitors cannot reach you yet/i)
+    expect(contactNudge(empty)!.length).toBeLessThan(200) // one short sentence pair, not a paragraph
     expect(contactNudge(empty)).toMatch(/Grow tab/)
     expect(contactNudge({ 'src/owner-details.ts': `export const OWNER = { whatsapp: "919999999999", phone: "" }` })).toBeNull()
     expect(contactNudge({ 'src/owner-details.ts': `export const OWNER = { phone: '+91 99999 99999' }` })).toBeNull()
@@ -285,7 +286,7 @@ describe('no invented facts (15 Nov)', () => {
     expect(inventedPeople(owner + `// FILE src/App.tsx\n<h2>Teachers</h2>{OWNER.team && <p>{OWNER.team}</p>}`)).toEqual([])
   })
   it('the nudge also says staff, timetable and prices were left out', () => {
-    expect(contactNudge({ 'src/owner-details.ts': 'export const OWNER = { whatsapp: "", phone: "", email: "", team: "", timetable: "" }' })).toMatch(/staff names, the timetable and prices/)
+    expect(contactNudge({ 'src/owner-details.ts': 'export const OWNER = { whatsapp: "", phone: "", email: "", team: "", timetable: "" }' })).toMatch(/staff names, the timetable and prices/i)
   })
 })
 
@@ -299,7 +300,7 @@ describe('post-build check is wired without the agent team (15 Nov)', () => {
     expect(src).toMatch(/const qaFirstBuild = !hasGeneratedFiles \|\| \(opts\?\.stage === 'fill' && !!opts\?\.finalPass\)/)
   })
   it('a launch-ready fix pass names what it added; continuation passes never claim the build is complete (16 Nov)', () => {
-    expect(src).toMatch(/Added what was missing:/)
+    expect(src).toMatch(/Finished the last checks/)
     const dict = fs.readFileSync(path.join(process.cwd(), 'src/lib/i18n/dict/editor-chatpanel.ts'), 'utf8')
     expect(dict).not.toMatch(/continuationDoneMsg: '[^']*build is complete/i)
   })
@@ -396,6 +397,6 @@ describe('edit pass handing off to a follow-up pass (16 Nov)', () => {
   it('closes its own bubble instead of leaving an orphaned "Working on your changes..." spinner', () => {
     const src = fs.readFileSync(path.join(process.cwd(), 'src/components/editor/ChatPanel.tsx'), 'utf8')
     expect(src).not.toMatch(/ownsBubble && completenessRetryFired\) \{\s*updateMessage\(assistantId, \{ status: 'streaming' \}\)/)
-    expect(src).toMatch(/finishing the rest now, a few more updates coming below/)
+    expect(src).toMatch(/Finishing the rest./)
   })
 })

@@ -19,3 +19,22 @@ describe('isIndianPrompt', () => {
     expect(currencyFor('crm for a plumber in Denver')).toBe('$')
   })
 })
+
+import { languagesFor } from './languages'
+import { WEBSITE_READY_ITEMS_FOR_TEST } from '../website-ready'
+
+describe('languages follow the place, not the country', () => {
+  it('Hindi alone outside Gujarat (Nagpur, Pune, Mumbai, Jaipur); Gujarati only for a business in Gujarat', () => {
+    for (const city of ['Nagpur', 'Pune', 'Mumbai', 'Jaipur', 'Nashik']) expect(languagesFor('A pickle kitchen in ' + city, {}), city).toEqual(['en', 'hi'])
+    for (const city of ['Ahmedabad', 'Surat', 'Rajkot', 'Bhavnagar', 'Jamnagar']) expect(languagesFor('A pickle kitchen in ' + city, {}), city).toEqual(['en', 'hi', 'gu'])
+  })
+  it('a brief outside India gets English only', () => {
+    expect(languagesFor('A pickle kitchen in Leeds', {})).toEqual(['en'])
+  })
+  it('the old free-form check no longer tells a business outside Gujarat to add Gujarati', () => {
+    const item = WEBSITE_READY_ITEMS_FOR_TEST.find(i => i.id === 'language-toggle')!
+    expect(item.label).not.toMatch(/gujarati/i)
+    expect(item.fix).toMatch(/only if the business is in Gujarat/i)
+    expect(item.applies!('Amma\'s Pickles, Nagpur')).toBe(true)
+  })
+})

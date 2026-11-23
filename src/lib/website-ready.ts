@@ -1,4 +1,5 @@
 import { readyMessage } from './ready-message'
+import { isIndianPrompt } from './build-spec/locale'
 // Launch-ready websites: the contract, the price floor and a source check. Off unless NEXT_PUBLIC_WEBSITE_LAUNCH_READY=true.
 // Same pattern as launch-ready.ts (web apps). A website exists to bring in enquiries and to be trusted, so the contract is about:
 // facts that are true, a contact path that works, forms that really deliver, search basics, speed and language.
@@ -52,7 +53,7 @@ W7 SEARCH BASICS: unique title (60 characters or fewer) and description (140 to 
 
 W8 SPEED: width and height on every image, lazy-load below the fold, no animation or chart library on a brochure site, fonts from the preloaded set only. Aim for LCP under 2.5 s and layout shift under 0.1.
 
-W9 LANGUAGE: when the business is in India, add a language toggle (English plus Hindi, plus Gujarati for Gujarat) covering the headline, navigation, primary action, contact block and form labels, from one translations object, remembered between visits. English is the default. If you are not confident in a translation, leave that string in English instead of guessing.
+W9 LANGUAGE: when the business is in India, add a language toggle (English plus Hindi; add Gujarati ONLY when the business is in Gujarat, never for a business anywhere else) covering the headline, navigation, primary action, contact block and form labels, from one translations object, remembered between visits. English is the default. If you are not confident in a translation, leave that string in English instead of guessing.
 
 W10 PRIVACY: footer links to Privacy and Terms pages (short and plain; the reminder to have them reviewed goes in a code comment and the build summary, never on the page, see W13). Beside any form say what the details are used for ("We use your details only to reply to your enquiry"). Add a cookie notice only if you add analytics or third-party scripts. Never claim legal compliance.
 
@@ -111,10 +112,9 @@ export function contactNudge(files: Record<string, FileVal>): string | null {
   const src = contentOf(entry[1])
   const val = (k: string) => (src.match(new RegExp(`${k}\\s*:\\s*(['"\`])((?:\\\\.|(?!\\1).)*)\\1`))?.[2] ?? '').trim()
   if (val('whatsapp') || val('phone') || val('email')) return null
-  const how = 'Add your WhatsApp number, phone and opening hours: in the Grow tab if you have it (0 credits), or just tell me in the chat and I will add them.'
-  const people = /\bteam\s*:|\btimetable\s*:/.test(src) ? ' I also left out staff names, the timetable and prices because you did not give them; tell me who works there and when, and I will add them.' : ''
-  const named = /\bname\s*:\s*(["'`])\s*\1/.test(src) ? ' Your business name is not set either, so the site is called by what it is and where; tell me the name and I will use it.' : ''
-  return `Your site is built, but visitors cannot reach you yet: no WhatsApp number, phone or email is set, so the contact button and enquiry form are left out. ${how}${people}${named}`
+  const people = /\bteam\s*:|\btimetable\s*:/.test(src) ? ' Staff names, the timetable and prices are left out because you did not give them.' : ''
+  const named = /\bname\s*:\s*(["'`])\s*\1/.test(src) ? ' Your business name is not set; tell me it.' : ''
+  return `Visitors cannot reach you yet: no WhatsApp number, phone or email is set, so the contact button is left out. Add them in the Grow tab (0 credits) or tell me here.${people}${named}`
 }
 
 const ROLE_WORDS = /teacher|trainer|instructor|doctor|dentist|team|faculty|founder|therapist|stylist|chef|photographer|lawyer|accountant|surgeon|coach|mentor/i
@@ -340,9 +340,9 @@ const CHECKS: Check[] = [
   { id: 'robots-sitemap', label: 'robots.txt and sitemap.xml',
     fix: 'Add public/robots.txt and public/sitemap.xml listing the site\'s pages.',
     test: c => /\/\/ FILE public\/robots\.txt/.test(c) && /\/\/ FILE public\/sitemap\.xml/.test(c) },
-  { id: 'language-toggle', label: 'Hindi or Gujarati toggle for an Indian business',
-    fix: 'Add a language toggle (English, Hindi, plus Gujarati for Gujarat) driven by one translations object and remembered between visits.',
-    applies: c => /ahmedabad|surat|vadodara|rajkot|pune|mumbai|delhi|bengaluru|bangalore|hyderabad|chennai|kolkata|india|₹|\+91/i.test(c),
+  { id: 'language-toggle', label: 'Hindi language toggle for an Indian business',
+    fix: 'Add a language toggle (English and Hindi) driven by one translations object and remembered between visits. Add Gujarati only if the business is in Gujarat (Ahmedabad, Surat, Vadodara, Rajkot, Gandhinagar and the rest of the state); never add Gujarati anywhere else.',
+    applies: c => isIndianPrompt(c),
     test: c => /translations|i18n|हिन्दी|हिंदी|ગુજરાતી|\bhindi\b|\bgujarati\b/i.test(c) },
   { id: 'privacy-terms', label: 'Privacy and Terms links',
     fix: 'Add Privacy and Terms pages or anchored sections linked in the footer, with a "have this reviewed" note for the owner.',
@@ -387,3 +387,6 @@ export function websiteReadyIssues(files: Record<string, FileVal>): { kind: 'lau
     .map(i => ({ kind: 'launch-ready' as const, detail: `Design: ${i.label}`, fixPrompt: `DESIGN CRAFT item: ${i.label} (${i.count} found, for example "${i.sample.replace(/"/g, "'")}"). ${i.fix} Change only what is needed.` }))
   return [...mine, ...slop]
 }
+
+// Exposed for tests that pin the wording of individual checks.
+export const WEBSITE_READY_ITEMS_FOR_TEST = CHECKS
