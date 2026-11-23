@@ -44,7 +44,7 @@ describe('shared core: the pieces every pillar reuses', () => {
     expect(imageDirective({ brief: 'soft light', ratio: '4/5' }, 'x')).toMatch(/\| 9:16\}\}$/)
     expect(BANNED_CLAIMS.test('the best studio!')).toBe(true)
     expect(IMAGE_BRIEF_BANNED.test('a sign reading call now')).toBe(true)
-    expect(Object.keys(UI)).toEqual(['en', 'hi', 'gu'])
+    expect(Object.keys(UI)).toEqual(['en', 'hi', 'mr', 'gu', 'ta', 'te', 'kn', 'bn'])
   })
   it('the website pillar re-exports the core, so there is one implementation', async () => {
     const core = await import('./index')

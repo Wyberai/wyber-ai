@@ -40,7 +40,7 @@ describe('layout variants', () => {
 describe('languages', () => {
   it('Hindi for Indian businesses, Gujarati too in Gujarat, English only when asked or abroad', () => {
     expect(languagesFor('dental clinic in Ahmedabad', {})).toEqual(['en', 'hi', 'gu'])
-    expect(languagesFor('bakery in Pune', {})).toEqual(['en', 'hi'])
+    expect(languagesFor('bakery in Pune', {})).toEqual(['en', 'hi', 'mr'])
     expect(languagesFor('bakery', { city: 'Surat' })).toEqual(['en', 'hi', 'gu'])
     expect(languagesFor('cafe in London', {})).toEqual(['en'])
     expect(languagesFor('cafe in Pune, English only', {})).toEqual(['en'])
@@ -98,10 +98,14 @@ describe('generate with translations and free-text facts', () => {
   const d = DEMOS[1]
   const isTranslate = (system: string) => /^You translate/.test(system)
   const model = (opts: { badTranslate?: boolean } = {}) => {
-    const calls: { kind: 'copy' | 'translate'; user: string }[] = []
+    const calls: { kind: 'copy' | 'translate' | 'languages'; user: string }[] = []
     return {
       calls,
       writeCopy: async (system: string, user: string) => {
+        if (/^You decide which language/.test(system)) {
+          calls.push({ kind: 'languages', user })
+          return { text: JSON.stringify({ languages: ['hi'], why: 'test' }), inputTokens: 1, outputTokens: 1 }
+        }
         if (isTranslate(system)) {
           calls.push({ kind: 'translate', user })
           if (opts.badTranslate) return { text: 'not json', inputTokens: 1, outputTokens: 1 }
@@ -123,7 +127,7 @@ describe('generate with translations and free-text facts', () => {
     expect(m.calls.filter(c => c.kind === 'translate')).toHaveLength(1) // Hyderabad: Hindi only
     expect(r.text).toContain('हिन्दी')
     expect(r.text).toContain('"hi": {')
-    expect(r.usage.outputTokens).toBe(220)
+    expect(r.usage.outputTokens).toBe(221)
   })
 
   it('a failed translation is skipped, noted, and the site still ships in English', async () => {

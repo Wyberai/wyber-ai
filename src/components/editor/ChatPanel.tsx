@@ -4109,11 +4109,17 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
                     }
                   </div>
                   {msg.filesChanged && msg.filesChanged.length > 0 && (
-                    <div style={{ marginTop:6, display:'flex', flexWrap:'wrap', gap:3 }}>
-                      {msg.filesChanged.map(f => (
-                        <span key={f} style={{ background:'var(--accent-glow)', color:'var(--accent)', padding:'1px 6px', borderRadius:4, fontSize: 12, border:'1px solid var(--accent-dim)', fontFamily:'monospace' }}>✎ {f}</span>
-                      ))}
-                    </div>
+                    // A whole-product build touches 20+ files: fold them behind one line instead of a wall of chips.
+                    <details open={msg.filesChanged.length <= 4} style={{ marginTop:6 }}>
+                      {msg.filesChanged.length > 4 && (
+                        <summary style={{ cursor:'pointer', fontSize:12, color:'var(--ide-text2)' }}>{msg.filesChanged.length} files written</summary>
+                      )}
+                      <div style={{ marginTop:4, display:'flex', flexWrap:'wrap', gap:3 }}>
+                        {msg.filesChanged.map(f => (
+                          <span key={f} style={{ background:'var(--accent-glow)', color:'var(--accent)', padding:'1px 6px', borderRadius:4, fontSize: 12, border:'1px solid var(--accent-dim)', fontFamily:'monospace' }}>✎ {f}</span>
+                        ))}
+                      </div>
+                    </details>
                   )}
                   {msg.agentReport && (
                     <AgentFeedBoundary>

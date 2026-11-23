@@ -24,8 +24,8 @@ import { languagesFor } from './languages'
 import { WEBSITE_READY_ITEMS_FOR_TEST } from '../website-ready'
 
 describe('languages follow the place, not the country', () => {
-  it('Hindi alone outside Gujarat (Nagpur, Pune, Mumbai, Jaipur); Gujarati only for a business in Gujarat', () => {
-    for (const city of ['Nagpur', 'Pune', 'Mumbai', 'Jaipur', 'Nashik']) expect(languagesFor('A pickle kitchen in ' + city, {}), city).toEqual(['en', 'hi'])
+  it('Hindi alone outside Gujarat and Maharashtra (Jaipur); Marathi too in Maharashtra; Gujarati only for a business in Gujarat', () => {
+    for (const city of ['Nagpur', 'Pune', 'Mumbai', 'Nashik']) expect(languagesFor('A pickle kitchen in ' + city, {}), city).toEqual(['en', 'hi', 'mr'])
     for (const city of ['Ahmedabad', 'Surat', 'Rajkot', 'Bhavnagar', 'Jamnagar']) expect(languagesFor('A pickle kitchen in ' + city, {}), city).toEqual(['en', 'hi', 'gu'])
   })
   it('a brief outside India gets English only', () => {

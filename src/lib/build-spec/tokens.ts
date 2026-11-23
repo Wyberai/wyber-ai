@@ -10,6 +10,11 @@ const TOKEN_ORDER = [
 const FALLBACK = "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif"
 const SCRIPT_FONTS: Partial<Record<LangId, { css: string; family: string }>> = {
   hi: { css: "'Noto Sans Devanagari'", family: 'Noto+Sans+Devanagari:wght@400;500;600' },
+  mr: { css: "'Noto Sans Devanagari'", family: 'Noto+Sans+Devanagari:wght@400;500;600' },
+  ta: { css: "'Noto Sans Tamil'", family: 'Noto+Sans+Tamil:wght@400;500;600' },
+  te: { css: "'Noto Sans Telugu'", family: 'Noto+Sans+Telugu:wght@400;500;600' },
+  kn: { css: "'Noto Sans Kannada'", family: 'Noto+Sans+Kannada:wght@400;500;600' },
+  bn: { css: "'Noto Sans Bengali'", family: 'Noto+Sans+Bengali:wght@400;500;600' },
   gu: { css: "'Noto Sans Gujarati'", family: 'Noto+Sans+Gujarati:wght@400;500;600' },
 }
 

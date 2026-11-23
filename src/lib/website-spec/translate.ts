@@ -1,7 +1,7 @@
 import { navLabels } from './render-app'
 import type { BuildSpec, LangId, SiteCopy } from './types'
 
-const LANG_NAME: Record<Exclude<LangId, 'en'>, string> = { hi: 'Hindi (Devanagari script)', gu: 'Gujarati (Gujarati script)' }
+const LANG_NAME: Record<Exclude<LangId, 'en'>, string> = { hi: 'Hindi (Devanagari script)', gu: 'Gujarati (Gujarati script)', mr: 'Marathi (Devanagari script)', ta: 'Tamil (Tamil script)', te: 'Telugu (Telugu script)', kn: 'Kannada (Kannada script)', bn: 'Bengali (Bengali script)' }
 
 type WithNav = SiteCopy & { nav?: Record<string, string> }
 

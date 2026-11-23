@@ -1,6 +1,7 @@
 import { scrubClaims } from '../build-spec/claims'
 import { askForJson } from '../build-spec/ask'
 import { parseFactsFromPrompt, stripFactsSuffix } from '../build-spec/facts'
+import { buildLanguagePrompt, languagesFromReply, validateLanguageReply } from '../build-spec/languages'
 import type { ModelCall, ModelReply } from '../build-spec/types'
 import { buildCopyPrompt, normalizeCopy, validateCopy } from './copy'
 import { planWebsite } from './plan'
@@ -41,6 +42,15 @@ export async function generateWebsite(input: GenerateInput, deps: GenerateDeps):
   } catch (e) { return { ok: false, reason: 'plan: ' + String(e), usage } }
   if (spec.brief.note) notes.push(spec.brief.note)
   if (spec.brief.unsupported.length) notes.push('Not built yet: ' + spec.brief.unsupported.join(', '))
+
+  // The model decides the language toggles from the whole brief (a place list cannot know that a Nagpur business may want Marathi and
+  // Hindi, or that an export brand wants none). The rule-based answer from the plan stays as the fallback if the call fails.
+  if (!/\b(english only|only in english|no hindi|no translation)\b/i.test(input.prompt)) {
+    const lp = buildLanguagePrompt(stripFactsSuffix(input.prompt) + (spec.brief.facts.city ? `\nCity: ${spec.brief.facts.city}` : ''))
+    const chosen = await askForJson<{ languages: string[] }>({ call: deps.writeCopy, system: lp.system, user: lp.user, onUsage, timeoutMs: 25000, attempts: 2, validate: validateLanguageReply })
+    if (chosen.ok) spec.languages = languagesFromReply(chosen.value)
+    else notes.push('languages: kept the rule-based choice')
+  }
 
   const { system, user } = buildCopyPrompt(spec, stripFactsSuffix(input.prompt))
   const written = await askForJson<SiteCopy>({ scrub: scrubClaims,

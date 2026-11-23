@@ -13,7 +13,7 @@ export interface OwnerFacts {
 }
 
 /** Languages a product offers. English is always first; the rest are written by a translation step. */
-export type LangId = 'en' | 'hi' | 'gu'
+export type LangId = 'en' | 'hi' | 'gu' | 'mr' | 'ta' | 'te' | 'kn' | 'bn'
 
 export interface ModelReply { text: string; inputTokens: number; outputTokens: number }
 /** One non-streaming model call. In production this is Sonnet; tests inject a fake. */
