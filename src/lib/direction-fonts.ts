@@ -78,10 +78,12 @@ export const ANY_DIRECTION_FONT_WEIGHTS: Record<string, number[]> = {
   ...Object.fromEntries(Object.entries(FONTSHARE_FONTS).map(([k, v]) => [k, v.weights])),
 }
 
-/** One Fontshare css URL for the given families (unknown names are ignored). Null if none. */
-export function fontshareUrl(families: string[]): string | null {
-  const parts = [...new Set(families)].filter(f => FONTSHARE_FONTS[f]).map(f => 'f[]=' + FONTSHARE_FONTS[f].slug + '@' + FONTSHARE_FONTS[f].weights.join(','))
-  return parts.length ? 'https://api.fontshare.com/v2/css?' + parts.join('&') + '&display=swap' : null
+/**
+ * One Fontshare css URL PER family (unknown names are ignored). Fontshare's API returns only the FIRST family of a multi-family request
+ * (checked 23 Nov 2026: f[]=erode&f[]=satoshi returns Erode alone), so a site that names two families needs two links.
+ */
+export function fontshareUrls(families: string[]): string[] {
+  return [...new Set(families)].filter(f => FONTSHARE_FONTS[f]).map(f => 'https://api.fontshare.com/v2/css?f[]=' + FONTSHARE_FONTS[f].slug + '@' + FONTSHARE_FONTS[f].weights.join(',') + '&display=swap')
 }
 
 /** Fontshare families a piece of CSS/JS/HTML text actually names. */
@@ -94,6 +96,6 @@ export function detectFontshareFonts(text: string): string[] {
 /** <link> tag(s) loading only the direction fonts named in `css` (Google and Fontshare); '' when none (the common case). */
 export function extraFontLinks(css: string): string {
   const g = directionFontsUrl(detectDirectionFonts(css))
-  const f = fontshareUrl(detectFontshareFonts(css))
-  return [g ? `<link href="${g}" rel="stylesheet">` : '', f ? `<link href="${f}" rel="stylesheet">` : ''].filter(Boolean).join('\n  ')
+  const f = fontshareUrls(detectFontshareFonts(css))
+  return [g ? `<link href="${g}" rel="stylesheet">` : '', ...f.map(u => `<link href="${u}" rel="stylesheet">`)].filter(Boolean).join('\n  ')
 }

@@ -4,7 +4,7 @@
 import { pickPaletteOptions, type Palette } from './design-palettes'
 import { dealDirections } from './direction-brief'
 import { getDirectionById, type Direction } from './design-directions'
-import { DIRECTION_FONT_FAMILIES, FONTSHARE_FONTS, directionFontsUrl, fontshareUrl } from './direction-fonts'
+import { DIRECTION_FONT_FAMILIES, FONTSHARE_FONTS, directionFontsUrl, fontshareUrls } from './direction-fonts'
 
 export interface PickerOptions {
   /** Palette-shaped so the existing card mock-up renders either source unchanged. */
@@ -43,8 +43,8 @@ export function specNoteForId(id: string | null | undefined): string {
 }
 
 /** <link> URL that loads the fonts of the given direction palettes (editor chrome only loads brand faces). */
-export function pickerFontshareUrl(options: Palette[]): string | null {
-  return fontshareUrl(options.flatMap(p => [p.fontDisplay, p.fontSans]).filter(f => Boolean(FONTSHARE_FONTS[f])))
+export function pickerFontshareUrls(options: Palette[]): string[] {
+  return fontshareUrls(options.flatMap(p => [p.fontDisplay, p.fontSans]).filter(f => Boolean(FONTSHARE_FONTS[f])))
 }
 
 /** <link> URL that loads the Google fonts of the given direction palettes (Fontshare ones: pickerFontshareUrl). */

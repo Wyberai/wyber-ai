@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { DIRECTIONS, DIRECTION_IDS, getDirectionById, hslToHex } from './design-directions'
 import { dealDirections, pickDirection, renderDirectionBrief, surfaceFor } from './direction-brief'
 import { lintAgainstDirection } from './direction-lint'
-import { DIRECTION_FONT_WEIGHTS, ANY_DIRECTION_FONT_WEIGHTS, FONTSHARE_FONTS, fontshareUrl, directionFontsUrl, detectDirectionFonts, extraFontLinks } from './direction-fonts'
+import { DIRECTION_FONT_WEIGHTS, ANY_DIRECTION_FONT_WEIGHTS, FONTSHARE_FONTS, directionFontsUrl, detectDirectionFonts, extraFontLinks } from './direction-fonts'
 import { contrastRatio } from './color-contrast'
 
 const BASE_FONTS = new Set(['Switzer', 'General Sans', 'Instrument Serif', 'Fraunces', 'Playfair Display', 'Lora', 'JetBrains Mono'])

@@ -34,7 +34,7 @@ function placeholder(spec, brief, ratio) {
 
 const summary = []
 for (const demo of DEMOS) {
-  const spec = m.planWebsite(demo.prompt, { seed: demo.seed, facts: demo.facts })
+  const spec = m.planWebsite(demo.prompt, { seed: demo.seed + (process.env.SEED_SUFFIX || ''), facts: demo.facts, directionId: process.env.DIRECTION || undefined })
   if (process.env.DEMO_MOTION) spec.motion = { ...spec.motion, ...JSON.parse(process.env.DEMO_MOTION) }
   if (process.env.DEMO_LAYOUT) spec.layout = { ...spec.layout, ...JSON.parse(process.env.DEMO_LAYOUT) }
   const issues = m.validateCopy(spec, demo.copy)
@@ -52,6 +52,12 @@ for (const demo of DEMOS) {
   spec._tokens = tokens
   for (const [p, content] of Object.entries(site.files)) {
     let body = content
+    if (p === 'index.html') {
+      // the platform injects the direction fonts at build time; the demo does the same so the page shows the real type
+      const FS = { Erode: 'erode@400,500,600', Gambetta: 'gambetta@500,600', Boska: 'boska@400', 'Clash Display': 'clash-display@400,500,600,700', 'Clash Grotesk': 'clash-grotesk@400,500,600', Satoshi: 'satoshi@400,500,700', Supreme: 'supreme@400,500,700' }
+      const links = Object.entries(FS).filter(([n]) => css.includes("'" + n + "'")).map(([, v]) => '<link href="https://api.fontshare.com/v2/css?f[]=' + v + '&display=swap" rel="stylesheet">').join('\n')
+      body = body.replace('</head>', links + '\n</head>')
+    }
     if (p === 'src/App.tsx') body = body.replace(/\{\{wyber-image: ([^|}]+)\| ([0-9:]+)\}\}/g, (_, brief, ratio) => placeholder(spec, brief.trim(), ratio.replace(':', '/')))
     const target = path.join(dir, p)
     fs.mkdirSync(path.dirname(target), { recursive: true })

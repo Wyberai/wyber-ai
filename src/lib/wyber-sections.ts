@@ -57,7 +57,7 @@ function Eyebrow({ children, className }: { children?: React.ReactNode; classNam
 function Accented({ text, accent }: { text: string; accent?: string }) {
   const i = accent ? text.indexOf(accent) : -1
   if (!accent || i < 0) return <>{text}</>
-  return <>{text.slice(0, i)}<em className="italic text-primary">{accent}</em>{text.slice(i + accent.length)}</>
+  return <>{text.slice(0, i)}<em className="not-italic text-primary">{accent}</em>{text.slice(i + accent.length)}</>
 }
 
 function Shell({ tone = 'plain', className, children }: { tone?: Tone; className?: string; children?: React.ReactNode }) {

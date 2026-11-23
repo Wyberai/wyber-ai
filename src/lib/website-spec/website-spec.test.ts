@@ -299,3 +299,37 @@ describe('distinctive type reaches the built page', () => {
     expect(html.split('f[]=erode@').length - 1).toBe(1)
   })
 })
+
+describe('type and photography hold across every direction (regression: 23 Nov, "idiotic font, no hero image")', () => {
+  it('every direction that uses a Fontshare face gets one stylesheet per family, so display AND body both load', async () => {
+    const { DIRECTIONS } = await import('../design-directions')
+    const { extraFontLinks, FONTSHARE_FONTS } = await import('../direction-fonts')
+    let withFontshare = 0
+    for (const d of DIRECTIONS) {
+      const css = `--font-display: '${d.fonts.display}'; --font-sans: '${d.fonts.body}'; --font-mono: '${d.fonts.mono}'`
+      const links = extraFontLinks(css).split('\n').filter(l => l.includes('fontshare.com'))
+      const want = [...new Set([d.fonts.display, d.fonts.body].filter(f => FONTSHARE_FONTS[f]))]
+      expect(links.length, d.id).toBe(want.length)
+      for (const l of links) expect((l.match(/f\[\]=/g) || []).length, d.id + ' must request one family per link').toBe(1)
+      if (want.length) withFontshare++
+    }
+    expect(withFontshare).toBeGreaterThan(5)
+  })
+
+  it('no accent is ever slanted (the faces have no italic, so the browser would fake one)', async () => {
+    const { WYBER_SECTIONS_SOURCE } = await import('../wyber-sections')
+    expect(WYBER_SECTIONS_SOURCE).not.toMatch(/<em className="[^"]*(?<![\w-])italic\b/)
+    expect(WYBER_SECTIONS_SOURCE).toMatch(/<em className="not-italic text-primary">/)
+  })
+
+  it('every photo-led direction, on every seed and blueprint, puts a photograph in the first screen (full-bleed or split hero)', async () => {
+    const { DIRECTIONS } = await import('../design-directions')
+    const photo = DIRECTIONS.filter(d => d.surfaces.includes('website') && ['photo', 'video', 'illustration', 'cutouts', 'line-art'].includes(d.rules.heroMedia))
+    expect(photo.length).toBeGreaterThan(5)
+    for (const d of photo) for (const demo of DEMOS) for (let i = 0; i < 6; i++) {
+      const spec = planWebsite(demo.prompt, { seed: demo.seed + i, facts: demo.facts, directionId: d.id })
+      expect(['full', 'split'], `${d.id}/${demo.key}/${i}`).toContain(spec.layout?.sx?.hero)
+      expect(spec.images.some(x => x.id === 'hero'), `${d.id}/${demo.key}/${i} has a hero photo slot`).toBe(true)
+    }
+  })
+})

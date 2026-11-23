@@ -7,7 +7,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { type Palette } from '@/lib/design-palettes';
 import { directionsEnabled } from '@/lib/direction-flag';
-import { pickerOptions, pickerFontsUrl, pickerFontshareUrl } from '@/lib/direction-picker';
+import { pickerOptions, pickerFontsUrl, pickerFontshareUrls } from '@/lib/direction-picker';
 import { MicroLabel } from './ui';
 import { useT } from '@/lib/i18n/useT';
 import { EDITOR_CANVAS_STRINGS } from '@/lib/i18n/dict/editor-canvas';
@@ -43,7 +43,7 @@ export function DirectionCards({ prompt, selectedId, onPick, count = 3, projectT
   // The editor chrome only loads brand faces: load the dealt directions' fonts so each card shows its real type.
   useEffect(() => {
     if (!picked.directions) return;
-    for (const href of [pickerFontsUrl(options), pickerFontshareUrl(options)]) {
+    for (const href of [pickerFontsUrl(options), ...pickerFontshareUrls(options)]) {
       if (!href || document.querySelector(`link[data-direction-fonts="1"][href="${href}"]`)) continue;
       const l = document.createElement('link');
       l.rel = 'stylesheet'; l.href = href; l.setAttribute('data-direction-fonts', '1');
