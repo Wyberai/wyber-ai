@@ -286,3 +286,16 @@ describe('a photo-led direction always ships photography', () => {
     }
   })
 })
+
+describe('distinctive type reaches the built page', () => {
+  it('a site on a Fontshare direction names its fonts in CSS and the build links the Fontshare stylesheet exactly once', async () => {
+    const { sanitizeFiles } = await import('../sanitize-files')
+    const spec = planWebsite('Website for Amma\'s Pickles, a home pickle kitchen in Nagpur. Photo-led.', { seed: 'type1', directionId: 'ed-brand-world' })
+    const files = renderWebsite(spec, DEMOS[0].copy).files
+    expect(files['src/index.css']).toContain("'Erode'")
+    const wrapped = Object.fromEntries(Object.entries(files).map(([p, c]) => [p, { content: c }]))
+    const html = (sanitizeFiles(wrapped as never) as Record<string, { content: string }>)['index.html'].content
+    expect(html).toContain('https://api.fontshare.com/v2/css?f[]=erode@400,500,600')
+    expect(html.split('f[]=erode@').length - 1).toBe(1)
+  })
+})

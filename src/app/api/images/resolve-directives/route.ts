@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
-import { generateAndPersistImage, billBuildImage } from '@/lib/generate-image-persist'
+import { generateAndPersistImage, billBuildImage, buildImageQuality } from '@/lib/generate-image-persist'
 import { rateLimit } from '@/lib/rate-limit'
 
 // Resolve {{wyber-image}} directives into REAL persisted image URLs for the
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
     // Paying customers get top-of-the-line ('high') image quality; free-tier
     // build images stay 'medium' — the cheaper COGS default.
     const { data: profile } = await supabase.from('profiles').select('plan').eq('id', user.id).single()
-    const quality = profile?.plan && profile.plan !== 'free' ? 'high' : 'medium'
+    const quality = buildImageQuality(profile?.plan)
     const batch = directives.slice(0, MAX_DIRECTIVES) as { token: string; prompt: string; ratio: string }[]
     const one = async (d: { token: string; prompt: string; ratio: string }) => {
       if (!d?.token || !d?.prompt) return null

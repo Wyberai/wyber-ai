@@ -27,6 +27,15 @@ export interface ImageGenOpts {
 /** Stable storage key so re-publishing the same prompt reuses one object.
  *  `variant` folds regen nonces / transparency into the hash — REGENERATE MUST
  *  VARY IT or the idempotent cache returns the old image. */
+/**
+ * Quality for a build's images. Paying plans get 'high'; free-plan builds stay 'medium' (cheaper) unless IMAGE_QUALITY_ALL=high is set on the
+ * server (event weeks, demos), which makes every build's photographs high quality. Roughly the same image cache either way: the key includes quality.
+ */
+export function buildImageQuality(plan: string | null | undefined): 'medium' | 'high' {
+  if (process.env.IMAGE_QUALITY_ALL === 'high') return 'high'
+  return plan && plan !== 'free' ? 'high' : 'medium'
+}
+
 export function imageKey(scope: string, prompt: string, ratio: string, variant = ''): string {
   let h = 0
   const s = `${prompt}|${ratio}${variant ? `|${variant}` : ''}`

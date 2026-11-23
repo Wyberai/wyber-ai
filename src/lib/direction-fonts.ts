@@ -57,8 +57,43 @@ export function detectDirectionFonts(text: string): string[] {
   return DIRECTION_FONT_FAMILIES.filter(f => lower.includes(f.toLowerCase()))
 }
 
-/** <link> tag(s) loading only the direction fonts named in `css`; '' when none (the common case). */
+// Fontshare (Indian Type Foundry) families: free for personal and commercial use, served from api.fontshare.com, which every build already
+// preconnects to (General Sans and Switzer load from it for all builds). Weights below were each tested to return ONLY that family from the
+// CDN on 23 Nov 2026: asking for a weight a family does not have makes the API pad the response with other families, so do not hand-edit.
+export const FONTSHARE_FONTS: Record<string, { slug: string; weights: number[] }> = {
+  'Erode': { slug: 'erode', weights: [400, 500, 600] },
+  'Gambetta': { slug: 'gambetta', weights: [500, 600] },
+  'Boska': { slug: 'boska', weights: [400] },
+  'Clash Display': { slug: 'clash-display', weights: [400, 500, 600, 700] },
+  'Clash Grotesk': { slug: 'clash-grotesk', weights: [400, 500, 600] },
+  'Satoshi': { slug: 'satoshi', weights: [400, 500, 700] },
+  'Supreme': { slug: 'supreme', weights: [400, 500, 700] },
+  'Excon': { slug: 'excon', weights: [400, 500, 700] },
+  'Chillax': { slug: 'chillax', weights: [400, 500, 600] },
+}
+
+/** Every family a direction may name, Google or Fontshare, with its real weights. */
+export const ANY_DIRECTION_FONT_WEIGHTS: Record<string, number[]> = {
+  ...DIRECTION_FONT_WEIGHTS,
+  ...Object.fromEntries(Object.entries(FONTSHARE_FONTS).map(([k, v]) => [k, v.weights])),
+}
+
+/** One Fontshare css URL for the given families (unknown names are ignored). Null if none. */
+export function fontshareUrl(families: string[]): string | null {
+  const parts = [...new Set(families)].filter(f => FONTSHARE_FONTS[f]).map(f => 'f[]=' + FONTSHARE_FONTS[f].slug + '@' + FONTSHARE_FONTS[f].weights.join(','))
+  return parts.length ? 'https://api.fontshare.com/v2/css?' + parts.join('&') + '&display=swap' : null
+}
+
+/** Fontshare families a piece of CSS/JS/HTML text actually names. */
+export function detectFontshareFonts(text: string): string[] {
+  if (!text) return []
+  const lower = text.toLowerCase()
+  return Object.keys(FONTSHARE_FONTS).filter(f => lower.includes(f.toLowerCase()))
+}
+
+/** <link> tag(s) loading only the direction fonts named in `css` (Google and Fontshare); '' when none (the common case). */
 export function extraFontLinks(css: string): string {
-  const url = directionFontsUrl(detectDirectionFonts(css))
-  return url ? `<link href="${url}" rel="stylesheet">` : ''
+  const g = directionFontsUrl(detectDirectionFonts(css))
+  const f = fontshareUrl(detectFontshareFonts(css))
+  return [g ? `<link href="${g}" rel="stylesheet">` : '', f ? `<link href="${f}" rel="stylesheet">` : ''].filter(Boolean).join('\n  ')
 }

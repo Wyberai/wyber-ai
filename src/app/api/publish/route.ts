@@ -7,7 +7,7 @@ import { scanForExposedSecrets } from '@/lib/security-scan'
 import { runProjectRlsScan, hasCriticalLeak } from '@/lib/rls-scan-project'
 import { runProjectWyberCloudScan, hasCriticalWyberCloudLeak } from '@/lib/wybercloud-scan-project'
 import { extractImageDirectives, replaceTokenInFiles, resolveDirectivesForPreview } from '@/lib/image-directives'
-import { generateAndPersistImage, billBuildImage } from '@/lib/generate-image-persist'
+import { generateAndPersistImage, billBuildImage, buildImageQuality } from '@/lib/generate-image-persist'
 import { syncSupabaseAuthUrl } from '@/lib/sync-supabase-auth-url'
 import { notify } from '@/lib/push'
 import { rateLimit } from '@/lib/rate-limit'
@@ -127,7 +127,7 @@ export async function POST(req: NextRequest) {
       // Paying customers get top-of-the-line ('high') image quality; free-tier
       // build images stay 'medium' — the cheaper COGS default.
       const { data: publishProfile } = await admin.from('profiles').select('plan').eq('id', user.id).single()
-      const quality = publishProfile?.plan && publishProfile.plan !== 'free' ? 'high' : 'medium'
+      const quality = buildImageQuality(publishProfile?.plan)
       let generated = 0
       for (const d of directives) {
         let url: string | null = null

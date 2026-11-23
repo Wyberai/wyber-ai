@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { DIRECTIONS, DIRECTION_IDS, getDirectionById, hslToHex } from './design-directions'
 import { dealDirections, pickDirection, renderDirectionBrief, surfaceFor } from './direction-brief'
 import { lintAgainstDirection } from './direction-lint'
-import { DIRECTION_FONT_WEIGHTS, directionFontsUrl, detectDirectionFonts, extraFontLinks } from './direction-fonts'
+import { DIRECTION_FONT_WEIGHTS, ANY_DIRECTION_FONT_WEIGHTS, FONTSHARE_FONTS, fontshareUrl, directionFontsUrl, detectDirectionFonts, extraFontLinks } from './direction-fonts'
 import { contrastRatio } from './color-contrast'
 
 const BASE_FONTS = new Set(['Switzer', 'General Sans', 'Instrument Serif', 'Fraunces', 'Playfair Display', 'Lora', 'JetBrains Mono'])
@@ -39,9 +39,9 @@ describe('direction library integrity', () => {
 
   it.each(DIRECTIONS.map(d => [d.id, d] as const))('%s uses only loadable fonts with a real display weight', (_id, d) => {
     for (const fam of [d.fonts.display, d.fonts.body, d.fonts.mono]) {
-      expect(BASE_FONTS.has(fam) || DIRECTION_FONT_WEIGHTS[fam], `font not loadable: ${fam}`).toBeTruthy()
+      expect(BASE_FONTS.has(fam) || ANY_DIRECTION_FONT_WEIGHTS[fam], `font not loadable: ${fam}`).toBeTruthy()
     }
-    const w = DIRECTION_FONT_WEIGHTS[d.fonts.display]
+    const w = ANY_DIRECTION_FONT_WEIGHTS[d.fonts.display]
     if (w) expect(w, `${d.fonts.display} has no weight ${d.fonts.displayWeight}`).toContain(d.fonts.displayWeight)
   })
 
@@ -145,7 +145,7 @@ describe('lintAgainstDirection', () => {
   const file = (c: string) => ({ 'src/App.tsx': { content: c } })
 
   it('passes a clean build', () => {
-    expect(lintAgainstDirection({ ...file('export default function App(){ return <main className="bg-background text-foreground"><h1 className="text-6xl">Hi</h1></main> }'), 'src/index.css': { content: "--font-display: 'Newsreader'; --font-sans: 'Hanken Grotesk';" } }, dir)).toEqual([])
+    expect(lintAgainstDirection({ ...file('export default function App(){ return <main className="bg-background text-foreground"><h1 className="text-6xl">Hi</h1></main> }'), 'src/index.css': { content: `--font-display: '${dir.fonts.display}'; --font-sans: '${dir.fonts.body}';` } }, dir)).toEqual([])
   })
 
   it('flags glow, gradients over budget, pure black, purple, reveal-everywhere and missing fonts', () => {
@@ -195,8 +195,8 @@ describe('direction fonts', () => {
   it('every direction family produces a valid link', () => {
     for (const d of DIRECTIONS) {
       const link = extraFontLinks(`--font-display: '${d.fonts.display}'; --font-sans: '${d.fonts.body}'; --font-mono: '${d.fonts.mono}'`)
-      const needed = [d.fonts.display, d.fonts.body, d.fonts.mono].filter(f => DIRECTION_FONT_WEIGHTS[f])
-      for (const f of needed) expect(link, `${d.id}:${f}`).toContain(`family=${f.replace(/ /g, '+')}`)
+      const needed = [d.fonts.display, d.fonts.body, d.fonts.mono].filter(f => ANY_DIRECTION_FONT_WEIGHTS[f])
+      for (const f of needed) expect(link, `${d.id}:${f}`).toContain(FONTSHARE_FONTS[f] ? `f[]=${FONTSHARE_FONTS[f].slug}@` : `family=${f.replace(/ /g, '+')}`)
     }
   })
 })

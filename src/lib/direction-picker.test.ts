@@ -1,5 +1,6 @@
 import { describe, it, expect, afterEach } from 'vitest'
-import { pickerOptions, specNoteForId, directionSpecNote, pickerFontsUrl } from './direction-picker'
+import { pickerOptions, specNoteForId, directionSpecNote, pickerFontsUrl, pickerFontshareUrl } from './direction-picker'
+import { DIRECTION_FONT_FAMILIES, FONTSHARE_FONTS } from './direction-fonts'
 import { directionsEnabled } from './direction-flag'
 import { DIRECTION_IDS, getDirectionById } from './design-directions'
 import { PALETTES } from './design-palettes'
@@ -59,10 +60,16 @@ describe('plan spec additions', () => {
 describe('pickerFontsUrl', () => {
   it('loads the dealt directions’ fonts, nothing for brand/palette faces', () => {
     const dir = pickerOptions('a restaurant', 3, { enabled: true, rnd: seeded(4) }).options
-    const url = pickerFontsUrl(dir)!
-    expect(url).toContain('https://fonts.googleapis.com/css2?')
-    expect(url).toContain(`family=${dir[0].fontDisplay.replace(/ /g, '+')}`)
+    const url = pickerFontsUrl(dir)
+    const share = pickerFontshareUrl(dir)
+    // each dealt face loads from one of the two sources, depending on where it lives
+    expect(url || share).toBeTruthy()
+    for (const o of dir) for (const f of [o.fontDisplay, o.fontSans]) {
+      if (FONTSHARE_FONTS[f]) expect(share, f).toContain('f[]=' + FONTSHARE_FONTS[f].slug + '@')
+      else if (DIRECTION_FONT_FAMILIES.includes(f)) expect(url, f).toContain('family=' + f.replace(/ /g, '+'))
+    }
     expect(pickerFontsUrl(PALETTES.slice(0, 3))).toBeNull()
+    expect(pickerFontshareUrl(PALETTES.slice(0, 3))).toBeNull()
   })
 })
 
