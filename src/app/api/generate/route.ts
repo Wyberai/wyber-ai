@@ -4482,6 +4482,23 @@ export async function POST(req: NextRequest) {
         }
       }
 
+      // Duplicate first-build guard. The same first build can reach this route twice for one project (a remount or a silent client
+      // retry sends it again while the first is still running; live 23 Nov: one website build was charged 100 twice, 30 s apart).
+      // The first request leaves a short-lived marker; a repeat for the same project inside 10 minutes is not charged again.
+      if (isNewBuild && stage === 'full' && !selfHeal && !isInternalPass && cost > 0 && typeof projectId === 'string' && /^[0-9a-f-]{36}$/i.test(projectId)) {
+        try {
+          const since = new Date(Date.now() - 10 * 60_000).toISOString()
+          const { data: earlier } = await admin.from('generations').select('id').eq('project_id', projectId).eq('user_id', user.id)
+            .eq('status', 'turn-start').gte('created_at', since).limit(1)
+          if (earlier && earlier.length > 0) {
+            console.log('[dup-first-build] repeat first build for the same project inside 10 minutes, not charging again project=' + projectId.slice(0, 8))
+            cost = 0
+          } else {
+            await admin.from('generations').insert({ project_id: projectId, user_id: user.id, prompt: '', response_text: '', status: 'turn-start' })
+          }
+        } catch (dupErr) { console.error('[dup-first-build] guard failed (charging as usual)', String(dupErr)) }
+      }
+
       if (balance < cost) {
         // Highest-intent email moment: they just tried to build and were
         // refused. Send the first "out of credits" email NOW (the daily drip

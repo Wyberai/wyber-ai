@@ -47,6 +47,7 @@ async function handleExport(projectId: string | null, format: string | null) {
       .from('generations')
       .select('prompt, files_changed, created_at, credits_used')
       .eq('project_id', projectId)
+      .neq('status', 'turn-start')
       .order('created_at', { ascending: true });
 
     return NextResponse.json({
