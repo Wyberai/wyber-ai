@@ -8,6 +8,7 @@ import { collectMissingStubs } from './stub-missing-imports'
 import { TAILWIND_CONFIG_FILE, DEFAULT_TOKENS_CSS, GOOGLE_FONTS_LINKS } from './design-system'
 import { extraFontLinks } from './direction-fonts'
 import { WYBER_UI_KIT_FILES } from './wyber-ui-kit'
+import { WYBER_SECTIONS_FILES } from './wyber-sections'
 import { WYBER_STORE_FILES } from './wyber-store'
 import { CONNECTOR_INFRA_FILES } from './connector-infra'
 import { DATA_TABLE_FILES } from './data-table-infra'
@@ -127,7 +128,7 @@ export function sanitizeFiles<T extends Record<string, FileVal>>(files: T, opts?
     //    config: transient, never persisted, user files win. Vite tree-shakes
     //    it entirely when the app doesn't import it. Must land before the
     //    stub pass so a kit import is never stubbed as "missing".
-    for (const [kitPath, kitContent] of Object.entries(WYBER_UI_KIT_FILES)) {
+    for (const [kitPath, kitContent] of Object.entries({ ...WYBER_UI_KIT_FILES, ...WYBER_SECTIONS_FILES })) {
       if (!(kitPath in out)) out[kitPath] = { content: kitContent, language: 'typescript' }
     }
 

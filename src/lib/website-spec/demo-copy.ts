@@ -31,11 +31,12 @@ export const DEMOS: DemoSite[] = [
         services: {
           eyebrow: 'Treatments',
           title: 'What we do',
-          description: 'Three things, done carefully, for children and adults.',
+          description: 'Four things, done carefully, for children and adults.',
           items: [
             { title: 'Check-ups and cleaning', text: 'A routine look at your teeth and gums, a clean, and advice you can follow at home.' },
             { title: 'Braces and aligners', text: 'Straightening for children and adults, planned after an examination and reviewed along the way.' },
             { title: 'Root canal treatment', text: 'Treatment to save a painful or infected tooth, explained to you before it begins.' },
+            { title: 'Dentistry for children', text: 'Gentle visits for younger patients, with time to explain each step before it happens.' },
           ],
         },
         how: {
@@ -113,6 +114,7 @@ export const DEMOS: DemoSite[] = [
           items: [
             { title: 'Importers and distributors', text: 'Larger orders with packing and labelling agreed in advance with you.' },
             { title: 'Wholesalers', text: 'Regular supply for stores and markets, planned around your buying cycle.' },
+            { title: 'Exporters and traders', text: 'Orders for onward shipment, with documents and packing agreed in advance.' },
             { title: 'Food businesses', text: 'Steady supply for kitchens, caterers and institutions that cook at volume.' },
           ],
         },
