@@ -275,7 +275,7 @@ import { Check } from 'lucide-react'
 import { Badge, Button, Card, ProgressBar } from '../wyber-ui'
 import { APP } from '../schema'
 import { PLANS, RECORD_NOUN, planById, priceLabel, type Plan } from '../plans'
-import { can, fetchSubscription, isConnected, openPortal, startCheckout, type SaasState, type StatusResult, type SubscriptionResult, type Usage } from '../lib/saas'
+import { can, isConnected, openPortal, startCheckout, type SaasState, type StatusResult, type SubscriptionResult, type Usage } from '../lib/saas'
 import { PageHeader } from './parts'
 
 const STATUS_TEXT: Record<string, string> = { active: 'Active', trialing: 'Trial', past_due: 'Payment overdue', canceled: 'Cancelled' }

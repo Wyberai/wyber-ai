@@ -17,6 +17,7 @@ export function buildSaasModelPrompt(prompt: string): { system: string; user: st
     'limitEntity: the id of the main entity (the thing the customer adds the most of). Its row count is what a plan limits.',
     'Plan: { id (lowercase letters and digits), name, price, period: "month" | "year", blurb (one line), features: [3 to 5 short lines], limits: { records, seats } }. Write 2 or 3 plans in ascending order.',
     'price: a number ONLY if the owner brief states that exact number; otherwise null. Never invent a price. 0 is allowed only if the brief says the plan is free. records and seats are whole numbers or null for unlimited; limits never shrink from one plan to the next; the first plan allows at least 10 records so the product can be tried. Plan names are plain (for example Starter, Team, Business), never "Pro Max" style names.',
+    'Write exactly 4 metrics and exactly 2 entities (or 4 if the product truly needs them): the home screen lays them out in even grids.',
     'Features describe only what the product screens in this reply do (lists, metrics, CSV import and export, reminders). No security, uptime, sync, AI, integration or support promises.',
   ].join('\n')
   return { system, user }
@@ -30,6 +31,9 @@ export function normalizeSaasModel(raw: unknown): SaasModel {
 export function validateSaasModel(m: SaasModel, prompt: string): string[] {
   const problems = validateModel(m.app)
   if (problems.length) return problems
+  // grids must never leave an orphan card: four numbers (2 by 2, 4 across) and one or two pairs of list shortcuts
+  if (m.app.metrics.length !== 4) return ['metrics: write exactly 4 metrics so the home grid has no short row']
+  if (m.app.entities.length !== 2 && m.app.entities.length !== 4) return ['entities: write 2 or 4 entities so the shortcut grid has no short row']
   return validatePlans(m.plans, prompt, m.app)
 }
 

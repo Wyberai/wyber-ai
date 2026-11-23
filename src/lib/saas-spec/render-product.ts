@@ -26,7 +26,7 @@ export function renderProductApp(app: AppModel, opts: { tools?: boolean } = {}):
   return `import { useEffect, useRef, useState } from 'react'
 import { ${icons.join(', ')} } from 'lucide-react'
 import { Badge, BottomTabBar, Button, Dialog, Drawer, ProgressBar, SidebarNav } from '../wyber-ui'
-import { APP, type Row } from '../schema'
+import { type Row } from '../schema'
 import { create, load, logChange, remove, restore, save, update, wipe, type Store } from '../lib/db'
 import { entityOf, titleOf, withSample, withoutSample } from '../lib/logic'
 import { LIMIT_ENTITY, RECORD_NOUN, planById } from '../plans'

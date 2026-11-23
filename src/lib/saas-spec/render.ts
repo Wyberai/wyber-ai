@@ -77,7 +77,8 @@ export function renderSaas(spec: SaasSpec, model: SaasModel, copy: SiteCopy): Re
       'src/components/FormDialog.tsx': FORM_TSX,
       'src/components/CsvImport.tsx': CSV_IMPORT_TSX,
       'src/components/EntityPage.tsx': ENTITY_PAGE_TSX,
-      'src/components/HomePage.tsx': HOME_TSX,
+      // four numbers fill the grid evenly (2 by 2 on a phone, 4 across on a desk); the shared screen is built for 3
+      'src/components/HomePage.tsx': HOME_TSX.replace('grid grid-cols-2 gap-4 lg:grid-cols-3', 'grid grid-cols-2 gap-4 lg:grid-cols-4'),
       'src/components/HistoryPage.tsx': HISTORY_TSX,
       'src/saas/parts.tsx': PARTS_TSX,
       'src/saas/AuthPage.tsx': AUTH_TSX,

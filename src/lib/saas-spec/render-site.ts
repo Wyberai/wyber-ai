@@ -258,7 +258,7 @@ export function renderSite(spec: SaasSpec, copy: SiteCopy, app: AppModel): strin
     : ''
   if (mo.progress) U('ScrollProgress')
   if (mo.backToTop) U('BackToTop')
-  if (cta) U('CTASection')
+
   const nav = [
     features ? `{ label: ${JSON.stringify(site.sections.find(s => s.id === features.id)?.nav ?? 'Features')}, href: '#features' }` : '',
     steps ? `{ label: ${JSON.stringify(steps.nav ?? 'How it works')}, href: '#how' }` : '',
@@ -287,12 +287,16 @@ export function renderSite(spec: SaasSpec, copy: SiteCopy, app: AppModel): strin
   ].filter(Boolean).join('\n        ')
 
   const ctaBlock = cta
-    ? `<section className="mx-auto max-w-6xl px-6 py-20"><CTASection title={${cp(cta.id)}.title} description={${cp(cta.id)}.description} primaryCta={${cp(cta.id)}.button || COPY.hero.cta} onPrimary={() => openApp()} /></section>`
+    ? `<section className="mx-auto max-w-6xl px-6 py-20"><div className="rounded-2xl border border-border bg-card px-6 py-14 text-center md:px-16 md:py-20">
+          <h2 className="mx-auto max-w-2xl font-display text-3xl font-semibold tracking-tight text-foreground md:text-5xl">{${cp(cta.id)}.title}</h2>
+          {${cp(cta.id)}.description && <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-muted-foreground">{${cp(cta.id)}.description}</p>}
+          <div className="mt-8"><Button size="lg" onClick={() => openApp()}>{${cp(cta.id)}.button || COPY.hero.cta}</Button></div>
+          <p className="mt-4 text-xs text-muted-foreground">Demo mode: nothing is charged, sent or stored on a server.</p>
+        </div></section>`
     : ''
 
   const imports = [...used].sort()
-  return `import { Check } from 'lucide-react'
-import { ${imports.join(', ')} } from './wyber-ui'
+  return `${lay.pricing === 'cards' ? "import { Check } from 'lucide-react'\n" : ''}import { ${imports.join(', ')} } from './wyber-ui'
 import { OWNER } from './owner-details'
 import { CURRENCY, PLANS, RECORD_NOUN, priceLabel } from './plans'
 
@@ -300,8 +304,7 @@ import { CURRENCY, PLANS, RECORD_NOUN, priceLabel } from './plans'
 const COPY: any = ${JSON.stringify(copy, null, 2)}
 
 const openApp = () => { window.location.hash = '#/app' }
-const allFeatures: string[] = Array.from(new Set(PLANS.flatMap(p => p.features)))
-
+${lay.pricing === 'table' ? 'const allFeatures: string[] = Array.from(new Set(PLANS.flatMap(p => p.features)))\n' : ''}
 ${hlCode}export default function Site() {
   const BRAND: string = COPY.brand
   const links = [

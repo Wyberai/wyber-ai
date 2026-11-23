@@ -23,7 +23,11 @@ export function pickSaasDirection(prompt: string, o: SaasPlanOptions): Direction
   const wide = dealDirections(prompt, 24, { projectType: 'saas', rnd })
   const both = wide.filter(d => d.surfaces.includes('website') && d.surfaces.includes('app'))
   const pool = both.length >= 2 ? both : wide
-  const scored = pool.map((d, i) => ({ d, i, f: feelScore(prompt, d) })).sort((a, b) => b.f - a.f || a.i - b.i)
+  // an explicit "dark" or "light" decides the mode before anything else
+  const wantsDark = /\bdark\b/i.test(prompt)
+  const wantsLight = /\b(light|bright)\b/i.test(prompt) && !wantsDark
+  const modeBonus = (d: Direction) => ((wantsDark && d.palette.mode === 'dark') || (wantsLight && d.palette.mode === 'light') ? 2 : 0)
+  const scored = pool.map((d, i) => ({ d, i, f: feelScore(prompt, d) + modeBonus(d) })).sort((a, b) => b.f - a.f || a.i - b.i)
   const top = scored[0]?.f ?? 0
   const ranked = scored.filter(x => top === 0 || x.f === top).slice(0, 3).map(x => x.d)
   const fresh = ranked.filter(d => !(o.avoid ?? []).includes(d.id))
@@ -68,8 +72,8 @@ function planSite(prompt: string, d: Direction, facts: OwnerFacts, seed: string)
     direction: { id: d.id, name: d.name, group: d.group, mode: d.palette.mode, heroMedia: d.rules.heroMedia },
     header: headerVariantFor(d),
     hero: heroVariantFor(d),
-    // a SaaS has no sticky contact bar: the call to action is always the demo
-    motion: { ...motion, stickyCta: false, backToTop: true },
+    // a SaaS has no sticky contact bar (the call to action is always the demo) and no marker under a headline phrase, which breaks when the line wraps on a phone
+    motion: { ...motion, stickyCta: false, backToTop: true, highlight: false },
     sections,
     images: [],
     seo: { schemaType: 'SoftwareApplication', slug: slug(industry + '-app') || 'app', titleMax: 60, descMin: 110, descMax: 158, faqSchema: true },
