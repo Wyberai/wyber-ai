@@ -10,6 +10,7 @@ import { COMMON_STRINGS } from '@/lib/i18n/dict/common';
 import { estimateCost } from '@/lib/credits';
 import { LaunchKit } from './LaunchKit';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
+import DomainsManager from '@/components/domains/DomainsManager';
 
 interface Props {
   initialProfile?: { credits: number; plan: string; email: string; id?: string } | null;
@@ -741,6 +742,16 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
                     </div>
                   )}
                 </div>
+
+                <div style={{ height: 1, background: 'var(--ide-border)' }} />
+
+                {/* ResellerClub domains and Google Workspace (src/lib/domains). Shows only when the service is configured. */}
+                <ErrorBoundary fallbackMessage="Domains could not load. The rest of the editor is unaffected.">
+                  <details style={{ fontSize: 13 }}>
+                    <summary style={{ cursor: 'pointer', fontWeight: 600 }}>Buy a domain or business email (price + $1 flat)</summary>
+                    <div style={{ marginTop: 10 }}><DomainsManager projectId={projectId} /></div>
+                  </details>
+                </ErrorBoundary>
 
                 <div style={{ height: 1, background: 'var(--ide-border)' }} />
 

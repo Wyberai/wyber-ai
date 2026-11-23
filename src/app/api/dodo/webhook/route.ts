@@ -259,6 +259,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ received: true })
     }
 
+    // Domain / Workspace order (ResellerClub, src/lib/domains): register or provision once payment is confirmed.
+    // Idempotent: fulfilOrder only acts on an order still waiting for payment, so a retried delivery does nothing twice.
+    if (eventType === 'payment.succeeded' && metadata.purchase_type === 'commerce_order') {
+      const orderId = String(metadata.commerce_order_id || '')
+      if (orderId) {
+        const { getProvider } = await import('@/lib/domains')
+        const { supabaseStore } = await import('@/lib/domains/store')
+        const { fulfilOrder } = await import('@/lib/domains/orders')
+        const provider = getProvider()
+        if (!provider) {
+          sendAdminPaymentAlert(userEmail || 'unknown', `Domain order ${orderId} was paid but the domain provider is not configured. Fulfil it by hand.`).catch(() => {})
+        } else {
+          const r = await fulfilOrder({ provider, store: supabaseStore(admin) }, orderId)
+          if (!r.ok) sendAdminPaymentAlert(userEmail || 'unknown', `Domain order ${orderId} was paid but did not finish (${r.status}). Open it in commerce_orders.`).catch(() => {})
+        }
+      }
+      return NextResponse.json({ received: true })
+    }
+
     // Domain purchase confirmation: buy the domain via Vercel and attach it
     // to the project. Distinct from credit top-ups/plans — keyed by metadata,
     // not productId, since the domain product is pay-what-you-want.

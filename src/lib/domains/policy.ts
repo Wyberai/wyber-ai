@@ -21,7 +21,7 @@ export const TRANSFER_LINE =
   'Transfer: the domain is registered in your name and you can move it to another registrar with its authorization code. New registrations of .com are locked against transfer for 60 days under ICANN rules, and each registry sets its own rule for other extensions.'
 
 export const RENEWAL_LINE =
-  'Renewal: domains do not renew by themselves. We email you 30, 14, 7 and 1 days before the domain expires, and you renew it from My domains.'
+  'Renewal: domains do not renew by themselves. We email you 30, 14, 7 and 1 days before the domain expires. To renew, write to support before that date and we renew it at the registry price plus $1.'
 
 export function policyLines(tld: string): string[] {
   return [PRICE_RULE_LINE, refundLine(tld), TRANSFER_LINE, RENEWAL_LINE]

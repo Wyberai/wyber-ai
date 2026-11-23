@@ -22,6 +22,7 @@ export const JOBS: Job[] = [
   { path: '/api/cron/ops-agents', cron: '15 */3 * * *', name: 'Company agents', what: 'The agents write new drafts for your approval. Nothing is sent.', touchesCustomers: false },
   { path: '/api/cron/security-rescan', cron: '0 3 * * *', name: 'Security rescan', what: 'Re-checks published apps for security problems.', touchesCustomers: true },
   { path: '/api/cron/consultation-reminders', cron: '*/15 * * * *', name: 'Consultation reminders', what: 'Reminds people about consultation calls they booked.', touchesCustomers: true },
+  { path: '/api/cron/domain-reminders', cron: '0 5 * * *', name: 'Domain reminders', what: 'Emails people 30, 14, 7 and 1 days before a domain or Workspace order expires.', touchesCustomers: true },
   { path: '/api/cron/wpl-monthly-reminder', cron: '0 6 28-31 * *', name: 'Premier League reminder', what: 'Month-end reminder for the monthly contest.', touchesCustomers: true },
 ]
 

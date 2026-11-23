@@ -1,0 +1,210 @@
+import { beforeEach, describe, expect, it } from 'vitest'
+import { FakeDomainsProvider } from './fake-provider'
+import { memoryStore } from './memory-store'
+import { createDomainOrder, fulfilOrder, QuoteChangedError } from './orders'
+import { quoteDomain, quoteWorkspace, splitDomain, toUsdCents } from './pricing'
+import { resetCostCache, searchDomains, toLabel, workspaceQuoteFor } from './search'
+import { providerPath, siteRecords, workspaceRecords } from './dns'
+import { dueReminder } from './dates'
+import { RelayDomainsClient } from './relay-client'
+import { signRelayBody, verifyRelaySignature } from './relay-sign'
+import { policyLines, workspacePolicyLines } from './policy'
+import { breaksCopyRules } from '@/lib/customer-copy-rules'
+import { getProvider } from './index'
+
+const contact = { name: 'Asha Rao', company: '', email: 'asha@example.com', address1: '1 MG Road', city: 'Pune', state: 'MH', zip: '411001', country: 'IN', phoneCc: '91', phone: '9876543210' }
+const attachOk = async () => ({ attached: true, verified: false })
+
+beforeEach(() => resetCostCache())
+
+describe('pricing', () => {
+  it('adds a flat $1 to the registry price', async () => {
+    const t = await new FakeDomainsProvider().getCostTable()
+    const q = quoteDomain('ashabakery.com', 1, t)!
+    expect(q.registryCents).toBe(1099)
+    expect(q.marginCents).toBe(100)
+    expect(q.totalCents).toBe(1199)
+    expect(q.renewalTotalCents).toBe(1299)
+  })
+  it('keeps the margin flat across terms', async () => {
+    const t = await new FakeDomainsProvider().getCostTable()
+    expect(quoteDomain('a1.com', 5, t)!.totalCents).toBe(1099 * 5 + 100)
+  })
+  it('matches .co.in before .in', () => {
+    expect(splitDomain('shop.co.in')).toEqual({ label: 'shop', tld: 'co.in' })
+    expect(splitDomain('shop.in')).toEqual({ label: 'shop', tld: 'in' })
+  })
+  it('converts INR cost up to the next cent', () => {
+    expect(toUsdCents(100001, 'INR', 83)).toBe(1205)
+    expect(() => toUsdCents(100, 'INR')).toThrow()
+  })
+  it('prices Workspace per seat per month with a flat margin', () => {
+    const q = quoteWorkspace({ seats: 3, months: 12, costPerSeatMonthMinor: 600, currency: 'USD', marginPerSeatMonthCents: 50 })
+    expect(q.registryCents).toBe(600 * 36)
+    expect(q.marginCents).toBe(50 * 36)
+    expect(q.totalCents).toBe(650 * 36)
+  })
+})
+
+describe('search', () => {
+  it('turns what people type into a label', () => {
+    expect(toLabel('Asha Bakery')).toBe('ashabakery')
+    expect(toLabel('https://ashabakery.com/menu')).toBe('ashabakery')
+  })
+  it('returns prices only for available names and hides TLDs without a price', async () => {
+    const p = new FakeDomainsProvider()
+    const { results } = await searchDomains(p, 'ashabakery')
+    const by = Object.fromEntries(results.map(r => [r.tld, r]))
+    expect(by.com.status).toBe('available')
+    expect(by.com.quote?.totalCents).toBe(1199)
+    expect(by.io.status).toBe('not_offered')
+    expect(by.io.quote).toBeNull()
+    const taken = await searchDomains(p, 'takenname')
+    expect(taken.results.find(r => r.tld === 'com')).toMatchObject({ status: 'taken', quote: null })
+  })
+  it('quotes Workspace by region', async () => {
+    const p = new FakeDomainsProvider()
+    const india = await workspaceQuoteFor(p, 'in', 2, 12, undefined, {})
+    expect(india?.perSeatMonthCostCents).toBe(300)
+    expect(india?.perSeatMonthMarginCents).toBe(50)
+  })
+})
+
+describe('buying a domain', () => {
+  const setup = () => ({ provider: new FakeDomainsProvider(), mem: memoryStore() })
+  const input = { userId: 'u1', domain: 'ashabakery.com', years: 1, projectId: 'p1', contact, confirmedTotalCents: 1199, acknowledged: true }
+
+  it('refuses without the confirmation step', async () => {
+    const { provider, mem } = setup()
+    await expect(createDomainOrder({ provider, store: mem.store }, { ...input, acknowledged: false })).rejects.toThrow(/confirm/)
+    expect(mem.orders.size).toBe(0)
+  })
+  it('refuses when the confirmed total is not the current total', async () => {
+    const { provider, mem } = setup()
+    await expect(createDomainOrder({ provider, store: mem.store }, { ...input, confirmedTotalCents: 999 })).rejects.toBeInstanceOf(QuoteChangedError)
+    expect(mem.orders.size).toBe(0)
+  })
+  it('refuses a name that is no longer free', async () => {
+    const { provider, mem } = setup()
+    await expect(createDomainOrder({ provider, store: mem.store }, { ...input, domain: 'takenshop.com', confirmedTotalCents: 1199 })).rejects.toThrow(/no longer available/)
+  })
+  it('registers, writes DNS, attaches to the project and links the site after payment', async () => {
+    const { provider, mem } = setup()
+    const o = await createDomainOrder({ provider, store: mem.store }, input)
+    expect(o.total_cents).toBe(1199)
+    const r = await fulfilOrder({ provider, store: mem.store, attach: attachOk }, o.id)
+    expect(r).toEqual({ ok: true, status: 'active' })
+    expect(provider.state.dns.get('ashabakery.com')?.map(x => `${x.type} ${x.host}`)).toEqual(['A @', 'CNAME www'])
+    expect(mem.domains.get('ashabakery.com')).toMatchObject({ dns_written: true, vercel_attached: true })
+    expect(mem.linked.p1).toBe('ashabakery.com')
+  })
+  it('does not register twice when the payment webhook is delivered twice', async () => {
+    const { provider, mem } = setup()
+    const o = await createDomainOrder({ provider, store: mem.store }, input)
+    await fulfilOrder({ provider, store: mem.store, attach: attachOk }, o.id)
+    await fulfilOrder({ provider, store: mem.store, attach: attachOk }, o.id)
+    expect(provider.state.calls.filter(c => c === 'registerDomain')).toHaveLength(1)
+  })
+  it('keeps a paid order visible when registration fails', async () => {
+    const { provider, mem } = setup()
+    const o = await createDomainOrder({ provider, store: mem.store }, input)
+    provider.failNext.registerDomain = 'Registry unavailable'
+    const r = await fulfilOrder({ provider, store: mem.store, attach: attachOk }, o.id)
+    expect(r.status).toBe('needs_attention')
+    expect((await mem.store.getOrder(o.id))?.error).toMatch(/Registry unavailable/)
+  })
+  it('still finishes when only the DNS write fails, shown as DNS pending', async () => {
+    const { provider, mem } = setup()
+    const o = await createDomainOrder({ provider, store: mem.store }, input)
+    provider.failNext.addDnsRecord = 'dns down'
+    const r = await fulfilOrder({ provider, store: mem.store, attach: attachOk }, o.id)
+    expect(r.ok).toBe(true)
+    expect(mem.domains.get('ashabakery.com')?.dns_written).toBe(false)
+  })
+  it('sets up Workspace with mail records', async () => {
+    const { provider, mem } = setup()
+    const o = await mem.store.insertOrder({ user_id: 'u1', kind: 'workspace', domain: 'ashabakery.com', project_id: null, years: null, months: 12, seats: 3, region: 'in', registry_cents: 10800, margin_cents: 1800, total_cents: 12600, contact, policy_version: 'x' })
+    expect((await fulfilOrder({ provider, store: mem.store }, o.id)).ok).toBe(true)
+    expect(mem.workspaces.get('ashabakery.com')?.seats).toBe(3)
+    expect(provider.state.dns.get('ashabakery.com')?.some(r => r.type === 'MX' && r.value === 'smtp.google.com')).toBe(true)
+  })
+})
+
+describe('dns records', () => {
+  it('uses the same site records the custom-domain check expects', () => {
+    expect(siteRecords()).toEqual([
+      { type: 'A', host: '@', value: '76.76.21.21', ttl: 300 },
+      { type: 'CNAME', host: 'www', value: 'cname.vercel-dns.com', ttl: 300 },
+    ])
+  })
+  it('maps records to provider calls', () => {
+    expect(providerPath({ type: 'A', host: '@', value: '1.2.3.4', ttl: 300 })).toEqual({ path: 'dns/manage/add-ipv4-record.json', params: { value: '1.2.3.4', ttl: '300' } })
+    expect(providerPath({ type: 'MX', host: '@', value: 'smtp.google.com', ttl: 3600, priority: 1 }).params.priority).toBe('1')
+    expect(providerPath({ type: 'CNAME', host: 'www', value: 'x.example', ttl: 300 }).params.host).toBe('www')
+  })
+  it('adds a verification record only when we have one', () => {
+    expect(workspaceRecords()).toHaveLength(2)
+    expect(workspaceRecords({ verificationToken: 'google-site-verification=abc' })).toHaveLength(3)
+  })
+})
+
+describe('reminders', () => {
+  it('sends one reminder per threshold and never for the past', () => {
+    expect(dueReminder(40, [])).toBeNull()
+    expect(dueReminder(30, [])).toBe(30)
+    expect(dueReminder(13, [30])).toBe(14)
+    expect(dueReminder(13, [30, 14])).toBeNull()
+    expect(dueReminder(1, [30, 14, 7])).toBe(1)
+    expect(dueReminder(-1, [])).toBeNull()
+  })
+})
+
+describe('relay client', () => {
+  it('signs each request and never carries provider credentials', async () => {
+    let seen: { url: string; headers: Record<string, string>; body: string } | null = null
+    const fetchImpl = (async (url: string, init: RequestInit) => {
+      seen = { url, headers: init.headers as Record<string, string>, body: String(init.body) }
+      return new Response(JSON.stringify({ 'ashabakery.com': { status: 'available' }, 'ashabakery.in': { status: 'regthroughothers' } }))
+    }) as unknown as typeof fetch
+    const c = new RelayDomainsClient({ url: 'https://relay.test/', secret: 's3cret', fetchImpl, now: () => 1000 })
+    const out = await c.checkAvailability('ashabakery', ['com', 'in'])
+    expect(out).toEqual({ com: 'available', in: 'taken' })
+    expect(seen!.url).toBe('https://relay.test/v1/call')
+    expect(seen!.body).not.toMatch(/api-key|auth-userid/)
+    expect(seen!.headers['x-relay-signature']).toBe(signRelayBody('s3cret', 1000, seen!.body))
+    expect(verifyRelaySignature('s3cret', 1000, seen!.body, seen!.headers['x-relay-signature'], 1010)).toBe(true)
+    expect(verifyRelaySignature('s3cret', 1000, seen!.body, seen!.headers['x-relay-signature'], 1100)).toBe(false)
+    expect(verifyRelaySignature('other', 1000, seen!.body, seen!.headers['x-relay-signature'], 1010)).toBe(false)
+  })
+  it('turns provider errors into errors', async () => {
+    const fetchImpl = (async () => new Response(JSON.stringify({ status: 'ERROR', message: 'Invalid contact' }))) as unknown as typeof fetch
+    const c = new RelayDomainsClient({ url: 'https://relay.test', secret: 's', fetchImpl })
+    await expect(c.ensureContact({ customerId: 1, contact })).rejects.toThrow('Invalid contact')
+  })
+  it('reads cost prices into minor units', async () => {
+    const fetchImpl = (async () => new Response(JSON.stringify({ domcno: { addnewdomain: { '1': '9.99' }, renewdomain: { '1': '10.49' } } }))) as unknown as typeof fetch
+    const c = new RelayDomainsClient({ url: 'https://relay.test', secret: 's', fetchImpl, env: {} })
+    const t = await c.getCostTable()
+    expect(t.domains.domcno.register[1]).toBe(999)
+    expect(t.domains.domcno.renew[1]).toBe(1049)
+  })
+})
+
+describe('provider selection', () => {
+  it('is off when nothing is configured and refuses the fake on production', () => {
+    expect(getProvider({})).toBeNull()
+    expect(getProvider({ DOMAINS_PROVIDER: 'fake', VERCEL_ENV: 'production' })).toBeNull()
+    expect(getProvider({ DOMAINS_PROVIDER: 'fake' })?.name).toBe('fake')
+    expect(getProvider({ DOMAINS_RELAY_URL: 'https://r', DOMAINS_RELAY_SECRET: 's' })?.name).toBe('resellerclub-relay')
+  })
+})
+
+describe('customer copy', () => {
+  it('breaks none of the founder copy rules and states the price rule and refund window', () => {
+    const lines = [...policyLines('com'), ...policyLines('io'), ...workspacePolicyLines(50)]
+    for (const l of lines) expect(breaksCopyRules(l)).toBeNull()
+    expect(policyLines('com').join(' ')).toMatch(/registry price plus a flat \$1/)
+    expect(policyLines('com').join(' ')).toMatch(/4 days/)
+    expect(policyLines('io').join(' ')).toMatch(/not published/)
+  })
+})
