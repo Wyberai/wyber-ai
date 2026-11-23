@@ -61,7 +61,10 @@ export function buildSaasCopyPrompt(spec: SaasSpec, businessPrompt: string, mode
     'Return JSON with: brand (the product name above), seo {title (max ' + spec.site.seo.titleMax + ' chars, "<what it does> | <product name>"), description (' + spec.site.seo.descMin + ' to ' + spec.site.seo.descMax + ' chars)},',
     'hero {eyebrow?, headline, accent?, sub, cta (the label of the button that opens the demo, for example "Try the demo"), secondary (a link label that jumps to the features)}, sections {<id>: {title, description?, items? [{title,text}], faq? [{question,answer}], button?}}.',
     spec.site.motion.highlight ? 'hero.accent: the 1 to 3 consecutive words of the headline that carry its meaning, copied exactly.' : 'Omit hero.accent.',
-    'There are no image slots: omit imageBrief and imageAlt. Feature items name a real thing the product does, one concrete line each.',
+    spec.layout.heroPhoto
+      ? 'hero.imageBrief: ONE sentence describing a photograph of the real place and people this product is used by (a scene: who, where, what they are doing, the light). No screens, no text, no signs, no numbers, no logos, no phone numbers. hero.imageAlt: a plain description of that scene. Other sections have no image slots, omit their imageBrief and imageAlt.'
+      : 'There are no image slots: omit imageBrief and imageAlt.',
+    'Feature items name a real thing the product does, one concrete line each.',
     'Sections to write:',
     lines,
   ].join('\n')

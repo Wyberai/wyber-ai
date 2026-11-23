@@ -34,6 +34,8 @@ export interface SaasModel { app: AppModel; plans: PlansModel }
 export interface SaasLayoutPlan {
   /** Marketing site: how the product preview sits in the hero. */
   heroPreview: 'right' | 'below'
+  /** Photo-first hero (a direction whose hero media is a photograph): one full-bleed photo, flat dark overlay, headline low and left. */
+  heroPhoto: boolean
   steps: 'timeline' | 'columns'
   pricing: 'cards' | 'table'
   faq: 'split' | 'centered'

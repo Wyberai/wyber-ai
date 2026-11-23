@@ -520,3 +520,27 @@ it('the kit pieces the SaaS screens lean on exist', () => {
     expect(WYBER_UI_KIT_SOURCE).toMatch(new RegExp('export function ' + n + '\\b'))
   }
 })
+
+describe('photo-first hero (a direction whose hero media is a photograph)', () => {
+  const d = DEMO_SAAS[0]
+  it('uses one full-bleed photo with a flat overlay, no gradient, and the headline low and left', async () => {
+    const { renderSite } = await import('./render-site')
+    const spec = planSaas(d.prompt, { seed: d.seed, currency: d.currency, directionId: 'ed-brand-world' })
+    expect(spec.layout.heroPhoto).toBe(true)
+    const copy = demoSiteCopy(spec.site, d.copy)
+    copy.hero.imageBrief = 'A physiotherapist guides a patient through a shoulder exercise in a bright, plain clinic room.'
+    copy.hero.imageAlt = 'A physiotherapist helping a patient with a shoulder exercise'
+    const src = renderSite(spec, copy, d.model.app)
+    expect(src).toContain('{{wyber-image:')
+    expect(src).toContain('bg-black/55')
+    expect(src).not.toMatch(/gradient/)
+    expect(src).toContain('items-end')
+    expect(scanSlopSource(src).issues.map(i => i.id + ': ' + i.sample)).toEqual([])
+  })
+  it('a direction led by type or product UI keeps the plain hero and asks for no image', async () => {
+    const { renderSite } = await import('./render-site')
+    const spec = planSaas(d.prompt, { seed: d.seed, currency: d.currency, directionId: 'dk-instrument' })
+    expect(spec.layout.heroPhoto).toBe(false)
+    expect(renderSite(spec, demoSiteCopy(spec.site, d.copy), d.model.app)).not.toContain('{{wyber-image:')
+  })
+})

@@ -41,6 +41,7 @@ export function saasLayoutFor(d: Direction, seed: string): SaasLayoutPlan {
   const editorial = d.group === 'editorial' || d.group === 'type-led'
   return {
     heroPreview: hero === 'split' ? 'right' : 'below',
+    heroPhoto: d.rules.heroMedia === 'photo',
     steps: r() < 0.5 ? 'timeline' : 'columns',
     pricing: r() < 0.65 ? 'cards' : 'table',
     faq: r() < 0.5 ? 'split' : 'centered',

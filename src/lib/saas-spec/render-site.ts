@@ -1,6 +1,7 @@
 import type { AppEntity, AppModel } from '../app-spec/types'
 import type { SiteCopy } from '../website-spec/types'
 import type { SaasSpec } from './types'
+import { imageDirective } from '../build-spec/images'
 
 // The marketing site of a SaaS, built from the website pipeline's product plan and copy, the Wyber UI kit and the product's own sample data.
 // The hero shows a real preview of the product (its own columns and its own sample rows, labelled Sample); no invented screenshots,
@@ -89,7 +90,25 @@ export function renderSite(spec: SaasSpec, copy: SiteCopy, app: AppModel): strin
   const headline = mo.highlight ? (U('HighlightMarker'), '{hl(COPY.hero.headline, COPY.hero.accent)}') : '{COPY.hero.headline}'
 
   let hero: string
-  if (site.hero === 'editorial') {
+  if (lay.heroPhoto) {
+    const scene = (copy.hero.imageBrief || '').replace(/\s+/g, ' ').trim() || 'An everyday scene of the place and the people who use this product, in daylight.'
+    const photo = imageDirective({ brief: 'Documentary photograph, natural light, unposed, real people and a real place, restrained colour, no text anywhere.', ratio: '16:9' }, scene)
+    hero = `<section className="relative isolate flex min-h-[85vh] items-end overflow-hidden">
+          <img src="${photo}" alt={COPY.hero.imageAlt || BRAND} loading="eager" decoding="async" className="absolute inset-0 -z-20 h-full w-full object-cover" />
+          <div aria-hidden="true" className="absolute inset-0 -z-10 bg-black/55" />
+          <div className="mx-auto w-full max-w-6xl px-6 pb-16 pt-40 md:pb-24">
+            {COPY.hero.eyebrow && <p className="mb-4 font-mono text-sm text-white/80">{COPY.hero.eyebrow}</p>}
+            <h1 className="max-w-4xl font-display text-[clamp(2.5rem,6vw,5.5rem)] font-semibold leading-[1.02] tracking-tight text-white">{COPY.hero.headline}</h1>
+            <p className="mt-6 max-w-xl text-lg leading-relaxed text-white/85">{COPY.hero.sub}</p>
+            <div className="mt-8 flex flex-wrap items-center gap-4">
+              <Button size="lg" onClick={() => openApp()}>{COPY.hero.cta}</Button>
+              <a href="#features" className="text-sm font-medium text-white underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white">{COPY.hero.secondary}</a>
+            </div>
+            <p className="mt-4 text-xs text-white/70">Demo mode: nothing is charged, sent or stored on a server.</p>
+          </div>
+        </section>
+        <section className="mx-auto max-w-5xl px-6 py-16">${preview}</section>`
+  } else if (site.hero === 'editorial') {
     U('EditorialHeadline')
     hero = `<section className="mx-auto max-w-6xl px-6 pb-12 pt-32 md:pt-40">
           <EditorialHeadline as="h1" eyebrow={COPY.hero.eyebrow}>${headline}</EditorialHeadline>
