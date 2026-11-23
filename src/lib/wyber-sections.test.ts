@@ -14,8 +14,8 @@ describe('wyber-sections — source validity', () => {
     expect(WYBER_SECTIONS_PATH).toBe('src/wyber-sections.tsx')
   })
 
-  it('imports only the UI kit, react, framer-motion and lucide-react', () => {
-    const ALLOWED = new Set(['react', 'framer-motion', 'lucide-react', './wyber-ui'])
+  it('imports only the UI kit, react, react-dom (flushSync for view transitions), framer-motion and lucide-react', () => {
+    const ALLOWED = new Set(['react', 'react-dom', 'framer-motion', 'lucide-react', './wyber-ui'])
     for (const m of WYBER_SECTIONS_SOURCE.matchAll(/import\s+[^'"]*?from\s*['"]([^'"]+)['"]/g)) expect(ALLOWED.has(m[1]), m[1]).toBe(true)
   })
 

@@ -19,6 +19,24 @@ const SCRIPT_FONTS: Partial<Record<LangId, { css: string; family: string }>> = {
 }
 
 /** index.css for any generated product: the direction's tokens, fonts and base styles. `extra` is appended before the reduced-motion block. */
+/**
+ * Modern-CSS motion and type layer shared by every generated site (23 Nov 2026). Each part is progressive enhancement: the page is complete without it.
+ * - text-wrap: balance on headings and pretty on running text (no orphans, even line lengths).
+ * - Scroll-driven reveals: blocks marked data-sv fade and rise while they enter, driven by the scroll position (no JavaScript). Only where the
+ *   browser supports animation-timeline; the sections fall back to framer-motion elsewhere and never mark the block, so nothing is ever left hidden.
+ * - View Transitions: the default crossfade is tuned to the one easing curve; reduced motion switches it off.
+ */
+export const MOTION_CSS = `h1, h2, h3, h4 { text-wrap: balance; }
+p, li, dd, blockquote, figcaption { text-wrap: pretty; }
+::view-transition-group(*) { animation-duration: 0.45s; animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
+@keyframes wyber-sv { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    [data-sv] { animation: wyber-sv linear both; animation-timeline: view(); animation-range: entry calc(var(--sv-d, 0) * 1%) entry calc(35% + var(--sv-d, 0) * 1%); }
+  }
+}
+@media print { [data-sv] { animation: none; } }`
+
 export function renderTokensCss(directionId: string, langs: LangId[] = ['en'], extra = ''): string {
   const d = getDirectionById(directionId)
   if (!d) throw new Error('unknown direction ' + directionId)
@@ -48,9 +66,12 @@ body {
 }
 .font-display { font-family: var(--font-display); font-weight: ${d.fonts.displayWeight}; letter-spacing: ${d.fonts.displayTracking}; }
 .font-mono { font-family: var(--font-mono); }
+${MOTION_CSS}
 ${extra}
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
+  [data-sv] { animation: none; }
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
 }
 `
 }

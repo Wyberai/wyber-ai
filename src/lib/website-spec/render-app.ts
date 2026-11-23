@@ -374,7 +374,13 @@ export function renderApp(spec: BuildSpec, copy: SiteCopy, translations: Transla
 `
     : ''
   const names = [...used].sort()
+  if (sx) S(c, 'AnchorMorph', 'withViewTransition')
+  if (sx && mo.reveal) S(c, 'FactTicker')
   const secImport = c.sec.size ? 'import { ' + [...c.sec].sort().join(', ') + " } from './wyber-sections'\n" : ''
+  const tickerCode = sx && mo.reveal
+    ? `  const tickerItems = [OWNER.city, OWNER.hours, OWNER.phone, OWNER.address].filter(Boolean) as string[]
+`
+    : ''
   const phoneLink = "<a href={'tel:' + OWNER.phone} className=\"underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring\">{OWNER.phone}</a>"
   const mailLink = "<a href={'mailto:' + OWNER.email} className=\"underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring\">{OWNER.email}</a>"
   const factsCode = sx
@@ -410,7 +416,7 @@ export function renderApp(spec: BuildSpec, copy: SiteCopy, translations: Transla
     ? `  const langToggle = LANGS.length > 1 ? (
     <div role="group" aria-label={T.language} className="flex overflow-hidden rounded-md border border-border text-sm">
       {LANGS.map(l => (
-        <button key={l} type="button" aria-pressed={l === lang} onClick={() => setLang(l)} className={'px-3 py-1.5 font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring ' + (l === lang ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground')}>{UI[l].label}</button>
+        <button key={l} type="button" aria-pressed={l === lang} onClick={() => ${sx ? 'withViewTransition(() => setLang(l))' : 'setLang(l)'}} className={'px-3 py-1.5 font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring ' + (l === lang ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground')}>{UI[l].label}</button>
       ))}
     </div>
   ) : null
@@ -471,7 +477,7 @@ export default function App() {
   const links = [
     ${navLinks}
   ]
-${langToggleCode}${factsCode}  const headerCta = (langToggle || hasContact) ? (
+${langToggleCode}${factsCode}${tickerCode}  const headerCta = (langToggle || hasContact) ? (
     <div className="flex items-center gap-3">
       {langToggle}
       {hasContact && <Button size="sm" onClick={() => go(primaryHref)}>{COPY.hero.cta}</Button>}
@@ -480,6 +486,7 @@ ${langToggleCode}${factsCode}  const headerCta = (langToggle || hasContact) ? (
   return (
     <div className="min-h-screen bg-background text-foreground">
       ${mo.progress ? '<ScrollProgress />' : ''}
+      ${sx ? '<AnchorMorph />' : ''}
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-background focus:px-4 focus:py-2">{T.skip}</a>
       <${Header}
         brand={BRAND}
@@ -488,6 +495,7 @@ ${langToggleCode}${factsCode}  const headerCta = (langToggle || hasContact) ? (
       />
       <main id="main">
         ${heroJsx}
+        ${sx && mo.reveal ? '{tickerItems.length >= 3 && <div className="pb-4 md:pb-8"><FactTicker items={tickerItems} label={T.area} /></div>}' : ''}
         ${bodies.join('\n        ')}
       </main>
       ${mo.stickyCta ? '{hasContact && <StickyCTABar message={BRAND} ctaLabel={COPY.hero.cta} onCta={() => go(primaryHref)} />}' : ''}

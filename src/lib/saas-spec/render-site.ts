@@ -231,6 +231,7 @@ export function renderSite(spec: SaasSpec, copy: SiteCopy, app: AppModel): strin
         <p className="mx-auto max-w-[1320px] px-5 py-4 text-xs text-muted-foreground sm:px-8 lg:px-12">Demo mode: nothing is charged, sent or stored on a server.</p>`
     : ''
 
+  S('AnchorMorph')
   const imports = [...used].sort()
   return `${lay.pricing === 'cards' ? "import { Check } from 'lucide-react'\n" : ''}import { ${imports.join(', ')} } from './wyber-ui'
 import { ${[...sec].sort().join(', ')} } from './wyber-sections'
@@ -250,6 +251,7 @@ ${hlCode}export default function Site() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       ${mo.progress ? '<ScrollProgress />' : ''}
+      <AnchorMorph />
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-background focus:px-4 focus:py-2">Skip to content</a>
       <${headerName} brand={BRAND} links={links}${lay.heroPhoto ? ' over' : ''} cta={<Button size="sm" onClick={() => openApp()}>{COPY.hero.cta}</Button>} />
       <main id="main">

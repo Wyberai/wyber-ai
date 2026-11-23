@@ -16,8 +16,9 @@
 export const WYBER_SECTIONS_PATH = 'src/wyber-sections.tsx'
 
 export const WYBER_SECTIONS_SOURCE = String.raw`// Wyber Sections — page sections provided by the platform. Auto-injected; edits here are overwritten on every build.
-import React, { useState, useEffect } from 'react'
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
+import React, { useState, useEffect, useRef } from 'react'
+import { flushSync } from 'react-dom'
+import { motion, AnimatePresence, useReducedMotion, useMotionValue, useSpring, useTransform } from 'framer-motion'
 import { ArrowUpRight, Plus, Minus, Menu, X } from 'lucide-react'
 import { cn } from './wyber-ui'
 
@@ -34,13 +35,100 @@ type Tone = 'plain' | 'card' | 'rule'
 
 /* ------------------------------- primitives ------------------------------- */
 
-function Rv({ on, delay = 0, y = 16, className, children }: { on?: boolean; delay?: number; y?: number; className?: string; children?: React.ReactNode }) {
+const CALM_QUERY = '(prefers-reduced-motion: reduce)'
+// Scroll-driven reveals run on the compositor with no JavaScript; the CSS for them lives in index.css (data-sv). Browsers without them keep the framer-motion reveal.
+const SCROLL_REVEAL = typeof CSS !== 'undefined' && typeof CSS.supports === 'function' && CSS.supports('animation-timeline: view()')
+
+// load: the block is on the first screen, so it eases in once on load instead of waiting for a scroll position.
+function Rv({ on, delay = 0, y = 16, className, children, load }: { on?: boolean; delay?: number; y?: number; className?: string; children?: React.ReactNode; load?: boolean }) {
   const calm = useReducedMotion()
   if (!on || calm) return <div className={className}>{children}</div>
+  if (SCROLL_REVEAL && !load) return <div data-sv="" className={className} style={delay ? ({ '--sv-d': Math.min(30, Math.round(delay * 100)) } as React.CSSProperties) : undefined}>{children}</div>
   return (
     <motion.div className={className} initial={{ opacity: 0, y }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-40px' }} transition={{ duration: 0.7, delay, ease: EASE }}>
       {children}
     </motion.div>
+  )
+}
+
+type VTDoc = Document & { startViewTransition?: (update: () => void) => { finished: Promise<unknown> } }
+
+/** Runs a state update inside a native View Transition when the browser has one (and motion is allowed); otherwise just runs it. */
+export function withViewTransition(update: () => void): void {
+  const doc = document as VTDoc
+  const calm = typeof matchMedia === 'function' && matchMedia(CALM_QUERY).matches
+  if (typeof doc.startViewTransition !== 'function' || calm) { update(); return }
+  try { doc.startViewTransition(() => { flushSync(update) }) } catch { update() }
+}
+
+/** Clicking an in-page link morphs the link into the heading of the section it points to (shared element). No support, or reduced motion: the link works as a plain anchor. */
+export function AnchorMorph() {
+  useEffect(() => {
+    const doc = document as VTDoc
+    if (typeof doc.startViewTransition !== 'function' || typeof matchMedia !== 'function') return
+    const calm = matchMedia(CALM_QUERY)
+    const onClick = (e: MouseEvent) => {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || calm.matches) return
+      const link = (e.target as Element | null)?.closest?.('a[href^="#"]') as HTMLElement | null
+      const href = link?.getAttribute('href') ?? ''
+      if (!link || href.length < 2 || href === '#main' || href.startsWith('#/')) return
+      let id = href.slice(1)
+      try { id = decodeURIComponent(id) } catch { /* keep the raw id */ }
+      const target = document.getElementById(id)
+      const heading = target?.querySelector('h1, h2') as HTMLElement | null
+      if (!target || !heading || !doc.startViewTransition) return
+      e.preventDefault()
+      link.style.setProperty('view-transition-name', 'wyber-morph')
+      const done = () => heading.style.removeProperty('view-transition-name')
+      const t = doc.startViewTransition(() => {
+        link.style.removeProperty('view-transition-name')
+        heading.style.setProperty('view-transition-name', 'wyber-morph')
+        target.scrollIntoView({ behavior: 'instant' as ScrollBehavior, block: 'start' })
+        try { history.pushState(null, '', href) } catch { /* sandboxed frame */ }
+        heading.tabIndex = -1
+        heading.focus({ preventScroll: true })
+      })
+      t.finished.then(done, done)
+    }
+    document.addEventListener('click', onClick)
+    return () => document.removeEventListener('click', onClick)
+  }, [])
+  return null
+}
+
+/** A photograph that leans toward the pointer on a spring. Fine pointers only; static on touch and under reduced motion. */
+function Lean({ children, className, reach = 14, zoom = 1.05 }: { children?: React.ReactNode; className?: string; reach?: number; zoom?: number }) {
+  const calm = useReducedMotion()
+  const ref = useRef<HTMLDivElement>(null)
+  const mx = useMotionValue(0)
+  const my = useMotionValue(0)
+  const z = useSpring(1, { stiffness: 90, damping: 20 })
+  const sx = useSpring(mx, { stiffness: 110, damping: 16, mass: 0.7 })
+  const sy = useSpring(my, { stiffness: 110, damping: 16, mass: 0.7 })
+  const x = useTransform(sx, v => v * reach)
+  const y = useTransform(sy, v => v * reach)
+  useEffect(() => {
+    const el = ref.current
+    if (calm || !el || typeof matchMedia !== 'function' || !matchMedia('(hover: hover) and (pointer: fine)').matches) return
+    const root = (el.closest('[data-lean-root]') as HTMLElement | null) ?? el.parentElement
+    if (!root) return
+    const move = (e: PointerEvent) => {
+      if (e.pointerType !== 'mouse') return
+      const r = root.getBoundingClientRect()
+      if (!r.width || !r.height) return
+      mx.set(((e.clientX - r.left) / r.width - 0.5) * 2)
+      my.set(((e.clientY - r.top) / r.height - 0.5) * 2)
+    }
+    const leave = () => { mx.set(0); my.set(0) }
+    z.set(zoom)
+    root.addEventListener('pointermove', move)
+    root.addEventListener('pointerleave', leave)
+    return () => { root.removeEventListener('pointermove', move); root.removeEventListener('pointerleave', leave); z.set(1) }
+  }, [calm, mx, my, z, zoom])
+  return (
+    <div ref={ref} className={className}>
+      <motion.div className="h-full w-full [&_img]:h-full [&_img]:w-full [&_img]:object-cover" style={{ x, y, scale: z }}>{children}</motion.div>
+    </div>
   )
 }
 
@@ -105,10 +193,10 @@ function Actions({ cta, onCta, secondaryLabel, secondaryHref, dark, invert, clas
   )
 }
 
-function Frame({ media, ratio, className, style }: { media?: React.ReactNode; ratio?: string; className?: string; style?: React.CSSProperties }) {
+function Frame({ media, ratio, className, style, lean }: { media?: React.ReactNode; ratio?: string; className?: string; style?: React.CSSProperties; lean?: boolean }) {
   return (
     <div className={cn('relative overflow-hidden rounded-2xl border border-border bg-muted', className)} style={ratio ? { aspectRatio: ratio, ...style } : style}>
-      <div className="absolute inset-0 [&_img]:h-full [&_img]:w-full [&_img]:object-cover">{media}</div>
+      <div className="absolute inset-0 [&_img]:h-full [&_img]:w-full [&_img]:object-cover">{lean && media ? <Lean className="h-full w-full">{media}</Lean> : media}</div>
     </div>
   )
 }
@@ -243,10 +331,10 @@ type HeroProps = ActionProps & { eyebrow?: string; headline: string; accent?: st
 
 export function HeroSplitPhoto(p: HeroProps) {
   return (
-    <div className={cn(WRAP, 'pb-16 pt-32 md:pb-28 md:pt-44')}>
+    <div data-lean-root="" className={cn(WRAP, 'pb-16 pt-32 md:pb-28 md:pt-44')}>
       <div className="grid items-end gap-12 lg:grid-cols-12 lg:gap-16">
         <div className={cn(p.media ? 'lg:col-span-7' : 'lg:col-span-10', p.flip && p.media && 'lg:order-2')}>
-          <Rv on={p.reveal}>
+          <Rv load on={p.reveal}>
             <Eyebrow>{p.eyebrow}</Eyebrow>
             <h1 className="mt-6 font-display text-[clamp(2.75rem,6.2vw,6rem)] leading-[0.98] tracking-[-0.03em] text-foreground"><Accented text={p.headline} accent={p.accent} /></h1>
             <p className="mt-8 max-w-xl text-lg leading-relaxed text-muted-foreground md:text-xl">{p.sub}</p>
@@ -254,8 +342,8 @@ export function HeroSplitPhoto(p: HeroProps) {
           </Rv>
         </div>
         {p.media && (
-          <Rv on={p.reveal} delay={0.12} className={cn('lg:col-span-5', p.flip && 'lg:order-1')}>
-            <Frame media={p.media} ratio="4/5" className="lg:translate-y-8" />
+          <Rv load on={p.reveal} delay={0.12} className={cn('lg:col-span-5', p.flip && 'lg:order-1')}>
+            <Frame lean media={p.media} ratio="4/5" className="lg:translate-y-8" />
           </Rv>
         )}
       </div>
@@ -267,16 +355,16 @@ export function HeroSplitPhoto(p: HeroProps) {
 export function HeroEditorial(p: HeroProps) {
   return (
     <div className={cn(WRAP, 'pb-16 pt-32 md:pb-28 md:pt-44')}>
-      <Rv on={p.reveal}>
+      <Rv load on={p.reveal}>
         <Eyebrow>{p.eyebrow}</Eyebrow>
         <h1 className="mt-8 font-display text-[clamp(3rem,10.5vw,10.5rem)] leading-[0.9] tracking-[-0.045em] text-foreground"><Accented text={p.headline} accent={p.accent} /></h1>
       </Rv>
-      <Rv on={p.reveal} delay={0.1} className="mt-12 grid gap-8 border-t border-border pt-8 md:grid-cols-12 md:gap-12">
+      <Rv load on={p.reveal} delay={0.1} className="mt-12 grid gap-8 border-t border-border pt-8 md:grid-cols-12 md:gap-12">
         <p className="max-w-xl text-lg leading-relaxed text-muted-foreground md:col-span-6 md:text-xl">{p.sub}</p>
         <Actions {...p} className="md:col-span-6 md:justify-end" />
       </Rv>
       {p.media && (
-        <Rv on={p.reveal} delay={0.15} className="mt-14 md:mt-20">
+        <Rv load on={p.reveal} delay={0.15} className="mt-14 md:mt-20">
           <Frame media={p.media} className="aspect-[4/3] md:aspect-[21/9]" />
         </Rv>
       )}
@@ -288,14 +376,14 @@ export function HeroEditorial(p: HeroProps) {
 export function HeroCentered(p: HeroProps) {
   return (
     <div className={cn(WRAP, 'pb-16 pt-32 text-center md:pb-28 md:pt-44')}>
-      <Rv on={p.reveal} className="mx-auto max-w-4xl">
+      <Rv load on={p.reveal} className="mx-auto max-w-4xl">
         <Eyebrow className="justify-center">{p.eyebrow}</Eyebrow>
         <h1 className="mt-6 font-display text-[clamp(2.75rem,7.4vw,7rem)] leading-[0.96] tracking-[-0.035em] text-foreground"><Accented text={p.headline} accent={p.accent} /></h1>
         <p className="mx-auto mt-8 max-w-2xl text-lg leading-relaxed text-muted-foreground md:text-xl">{p.sub}</p>
         <Actions {...p} className="mt-10 justify-center" />
       </Rv>
       {p.media && (
-        <Rv on={p.reveal} delay={0.15} className="mx-auto mt-16 max-w-3xl md:mt-24">
+        <Rv load on={p.reveal} delay={0.15} className="mx-auto mt-16 max-w-3xl md:mt-24">
           <Frame media={p.media} ratio="5/6" style={{ borderRadius: '999px 999px 24px 24px' }} className="mx-auto" />
         </Rv>
       )}
@@ -307,15 +395,15 @@ export function HeroCentered(p: HeroProps) {
 export function HeroFullBleed(p: HeroProps) {
   const photo = Boolean(p.media)
   return (
-    <div className={cn('relative flex min-h-[92svh] flex-col justify-end overflow-hidden', photo ? 'bg-black' : 'bg-foreground')}>
+    <div data-lean-root="" className={cn('relative flex min-h-[92svh] flex-col justify-end overflow-hidden', photo ? 'bg-black' : 'bg-foreground')}>
       {photo && (
         <>
-          <div className="absolute inset-0 [&_img]:h-full [&_img]:w-full [&_img]:object-cover">{p.media}</div>
+          <Lean className="absolute inset-0">{p.media}</Lean>
           <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/20" />
         </>
       )}
       <div className={cn(WRAP, 'relative pb-12 pt-40 md:pb-16', photo ? 'text-white' : 'text-background')}>
-        <Rv on={p.reveal}>
+        <Rv load on={p.reveal}>
           {p.eyebrow && (
             <p className={cn('flex items-center gap-3 font-mono text-xs', photo ? 'text-white/80' : 'text-background/70')}>
               <span aria-hidden="true" className={cn('h-px w-8', photo ? 'bg-white/60' : 'bg-background/50')} />{p.eyebrow}
@@ -341,7 +429,7 @@ export function HeroMinimal(p: HeroProps) {
           <p className="font-mono text-xs text-muted-foreground">{p.eyebrow}</p>
           <span aria-hidden="true" className="mt-6 block h-40 w-px bg-border" />
         </div>
-        <Rv on={p.reveal} className="md:col-span-10">
+        <Rv load on={p.reveal} className="md:col-span-10">
           {p.eyebrow && <Eyebrow className="mb-6 md:hidden">{p.eyebrow}</Eyebrow>}
           <h1 className="font-display text-[clamp(2.9rem,7.6vw,7.5rem)] leading-[0.97] tracking-[-0.035em] text-foreground"><Accented text={p.headline} accent={p.accent} /></h1>
           <div className="mt-12 grid gap-8 md:grid-cols-10 md:gap-12">
@@ -736,6 +824,40 @@ export function VisitList({ eyebrow, title, description, facts, children, tone, 
   )
 }
 
+/* ---------------------------------- ticker ---------------------------------- */
+
+// A slow strip of short facts the owner actually gave (place, hours, phone). Fewer than three facts renders nothing: a ticker needs something to say.
+// Plain CSS keyframes (animate-marquee), so it runs without JavaScript. Under reduced motion it stops and wraps as ordinary text; hover, focus and the pause button also stop it.
+export function FactTicker({ items, label }: { items: string[]; label?: string }) {
+  const [paused, setPaused] = useState(false)
+  const clean = items.map(x => (x || '').trim()).filter(Boolean)
+  if (clean.length < 3) return null
+  const reps = Math.max(2, Math.ceil(8 / clean.length))
+  const run = Array.from({ length: reps }, () => clean).flat()
+  const row = (copy: boolean) => (
+    <ul aria-hidden={copy ? true : undefined} className="flex shrink-0 items-center gap-10 pr-10 motion-reduce:flex-wrap motion-reduce:gap-x-8 motion-reduce:gap-y-2 motion-reduce:pr-0">
+      {run.map((t, i) => (
+        <li key={i} className={cn('flex items-center gap-10 whitespace-nowrap font-display text-2xl text-foreground md:text-3xl motion-reduce:gap-0 motion-reduce:whitespace-normal', (copy || i >= clean.length) && 'motion-reduce:hidden')} aria-hidden={!copy && i >= clean.length ? true : undefined}>
+          {t}<span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-sm bg-primary motion-reduce:hidden" />
+        </li>
+      ))}
+    </ul>
+  )
+  return (
+    <div role="group" aria-label={label || 'Details'} className={cn(WRAP, 'relative')}>
+      <div className="group overflow-hidden border-y border-border py-5 [mask-image:linear-gradient(to_right,transparent,black_6%,black_94%,transparent)] motion-reduce:overflow-visible motion-reduce:[mask-image:none]">
+        <div
+          className="flex w-max animate-marquee motion-reduce:w-auto motion-reduce:animate-none group-hover:[animation-play-state:paused] group-focus-within:[animation-play-state:paused]"
+          style={{ animationDuration: Math.max(24, run.length * 5) + 's', animationPlayState: paused ? 'paused' : undefined }}
+        >
+          {row(false)}{row(true)}
+        </div>
+      </div>
+      <button type="button" onClick={() => setPaused(v => !v)} className={cn('absolute right-5 top-1 rounded-md bg-background px-2 py-1 text-xs text-muted-foreground sm:right-8 lg:right-12 motion-reduce:hidden sr-only focus-visible:not-sr-only', FOCUS)}>{paused ? 'Play ticker' : 'Pause ticker'}</button>
+    </div>
+  )
+}
+
 /* ---------------------------------- footers ---------------------------------- */
 
 type FooterProps = { brand: string; description?: string; columns?: { title: string; links: SectionLink[] }[]; note?: string }
@@ -798,4 +920,5 @@ export const WYBER_SECTION_NAMES = [
   'FeaturesIndex', 'FeaturesCards', 'FeaturesBento', 'FeaturesGrid',
   'StepsColumns', 'StepsTimeline', 'AboutSplit', 'AboutBand', 'FaqSplit', 'FaqBoxed',
   'CtaBand', 'CtaSplit', 'CtaPhoto', 'PhotoBand', 'ContactSplit', 'ContactCentered', 'VisitList', 'FooterGiant', 'FooterSlim',
+  'FactTicker', 'AnchorMorph', 'withViewTransition',
 ] as const
