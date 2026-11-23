@@ -12,7 +12,7 @@ export type MobileGenerateResult =
   | { ok: true; text: string; spec: MobileSpec; model: AppModel; usage: { inputTokens: number; outputTokens: number }; notes: string[]; paths: string[] }
   | { ok: false; reason: string; usage: { inputTokens: number; outputTokens: number } }
 
-const INDIAN = /\b(india|indian|rs\.?|inr|gst|udhaar|khata|kirana)\b|₹|\b(ahmedabad|surat|vadodara|rajkot|pune|mumbai|delhi|bengaluru|bangalore|hyderabad|chennai|kolkata|jaipur|jodhpur|udaipur|lucknow|indore|bhopal)\b/i
+import { isIndianPrompt } from '../build-spec/locale'
 
 /** The web app's model prompt, reworded for a phone: short labels, records stay on the phone. The model still writes data only, never code. */
 export function buildMobileModelPrompt(brief: AppIntentBrief, businessPrompt: string): { system: string; user: string } {
@@ -43,7 +43,7 @@ export async function generateMobileApp(input: MobileGenerateInput, deps: { writ
   const model = normalizeModel(asked.value)
 
   let files: Record<string, string>
-  try { files = renderMobileApp(spec, model, INDIAN.test(input.prompt) ? '₹' : '$', { name: facts.name, email: facts.email }).files } catch (e) { return { ok: false, reason: 'render: ' + String(e), usage } }
+  try { files = renderMobileApp(spec, model, isIndianPrompt(input.prompt) ? '₹' : '$', { name: facts.name, email: facts.email }).files } catch (e) { return { ok: false, reason: 'render: ' + String(e), usage } }
   const order = Object.keys(files).sort((a, b) => (a === 'App.tsx' ? 1 : 0) - (b === 'App.tsx' ? 1 : 0))
   const text = order.map(p => '[progress: Wrote ' + p + ']\n<file path="' + p + '">\n' + files[p] + '\n</file>\n').join('')
   return { ok: true, text, spec, model, usage, notes, paths: order }

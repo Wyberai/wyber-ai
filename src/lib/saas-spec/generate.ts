@@ -1,6 +1,7 @@
 import { askForJson } from '../build-spec/ask'
 import { parseFactsFromPrompt, stripFactsSuffix } from '../build-spec/facts'
 import type { ModelCall, ModelReply } from '../build-spec/types'
+import { isIndianPrompt } from '../build-spec/locale'
 import { normalizeCopy, validateCopy } from '../website-spec/copy'
 import type { SiteCopy } from '../website-spec/types'
 import { buildSaasCopyPrompt, buildSaasModelPrompt, normalizeSaasModel, validateSaasModel } from './model'
@@ -13,8 +14,8 @@ export type SaasGenerateResult =
   | { ok: true; text: string; spec: SaasSpec; model: SaasModel; usage: { inputTokens: number; outputTokens: number }; notes: string[]; paths: string[] }
   | { ok: false; reason: string; usage: { inputTokens: number; outputTokens: number } }
 
-const CURRENCIES: [RegExp, string][] = [[/₹|\b(india|indian|inr|rs\.?|gst|ahmedabad|surat|mumbai|delhi|pune|bengaluru|bangalore|hyderabad|chennai|kolkata|jaipur)\b/i, '₹'], [/€|\beur(o|os)?\b/i, '€'], [/£|\bgbp\b/i, '£']]
-export const currencyFor = (prompt: string): string => CURRENCIES.find(([re]) => re.test(prompt))?.[1] ?? '$'
+const CURRENCIES: [RegExp, string][] = [[/€|\beur(o|os)?\b/i, '€'], [/£|\bgbp\b/i, '£']]
+export const currencyFor = (prompt: string): string => (isIndianPrompt(prompt) ? '₹' : CURRENCIES.find(([re]) => re.test(prompt))?.[1] ?? '$')
 
 /** A short list of file blocks, entry file last, the same shape the website and web app pillars return. */
 export function toFileBlocks(files: Record<string, string>): { text: string; paths: string[] } {

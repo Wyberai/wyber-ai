@@ -11,7 +11,7 @@ export type AppGenerateResult =
   | { ok: true; text: string; spec: AppSpec; model: AppModel; usage: { inputTokens: number; outputTokens: number }; notes: string[]; paths: string[] }
   | { ok: false; reason: string; usage: { inputTokens: number; outputTokens: number } }
 
-const INDIAN = /\b(india|indian|rs\.?|inr|gst|udhaar|khata|kirana)\b|₹|\b(ahmedabad|surat|vadodara|rajkot|pune|mumbai|delhi|bengaluru|bangalore|hyderabad|chennai|kolkata|jaipur|jodhpur|udaipur|lucknow|indore|bhopal)\b/i
+import { isIndianPrompt } from '../build-spec/locale'
 
 export async function generateApp(input: AppGenerateInput, deps: { writeModel: ModelCall }): Promise<AppGenerateResult> {
   const usage = { inputTokens: 0, outputTokens: 0 }
@@ -32,7 +32,7 @@ export async function generateApp(input: AppGenerateInput, deps: { writeModel: M
   const model = normalizeModel(asked.value)
 
   let files: Record<string, string>
-  try { files = renderApp(spec, model, INDIAN.test(input.prompt) ? '₹' : '$').files } catch (e) { return { ok: false, reason: 'render: ' + String(e), usage } }
+  try { files = renderApp(spec, model, isIndianPrompt(input.prompt) ? '₹' : '$').files } catch (e) { return { ok: false, reason: 'render: ' + String(e), usage } }
   const order = Object.keys(files).sort((a, b) => (a === 'src/App.tsx' ? 1 : 0) - (b === 'src/App.tsx' ? 1 : 0))
   const text = order.map(p => '[progress: Wrote ' + p + ']\n<file path="' + p + '">\n' + files[p] + '\n</file>\n').join('')
   return { ok: true, text, spec, model, usage, notes, paths: order }

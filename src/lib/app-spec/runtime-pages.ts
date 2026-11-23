@@ -128,7 +128,7 @@ export default function EntityPage(props: { entity: Entity; api: Api }) {
             <div>
               <label htmlFor="list-status" className="sr-only">{'Filter by ' + statusField.label.toLowerCase()}</label>
               <select id="list-status" value={status} onChange={e => setStatus(e.target.value)} className={control}>
-                <option value="all">{'All ' + statusField.label.toLowerCase()}</option>
+                <option value="all">{'All ' + statusField.label.toLowerCase() + (/s$/i.test(statusField.label) ? '' : 's')}</option>
                 {(statusField.options || []).map(o => <option key={o} value={o}>{o}</option>)}
               </select>
             </div>
@@ -227,11 +227,11 @@ export default function EntityPage(props: { entity: Entity; api: Api }) {
       {board && statusField && all.length > 0 ? (
         <section aria-label="Stages" data-noprint className="space-y-3">
           <h2 className="font-display text-lg font-semibold text-foreground">By stage</h2>
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="flex items-start gap-3 overflow-x-auto pb-2">
             {(statusField.options || []).map(stage => {
               const inStage = rows.filter(r => String(r[statusField.id]) === stage)
               return (
-                <div key={stage} className="rounded-xl border border-border bg-muted/40 p-3">
+                <div key={stage} className="min-w-[13rem] flex-1 rounded-xl border border-border bg-muted/40 p-3">
                   <div className="mb-2 flex items-center justify-between">
                     <h3 className="text-sm font-medium text-foreground">{stage}</h3>
                     <span className="text-xs text-muted-foreground">{inStage.length}</span>
