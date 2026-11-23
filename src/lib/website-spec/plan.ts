@@ -1,4 +1,5 @@
-import { dealDirections } from '../direction-brief'
+import { dealDirections, directionFit } from '../direction-brief'
+import { pickWeighted, poolSize } from '../design-variety'
 import { getDirectionById, type Direction } from '../design-directions'
 import { seededRandom } from '../build-spec/random'
 import { languagesFor } from '../build-spec/languages'
@@ -52,12 +53,24 @@ export function pickWebsiteDirection(prompt: string, o: PlanOptions): Direction 
   const explicit = getDirectionById(o.directionId)
   if (explicit) return explicit
   const rnd = seededRandom(o.seed)
-  // Take the best fits for the business, then let the stated feel decide the order (stable for equal scores).
+  // Take the best fits for the business, then let the stated feel decide the order (stable for equal scores). A clear business match keeps a
+  // tight pool; a vague brief gets a wider one. The pick among them is weighted by design-variety (corpus hue shares, a cap on cream
+  // grounds), so two briefs in the same trade rarely land on the same ground, hue and hero.
   const wide = dealDirections(prompt, 9, { projectType: 'website', rnd })
-  const top = wide.map((d, i) => ({ d, i, s: feelScore(prompt, d) })).sort((a, b) => b.s - a.s || a.i - b.i).slice(0, 3).map(x => x.d)
+  const ranked = wide.map((d, i) => ({ d, i, s: feelScore(prompt, d) })).sort((a, b) => b.s - a.s || a.i - b.i)
+  const topFeel = ranked[0]?.s ?? 0
+  const bestFit = Math.max(0, ...wide.map(d => directionFit(d, prompt)))
+  // a stated feel narrows the pool to the directions that deliver it
+  let eligible = topFeel > 0 ? ranked.filter(x => x.s === topFeel) : ranked
+  // with no stated feel, a dark direction that does not fit the trade at all is only a filler: a dark poster studio for a bakery or a
+  // dental clinic is the same wrong answer every time (it filled the second slot of nearly every brief). Fit decides, not the mode bonus.
+  if (topFeel === 0) {
+    const sane = eligible.filter(x => !(x.d.palette.mode === 'dark' && directionFit(x.d, prompt) < 1))
+    if (sane.length >= 3) eligible = sane
+  }
+  const top = eligible.slice(0, poolSize(bestFit)).map(x => x.d)
   const fresh = top.filter(d => !(o.avoid ?? []).includes(d.id))
-  const pool = fresh.length ? fresh : top
-  return pool[Math.floor(rnd() * pool.length)]
+  return pickWeighted(fresh.length ? fresh : top, rnd, d => directionFit(d, prompt))
 }
 
 /** The direction's own motion note decides what moves; the seed varies the optional extras so two sites never share a rhythm. */
