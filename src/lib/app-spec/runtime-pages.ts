@@ -313,23 +313,48 @@ export default function EntityPage(props: { entity: Entity; api: Api }) {
 }
 `
 
-export const HOME_TSX = String.raw`import { ArrowRight, MessageCircle, Plus } from 'lucide-react'
+export const HOME_TSX = String.raw`import { AlertCircle, ArrowRight, BarChart3, CheckCircle2, MessageCircle, Plus, Wallet } from 'lucide-react'
 import { Button, Card, StatBlock } from '../wyber-ui'
 import { APP } from '../schema'
 import { list } from '../lib/db'
 import { attention, dueLabel, formatMoney, hasSample, isEmpty, metricValue, reminderEligible, reminderLink, titleOf } from '../lib/logic'
 import type { Api } from './api'
 
+// A small original illustration for empty states: three stacked cards in the brand colour and neutrals. Flat shapes only.
+export function Art() {
+  return (
+    <svg viewBox="0 0 160 120" className="h-28 w-40 shrink-0" role="img" aria-label="Illustration of three stacked cards">
+      <rect x="22" y="14" width="104" height="68" rx="12" className="fill-muted stroke-border" strokeWidth="1.5" transform="rotate(-6 74 48)" />
+      <rect x="30" y="26" width="104" height="68" rx="12" className="fill-card stroke-border" strokeWidth="1.5" transform="rotate(3 82 60)" />
+      <rect x="38" y="38" width="104" height="68" rx="12" className="fill-card stroke-foreground" strokeWidth="1.5" />
+      <rect x="52" y="54" width="40" height="8" rx="4" className="fill-primary" />
+      <rect x="52" y="70" width="72" height="6" rx="3" className="fill-muted" />
+      <rect x="52" y="82" width="54" height="6" rx="3" className="fill-muted" />
+    </svg>
+  )
+}
+
+function metricIcon(label: string, money: boolean | undefined) {
+  if (/late|overdue|unpaid|due|pending|missed|open/i.test(label)) return <AlertCircle size={18} aria-hidden="true" />
+  if (/paid|collected|done|complete|filed|won|closed/i.test(label)) return <CheckCircle2 size={18} aria-hidden="true" />
+  return money ? <Wallet size={18} aria-hidden="true" /> : <BarChart3 size={18} aria-hidden="true" />
+}
+
 export default function HomePage({ api }: { api: Api }) {
   const { store } = api
   const empty = isEmpty(store)
+  const first = APP.entities[0]
   const metrics = (
-    <section aria-label="Numbers" className="grid grid-cols-2 gap-4 lg:grid-cols-3">
+    <section aria-label="Numbers" className="grid grid-cols-2 gap-4 lg:grid-cols-4">
       {APP.metrics.map(m => {
         const v = metricValue(store, m)
         return (
-          <Card key={m.id} className="p-5">
-            <StatBlock value={m.money ? formatMoney(v) : v} label={m.label} />
+          <Card key={m.id} className="overflow-hidden p-0 shadow-sm">
+            <div aria-hidden="true" className="h-1 bg-primary" />
+            <div className="p-5">
+              <span className="mb-4 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-muted text-foreground">{metricIcon(m.label, m.money)}</span>
+              <StatBlock value={m.money ? formatMoney(v) : v} label={m.label} />
+            </div>
           </Card>
         )
       })}
@@ -339,12 +364,15 @@ export default function HomePage({ api }: { api: Api }) {
   const needs = due.length > 0 ? (
     <section aria-label="Needs attention" className="space-y-3">
       <h2 className="font-display text-lg font-semibold text-foreground">Needs attention</h2>
-      <ul className="divide-y divide-border rounded-xl border border-border bg-card">
+      <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
         {due.map(d => (
-          <li key={d.entity.id + d.row.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-            <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-foreground">{titleOf(d.entity, d.row)}</p>
-              <p className="text-xs text-muted-foreground">{d.entity.singular + ' - ' + dueLabel(d.days)}</p>
+          <li key={d.entity.id + d.row.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5">
+            <div className="flex min-w-0 items-center gap-3">
+              <span aria-hidden="true" className={'h-2.5 w-2.5 shrink-0 rounded-full ' + (d.days < 0 ? 'bg-destructive' : 'bg-primary')} />
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium text-foreground">{titleOf(d.entity, d.row)}</p>
+                <p className="text-xs text-muted-foreground">{d.entity.singular + ' - ' + dueLabel(d.days)}</p>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               {reminderEligible(d.entity, d.row) && reminderLink(store, d.entity, d.row) ? (
@@ -360,43 +388,42 @@ export default function HomePage({ api }: { api: Api }) {
   const shortcuts = (
     <section aria-label="Shortcuts" className="grid gap-4 sm:grid-cols-2">
       {APP.entities.map(e => (
-        <Card key={e.id} className="flex flex-col justify-between gap-4 p-5">
+        <button key={e.id} type="button" onClick={() => api.go(e.id)} className="group flex flex-col justify-between gap-4 rounded-2xl border border-border bg-card p-5 text-left shadow-sm transition-colors hover:border-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring">
           <div>
             <h2 className="font-display text-lg font-semibold text-foreground">{e.label}</h2>
             <p className="mt-1 text-sm text-muted-foreground">{e.blurb}</p>
           </div>
           <div className="flex items-center justify-between gap-3">
             <p className="text-sm text-muted-foreground">{list(store, e.id).length + ' saved'}</p>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => api.go(e.id)}>Open<ArrowRight size={16} aria-hidden="true" /></Button>
-            </div>
+            <span className="inline-flex items-center gap-1 text-sm font-medium text-foreground">Open<ArrowRight size={16} aria-hidden="true" className="transition-transform group-hover:translate-x-0.5" /></span>
           </div>
-        </Card>
+        </button>
       ))}
     </section>
   )
   return (
     <div className="space-y-8">
-      <header>
-        <h1 className="font-display text-2xl font-semibold text-foreground md:text-3xl">{store.settings.businessName ? store.settings.businessName : APP.name}</h1>
-        <p className="mt-2 max-w-2xl text-muted-foreground">{APP.homeIntro}</p>
-      </header>
+      <Card className="flex flex-wrap items-center justify-between gap-6 rounded-3xl p-6 shadow-sm md:p-8">
+        <div className="min-w-0 max-w-2xl">
+          <p className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground"><span aria-hidden="true" className="h-2 w-2 rounded-full bg-primary" />{APP.tagline.replace(/[.!?]+$/, '')}</p>
+          <h1 className="mt-3 font-display text-3xl font-semibold tracking-tight text-foreground md:text-5xl">{store.settings.businessName ? store.settings.businessName : APP.name}</h1>
+          <p className="mt-3 text-base text-muted-foreground md:text-lg">{APP.homeIntro}</p>
+          {first ? (
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Button onClick={() => api.go(first.id)}><Plus size={16} aria-hidden="true" />{'Add ' + first.singular.toLowerCase()}</Button>
+              {hasSample(store) ? null : <Button variant="outline" onClick={api.loadSample}>Load sample data (demo)</Button>}
+            </div>
+          ) : null}
+        </div>
+        <div className="hidden md:block"><Art /></div>
+      </Card>
       {empty ? (
-        <Card className="flex flex-wrap items-center justify-between gap-4 p-5">
-          <div>
-            <h2 className="font-medium text-foreground">Nothing saved yet</h2>
-            <p className="mt-1 text-sm text-muted-foreground">Start with your own first record, or look around with sample data. Sample rows are marked Demo and can be removed in one click.</p>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <Button onClick={() => api.go(APP.entities[0].id)}><Plus size={16} aria-hidden="true" />{'Add ' + APP.entities[0].singular.toLowerCase()}</Button>
-            <Button variant="outline" onClick={api.loadSample}>Load sample data (demo)</Button>
-          </div>
-        </Card>
+        <p className="rounded-2xl border border-dashed border-border bg-card/60 px-5 py-4 text-sm text-muted-foreground">Nothing saved yet. Start with your own first record, or load sample data to look around. Sample rows are marked Demo and can be removed in one click.</p>
       ) : hasSample(store) ? (
-        <Card className="flex flex-wrap items-center justify-between gap-4 p-5">
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-card px-5 py-4 shadow-sm">
           <p className="text-sm text-muted-foreground">You are looking at sample data marked Demo. Your own entries stay when you remove it.</p>
           <Button variant="outline" size="sm" onClick={api.removeSample}>Remove sample data</Button>
-        </Card>
+        </div>
       ) : null}
       {APP.layout.home === 'metrics-first' ? <>{metrics}{needs}{shortcuts}</> : <>{needs}{shortcuts}{metrics}</>}
     </div>

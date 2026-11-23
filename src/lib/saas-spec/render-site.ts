@@ -58,10 +58,10 @@ export function renderSite(spec: SaasSpec, copy: SiteCopy, app: AppModel): strin
   const faq = site.sections.find(s => s.kind === 'faq')
   const cta = site.sections.find(s => s.kind === 'cta')
   const band = (i: number) =>
-    lay.rhythm === 'plain' ? 'py-24 md:py-32' : lay.rhythm === 'rules' ? 'border-t border-border py-20 md:py-28' : 'border-t border-border py-20 md:py-28' + (i % 2 === 1 ? ' bg-card' : '')
+    lay.rhythm === 'plain' ? 'py-24 md:py-32' : lay.rhythm === 'rules' ? 'border-t border-border py-20 md:py-28' : 'border-t border-border py-20 md:py-28' + (i % 2 === 1 ? ' bg-muted/60' : '')
 
   const pv = previewOf(app)
-  const preview = `<BrowserFrame url="Preview with sample data" className="w-full">
+  const preview = `<div className="rounded-3xl bg-primary/10 p-3 sm:p-6"><BrowserFrame url="Preview with sample data" className="w-full shadow-xl">
               <div className="p-4 sm:p-5">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="font-display text-base font-semibold text-foreground">${JSON.stringify(pv.entity.label).slice(1, -1)}</p>
@@ -79,7 +79,7 @@ export function renderSite(spec: SaasSpec, copy: SiteCopy, app: AppModel): strin
                   </table>
                 </div>
               </div>
-            </BrowserFrame>`
+            </BrowserFrame></div>`
 
   const buttons = `<div className="mt-8 flex flex-wrap items-center gap-4">
               <Button size="lg" onClick={() => openApp()}>{COPY.hero.cta}</Button>
@@ -150,7 +150,7 @@ export function renderSite(spec: SaasSpec, copy: SiteCopy, app: AppModel): strin
             {${list}.map((it: { title: string; text: string }, i: number) => (
               <${tag('item')} key={it.title} className={i === 0 || i === 3 ? 'md:col-span-2' : ''}>
                 <Card className="h-full">
-                  <p className="font-mono text-xs text-muted-foreground">{String(i + 1).padStart(2, '0')}</p>
+                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-primary font-mono text-xs text-primary-foreground">{String(i + 1).padStart(2, '0')}</span>
                   <h3 className="mt-3 font-display text-lg font-semibold text-foreground">{it.title}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{it.text}</p>
                 </Card>
@@ -162,7 +162,7 @@ export function renderSite(spec: SaasSpec, copy: SiteCopy, app: AppModel): strin
             {${list}.map((it: { title: string; text: string }, i: number) => (
               <${tag('item')} key={it.title}>
                 <Card className="h-full">
-                  <p className="font-mono text-xs text-muted-foreground">{String(i + 1).padStart(2, '0')}</p>
+                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-primary font-mono text-xs text-primary-foreground">{String(i + 1).padStart(2, '0')}</span>
                   <h3 className="mt-3 font-display text-lg font-semibold text-foreground">{it.title}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{it.text}</p>
                 </Card>
@@ -287,11 +287,11 @@ export function renderSite(spec: SaasSpec, copy: SiteCopy, app: AppModel): strin
   ].filter(Boolean).join('\n        ')
 
   const ctaBlock = cta
-    ? `<section className="mx-auto max-w-6xl px-6 py-20"><div className="rounded-2xl border border-border bg-card px-6 py-14 text-center md:px-16 md:py-20">
-          <h2 className="mx-auto max-w-2xl font-display text-3xl font-semibold tracking-tight text-foreground md:text-5xl">{${cp(cta.id)}.title}</h2>
-          {${cp(cta.id)}.description && <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-muted-foreground">{${cp(cta.id)}.description}</p>}
+    ? `<section className="mx-auto max-w-6xl px-6 py-20"><div className="rounded-3xl bg-foreground px-6 py-14 text-center text-background md:px-16 md:py-20">
+          <h2 className="mx-auto max-w-2xl font-display text-3xl font-semibold tracking-tight text-background md:text-5xl">{${cp(cta.id)}.title}</h2>
+          {${cp(cta.id)}.description && <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-background/80">{${cp(cta.id)}.description}</p>}
           <div className="mt-8"><Button size="lg" onClick={() => openApp()}>{${cp(cta.id)}.button || COPY.hero.cta}</Button></div>
-          <p className="mt-4 text-xs text-muted-foreground">Demo mode: nothing is charged, sent or stored on a server.</p>
+          <p className="mt-4 text-xs text-background/70">Demo mode: nothing is charged, sent or stored on a server.</p>
         </div></section>`
     : ''
 

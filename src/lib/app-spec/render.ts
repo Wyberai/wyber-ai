@@ -145,18 +145,21 @@ ${extra.map(x => "    : view === '" + x.id + "' ? <" + x.component + ' api={api}
   const phoneTabs = [...NAV.slice(0, 4), { id: 'more', label: 'More', icon: <Menu size={18} aria-hidden="true" /> }]
 
   return (
-    <div className="min-h-screen bg-background text-foreground lg:flex">
+    <div className="min-h-screen bg-muted/50 text-foreground lg:flex">
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-background focus:px-4 focus:py-2">Skip to content</a>
       <aside className="hidden border-r border-border bg-card lg:block lg:w-64 lg:shrink-0" data-noprint>
         <div className="sticky top-0 flex h-screen flex-col">
-          <p className="px-5 pb-3 pt-6 font-display text-lg font-semibold text-foreground">{store.settings.businessName || APP.name}</p>
+          <div className="flex items-center gap-3 px-5 pb-4 pt-6">
+            <span aria-hidden="true" className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary font-display text-base font-semibold text-primary-foreground">{(store.settings.businessName || APP.name).trim().charAt(0).toUpperCase()}</span>
+            <p className="min-w-0 truncate font-display text-lg font-semibold text-foreground">{store.settings.businessName || APP.name}</p>
+          </div>
           <div className="min-h-0 flex-1 overflow-auto px-1">
             <SidebarNav items={NAV} active={view} onChange={api.go} className="border-0 bg-transparent" />
           </div>
         </div>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3 md:px-8" data-noprint>
+        <header className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 md:px-8" data-noprint>
           <p className="font-display text-base font-semibold text-foreground lg:invisible">{store.settings.businessName || APP.name}</p>
           <p className="text-xs text-muted-foreground" role="status">
             Saved in this browser only{saved ? '' : ' (this browser is blocking storage, so changes will be lost when you close the page)'}
@@ -187,7 +190,7 @@ ${extra.map(x => "    : view === '" + x.id + "' ? <" + x.component + ' api={api}
 
       <Dialog open={!store.settings.setupDone} onClose={() => setStore(s => ({ ...s, settings: { ...s.settings, setupDone: true } }))} title={'Welcome to ' + APP.name}>
         <form className="space-y-4" onSubmit={e => { e.preventDefault(); setStore(s => ({ ...s, settings: { businessName: bizName.trim(), setupDone: true } })) }}>
-          <p className="text-sm text-muted-foreground">{APP.tagline} Everything you add stays in this browser. Add your business name to put it at the top, or skip it.</p>
+          <p className="text-sm text-muted-foreground">{APP.tagline.replace(/[.!?]+$/, '') + '.'} Everything you add stays in this browser. Add your business name to put it at the top, or skip it.</p>
           <div>
             <label htmlFor="biz-name" className="mb-1.5 block text-sm font-medium text-foreground">Business name (optional)</label>
             <Input id="biz-name" value={bizName} onChange={e => setBizName(e.target.value)} autoComplete="organization" />
