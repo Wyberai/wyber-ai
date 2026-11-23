@@ -5,7 +5,7 @@ import { repairBlankBrandPanel } from './auth-brand-panel'
 import { sanitizeFiles } from './sanitize-files'
 
 // The real Login.tsx from the published "Ironclad Coaching Ops" app (16 Nov): overlay and grain, no picture.
-const real = readFileSync(join(__dirname, 'auth-brand-panel.fixture.txt'), 'utf8')
+const real = readFileSync(join(__dirname, 'auth-brand-panel.fixture.txt'), 'utf8').replace(/\r\n/g, '\n') // a Windows checkout can turn the fixture into CRLF
 
 describe('repairBlankBrandPanel', () => {
   it('puts a picture under the overlay of the real broken Login.tsx', () => {
