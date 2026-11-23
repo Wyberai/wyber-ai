@@ -47,11 +47,15 @@ export const APP: {
 `
 }
 
-export function renderAppTsx(model: AppModel): string {
+/** A fixed page a pillar adds to the shell (for example the Replace-your-SaaS coverage page). It receives the same `api` as every screen. `file` is the path under src/ without an extension. */
+export interface ExtraPage { id: string; label: string; icon: string; file: string; component: string }
+
+export function renderAppTsx(model: AppModel, extra: ExtraPage[] = []): string {
   const nav = [
     { id: 'home', label: 'Home', icon: 'Home' },
     // a child entity (points at another entity, has no status or due date of its own) gets the plain list icon, so it never shares one with its parent
     ...model.entities.map(e => ({ id: e.id, label: e.label, icon: e.fields.some(f => f.type === 'ref') && !e.status && !e.due ? 'ListChecks' : iconFor(e.label + ' ' + e.singular) })),
+    ...extra.map(x => ({ id: x.id, label: x.label, icon: x.icon })),
     { id: 'history', label: 'History', icon: 'History' },
     { id: 'privacy', label: 'Privacy', icon: 'ShieldCheck' },
   ]
@@ -68,6 +72,7 @@ import EntityPage from './components/EntityPage'
 import HistoryPage from './components/HistoryPage'
 import HomePage from './components/HomePage'
 import PrivacyPage from './components/PrivacyPage'
+${extra.map(x => 'import ' + x.component + " from './" + x.file + "'").join('\n')}
 
 const NAV = [
 ${navJs},
@@ -133,6 +138,7 @@ export default function App() {
 
   const page = view === 'home' ? <HomePage api={api} />
     : view === 'history' ? <HistoryPage api={api} />
+${extra.map(x => "    : view === '" + x.id + "' ? <" + x.component + ' api={api} />').join('\n')}
     : view === 'privacy' ? <PrivacyPage api={api} onWipe={() => { setStore(wipe()); setView('home') }} />
     : (() => { const e = entityOf(view); return e ? <EntityPage key={e.id} entity={e} api={api} /> : <HomePage api={api} /> })()
 
@@ -207,12 +213,12 @@ const PRINT_CSS = `@media print {
 }
 `
 
-export function renderApp(spec: AppSpec, model: AppModel, currency = '₹'): RenderedApp {
+export function renderApp(spec: AppSpec, model: AppModel, currency = '₹', extra: ExtraPage[] = []): RenderedApp {
   const title = model.appName + ': ' + model.tagline
   return {
     files: {
       'src/schema.ts': renderSchema(spec, model, currency),
-      'src/App.tsx': renderAppTsx(model),
+      'src/App.tsx': renderAppTsx(model, extra),
       'src/lib/db.ts': DB_TS,
       'src/lib/csv.ts': CSV_TS,
       'src/lib/logic.ts': LOGIC_TS,
