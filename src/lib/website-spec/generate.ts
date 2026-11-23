@@ -31,8 +31,11 @@ export type GenerateResult =
   | { ok: false; reason: string; usage: { inputTokens: number; outputTokens: number } }
 
 const TRANSLATE_TIMEOUT_MS = 70000
+/** A little under the route's 220 s spec timeout (WEBSITE_SPEC_TIMEOUT_MS), leaving room to render. */
+const TOTAL_BUDGET_MS = 200000
 
 export async function generateWebsite(input: GenerateInput, deps: GenerateDeps): Promise<GenerateResult> {
+  const t0 = Date.now()
   const usage = { inputTokens: 0, outputTokens: 0 }
   const onUsage = (r: ModelReply) => { usage.inputTokens += r.inputTokens; usage.outputTokens += r.outputTokens }
   const notes: string[] = []
@@ -45,11 +48,11 @@ export async function generateWebsite(input: GenerateInput, deps: GenerateDeps):
 
   // The model decides the language toggles from the whole brief (a place list cannot know that a Nagpur business may want Marathi and
   // Hindi, or that an export brand wants none). The rule-based answer from the plan stays as the fallback if the call fails.
+  // It runs while the copy is being written, so it adds no waiting time (the spec path has a fixed time budget).
+  let langPromise: Promise<{ ok: true; value: { languages: string[] } } | { ok: false; problems: string[] }> | null = null
   if (!/\b(english only|only in english|no hindi|no translation)\b/i.test(input.prompt)) {
     const lp = buildLanguagePrompt(stripFactsSuffix(input.prompt) + (spec.brief.facts.city ? `\nCity: ${spec.brief.facts.city}` : ''))
-    const chosen = await askForJson<{ languages: string[] }>({ call: deps.writeCopy, system: lp.system, user: lp.user, onUsage, timeoutMs: 25000, attempts: 2, validate: validateLanguageReply })
-    if (chosen.ok) spec.languages = languagesFromReply(chosen.value)
-    else notes.push('languages: kept the rule-based choice')
+    langPromise = askForJson<{ languages: string[] }>({ call: deps.writeCopy, system: lp.system, user: lp.user, onUsage, timeoutMs: 20000, attempts: 1, validate: validateLanguageReply })
   }
 
   const { system, user } = buildCopyPrompt(spec, stripFactsSuffix(input.prompt))
@@ -59,17 +62,24 @@ export async function generateWebsite(input: GenerateInput, deps: GenerateDeps):
   })
   if (!written.ok) return { ok: false, reason: 'copy: ' + written.problems.slice(0, 12).map(p => '- ' + p).join('\n'), usage }
   const copy = normalizeCopy(spec, written.value)
+  const chosen = langPromise ? await langPromise : null
+  if (chosen?.ok) spec.languages = languagesFromReply(chosen.value)
+  else if (chosen) notes.push('languages: kept the rule-based choice')
 
   // Other languages: written by the same model, checked for shape, best effort. A language that fails is left out and the site
   // still ships in English (and any remaining languages); the launch-ready language check then raises it for the free repair pass.
   const translations: Translations = {}
   const others = (spec.languages ?? ['en']).filter((l): l is Exclude<LangId, 'en'> => l !== 'en')
-  if (others.length) {
+  // The spec path runs inside a fixed time budget (the route abandons it and falls back to the free-form build when it is exceeded), so
+  // translations only get what is left of it: a slow copy step must cost a language, never the whole spec build.
+  const left = TOTAL_BUDGET_MS - (Date.now() - t0)
+  if (others.length && left < 30000) notes.push(others.join(", ") + " translation skipped: not enough time left")
+  if (others.length && left >= 30000) {
     const base = translatable(spec, copy)
     await Promise.all(others.map(async lang => {
       const p = buildTranslatePrompt(spec, copy, lang)
       const t = await askForJson<SiteCopy>({
-        call: deps.writeCopy, system: p.system, user: p.user, onUsage, timeoutMs: TRANSLATE_TIMEOUT_MS,
+        call: deps.writeCopy, system: p.system, user: p.user, onUsage, timeoutMs: Math.min(TRANSLATE_TIMEOUT_MS, left - 10000), attempts: left > 130000 ? 2 : 1,
         validate: v => validateTranslation(spec, base, v),
       })
       if (t.ok) translations[lang] = completeTranslation(spec, copy, t.value)

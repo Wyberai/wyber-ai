@@ -135,7 +135,7 @@ export const EDITOR_CHATPANEL_STRINGS: Record<Locale, Record<string, string>> = 
     templateIncludesStripeMsg: '💳 **This template includes Stripe payments.** Add your `STRIPE_SECRET_KEY` in the Connectors tab to enable checkout.',
     streamCutOffMsg: '✦ Still building…',
     emptyResponseMsg: "Nothing changed this time, and you weren't charged. Send it again and I'll make the change.",
-    nothingChangedMsg: "**No file changes were made** — try being more specific. Instead of \"add analytics\", try \"Build a full Analytics page with a line chart showing monthly revenue, a bar chart for deals by stage, and 4 KPI cards.\" You weren't charged for this.",
+    nothingChangedMsg: "**Nothing changed this time**, and you weren't charged. Tell me the exact section and the wording you want and I'll make the change. If you asked for reviews, photos or results, send the real ones and I'll place them; I don't make those up.",
     continuationDoneMsg: '✓ Finished the rest.',
     hitOutputLimitMsg: '✦ Finishing your app — the rest lands in the next pass.',
     supabaseUnreachableMsg: "⚠ I couldn't reach your connected Supabase project, so this build doesn't have a working database. Check your keys in the Connectors tab, then ask me to rebuild the data layer.",

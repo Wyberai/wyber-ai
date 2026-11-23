@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { generateWebsite, languagesFor, layoutFor, planWebsite, renderWebsite, buildTranslatePrompt, translatable, validateTranslation, completeTranslation, parseJsonObject } from './index'
 import { DEMOS } from './demo-copy'
 import { checkWebsiteReady } from '../website-ready'
@@ -138,6 +138,27 @@ describe('generate with translations and free-text facts', () => {
     expect(r.notes.join(' ')).toMatch(/hi translation skipped/)
     expect(r.text).not.toContain('aria-pressed')
     expect(m.calls.filter(c => c.kind === 'translate')).toHaveLength(2) // one retry
+  })
+
+  it('when the copy step eats the time budget, translations are skipped and the spec build still succeeds (never a free-form fallback)', async () => {
+    const m = model()
+    const spy = vi.spyOn(Date, 'now').mockReturnValueOnce(0).mockReturnValue(190000)
+    try {
+      const r = await generateWebsite({ prompt: d.prompt, seed: d.seed }, m)
+      expect(r.ok).toBe(true)
+      if (!r.ok) return
+      expect(r.notes.join(' ')).toMatch(/translation skipped: not enough time left/)
+      expect(m.calls.filter(c => c.kind === 'translate')).toHaveLength(0)
+    } finally { spy.mockRestore() }
+  })
+
+  it('asks which languages to offer while the copy is being written, not before it', async () => {
+    const m = model()
+    const r = await generateWebsite({ prompt: d.prompt, seed: d.seed }, m)
+    expect(r.ok).toBe(true)
+    const order = m.calls.map(c => c.kind)
+    expect(order.indexOf('languages')).toBeLessThanOrEqual(order.indexOf('copy') + 1)
+    expect(order.indexOf('languages')).toBeLessThan(order.indexOf('translate'))
   })
 
   it('a rich brief that skips the facts step still gets its contact path: WhatsApp typed in the brief reaches owner-details', async () => {
