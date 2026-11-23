@@ -277,7 +277,7 @@ describe('generateMobileApp (model injected)', () => {
   const reply = (obj: unknown) => ({ text: JSON.stringify(obj), inputTokens: 500, outputTokens: 1500 })
   it('asks once, validates, renders and returns <file> blocks with App.tsx last', async () => {
     let calls = 0
-    const r = await generateMobileApp({ prompt: d.prompt, seed: d.seed, directionId: d.directionId }, { writeModel: async () => { calls++; return reply(d.model) } })
+    const r = await generateMobileApp({ prompt: d.prompt, seed: d.seed, directionId: d.directionId }, { writeModel: async (sys: string) => { if (/^You choose the shape/.test(sys)) return { text: JSON.stringify({ primary: 'billing', secondary: null, notBuilt: [] }), inputTokens: 0, outputTokens: 0 }; calls++; return reply(d.model) } })
     expect(calls).toBe(1)
     expect(r.ok).toBe(true)
     if (!r.ok) return
@@ -289,11 +289,11 @@ describe('generateMobileApp (model injected)', () => {
   })
   it('extra keys in the reply never reach the app; a bad reply is repaired once, then gives up cleanly', async () => {
     const polluted = { ...d.model, hidden: 'nope', entities: d.model.entities.map(e => ({ ...e, extra: 1 })) }
-    const ok = await generateMobileApp({ prompt: d.prompt, seed: d.seed }, { writeModel: async () => reply(polluted) })
+    const ok = await generateMobileApp({ prompt: d.prompt, seed: d.seed }, { writeModel: async (sys: string) => (/^You choose the shape/.test(sys) ? { text: JSON.stringify({ primary: 'billing', secondary: null, notBuilt: [] }), inputTokens: 0, outputTokens: 0 } : reply(polluted)) })
     expect(ok.ok).toBe(true)
     if (ok.ok) { expect(ok.text).not.toContain('"hidden": "nope"'); expect(ok.text).not.toContain('"extra"') }
     const asked: string[] = []
-    const bad = await generateMobileApp({ prompt: d.prompt, seed: d.seed }, { writeModel: async (_s, u) => { asked.push(u); return reply({ ...d.model, entities: [] }) } })
+    const bad = await generateMobileApp({ prompt: d.prompt, seed: d.seed }, { writeModel: async (sys, u) => { if (/^You choose the shape/.test(sys)) return { text: JSON.stringify({ primary: 'billing', secondary: null, notBuilt: [] }), inputTokens: 0, outputTokens: 0 }; asked.push(u); return reply({ ...d.model, entities: [] }) } })
     expect(bad.ok).toBe(false)
     expect(asked).toHaveLength(2)
   })

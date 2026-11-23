@@ -11,8 +11,8 @@ export function notBuiltList(files: FileMap): string[] {
   const raw = contentOf(files['src/build-spec.json'])
   if (!raw) return []
   try {
-    const j = JSON.parse(raw) as { spec?: { brief?: { notBuilt?: unknown } }; brief?: { notBuilt?: unknown } }
-    const list = j.spec?.brief?.notBuilt ?? j.brief?.notBuilt
+    const j = JSON.parse(raw) as { spec?: { notBuilt?: unknown; brief?: { notBuilt?: unknown } }; notBuilt?: unknown; brief?: { notBuilt?: unknown } }
+    const list = j.spec?.brief?.notBuilt ?? j.spec?.notBuilt ?? j.brief?.notBuilt ?? j.notBuilt
     return Array.isArray(list) ? list.filter((s): s is string => typeof s === 'string' && s.trim().length > 0).slice(0, 5) : []
   } catch { return [] }
 }

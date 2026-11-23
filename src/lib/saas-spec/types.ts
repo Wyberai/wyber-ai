@@ -54,6 +54,8 @@ export interface SaasSpec {
   direction: { id: string; name: string; group: string; mode: 'light' | 'dark' }
   layout: SaasLayoutPlan
   currency: string
+  /** Parts of the brief this kind of product cannot do, named by the model that read the brief. The chat says them plainly. */
+  notBuilt?: string[]
 }
 
 export type ReplaceFeature = { name: string; status: 'built' | 'simplified'; note?: string }

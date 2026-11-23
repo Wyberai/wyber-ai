@@ -4,6 +4,7 @@ import { parseFactsFromPrompt, stripFactsSuffix } from '../build-spec/facts'
 import type { ModelCall } from '../build-spec/types'
 import { buildModelPrompt, normalizeModel, validateModel } from '../app-spec/model'
 import type { AppIntentBrief } from '../app-spec/intents'
+import { chooseShape } from '../app-spec/choose'
 import type { AppModel, OwnerFacts } from '../app-spec/types'
 import { planMobile, type MobileSpec } from './plan'
 import { renderMobileApp } from './render'
@@ -33,6 +34,11 @@ export async function generateMobileApp(input: MobileGenerateInput, deps: { writ
     spec = planMobile(stripFactsSuffix(input.prompt), { seed: input.seed, facts, directionId: input.directionId })
   } catch (e) { return { ok: false, reason: 'plan: ' + String(e), usage } }
   if (spec.brief.note) notes.push(spec.brief.note)
+
+  // The model reads the whole brief to choose what the app is for, and says what a phone app built here cannot do (see app-spec/choose).
+  const shape = await chooseShape(stripFactsSuffix(input.prompt), deps.writeModel, r => { usage.inputTokens += r.inputTokens; usage.outputTokens += r.outputTokens }, undefined, facts)
+  if (shape.chosen) spec.brief = shape.brief
+  else notes.push('shape: kept the keyword choice')
 
   const { system, user } = buildMobileModelPrompt(spec.brief, stripFactsSuffix(input.prompt))
   const asked = await askForJson<AppModel>({ scrub: scrubClaims,

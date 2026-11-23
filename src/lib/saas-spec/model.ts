@@ -1,12 +1,12 @@
 import { buildModelPrompt, normalizeModel, validateModel } from '../app-spec/model'
-import { classifyAppIntent } from '../app-spec/intents'
+import { classifyAppIntent, type AppIntentBrief } from '../app-spec/intents'
 import type { AppModel } from '../app-spec/types'
 import { normalizePlans, validatePlans } from './plans'
 import type { SaasModel, SaasSpec } from './types'
 
 /** The call that writes the product: the domain model (what the customers of this SaaS manage) and the plans. Data only, never code. */
-export function buildSaasModelPrompt(prompt: string): { system: string; user: string } {
-  const base = buildModelPrompt(classifyAppIntent(prompt), prompt)
+export function buildSaasModelPrompt(prompt: string, brief?: AppIntentBrief): { system: string; user: string } {
+  const base = buildModelPrompt(brief ?? classifyAppIntent(prompt), prompt)
   const system = [
     base.system,
     'This is the product inside a SaaS that other businesses sign up to. The entities are what a CUSTOMER of this SaaS manages in their own workspace, in the words that customer uses. Do not model the SaaS company itself (no "subscriptions", "tenants" or "users" entities).',

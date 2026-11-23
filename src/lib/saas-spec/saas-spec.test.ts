@@ -449,6 +449,7 @@ describe('generateSaas (model injected)', () => {
     const spec = planSaas(d.prompt, { seed: d.seed, currency: d.currency })
     const asked: string[] = []
     const fn = async (_s: string, u: string) => {
+      if (/^You choose the shape/.test(_s)) return { text: JSON.stringify({ primary: 'billing', secondary: null, notBuilt: [] }), inputTokens: 0, outputTokens: 0 }
       asked.push(u)
       if (/Sections to write/.test(u)) return reply(opts.copy ? opts.copy(spec) : demoSiteCopy(spec.site, d.copy))
       return reply(opts.model ?? { ...d.model.app, plans: d.model.plans })
@@ -476,6 +477,7 @@ describe('generateSaas (model injected)', () => {
     const spec = planSaas(d.prompt, { seed: d.seed, currency: d.currency })
     const asked: string[] = []
     const fn = async (_s: string, u: string) => {
+      if (/^You choose the shape/.test(_s)) return { text: JSON.stringify({ primary: 'billing', secondary: null, notBuilt: [] }), inputTokens: 0, outputTokens: 0 }
       asked.push(u)
       if (/Sections to write/.test(u)) return reply(demoSiteCopy(spec.site, d.copy))
       return reply(n++ === 0 ? bad : { ...d.model.app, plans: d.model.plans, secret: 'nope' })
@@ -545,5 +547,26 @@ describe('photo-first hero (a direction whose hero media is a photograph)', () =
     const spec = planSaas(d.prompt, { seed: d.seed, currency: d.currency, directionId: 'dk-instrument' })
     expect(spec.layout.heroPhoto).toBe(false)
     expect(renderSite(spec, demoSiteCopy(spec.site, d.copy), d.model.app)).not.toContain('{{wyber-image:')
+  })
+})
+
+describe('the model chooses the product shape and names what cannot be built', () => {
+  const d = DEMO_SAAS[0]
+  const reply = (o: unknown) => ({ text: JSON.stringify(o), inputTokens: 1, outputTokens: 1 })
+  it('saves the not-built list in the plan, and the model prompt carries the second job', async () => {
+    const spec = planSaas(d.prompt, { seed: d.seed, currency: d.currency })
+    let modelUser = ''
+    const fn = async (s: string, u: string) => {
+      if (/^You choose the shape/.test(s)) return reply({ primary: 'pipeline', secondary: 'billing', notBuilt: ['clients opening a link to upload documents'] })
+      if (/Sections to write/.test(u)) return reply(demoSiteCopy(spec.site, d.copy))
+      modelUser = u
+      return reply({ ...d.model.app, plans: d.model.plans })
+    }
+    const r = await generateSaas({ prompt: d.prompt, seed: d.seed }, { write: fn })
+    expect(r.ok).toBe(true)
+    if (!r.ok) return
+    expect(r.spec.notBuilt).toEqual(['clients opening a link to upload documents'])
+    expect(modelUser).toMatch(/second job, "Billing"/)
+    expect(r.text).toContain('clients opening a link to upload documents')
   })
 })

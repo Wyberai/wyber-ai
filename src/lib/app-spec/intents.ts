@@ -86,7 +86,7 @@ export const APP_LIMITS = [
 
 export interface AppIntentChoice { primary: AppIntentId; secondary?: AppIntentId | null; notBuilt: string[] }
 
-export function buildIntentPrompt(prompt: string): { system: string; user: string } {
+export function buildIntentPrompt(prompt: string, limits: string[] = APP_LIMITS): { system: string; user: string } {
   const shapes = (Object.values(APP_BLUEPRINTS)).map(b => `- ${b.id}: ${b.guidance}`).join('\n')
   return {
     system: [
@@ -94,7 +94,7 @@ export function buildIntentPrompt(prompt: string): { system: string; user: strin
       `The available shapes:\n${shapes}`,
       '"primary" is the shape of the daily work the staff touch all day. A job that moves through stages (job cards, orders, cases) is "pipeline" even when invoices are also asked for: the invoice is the secondary part.',
       '"secondary" is one other shape the brief clearly also needs, or null.',
-      `"notBuilt" lists, in the owner's own words and at most 5 short phrases, the parts of the brief this app cannot do. It cannot do: ${APP_LIMITS.join('; ')}. Leave it empty when the brief asks for none of these.`,
+      `"notBuilt" lists, in the owner's own words and at most 5 short phrases, the parts of the brief this app cannot do. It cannot do: ${limits.join('; ')}. Leave it empty when the brief asks for none of these.`,
       'Format: {"primary": "pipeline", "secondary": "billing" or null, "notBuilt": ["..."]}',
     ].join('\n'),
     user: `Brief:\n${prompt.slice(0, 2000)}`,

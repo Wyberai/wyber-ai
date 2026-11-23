@@ -3,6 +3,7 @@ import { askForJson } from '../build-spec/ask'
 import { parseFactsFromPrompt, stripFactsSuffix } from '../build-spec/facts'
 import type { ModelCall, ModelReply } from '../build-spec/types'
 import { isIndianPrompt } from '../build-spec/locale'
+import { chooseShape, SAAS_LIMITS } from '../app-spec/choose'
 import { normalizeCopy, validateCopy } from '../website-spec/copy'
 import type { SiteCopy } from '../website-spec/types'
 import { buildSaasCopyPrompt, buildSaasModelPrompt, normalizeSaasModel, validateSaasModel } from './model'
@@ -39,7 +40,11 @@ export async function generateSaas(input: SaasGenerateInput, deps: { write: Mode
     spec = planSaas(input.prompt, { seed: input.seed, facts: input.facts ?? parseFactsFromPrompt(input.prompt), directionId: input.directionId, avoid: input.avoid, currency: currencyFor(input.prompt) })
   } catch (e) { return { ok: false, reason: 'plan: ' + String(e), usage } }
 
-  const mp = buildSaasModelPrompt(brief)
+  // The model reads the whole brief to choose what the product is for (see app-spec/choose), and says what this kind of product cannot do.
+  const shape = await chooseShape(brief, deps.write, onUsage, SAAS_LIMITS)
+  if (shape.chosen) spec.notBuilt = shape.brief.notBuilt
+  else notes.push('shape: kept the keyword choice')
+  const mp = buildSaasModelPrompt(brief, shape.brief)
   const asked = await askForJson<unknown>({ scrub: scrubClaims,
     call: deps.write, system: mp.system, user: mp.user, attempts: 2, onUsage,
     validate: v => validateSaasModel(normalizeSaasModel(v), brief),
