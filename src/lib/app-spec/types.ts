@@ -91,7 +91,7 @@ export interface AppLayoutPlan {
 
 export interface AppSpec {
   version: 1
-  brief: { intent: AppIntentId; confidence: number; industry: string; facts: OwnerFacts; note?: string }
+  brief: { intent: AppIntentId; confidence: number; industry: string; facts: OwnerFacts; note?: string; secondary?: AppIntentId; notBuilt?: string[] }
   direction: { id: string; name: string; group: string; mode: 'light' | 'dark' }
   layout: AppLayoutPlan
   blueprint: AppIntentId

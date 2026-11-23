@@ -58,7 +58,7 @@ const RULES: { id: AppIntentId; w: [RegExp, number][] }[] = [
   { id: 'register', w: [[/\b(register|records?|members?|patients?|tenants?|students?|inventory|stock|directory|contacts?|customers?|database|list of)\b/, 3], [/\b(manage|keep track|maintain)\b/, 1]] },
 ]
 
-export interface AppIntentBrief { intent: AppIntentId; confidence: number; industry: string; facts: OwnerFacts; note?: string }
+export interface AppIntentBrief { intent: AppIntentId; confidence: number; industry: string; facts: OwnerFacts; note?: string; secondary?: AppIntentId; notBuilt?: string[] }
 
 const INDUSTRY = /\b(gym|clinic|dental|physio\w*|salon|spa|school|tuition|coaching|pharmacy|kirana|shop|store|restaurant|cafe|garage|workshop|laundry|tiffin|hostel|pg|rental|society|ngo|farm|dairy|transport|logistics)\b/
 
@@ -74,4 +74,40 @@ export function classifyAppIntent(prompt: string, facts: OwnerFacts = {}): AppIn
   let note: string | undefined
   if (confidence < 0.5) { intent = top.s > 0 ? top.id : 'register'; note = 'The job was not clear, so this starts as a simple register you can extend.' }
   return { intent, confidence, industry: p.match(INDUSTRY)?.[1] ?? APP_BLUEPRINTS[intent].label.toLowerCase(), facts, note }
+}
+
+/** What the generated web app cannot do. The model lists the parts of a brief that fall in here, so the owner is told instead of left to find out. */
+export const APP_LIMITS = [
+  'sign-in, user accounts and different roles or permissions per person',
+  'data shared between several people or devices (everything is saved in the browser it is used in)',
+  'taking online payments, or sending SMS or WhatsApp messages by itself (it can open a ready message for the owner to send)',
+  'photo or file uploads, barcode scanning, maps or live tracking',
+]
+
+export interface AppIntentChoice { primary: AppIntentId; secondary?: AppIntentId | null; notBuilt: string[] }
+
+export function buildIntentPrompt(prompt: string): { system: string; user: string } {
+  const shapes = (Object.values(APP_BLUEPRINTS)).map(b => `- ${b.id}: ${b.guidance}`).join('\n')
+  return {
+    system: [
+      'You choose the shape of a small business web app from the owner\'s brief. Reply with one JSON object and nothing else.',
+      `The available shapes:\n${shapes}`,
+      '"primary" is the shape of the daily work the staff touch all day. A job that moves through stages (job cards, orders, cases) is "pipeline" even when invoices are also asked for: the invoice is the secondary part.',
+      '"secondary" is one other shape the brief clearly also needs, or null.',
+      `"notBuilt" lists, in the owner's own words and at most 5 short phrases, the parts of the brief this app cannot do. It cannot do: ${APP_LIMITS.join('; ')}. Leave it empty when the brief asks for none of these.`,
+      'Format: {"primary": "pipeline", "secondary": "billing" or null, "notBuilt": ["..."]}',
+    ].join('\n'),
+    user: `Brief:\n${prompt.slice(0, 2000)}`,
+  }
+}
+
+export function validateIntentChoice(v: unknown): string[] {
+  const o = v as Partial<AppIntentChoice> | null
+  if (!o || typeof o !== 'object') return ['reply is not an object']
+  const ids = Object.keys(APP_BLUEPRINTS)
+  const out: string[] = []
+  if (!o.primary || !ids.includes(o.primary)) out.push('primary must be one of ' + ids.join(', '))
+  if (o.secondary != null && (!ids.includes(o.secondary) || o.secondary === o.primary)) out.push('secondary must be null or a different shape')
+  if (!Array.isArray(o.notBuilt) || o.notBuilt.length > 5 || o.notBuilt.some(s => typeof s !== 'string' || s.trim().length < 3 || s.length > 90)) out.push('notBuilt must be up to 5 short phrases')
+  return out
 }

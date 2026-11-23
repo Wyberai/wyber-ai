@@ -10,6 +10,7 @@ const SAMPLE_PHONE = /^90000 ?\d{5}$/
 
 export function buildModelPrompt(brief: AppIntentBrief, businessPrompt: string): { system: string; user: string } {
   const bp = APP_BLUEPRINTS[brief.intent]
+  const secondary = brief.secondary ? APP_BLUEPRINTS[brief.secondary] : undefined
   const skeleton = bp.skeleton.map(s => `- ${s.entity} (one is a "${s.singular}"): ${s.fields.join('; ')}`).join('\n')
   const system = [
     'You design the data model for a small business web app. You do not write code. Return ONE JSON object and nothing else.',
@@ -20,6 +21,10 @@ export function buildModelPrompt(brief: AppIntentBrief, businessPrompt: string):
   const user = [
     `Business brief: ${businessPrompt}`,
     `Job of the app: ${bp.label}. ${bp.guidance}`,
+    ...(secondary ? [
+      `The brief also needs a second job, "${secondary.label}": ${secondary.guidance} Add its entities too and link them to the main ones with a ref field (for example an invoice that points at the job card it bills). Keep to 4 entities in all.`,
+      `Its skeleton:\n${secondary.skeleton.map(x => `- ${x.entity} (one is a "${x.singular}"): ${x.fields.join('; ')}`).join('\n')}`,
+    ] : []),
     `Start from this skeleton, rename it for this business and add the fields it really records:\n${skeleton}`,
     'Return JSON: { appName, tagline, homeIntro, entities: [Entity], metrics: [Metric] }.',
     'Entity: { id (letters and digits, starts with a letter), label (plural), singular, title (id of the field that names a row), blurb (one line), fields: [Field] (3 to 10), computed?: [{ id, label, kind: "sumChild", entity (child entity id), field (child number or money field id), ref (child field id of type ref pointing at this entity) }], status?: id of a select field of stages, finalStatuses?: the options that mean finished, due?: id of a date field, amount?: id of a money field, contact?: id of a phone field, sample: [3 to 5 demo rows] }.',

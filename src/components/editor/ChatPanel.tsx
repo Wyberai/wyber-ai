@@ -1,4 +1,5 @@
 'use client'
+import { notBuiltSentence } from '@/lib/not-built-note';
 import { repairStringSeams } from '@/lib/string-seam'
 import { creditCost, type ActionType } from '@/lib/credits';
 import { findHeroImage, heroPrompt } from '@/lib/hero-upsell';
@@ -2977,7 +2978,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
           ? screenNamesOneShot[0]
           : `${screenNamesOneShot.slice(0, -1).join(', ')} and ${screenNamesOneShot[screenNamesOneShot.length - 1]}`;
         const oneShotSummary = screenNamesOneShot.length > 0
-          ? `Built it — ${screenListOneShot} ${screenNamesOneShot.length === 1 ? 'is' : 'are'} live. Tell me what to change next.`
+          ? ('Built it. Open the preview and tell me what to change next.' + (notBuiltSentence((useEditorStore.getState().files ?? {}) as Record<string, unknown>) ? ' ' + notBuiltSentence((useEditorStore.getState().files ?? {}) as Record<string, unknown>) : ''))
           : t('doneCheckPreviewMsg');
         updateMessage(chainId, { content: oneShotSummary, status: 'done', filesChanged: liveFilesOneShot });
         persistMessage('assistant', oneShotSummary, liveFilesOneShot);
@@ -3172,7 +3173,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
       ? screenNames[0]
       : `${screenNames.slice(0, -1).join(', ')} and ${screenNames[screenNames.length - 1]}`;
     const summary = screenNames.length > 0
-      ? `Built it — ${screenList} ${screenNames.length === 1 ? 'is' : 'are'} live. Tell me what to change next.`
+      ? ('Built it. Open the preview and tell me what to change next.' + (notBuiltSentence((useEditorStore.getState().files ?? {}) as Record<string, unknown>) ? ' ' + notBuiltSentence((useEditorStore.getState().files ?? {}) as Record<string, unknown>) : ''))
       : t('doneCheckPreviewMsg');
     // buildId ties this to the server-side [generate cache] elapsed_ms lines
     // for the same build — cross-reference to split "model latency" from

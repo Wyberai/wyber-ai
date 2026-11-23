@@ -245,10 +245,13 @@ describe('generated runtime, executed', () => {
 describe('generateApp (model injected)', () => {
   const d = DEMO_APPS[0]
   const reply = (obj: unknown) => ({ text: JSON.stringify(obj), inputTokens: 500, outputTokens: 1500 })
+  // The shape question comes first: this fake answers it (as a model would) and leaves the model-design counts to the tests below.
+  const isShape = (system: string) => /^You choose the shape/.test(system)
+  const shapeReply = () => ({ text: JSON.stringify({ primary: 'billing', secondary: null, notBuilt: [] }), inputTokens: 0, outputTokens: 0 })
 
   it('asks once, validates, renders and returns <file> blocks with App.tsx last', async () => {
     let calls = 0
-    const r = await generateApp({ prompt: d.prompt, seed: d.seed }, { writeModel: async () => { calls++; return reply(d.model) } })
+    const r = await generateApp({ prompt: d.prompt, seed: d.seed }, { writeModel: async (sys: string) => { if (isShape(sys)) return shapeReply(); calls++; return reply(d.model) } })
     expect(calls).toBe(1)
     expect(r.ok).toBe(true)
     if (!r.ok) return
@@ -259,14 +262,36 @@ describe('generateApp (model injected)', () => {
   })
   it('extra keys in the reply never reach the app; a bad reply is repaired once, then gives up cleanly', async () => {
     const polluted = { ...d.model, hidden: 'nope', entities: d.model.entities.map(e => ({ ...e, extra: 1 })) }
-    const ok = await generateApp({ prompt: d.prompt, seed: d.seed }, { writeModel: async () => reply(polluted) })
+    const ok = await generateApp({ prompt: d.prompt, seed: d.seed }, { writeModel: async (sys: string) => (isShape(sys) ? shapeReply() : reply(polluted)) })
     expect(ok.ok).toBe(true)
     if (ok.ok) { expect(ok.text).not.toContain('"hidden": "nope"'); expect(ok.text).not.toContain('"extra"') }
     const asked: string[] = []
-    const bad = await generateApp({ prompt: d.prompt, seed: d.seed }, { writeModel: async (_s, u) => { asked.push(u); return reply({ ...d.model, entities: [] }) } })
+    const bad = await generateApp({ prompt: d.prompt, seed: d.seed }, { writeModel: async (s, u) => { if (isShape(s)) return shapeReply(); asked.push(u); return reply({ ...d.model, entities: [] }) } })
     expect(bad.ok).toBe(false)
     expect(asked).toHaveLength(2)
     expect(asked[1]).toMatch(/entities/)
+  })
+})
+
+describe('the model chooses the app shape', () => {
+  const d = DEMO_APPS[0]
+  const modelReply = (obj: unknown) => ({ text: JSON.stringify(obj), inputTokens: 1, outputTokens: 1 })
+  const garage = 'Job card tracker for a garage: jobs move through Received, Diagnosing, Ready, Delivered; invoice with 18 percent GST; three roles'
+  it('a job board brief with invoice and GST words is a pipeline with billing as the second job, and unbuilt parts are listed', async () => {
+    let designUser = ''
+    const r = await generateApp({ prompt: garage, seed: 'g' }, { writeModel: async (s: string, u: string) => { if (/^You choose the shape/.test(s)) return modelReply({ primary: 'pipeline', secondary: 'billing', notBuilt: ['three roles with sign-in'] }); designUser = u; return modelReply(d.model) } })
+    expect(r.ok).toBe(true)
+    if (!r.ok) return
+    expect(r.spec.brief.intent).toBe('pipeline')
+    expect(r.spec.brief.secondary).toBe('billing')
+    expect(r.spec.brief.notBuilt).toEqual(['three roles with sign-in'])
+    expect(designUser).toMatch(/second job, "Billing"/)
+    expect(r.text).toContain('three roles with sign-in')
+  })
+  it('keeps the keyword choice when the model gives an unusable answer', async () => {
+    const r = await generateApp({ prompt: garage, seed: 'g' }, { writeModel: async (s: string) => (/^You choose the shape/.test(s) ? modelReply({ primary: 'nonsense' }) : modelReply(d.model)) })
+    expect(r.ok).toBe(true)
+    if (r.ok) { expect(r.spec.brief.secondary).toBeUndefined(); expect(r.notes.join(' ')).toMatch(/kept the keyword choice/) }
   })
 })
 
