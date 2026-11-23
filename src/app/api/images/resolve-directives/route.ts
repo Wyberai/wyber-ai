@@ -20,7 +20,9 @@ import { rateLimit } from '@/lib/rate-limit'
 // Generation can take 10-25s per image; they run in parallel, capped.
 export const maxDuration = 120
 
-const MAX_DIRECTIVES = 8
+// No practical cap on how many images a build may ask for (founder decision 23 Nov: image generation unlimited for now). They are made in small groups so the image provider is never hit with a burst.
+const MAX_DIRECTIVES = 24
+const GROUP_SIZE = 6
 
 export async function POST(req: NextRequest) {
   try {
@@ -47,7 +49,7 @@ export async function POST(req: NextRequest) {
     const { data: profile } = await supabase.from('profiles').select('plan').eq('id', user.id).single()
     const quality = profile?.plan && profile.plan !== 'free' ? 'high' : 'medium'
     const batch = directives.slice(0, MAX_DIRECTIVES) as { token: string; prompt: string; ratio: string }[]
-    const results = await Promise.all(batch.map(async d => {
+    const one = async (d: { token: string; prompt: string; ratio: string }) => {
       if (!d?.token || !d?.prompt) return null
       try {
         // Scope = projectId, matching the publish path exactly, so preview and
@@ -59,7 +61,9 @@ export async function POST(req: NextRequest) {
         console.error('[img-resolve] generation failed:', d.prompt.slice(0, 60), e)
         return null
       }
-    }))
+    }
+    const results: Awaited<ReturnType<typeof one>>[] = []
+    for (let i = 0; i < batch.length; i += GROUP_SIZE) results.push(...(await Promise.all(batch.slice(i, i + GROUP_SIZE).map(one))))
 
     const urls: Record<string, string> = {}
     for (const r of results) if (r) urls[r[0]] = r[1]

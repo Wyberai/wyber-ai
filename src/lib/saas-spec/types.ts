@@ -36,6 +36,8 @@ export interface SaasLayoutPlan {
   heroPreview: 'right' | 'below'
   /** Photo-first hero (a direction whose hero media is a photograph): one full-bleed photo, flat dark overlay, headline low and left. */
   heroPhoto: boolean
+  /** Which section header the page uses. */
+  header: 'bar' | 'centered' | 'index'
   steps: 'timeline' | 'columns'
   pricing: 'cards' | 'table'
   faq: 'split' | 'centered'

@@ -531,11 +531,14 @@ describe('photo-first hero (a direction whose hero media is a photograph)', () =
     copy.hero.imageBrief = 'A physiotherapist guides a patient through a shoulder exercise in a bright, plain clinic room.'
     copy.hero.imageAlt = 'A physiotherapist helping a patient with a shoulder exercise'
     const src = renderSite(spec, copy, d.model.app)
-    expect(src).toContain('{{wyber-image:')
-    expect(src).toContain('bg-black/55')
+    expect(src).toContain('<HeroFullBleed')
+    expect(src).toContain('<PhotoBand')
+    expect(src).toContain('<CtaPhoto')
+    expect((src.match(/{{wyber-image:/g) || []).length).toBe(3) // hero, wide band, closing: three different scenes
+    expect(new Set([...src.matchAll(/\{\{wyber-image: (.*?) \| 16:9\}\}/g)].map(m => m[1])).size).toBe(3)
+    expect(src).toMatch(/<Header(Bar|Centered|Index)[^>]* over /) // the header sits transparent over the photograph
     expect(src).not.toMatch(/gradient/)
-    expect(src).toContain('items-end')
-    expect(scanSlopSource(src).issues.map(i => i.id + ': ' + i.sample)).toEqual([])
+    expect(scanSlopSource({ 'src/Site.tsx': src }).issues.map(i => i.id + ': ' + i.sample)).toEqual([])
   })
   it('a direction led by type or product UI keeps the plain hero and asks for no image', async () => {
     const { renderSite } = await import('./render-site')

@@ -277,7 +277,15 @@ function sectionSections(c: Ctx, s: PlannedSection, tone: Tone): string {
       const name = sx.about === 'band' ? 'AboutBand' : 'AboutSplit'
       S(c, name)
       const media = slot ? ` media={${mediaImg(c, slot, `${k}.imageAlt ?? ''`, false)}}` : ''
-      return wrap(`<${name} ${head} paragraphs={${k}.paragraphs!}${media} flip={${c.lay.aboutFlip}} ${common} />`)
+      // A wide detail photograph straight after the about section, made from the same scene brief as the hero (a different view).
+      const heroSlot = c.spec.images.find(i => i.id === 'hero')
+      let band = ''
+      if (heroSlot) {
+        S(c, 'PhotoBand')
+        const detail = imageDirective(heroSlot, 'A close, detailed view of the hands, tools and materials in the same setting as this scene, no faces: ' + subjectFor(c.spec, c.copy, heroSlot))
+        band = `\n        <PhotoBand media={<img src="${detail}" alt={COPY.hero.imageAlt ?? ''} loading="lazy" decoding="async" />} reveal={${c.mo.reveal}} />`
+      }
+      return wrap(`<${name} ${head} paragraphs={${k}.paragraphs!}${media} flip={${c.lay.aboutFlip}} ${common} />`) + band
     }
     case 'faq': {
       const name = sx.faq === 'split' ? 'FaqSplit' : 'FaqBoxed'
@@ -294,6 +302,13 @@ function sectionSections(c: Ctx, s: PlannedSection, tone: Tone): string {
           )}`)
     }
     case 'cta': {
+      // With a photograph in the hero, the closing screen repeats its mood: the same place from further away, under a flat overlay.
+      const heroSlot = c.spec.images.find(i => i.id === 'hero')
+      if (heroSlot && sx.cta === 'band') {
+        S(c, 'CtaPhoto')
+        const far = imageDirective(heroSlot, 'A quiet wide view of the same place with people small in the frame, calm end of the day: ' + subjectFor(c.spec, c.copy, heroSlot))
+        return wrap(`<CtaPhoto title={${k}.title} description={${k}.description} cta={hasContact ? ${k}.button : undefined} onCta={() => go(primaryHref)} secondaryLabel={COPY.hero.secondary} secondaryHref="#${first}" media={<img src="${far}" alt={COPY.hero.imageAlt ?? ''} loading="lazy" decoding="async" />} reveal={${c.mo.reveal}} />`)
+      }
       const name = sx.cta === 'band' ? 'CtaBand' : 'CtaSplit'
       S(c, name)
       return wrap(`<${name} title={${k}.title} description={${k}.description} cta={hasContact ? ${k}.button : undefined} onCta={() => go(primaryHref)} secondaryLabel={COPY.hero.secondary} secondaryHref="#${first}" reveal={${c.mo.reveal}} />`)
@@ -463,7 +478,7 @@ ${langToggleCode}${factsCode}  const headerCta = (langToggle || hasContact) ? (
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-background focus:px-4 focus:py-2">{T.skip}</a>
       <${Header}
         brand={BRAND}
-        links={links}
+        links={links}${sx && sx.hero === 'full' && spec.images.some(i => i.id === 'hero') ? '\n        over' : ''}
         cta={headerCta}
       />
       <main id="main">

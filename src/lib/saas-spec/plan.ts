@@ -42,6 +42,7 @@ export function saasLayoutFor(d: Direction, seed: string): SaasLayoutPlan {
   return {
     heroPreview: hero === 'split' ? 'right' : 'below',
     heroPhoto: d.rules.heroMedia === 'photo',
+    header: editorial ? 'centered' : (['bar', 'index', 'bar'] as const)[Math.floor(r() * 3)],
     steps: r() < 0.5 ? 'timeline' : 'columns',
     pricing: r() < 0.65 ? 'cards' : 'table',
     faq: r() < 0.5 ? 'split' : 'centered',

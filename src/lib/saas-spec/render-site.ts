@@ -45,7 +45,7 @@ export function renderSite(spec: SaasSpec, copy: SiteCopy, app: AppModel): strin
   const site = spec.site
   const lay = spec.layout
   const mo = site.motion
-  const used = new Set<string>(['Navbar', 'Footer', 'Button', 'Card', 'Badge', 'BrowserFrame', 'MonoLabel', 'Accordion'])
+  const used = new Set<string>(['Button', 'Card', 'Badge', 'BrowserFrame', 'MonoLabel'])
   const U = (...n: string[]) => n.forEach(x => used.add(x))
   const tag = (kind: 'reveal' | 'stagger' | 'item'): string => {
     if (kind === 'reveal') { if (!mo.reveal) return 'div'; U('Reveal'); return 'Reveal' }
@@ -58,9 +58,6 @@ export function renderSite(spec: SaasSpec, copy: SiteCopy, app: AppModel): strin
   const steps = site.sections.find(s => s.kind === 'steps')
   const faq = site.sections.find(s => s.kind === 'faq')
   const cta = site.sections.find(s => s.kind === 'cta')
-  const band = (i: number) =>
-    lay.rhythm === 'plain' ? 'py-24 md:py-32' : lay.rhythm === 'rules' ? 'border-t border-border py-20 md:py-28' : 'border-t border-border py-20 md:py-28' + (i % 2 === 1 ? ' bg-muted/60' : '')
-
   const pv = previewOf(app)
   const preview = `<div className="rounded-3xl bg-primary/10 p-3 sm:p-6"><BrowserFrame url="Preview with sample data" className="w-full shadow-xl">
               <div className="p-4 sm:p-5">
@@ -90,24 +87,19 @@ export function renderSite(spec: SaasSpec, copy: SiteCopy, app: AppModel): strin
   const headline = mo.highlight ? (U('HighlightMarker'), '{hl(COPY.hero.headline, COPY.hero.accent)}') : '{COPY.hero.headline}'
 
   let hero: string
+  const scene = (copy.hero.imageBrief || '').replace(/\s+/g, ' ').trim() || 'An everyday scene of the place and the people who use this product, in daylight.'
+  const STYLE = 'Documentary photograph, natural light, unposed, real people and a real place, restrained colour, no text anywhere.'
+  const heroPhotoSrc = imageDirective({ brief: STYLE, ratio: '16:9' }, scene)
+  const bandPhotoSrc = imageDirective({ brief: STYLE, ratio: '16:9' }, 'A close, detailed view of the hands, tools and materials in the same setting as this scene, no faces: ' + scene)
+  const closePhotoSrc = imageDirective({ brief: STYLE, ratio: '16:9' }, 'A quiet wide view of the same place with people small in the frame, calm end of the day: ' + scene)
+  const reveal = mo.reveal ? ' reveal' : ''
+  const sec = new Set<string>()
+  const S = (n: string): string => (sec.add(n), n)
   if (lay.heroPhoto) {
-    const scene = (copy.hero.imageBrief || '').replace(/\s+/g, ' ').trim() || 'An everyday scene of the place and the people who use this product, in daylight.'
-    const photo = imageDirective({ brief: 'Documentary photograph, natural light, unposed, real people and a real place, restrained colour, no text anywhere.', ratio: '16:9' }, scene)
-    hero = `<section className="relative isolate flex min-h-[85vh] items-end overflow-hidden">
-          <img src="${photo}" alt={COPY.hero.imageAlt || BRAND} loading="eager" decoding="async" className="absolute inset-0 -z-20 h-full w-full object-cover" />
-          <div aria-hidden="true" className="absolute inset-0 -z-10 bg-black/55" />
-          <div className="mx-auto w-full max-w-6xl px-6 pb-16 pt-40 md:pb-24">
-            {COPY.hero.eyebrow && <p className="mb-4 font-mono text-sm text-white/80">{COPY.hero.eyebrow}</p>}
-            <h1 className="max-w-4xl font-display text-[clamp(2.5rem,6vw,5.5rem)] font-semibold leading-[1.02] tracking-tight text-white">{COPY.hero.headline}</h1>
-            <p className="mt-6 max-w-xl text-lg leading-relaxed text-white/85">{COPY.hero.sub}</p>
-            <div className="mt-8 flex flex-wrap items-center gap-4">
-              <Button size="lg" onClick={() => openApp()}>{COPY.hero.cta}</Button>
-              <a href="#features" className="text-sm font-medium text-white underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white">{COPY.hero.secondary}</a>
-            </div>
-            <p className="mt-4 text-xs text-white/70">Demo mode: nothing is charged, sent or stored on a server.</p>
-          </div>
-        </section>
+    hero = `<HeroFullBleed eyebrow={COPY.hero.eyebrow} headline={COPY.hero.headline} sub={COPY.hero.sub} cta={COPY.hero.cta} onCta={() => openApp()} secondaryLabel={COPY.hero.secondary} secondaryHref="#features" media={<img src="${heroPhotoSrc}" alt={COPY.hero.imageAlt || BRAND} loading="eager" decoding="async" />}${reveal} />
+        <p className="mx-auto max-w-[1320px] px-5 pt-6 text-xs text-muted-foreground sm:px-8 lg:px-12">Demo mode: nothing is charged, sent or stored on a server.</p>
         <section className="mx-auto max-w-5xl px-6 py-16">${preview}</section>`
+    S('HeroFullBleed')
   } else if (site.hero === 'editorial') {
     U('EditorialHeadline')
     hero = `<section className="mx-auto max-w-6xl px-6 pb-12 pt-32 md:pt-40">
@@ -140,80 +132,6 @@ export function renderSite(spec: SaasSpec, copy: SiteCopy, app: AppModel): strin
           <div className="flex flex-col items-center">${buttons}</div>
         </section>
         <section className="mx-auto max-w-5xl px-6 pb-20">${preview}</section>`
-  }
-
-  const heading = (id: string, align = 'left') => `<${tag('reveal')} className="mb-10 max-w-2xl ${align === 'center' ? 'mx-auto text-center' : ''}">
-            {${cp(id)}.eyebrow && <MonoLabel accent>{${cp(id)}.eyebrow}</MonoLabel>}
-            <h2 className="mt-3 font-display text-3xl font-semibold tracking-tight text-foreground md:text-4xl">{${cp(id)}.title}</h2>
-            {${cp(id)}.description && <p className="mt-3 text-base leading-relaxed text-muted-foreground">{${cp(id)}.description}</p>}
-          </${tag('reveal')}>`
-
-  const featureBlock = (): string => {
-    if (!features) return ''
-    const id = features.id
-    const variant = features.variant ?? 'cards'
-    const list = `${cp(id)}.items`
-    if (variant === 'list') {
-      return `<div className="divide-y divide-border border-y border-border">
-            {${list}.map((it: { title: string; text: string }, i: number) => (
-              <div key={it.title} className="grid gap-2 py-6 md:grid-cols-12 md:gap-8">
-                <p className="font-mono text-sm text-muted-foreground md:col-span-1">{String(i + 1).padStart(2, '0')}</p>
-                <h3 className="font-display text-xl font-semibold text-foreground md:col-span-4">{it.title}</h3>
-                <p className="text-muted-foreground md:col-span-7">{it.text}</p>
-              </div>
-            ))}
-          </div>`
-    }
-    if (variant === 'bento') {
-      return `<${tag('stagger')} className="grid gap-4 md:grid-cols-3">
-            {${list}.map((it: { title: string; text: string }, i: number) => (
-              <${tag('item')} key={it.title} className={i === 0 || i === 3 ? 'md:col-span-2' : ''}>
-                <Card className="h-full">
-                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-primary font-mono text-xs text-primary-foreground">{String(i + 1).padStart(2, '0')}</span>
-                  <h3 className="mt-3 font-display text-lg font-semibold text-foreground">{it.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{it.text}</p>
-                </Card>
-              </${tag('item')}>
-            ))}
-          </${tag('stagger')}>`
-    }
-    return `<${tag('stagger')} className="grid gap-4 md:grid-cols-3">
-            {${list}.map((it: { title: string; text: string }, i: number) => (
-              <${tag('item')} key={it.title}>
-                <Card className="h-full">
-                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-primary font-mono text-xs text-primary-foreground">{String(i + 1).padStart(2, '0')}</span>
-                  <h3 className="mt-3 font-display text-lg font-semibold text-foreground">{it.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{it.text}</p>
-                </Card>
-              </${tag('item')}>
-            ))}
-          </${tag('stagger')}>`
-  }
-
-  const stepsBlock = (): string => {
-    if (!steps) return ''
-    const list = `${cp(steps.id)}.items`
-    if (lay.steps === 'timeline') {
-      return `<ol className="relative max-w-2xl space-y-8 border-l border-border pl-8">
-            {${list}.map((it: { title: string; text: string }, i: number) => (
-              <li key={it.title} className="relative">
-                <span className="absolute -left-[2.9rem] flex h-8 w-8 items-center justify-center rounded-full border border-border bg-background font-mono text-xs text-foreground">{i + 1}</span>
-                <h3 className="font-display text-lg font-semibold text-foreground">{it.title}</h3>
-                <p className="mt-1 text-muted-foreground">{it.text}</p>
-              </li>
-            ))}
-          </ol>`
-    }
-    const n = copy.sections[steps.id]?.items?.length ?? 3
-    return `<ol className="grid gap-8 ${n === 4 ? 'sm:grid-cols-2 lg:grid-cols-4' : 'md:grid-cols-3'}">
-            {${list}.map((it: { title: string; text: string }, i: number) => (
-              <li key={it.title} className="border-t-2 border-foreground pt-4">
-                <p className="font-mono text-xs text-muted-foreground">{'Step ' + (i + 1)}</p>
-                <h3 className="mt-2 font-display text-lg font-semibold text-foreground">{it.title}</h3>
-                <p className="mt-2 text-muted-foreground">{it.text}</p>
-              </li>
-            ))}
-          </ol>`
   }
 
   const pricing = lay.pricing === 'table'
@@ -256,15 +174,6 @@ export function renderSite(spec: SaasSpec, copy: SiteCopy, app: AppModel): strin
             ))}
           </div>`
 
-  const faqBlock = faq
-    ? lay.faq === 'split'
-      ? `<div className="grid gap-10 md:grid-cols-12">
-            <div className="md:col-span-4">{${cp(faq.id)}.description && <p className="text-muted-foreground">{${cp(faq.id)}.description}</p>}</div>
-            <div className="md:col-span-8"><Accordion items={${cp(faq.id)}.faq.map((f: { question: string; answer: string }) => ({ title: f.question, content: f.answer }))} /></div>
-          </div>`
-      : `<div className="mx-auto max-w-3xl"><Accordion items={${cp(faq.id)}.faq.map((f: { question: string; answer: string }) => ({ title: f.question, content: f.answer }))} /></div>`
-    : ''
-
   const hlCode = mo.highlight
     ? `function hl(text: string, accent?: string): React.ReactNode {
   if (!accent) return text
@@ -284,38 +193,47 @@ export function renderSite(spec: SaasSpec, copy: SiteCopy, app: AppModel): strin
     `{ label: 'Pricing', href: '#pricing' }`,
     faq ? `{ label: ${JSON.stringify(faq.nav ?? 'Questions')}, href: '#faq' }` : '',
   ].filter(Boolean).join(',\n    ')
-  const Header = site.header === 'condensing' ? 'CondensingNavbar' : 'Navbar'
-  if (site.header === 'condensing') U('CondensingNavbar')
-  used.delete(site.header === 'condensing' ? 'Navbar' : 'CondensingNavbar')
+  if (mo.progress) U('ScrollProgress')
+  if (mo.backToTop) U('BackToTop')
 
-  let band_i = 0
-  const sec = (id: string, inner: string) => `<section id="${id}" className="${band(band_i++)}"><div className="mx-auto max-w-6xl px-6">
-          ${inner}
-        </div></section>`
+  const headerName = S(({ bar: 'HeaderBar', centered: 'HeaderCentered', index: 'HeaderIndex' } as const)[lay.header])
+  let ti = 0
+  const tone = (): string => (lay.rhythm === 'plain' ? 'plain' : lay.rhythm === 'rules' ? 'rule' : ti++ % 2 === 1 ? 'card' : 'plain')
+  const listProps = (id: string) => `eyebrow={${cp(id)}.eyebrow} title={${cp(id)}.title} description={${cp(id)}.description} items={${cp(id)}.items}${reveal}`
 
+  const featuresTag = features ? S(features.variant === 'bento' ? 'FeaturesBento' : features.variant === 'cards' ? 'FeaturesCards' : 'FeaturesIndex') : ''
+  const stepsTag = steps ? S(lay.steps === 'timeline' ? 'StepsTimeline' : 'StepsColumns') : ''
+  const faqTag = faq ? S(lay.faq === 'split' ? 'FaqSplit' : 'FaqBoxed') : ''
+  const footerTag = S(lay.heroPhoto || lay.rhythm === 'rules' ? 'FooterGiant' : 'FooterSlim')
+
+  const bandBlock = lay.heroPhoto
+    ? `<${S('PhotoBand')} media={<img src="${bandPhotoSrc}" alt={'Close view of the work and the place. ' + (COPY.hero.imageAlt || '')} loading="lazy" decoding="async" />}${reveal} />`
+    : ''
+  const priceTone = tone()
   const body = [
-    features ? sec('features', `${heading(features.id)}\n          ${featureBlock()}`) : '',
-    steps ? sec('how', `${heading(steps.id)}\n          ${stepsBlock()}`) : '',
-    sec('pricing', `<${tag('reveal')} className="mb-10 max-w-2xl">
+    features ? `<section id="features"><${featuresTag} ${listProps(features.id)} tone="${tone()}" /></section>` : '',
+    bandBlock,
+    steps ? `<section id="how"><${stepsTag} ${listProps(steps.id)} tone="${tone()}" /></section>` : '',
+    `<section id="pricing" className="${priceTone === 'card' ? 'bg-card' : priceTone === 'rule' ? 'border-t border-border' : ''}"><div className="mx-auto w-full max-w-[1320px] px-5 py-20 sm:px-8 md:py-32 lg:px-12">
+          <${tag('reveal')} className="mb-12 max-w-2xl">
             <MonoLabel accent>Pricing</MonoLabel>
-            <h2 className="mt-3 font-display text-3xl font-semibold tracking-tight text-foreground md:text-4xl">Plans</h2>
-            <p className="mt-3 text-base leading-relaxed text-muted-foreground">{PLANS.some(p => p.price === null) ? 'Prices will be shown here once they are set. The limits below already apply.' : 'Choose a plan when you are ready. You can look around in the demo first.'}</p>
+            <h2 className="mt-4 font-display text-[clamp(2.1rem,4.8vw,4.25rem)] leading-[1.04] tracking-[-0.025em] text-foreground">Plans</h2>
+            <p className="mt-5 text-base leading-relaxed text-muted-foreground md:text-lg">{PLANS.some(p => p.price === null) ? 'Prices will be shown here once they are set. The limits below already apply.' : 'Choose a plan when you are ready. You can look around in the demo first.'}</p>
           </${tag('reveal')}>
-          ${pricing}`),
-    faq ? sec('faq', `${heading(faq.id)}\n          ${faqBlock}`) : '',
+          ${pricing}
+        </div></section>`,
+    faq ? `<section id="faq"><${faqTag} eyebrow={${cp(faq.id)}.eyebrow} title={${cp(faq.id)}.title} description={${cp(faq.id)}.description} faq={${cp(faq.id)}.faq} tone="${tone()}"${reveal} /></section>` : '',
   ].filter(Boolean).join('\n        ')
 
+  const ctaTag = S(lay.heroPhoto ? 'CtaPhoto' : lay.rhythm === 'rules' ? 'CtaSplit' : 'CtaBand')
   const ctaBlock = cta
-    ? `<section className="mx-auto max-w-6xl px-6 py-20"><div className="rounded-3xl bg-foreground px-6 py-14 text-center text-background md:px-16 md:py-20">
-          <h2 className="mx-auto max-w-2xl font-display text-3xl font-semibold tracking-tight text-background md:text-5xl">{${cp(cta.id)}.title}</h2>
-          {${cp(cta.id)}.description && <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-background/80">{${cp(cta.id)}.description}</p>}
-          <div className="mt-8"><Button size="lg" onClick={() => openApp()}>{${cp(cta.id)}.button || COPY.hero.cta}</Button></div>
-          <p className="mt-4 text-xs text-background/70">Demo mode: nothing is charged, sent or stored on a server.</p>
-        </div></section>`
+    ? `<${ctaTag} title={${cp(cta.id)}.title} description={${cp(cta.id)}.description} cta={${cp(cta.id)}.button || COPY.hero.cta} onCta={() => openApp()}${lay.heroPhoto ? ` media={<img src="${closePhotoSrc}" alt={'Quiet view of the place. ' + (COPY.hero.imageAlt || '')} loading="lazy" decoding="async" />}` : ''}${reveal} />
+        <p className="mx-auto max-w-[1320px] px-5 py-4 text-xs text-muted-foreground sm:px-8 lg:px-12">Demo mode: nothing is charged, sent or stored on a server.</p>`
     : ''
 
   const imports = [...used].sort()
   return `${lay.pricing === 'cards' ? "import { Check } from 'lucide-react'\n" : ''}import { ${imports.join(', ')} } from './wyber-ui'
+import { ${[...sec].sort().join(', ')} } from './wyber-sections'
 import { OWNER } from './owner-details'
 import { CURRENCY, PLANS, RECORD_NOUN, priceLabel } from './plans'
 
@@ -333,14 +251,14 @@ ${hlCode}export default function Site() {
     <div className="min-h-screen bg-background text-foreground">
       ${mo.progress ? '<ScrollProgress />' : ''}
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-background focus:px-4 focus:py-2">Skip to content</a>
-      <${Header} brand={BRAND} links={links} cta={<Button size="sm" onClick={() => openApp()}>{COPY.hero.cta}</Button>} />
+      <${headerName} brand={BRAND} links={links}${lay.heroPhoto ? ' over' : ''} cta={<Button size="sm" onClick={() => openApp()}>{COPY.hero.cta}</Button>} />
       <main id="main">
         ${hero}
         ${body}
         ${ctaBlock}
       </main>
       ${mo.backToTop ? '<BackToTop />' : ''}
-      <Footer
+      <${footerTag}
         brand={BRAND}
         description={COPY.seo.description}
         columns={[

@@ -1,4 +1,5 @@
 import { fontsHrefFor, renderTokensCss } from '../build-spec/tokens'
+import { getDirectionById } from '../design-directions'
 import { CSV_TS, DB_TS, LOGIC_TS } from '../app-spec/runtime-core'
 import { API_TS, CSV_IMPORT_TSX, FORM_TSX } from '../app-spec/runtime-ui'
 import { ENTITY_PAGE_TSX, HISTORY_TSX, HOME_TSX } from '../app-spec/runtime-pages'
@@ -96,7 +97,7 @@ export function renderSaas(spec: SaasSpec, model: SaasModel, copy: SiteCopy): Re
       'api/subscription.ts': SUBSCRIPTION_TS,
       'api/status.ts': STATUS_TS,
       'api/send-email.ts': EMAIL_TS,
-      'src/index.css': renderTokensCss(spec.direction.id, ['en'], PRINT_CSS),
+      'src/index.css': renderTokensCss(spec.direction.id, ['en'], PRINT_CSS + warmGround(spec)),
       'index.html': html,
       'public/robots.txt': robotsTxt(spec.site),
       'public/sitemap.xml': sitemapXml(spec.site),
@@ -104,4 +105,13 @@ export function renderSaas(spec: SaasSpec, model: SaasModel, copy: SiteCopy): Re
       'src/build-spec.json': JSON.stringify({ spec, model, copy }, null, 2),
     },
   }
+}
+
+/** Study finding: warm paper, not white. A light, photo-led direction whose ground is near-white gets a faint warm tint so the page reads as paper. */
+export function warmGround(spec: SaasSpec): string {
+  if (!spec.layout.heroPhoto || spec.direction.mode !== 'light') return ''
+  const bg = getDirectionById(spec.direction.id)?.palette.tokens.background ?? ''
+  const m = /^(\d+)\s+(\d+)%\s+(\d+)%/.exec(bg)
+  if (!m || Number(m[3]) < 97 || Number(m[2]) > 8) return ''
+  return ':root { --background: 40 30% 97%; --card: 40 36% 99%; --muted: 40 24% 95%; --secondary: 40 24% 95%; --accent: 40 24% 93%; --border: 38 20% 86%; --input: 38 20% 86%; }\n'
 }

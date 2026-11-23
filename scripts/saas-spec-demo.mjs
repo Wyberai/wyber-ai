@@ -19,6 +19,7 @@ async function load(contents, name) {
 const m = await load("export * from './src/lib/saas-spec'", 'm')
 const { DEMO_SAAS, DEMO_REPLACE, demoSiteCopy } = await load("export { DEMO_SAAS, demoSiteCopy } from './src/lib/saas-spec/demo-models'\nexport { DEMO_REPLACE } from './src/lib/saas-spec/demo-replace'", 'd')
 const { WYBER_UI_KIT_SOURCE } = await load("export { WYBER_UI_KIT_SOURCE } from './src/lib/wyber-ui-kit'", 'k')
+const { WYBER_SECTIONS_SOURCE } = await load("export { WYBER_SECTIONS_SOURCE } from './src/lib/wyber-sections'", 's')
 const { checkSaasReady } = await load("export { checkSaasReady } from './src/lib/saas-ready'", 'r')
 const { composeBuildPrompt } = await load("export { composeBuildPrompt } from './src/lib/byos/quote'", 'q')
 
@@ -27,6 +28,7 @@ function overlay(dir, files) {
   fs.cpSync(base, dir, { recursive: true, filter: s => !/node_modules|[\\/]dist$/.test(s) })
   for (const rm of ['src/App.tsx', 'src/components/AskUs.tsx']) fs.rmSync(path.join(dir, rm), { force: true })
   fs.writeFileSync(path.join(dir, 'src/wyber-ui.tsx'), WYBER_UI_KIT_SOURCE)
+  fs.writeFileSync(path.join(dir, 'src/wyber-sections.tsx'), WYBER_SECTIONS_SOURCE)
   for (const [p, content] of Object.entries(files)) {
     const target = path.join(dir, p)
     fs.mkdirSync(path.dirname(target), { recursive: true })
@@ -36,7 +38,7 @@ function overlay(dir, files) {
 
 const summary = []
 for (const d of DEMO_SAAS) {
-  const spec = m.planSaas(d.prompt, { seed: process.env.SEED || d.seed, currency: d.currency })
+  const spec = m.planSaas(d.prompt, { seed: process.env.SEED || d.seed, currency: d.currency, directionId: process.env.DIRECTION || null })
   const copy = demoSiteCopy(spec.site, d.copy)
   const problems = m.validateSaasModel(m.normalizeSaasModel({ ...d.model.app, plans: d.model.plans }), d.prompt)
   if (problems.length) { console.error(d.key, problems); process.exitCode = 2; continue }

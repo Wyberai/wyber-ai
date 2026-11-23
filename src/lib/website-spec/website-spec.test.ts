@@ -252,3 +252,22 @@ describe('the platform reads what the spec path writes', () => {
     expect(files.find(f => f.path === 'src/App.tsx')!.content).toMatch(/\{\{wyber-image: [^}]+ \| 16:9\}\}/)
   })
 })
+
+describe('photo moments on a photo-led website', () => {
+  it('a full-bleed photo hero gets a transparent header and a detail band after About; each image is a different scene', () => {
+    let found = 0
+    for (const d of DEMOS) for (let i = 0; i < 40; i++) {
+      const spec = planWebsite(d.prompt, { seed: d.seed + i, facts: d.facts })
+      const sx = spec.layout?.sx
+      if (!sx || sx.hero !== 'full' || !spec.images.some(x => x.id === 'hero') || !spec.sections.some(s => s.kind === 'about')) continue
+      const src = renderWebsite(spec, d.copy).files['src/App.tsx'] ?? ''
+      found++
+      expect(src).toContain('<PhotoBand')
+      expect(src).toMatch(/<Header(Bar|Centered|Index)\s+brand=\{BRAND\}\s+links=\{links\}\s+over\s/)
+      const scenes = [...src.matchAll(/\{\{wyber-image: (.*?) \| /g)].map(m => m[1])
+      expect(new Set(scenes).size).toBe(scenes.length)
+      if (found >= 3) return
+    }
+    expect(found).toBeGreaterThan(0)
+  })
+})

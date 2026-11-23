@@ -35,7 +35,7 @@ describe('wyber-sections — source validity', () => {
     expect(WYBER_SECTIONS_SOURCE).not.toMatch(/#[0-9a-fA-F]{3,8}\b/)
     expect(WYBER_SECTIONS_SOURCE).not.toMatch(/\brgb\(/)
     const lines = WYBER_SECTIONS_SOURCE.split('\n').filter(l => /\b(?:bg|text|border|from|via|to)-(?:white|black)\b/.test(l))
-    for (const l of lines) expect(l, l).toMatch(/Cta\(|mode ===|HeroFullBleed|photo|dark|bg-gradient-to-t|bg-black|className=\{cn\('relative flex min-h/)
+    for (const l of lines) expect(l, l).toMatch(/Cta\(|mode ===|HeroFullBleed|photo|dark|bg-gradient-to-t|bg-black|bg-transparent|className=\{cn\('relative flex min-h/)
   })
 
   it('passes the anti-slop scanner with no exemption (the file is scanned like any generated source)', () => {

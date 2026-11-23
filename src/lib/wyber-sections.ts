@@ -7,7 +7,7 @@
 //
 // RULES (same as wyber-ui-kit.ts): the source lives in a String.raw template, so NO backticks and NO dollar-brace sequences inside it.
 // Colours come only from the semantic tokens, so each site's design direction re-colours every section. The one exception is the
-// white/black text and scrim over a photograph in HeroFullBleed, which has to stay readable on any image.
+// white/black text and scrim over a photograph (HeroFullBleed, CtaPhoto, and the header while it sits transparent over a photo hero), which has to stay readable on any image.
 //
 // The file is NOT excluded from the anti-slop scanner (src/lib/unslop.ts skips only wyber-ui and wyber-grow), so it is written to pass it:
 // no uppercase tracked labels, no hue gradients, no glow, no backdrop blur, no transition-all, no hover scale, no more than a handful of
@@ -170,12 +170,17 @@ function MobileMenu({ open, setOpen, links, cta }: { open: boolean; setOpen: (v:
   )
 }
 
-const headerBase = 'fixed inset-x-0 top-0 z-40 bg-background transition-colors'
+const headerBase = 'fixed inset-x-0 top-0 z-40 transition-colors'
+// Over a photograph hero the bar starts transparent with white type, and turns solid once the page scrolls or the menu opens.
+function headerSkin(over: boolean | undefined, scrolled: boolean, open: boolean): string {
+  if (!over || scrolled || open) return 'bg-background'
+  return 'bg-transparent [&_a]:!text-white [&_button[aria-label=Menu]]:!border-white/60 [&_button[aria-label=Menu]]:!text-white'
+}
 
-export function HeaderBar({ brand, links = [], cta }: { brand: string; links?: SectionLink[]; cta?: React.ReactNode }) {
+export function HeaderBar({ brand, links = [], cta, over }: { brand: string; links?: SectionLink[]; cta?: React.ReactNode; over?: boolean }) {
   const { scrolled, open, setOpen } = useHeader()
   return (
-    <header className={cn(headerBase, scrolled || open ? 'border-b border-border' : 'border-b border-transparent')}>
+    <header className={cn(headerBase, headerSkin(over, scrolled, open), scrolled || open ? 'border-b border-border' : 'border-b border-transparent')}>
       <nav className={cn(WRAP, 'flex h-[72px] items-center justify-between gap-6')}>
         <a href="#main" className={cn('font-display text-xl text-foreground', FOCUS)}>{brand}</a>
         <div className="hidden items-center gap-8 md:flex">
@@ -188,13 +193,13 @@ export function HeaderBar({ brand, links = [], cta }: { brand: string; links?: S
   )
 }
 
-export function HeaderCentered({ brand, links = [], cta }: { brand: string; links?: SectionLink[]; cta?: React.ReactNode }) {
+export function HeaderCentered({ brand, links = [], cta, over }: { brand: string; links?: SectionLink[]; cta?: React.ReactNode; over?: boolean }) {
   const { scrolled, open, setOpen } = useHeader()
   const half = Math.ceil(links.length / 2)
   const left = links.slice(0, half), right = links.slice(half)
   const item = (l: SectionLink) => <a key={l.href} href={l.href} className={cn('text-sm text-muted-foreground transition-colors hover:text-foreground', FOCUS)}>{l.label}</a>
   return (
-    <header className={cn(headerBase, scrolled || open ? 'border-b border-border' : 'border-b border-transparent')}>
+    <header className={cn(headerBase, headerSkin(over, scrolled, open), scrolled || open ? 'border-b border-border' : 'border-b border-transparent')}>
       <nav className={cn(WRAP, 'grid h-[76px] grid-cols-[1fr_auto_1fr] items-center gap-6')}>
         <div className="hidden items-center gap-8 md:flex">{left.map(item)}</div>
         <a href="#main" className={cn('col-start-1 font-display text-2xl text-foreground md:col-start-2 md:text-center', FOCUS)}>{brand}</a>
@@ -209,10 +214,10 @@ export function HeaderCentered({ brand, links = [], cta }: { brand: string; link
   )
 }
 
-export function HeaderIndex({ brand, links = [], cta }: { brand: string; links?: SectionLink[]; cta?: React.ReactNode }) {
-  const { open, setOpen } = useHeader()
+export function HeaderIndex({ brand, links = [], cta, over }: { brand: string; links?: SectionLink[]; cta?: React.ReactNode; over?: boolean }) {
+  const { scrolled, open, setOpen } = useHeader()
   return (
-    <header className={cn(headerBase, 'border-b border-border')}>
+    <header className={cn(headerBase, headerSkin(over, scrolled, open), over && !scrolled && !open ? 'border-b border-transparent' : 'border-b border-border')}>
       <nav className={cn(WRAP, 'flex h-[72px] items-center justify-between gap-6')}>
         <a href="#main" className={cn('flex items-center gap-3 text-foreground', FOCUS)}>
           <span aria-hidden="true" className="flex h-9 w-9 items-center justify-center rounded-md bg-foreground font-display text-lg text-background">{brand.slice(0, 1)}</span>
@@ -641,6 +646,43 @@ export function CtaSplit(p: CtaProps) {
   )
 }
 
+/* --------------------------------- photo ---------------------------------- */
+
+export function PhotoBand({ media, ratio = '21/9', caption, reveal }: { media?: React.ReactNode; ratio?: string; caption?: string; reveal?: boolean }) {
+  return (
+    <div className={cn(WRAP, 'py-6 md:py-12')}>
+      <Rv on={reveal}>
+        <Frame media={media} ratio={ratio} className="rounded-3xl" />
+        {caption && <p className="mt-3 text-sm text-muted-foreground">{caption}</p>}
+      </Rv>
+    </div>
+  )
+}
+
+// The closing screen repeats the mood of the first one: a photograph under a flat dark overlay, a large line, one action.
+export function CtaPhoto(p: CtaProps & { media?: React.ReactNode }) {
+  const photo = Boolean(p.media)
+  return (
+    <div className={cn('relative isolate overflow-hidden', photo ? 'bg-black text-white' : 'bg-foreground text-background')}>
+      {photo && (
+        <>
+          <div className="absolute inset-0 -z-20 [&_img]:h-full [&_img]:w-full [&_img]:object-cover">{p.media}</div>
+          <div aria-hidden="true" className="absolute inset-0 -z-10 bg-black/60" />
+        </>
+      )}
+      <div className={cn(WRAP, 'py-24 md:py-44')}>
+        <Rv on={p.reveal}>
+          <h2 className="max-w-5xl font-display text-[clamp(2.6rem,7vw,7rem)] leading-[0.96] tracking-[-0.04em]">{p.title}</h2>
+          <div className="mt-12 grid gap-8 md:grid-cols-12 md:items-end">
+            {p.description && <p className={cn('max-w-lg text-lg leading-relaxed md:col-span-6 md:text-xl', photo ? 'text-white/85' : 'text-background/80')}>{p.description}</p>}
+            <Actions cta={p.cta} onCta={p.onCta} secondaryLabel={p.secondaryLabel} secondaryHref={p.secondaryHref} dark={photo} invert={!photo} className="md:col-span-6 md:justify-end" />
+          </div>
+        </Rv>
+      </div>
+    </div>
+  )
+}
+
 /* --------------------------------- contact --------------------------------- */
 
 type ContactProps = { eyebrow?: string; title: string; description?: string; facts?: SectionFact[]; children?: React.ReactNode; flip?: boolean; tone?: Tone; reveal?: boolean }
@@ -755,5 +797,5 @@ export const WYBER_SECTION_NAMES = [
   'HeroSplitPhoto', 'HeroEditorial', 'HeroCentered', 'HeroFullBleed', 'HeroMinimal',
   'FeaturesIndex', 'FeaturesCards', 'FeaturesBento', 'FeaturesGrid',
   'StepsColumns', 'StepsTimeline', 'AboutSplit', 'AboutBand', 'FaqSplit', 'FaqBoxed',
-  'CtaBand', 'CtaSplit', 'ContactSplit', 'ContactCentered', 'VisitList', 'FooterGiant', 'FooterSlim',
+  'CtaBand', 'CtaSplit', 'CtaPhoto', 'PhotoBand', 'ContactSplit', 'ContactCentered', 'VisitList', 'FooterGiant', 'FooterSlim',
 ] as const
