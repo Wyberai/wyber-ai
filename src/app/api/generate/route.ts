@@ -5752,6 +5752,68 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
         }
       }
 
+      // ── Spec-driven mobile build (flag MOBILE_SPEC_BUILD=on, default OFF) ──────────────────────────────────────────
+      // Same recipe for Expo apps (src/lib/mobile-spec): the model writes the DOMAIN MODEL as JSON, a fixed, tested React Native kit and
+      // runtime render every screen, so the mobile launch-ready contract is met by construction. Any failure falls through.
+      if (!handledBySpec && isNewBuild && stage === 'full' && !selfHeal && projectType === 'mobile' && isLaunchReadyMobile(projectType) && (await import('@/lib/mobile-spec/flag')).mobileSpecEnabled()) {
+        try {
+          const { generateMobileApp } = await import('@/lib/mobile-spec')
+          const MOBILE_SPEC_TIMEOUT_MS = Number(process.env.MOBILE_SPEC_TIMEOUT_MS) || 150000
+          let mobTimer: ReturnType<typeof setTimeout> | undefined
+          const mobResult = await Promise.race([
+            generateMobileApp(
+              { prompt, seed: String(projectId ?? buildId ?? prompt) },
+              {
+                writeModel: async (system, user) => {
+                  const m = await client.messages.create({ model, max_tokens: 10000, system, messages: [{ role: 'user', content: user }] })
+                  const text = m.content.map(b => (b.type === 'text' ? b.text : '')).join('')
+                  return { text, inputTokens: m.usage.input_tokens ?? 0, outputTokens: m.usage.output_tokens ?? 0 }
+                },
+              },
+            ),
+            new Promise<never>((_, reject) => { mobTimer = setTimeout(() => reject(new Error(`mobile-spec exceeded ${MOBILE_SPEC_TIMEOUT_MS}ms`)), MOBILE_SPEC_TIMEOUT_MS) }),
+          ]).finally(() => { if (mobTimer) clearTimeout(mobTimer) })
+          totalInputTokens += mobResult.usage.inputTokens
+          totalOutputTokens += mobResult.usage.outputTokens
+          if (mobResult.ok) {
+            const mobText = `[progress: Planning your app (${mobResult.spec.brief.intent}, ${mobResult.spec.direction.name})]
+` + mobResult.text
+            const mobFiles = parseGenerationOutput(mobText).files
+            const mobVetoes = mobFiles.flatMap(f => reviewEmittedFile(f.path, f.content, '', { nextId: createFindingIdGenerator() })).filter(vetoEligible)
+            if (mobVetoes.length) {
+              console.log(`[mobile-spec] security review blocked the rendered app (${mobVetoes.map(v => v.ruleId).join(', ')}), falling back to the free-form build`)
+            } else {
+              generatedText = mobText
+              let i = 0
+              const mobChunk = 400
+              readable = new ReadableStream<Uint8Array>({
+                start(c) {
+                  emitAgent(c, { agent: 'coder', status: 'start', detail: 'rendering your app from the plan' })
+                  emitAgent(c, { agent: 'security', status: 'start', detail: 'reviewing every file as it lands' })
+                  for (const f of mobFiles) sentinelReview(c, f.path, f.content)
+                },
+                pull(c) {
+                  if (i >= mobText.length) {
+                    emitAgent(c, { agent: 'coder', status: 'done' })
+                    sentinelDone(c)
+                    c.close()
+                    return
+                  }
+                  c.enqueue(encoder.encode(mobText.slice(i, i + mobChunk)))
+                  i += mobChunk
+                },
+              })
+              handledBySpec = true
+              console.log(`[mobile-spec] ok buildId=${buildId ?? ''} intent=${mobResult.spec.brief.intent} direction=${mobResult.spec.direction.id} structure=${mobResult.spec.layout.structure} entities=${mobResult.model.entities.length} files=${mobResult.paths.length} output=${mobResult.usage.outputTokens} elapsed_ms=${Date.now() - requestStartTime}`)
+            }
+          } else {
+            console.log(`[mobile-spec] falling back to the free-form build: ${mobResult.reason.slice(0, 300)}`)
+          }
+        } catch (mobErr) {
+          console.log('[mobile-spec] threw, falling back to the free-form build:', String(mobErr))
+        }
+      }
+
       let handledByParallel = handledBySpec
       if (!handledBySpec && useToolUse && isNewBuild && newBuildComplexity !== true && process.env.CLAUDE_PARALLEL_BUILD !== 'off') {
         try {
