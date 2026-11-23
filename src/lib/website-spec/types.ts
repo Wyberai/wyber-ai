@@ -127,6 +127,8 @@ export const DEFAULT_MOTION: MotionPlan = { reveal: true, stagger: true, progres
 /** Languages the site offers. English is always first; the rest are written by a translation step. */
 
 export interface BuildSpec {
+  /** The art director's skin for this business (hue and font pairing), applied on top of the direction. */
+  look?: import('../build-spec/look').Look
   version: 1
   /** Optional so specs saved before these fields existed still render. */
   layout?: LayoutPlan

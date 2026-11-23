@@ -1,5 +1,6 @@
 'use client'
 import { notBuiltSentence } from '@/lib/not-built-note';
+import { explainableNoChange } from '@/lib/no-change-reply';
 import { repairStringSeams } from '@/lib/string-seam'
 import { creditCost, type ActionType } from '@/lib/credits';
 import { findHeroImage, heroPrompt } from '@/lib/hero-upsell';
@@ -2424,12 +2425,14 @@ const storeProjectId = useEditorStore.getState().project?.id;
         // to begin with).
         if (isVisible && !editIncompleteReported && !opts?.quietRetryEligible && !opts?.qaFix) {
           const emittedNothing = full.trim().length === 0;
+          // When the model wrote a real explanation or question (it declined to invent reviews, say), show that, not a canned error.
+          const explained = (fileCut || editCut || emittedNothing) ? null : explainableNoChange(full);
           const errMsg = (fileCut || editCut)
             ? t('streamCutOffMsg')
             : emittedNothing
             ? t('emptyResponseMsg')
-            : t('nothingChangedMsg');
-          updateMessage(assistantId, { content: errMsg, status: (fileCut || editCut) ? 'done' : 'error', retryPrompt: userMsg, retryLane: 'build' });
+            : explained ?? t('nothingChangedMsg');
+          updateMessage(assistantId, { content: errMsg, status: (fileCut || editCut) ? 'done' : (explained ? 'done' : 'error'), retryPrompt: explained ? undefined : userMsg, retryLane: 'build' });
           persistMessage('assistant', errMsg);
         } else if (isVisible && (opts?.quietRetryEligible || opts?.qaFix)) {
           // Close out the streaming bubble this pass added with no visible

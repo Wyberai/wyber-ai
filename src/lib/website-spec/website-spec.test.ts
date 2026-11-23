@@ -175,13 +175,14 @@ import { generateWebsite, parseFactsFromPrompt, parseJsonObject } from './genera
 import { factsSuffix } from '../website-facts'
 import { websiteSpecEnabled } from './flag'
 
+import { withLook, isLookQuestion, LOOK_REPLY } from '../build-spec/test-look'
 describe('generate (model injected)', () => {
   const d = DEMOS[0]
   const reply = (obj: unknown) => ({ text: '```json\n' + JSON.stringify(obj) + '\n```', inputTokens: 1000, outputTokens: 2000 })
 
   it('plans, asks for copy once, validates, renders and returns <file> blocks with the entry file last', async () => {
     let calls = 0
-    const r = await generateWebsite({ prompt: d.prompt + ' English only.', seed: d.seed, facts: d.facts }, { writeCopy: async () => { calls++; return reply(d.copy) } })
+    const r = await generateWebsite({ prompt: d.prompt + ' English only.', seed: d.seed, facts: d.facts }, { writeCopy: withLook(async () => { calls++; return reply(d.copy) }) })
     expect(calls).toBe(1)
     expect(r.ok).toBe(true)
     if (!r.ok) return
@@ -196,7 +197,7 @@ describe('generate (model injected)', () => {
     bad.hero.headline = 'The best clinic in the city!'
     const asked: string[] = []
     const r = await generateWebsite({ prompt: d.prompt + ' English only.', seed: d.seed, facts: d.facts }, {
-      writeCopy: async (_s, u) => { asked.push(u); return reply(asked.length === 1 ? bad : d.copy) },
+      writeCopy: withLook(async (_s, u) => { asked.push(u); return reply(asked.length === 1 ? bad : d.copy) }),
     })
     expect(r.ok).toBe(true)
     expect(asked).toHaveLength(2)
@@ -204,7 +205,7 @@ describe('generate (model injected)', () => {
   })
 
   it('gives up after two bad replies so the free-form build can take over', async () => {
-    const r = await generateWebsite({ prompt: d.prompt + ' English only.', seed: d.seed, facts: d.facts }, { writeCopy: async () => ({ text: 'sorry, I cannot', inputTokens: 5, outputTokens: 5 }) })
+    const r = await generateWebsite({ prompt: d.prompt + ' English only.', seed: d.seed, facts: d.facts }, { writeCopy: withLook(async () => ({ text: 'sorry, I cannot', inputTokens: 5, outputTokens: 5 })) })
     expect(r.ok).toBe(false)
     if (!r.ok) { expect(r.reason).toMatch(/^copy:/); expect(r.usage.inputTokens).toBe(10) }
   })

@@ -90,6 +90,8 @@ export interface AppLayoutPlan {
 }
 
 export interface AppSpec {
+  /** The art director's skin (hue and font pairing) on top of the direction. */
+  look?: import('../build-spec/look').Look
   version: 1
   brief: { intent: AppIntentId; confidence: number; industry: string; facts: OwnerFacts; note?: string; secondary?: AppIntentId; notBuilt?: string[] }
   direction: { id: string; name: string; group: string; mode: 'light' | 'dark' }

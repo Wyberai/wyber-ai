@@ -242,16 +242,17 @@ describe('generated runtime, executed', () => {
   })
 })
 
+import { withLook, isLookQuestion, LOOK_REPLY } from '../build-spec/test-look'
 describe('generateApp (model injected)', () => {
   const d = DEMO_APPS[0]
   const reply = (obj: unknown) => ({ text: JSON.stringify(obj), inputTokens: 500, outputTokens: 1500 })
   // The shape question comes first: this fake answers it (as a model would) and leaves the model-design counts to the tests below.
-  const isShape = (system: string) => /^You choose the shape/.test(system)
-  const shapeReply = () => ({ text: JSON.stringify({ primary: 'billing', secondary: null, notBuilt: [] }), inputTokens: 0, outputTokens: 0 })
+  const isShape = (system: string) => /^You choose the shape/.test(system) || isLookQuestion(system)
+  const shapeReply = (system = '') => (isLookQuestion(system) ? LOOK_REPLY : { text: JSON.stringify({ primary: 'billing', secondary: null, notBuilt: [] }), inputTokens: 0, outputTokens: 0 })
 
   it('asks once, validates, renders and returns <file> blocks with App.tsx last', async () => {
     let calls = 0
-    const r = await generateApp({ prompt: d.prompt, seed: d.seed }, { writeModel: async (sys: string) => { if (isShape(sys)) return shapeReply(); calls++; return reply(d.model) } })
+    const r = await generateApp({ prompt: d.prompt, seed: d.seed }, { writeModel: async (sys: string) => { if (isShape(sys)) return shapeReply(sys); calls++; return reply(d.model) } })
     expect(calls).toBe(1)
     expect(r.ok).toBe(true)
     if (!r.ok) return
@@ -262,11 +263,11 @@ describe('generateApp (model injected)', () => {
   })
   it('extra keys in the reply never reach the app; a bad reply is repaired once, then gives up cleanly', async () => {
     const polluted = { ...d.model, hidden: 'nope', entities: d.model.entities.map(e => ({ ...e, extra: 1 })) }
-    const ok = await generateApp({ prompt: d.prompt, seed: d.seed }, { writeModel: async (sys: string) => (isShape(sys) ? shapeReply() : reply(polluted)) })
+    const ok = await generateApp({ prompt: d.prompt, seed: d.seed }, { writeModel: async (sys: string) => (isShape(sys) ? shapeReply(sys) : reply(polluted)) })
     expect(ok.ok).toBe(true)
     if (ok.ok) { expect(ok.text).not.toContain('"hidden": "nope"'); expect(ok.text).not.toContain('"extra"') }
     const asked: string[] = []
-    const bad = await generateApp({ prompt: d.prompt, seed: d.seed }, { writeModel: async (s, u) => { if (isShape(s)) return shapeReply(); asked.push(u); return reply({ ...d.model, entities: [] }) } })
+    const bad = await generateApp({ prompt: d.prompt, seed: d.seed }, { writeModel: async (s, u) => { if (isShape(s)) return shapeReply(s); asked.push(u); return reply({ ...d.model, entities: [] }) } })
     expect(bad.ok).toBe(false)
     expect(asked).toHaveLength(2)
     expect(asked[1]).toMatch(/entities/)

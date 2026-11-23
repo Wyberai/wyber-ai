@@ -232,7 +232,7 @@ export function renderApp(spec: AppSpec, model: AppModel, currency = '₹', extr
       'src/components/HomePage.tsx': HOME_TSX,
       'src/components/HistoryPage.tsx': HISTORY_TSX,
       'src/components/PrivacyPage.tsx': PRIVACY_TSX,
-      'src/index.css': renderTokensCss(spec.direction.id, ['en'], PRINT_CSS),
+      'src/index.css': renderTokensCss(spec.direction.id, ['en'], PRINT_CSS, spec.look),
       'index.html': `<!DOCTYPE html>
 <html lang="en">
   <head>
@@ -240,7 +240,7 @@ export function renderApp(spec: AppSpec, model: AppModel, currency = '₹', extr
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>${title.replace(/</g, '&lt;')}</title>
     <meta name="description" content="${model.homeIntro.replace(/"/g, '&quot;')}" />
-    <link href="${fontsHrefFor(spec.direction.id)}" rel="stylesheet">
+    <link href="${fontsHrefFor(spec.direction.id, ['en'], spec.look)}" rel="stylesheet">
   </head>
   <body>
     <div id="root"></div>

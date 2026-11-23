@@ -11,7 +11,7 @@ import type { AppSpec } from '../app-spec/types'
 import type { BuildSpec, PlannedSection } from '../website-spec/types'
 import type { OwnerFacts, SaasLayoutPlan, SaasSpec } from './types'
 
-export interface SaasPlanOptions { seed: string; facts?: OwnerFacts; directionId?: string | null; avoid?: string[]; currency?: string }
+export interface SaasPlanOptions { seed: string; facts?: OwnerFacts; directionId?: string | null; avoid?: string[]; currency?: string; look?: import('../build-spec/look').Look }
 
 /**
  * One direction for the whole product, so the marketing site and the screens inside read as the same brand. Only directions made for both
@@ -97,6 +97,7 @@ export function planSaas(prompt: string, o: SaasPlanOptions): SaasSpec {
     blueprint: APP_BLUEPRINTS[intent.intent].id,
   }
   return {
+    look: o.look,
     version: 1, kind: 'saas',
     site: planSite(prompt, d, facts, o.seed),
     app,

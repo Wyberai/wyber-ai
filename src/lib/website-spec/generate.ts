@@ -4,6 +4,7 @@ import { parseFactsFromPrompt, stripFactsSuffix } from '../build-spec/facts'
 import { buildLanguagePrompt, languagesFromReply, validateLanguageReply } from '../build-spec/languages'
 import type { ModelCall, ModelReply } from '../build-spec/types'
 import { buildCopyPrompt, normalizeCopy, validateCopy } from './copy'
+import { resolveLook } from '../build-spec/look'
 import { planWebsite } from './plan'
 import { renderWebsite, type Translations } from './render'
 import { buildTranslatePrompt, completeTranslation, translatable, validateTranslation } from './translate'
@@ -41,7 +42,10 @@ export async function generateWebsite(input: GenerateInput, deps: GenerateDeps):
   const notes: string[] = []
   let spec: BuildSpec
   try {
-    spec = planWebsite(input.prompt, { seed: input.seed, facts: input.facts ?? parseFactsFromPrompt(input.prompt), directionId: input.directionId, avoid: input.avoid })
+    // The art director decides how this business should look; a direction the owner chose in Plan Mode is never overridden.
+    const art = input.directionId ? null : await resolveLook(stripFactsSuffix(input.prompt), input.seed, 'website', deps.writeCopy, onUsage, { named: !!(input.facts ?? parseFactsFromPrompt(input.prompt)).name, avoid: input.avoid })
+    if (!art) notes.push('look: kept the keyword choice')
+    spec = planWebsite(input.prompt, { seed: input.seed, facts: input.facts ?? parseFactsFromPrompt(input.prompt), directionId: art?.directionId ?? input.directionId, avoid: input.avoid, look: art?.look })
   } catch (e) { return { ok: false, reason: 'plan: ' + String(e), usage } }
   if (spec.brief.note) notes.push(spec.brief.note)
   if (spec.brief.unsupported.length) notes.push('Not built yet: ' + spec.brief.unsupported.join(', '))

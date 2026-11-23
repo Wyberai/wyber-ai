@@ -4,6 +4,7 @@ import { parseFactsFromPrompt, stripFactsSuffix } from '../build-spec/facts'
 import type { ModelCall, ModelReply } from '../build-spec/types'
 import { isIndianPrompt } from '../build-spec/locale'
 import { chooseShape, SAAS_LIMITS } from '../app-spec/choose'
+import { resolveLook } from '../build-spec/look'
 import { normalizeCopy, validateCopy } from '../website-spec/copy'
 import type { SiteCopy } from '../website-spec/types'
 import { buildSaasCopyPrompt, buildSaasModelPrompt, normalizeSaasModel, validateSaasModel } from './model'
@@ -37,7 +38,9 @@ export async function generateSaas(input: SaasGenerateInput, deps: { write: Mode
   const brief = stripFactsSuffix(input.prompt)
   let spec: SaasSpec
   try {
-    spec = planSaas(input.prompt, { seed: input.seed, facts: input.facts ?? parseFactsFromPrompt(input.prompt), directionId: input.directionId, avoid: input.avoid, currency: currencyFor(input.prompt) })
+    const art = input.directionId ? null : await resolveLook(brief, input.seed, 'saas', deps.write, onUsage, { named: true, avoid: input.avoid })
+    if (!art) notes.push('look: kept the keyword choice')
+    spec = planSaas(input.prompt, { seed: input.seed, facts: input.facts ?? parseFactsFromPrompt(input.prompt), directionId: art?.directionId ?? input.directionId, avoid: input.avoid, currency: currencyFor(input.prompt), look: art?.look })
   } catch (e) { return { ok: false, reason: 'plan: ' + String(e), usage } }
 
   // The model reads the whole brief to choose what the product is for (see app-spec/choose), and says what this kind of product cannot do.

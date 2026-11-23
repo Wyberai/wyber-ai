@@ -442,6 +442,7 @@ export * from './api/${name}'`)
   })
 })
 
+import { isLookQuestion } from '../build-spec/test-look'
 describe('generateSaas (model injected)', () => {
   const d = DEMO_SAAS[0]
   const reply = (o: unknown) => ({ text: JSON.stringify(o), inputTokens: 500, outputTokens: 1500 })
@@ -449,6 +450,7 @@ describe('generateSaas (model injected)', () => {
     const spec = planSaas(d.prompt, { seed: d.seed, currency: d.currency })
     const asked: string[] = []
     const fn = async (_s: string, u: string) => {
+      if (isLookQuestion(_s)) return { text: 'no usable answer', inputTokens: 0, outputTokens: 0 } // fixtures are written for the keyword plan
       if (/^You choose the shape/.test(_s)) return { text: JSON.stringify({ primary: 'billing', secondary: null, notBuilt: [] }), inputTokens: 0, outputTokens: 0 }
       asked.push(u)
       if (/Sections to write/.test(u)) return reply(opts.copy ? opts.copy(spec) : demoSiteCopy(spec.site, d.copy))
@@ -477,6 +479,7 @@ describe('generateSaas (model injected)', () => {
     const spec = planSaas(d.prompt, { seed: d.seed, currency: d.currency })
     const asked: string[] = []
     const fn = async (_s: string, u: string) => {
+      if (isLookQuestion(_s)) return { text: 'no usable answer', inputTokens: 0, outputTokens: 0 } // fixtures are written for the keyword plan
       if (/^You choose the shape/.test(_s)) return { text: JSON.stringify({ primary: 'billing', secondary: null, notBuilt: [] }), inputTokens: 0, outputTokens: 0 }
       asked.push(u)
       if (/Sections to write/.test(u)) return reply(demoSiteCopy(spec.site, d.copy))

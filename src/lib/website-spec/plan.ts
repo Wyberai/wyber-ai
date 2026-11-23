@@ -45,6 +45,8 @@ export interface PlanOptions {
   directionId?: string | null
   /** Directions this user got recently: skipped when there is another good fit. */
   avoid?: string[]
+  /** The art director's skin (see build-spec/look). */
+  look?: import('../build-spec/look').Look
 }
 
 export { feelScore }
@@ -168,6 +170,7 @@ export function planWebsite(prompt: string, o: PlanOptions): BuildSpec {
 
   return {
     version: 1,
+    look: o.look,
     layout,
     languages: languagesFor(prompt, facts),
     brief,

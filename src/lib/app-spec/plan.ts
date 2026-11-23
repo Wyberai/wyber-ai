@@ -5,7 +5,7 @@ import { getDirectionById, type Direction } from '../design-directions'
 import { APP_BLUEPRINTS, classifyAppIntent } from './intents'
 import type { AppLayoutPlan, AppSpec, OwnerFacts } from './types'
 
-export interface AppPlanOptions { seed: string; facts?: OwnerFacts; directionId?: string | null; avoid?: string[] }
+export interface AppPlanOptions { seed: string; facts?: OwnerFacts; directionId?: string | null; avoid?: string[]; look?: import('../build-spec/look').Look }
 
 /** App screens want a quiet working surface: the best fits for the business, ordered by the feel the owner asked for, then a seeded pick. */
 export function pickAppDirection(prompt: string, o: AppPlanOptions): Direction {
@@ -38,6 +38,7 @@ export function planApp(prompt: string, o: AppPlanOptions): AppSpec {
   const brief = classifyAppIntent(prompt, facts)
   const d = pickAppDirection(prompt, o)
   return {
+    look: o.look,
     version: 1,
     brief,
     direction: { id: d.id, name: d.name, group: d.group, mode: d.palette.mode },

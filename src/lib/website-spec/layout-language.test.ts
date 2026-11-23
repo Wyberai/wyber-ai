@@ -94,6 +94,7 @@ describe('languages', () => {
   })
 })
 
+import { withLook, isLookQuestion, LOOK_REPLY } from '../build-spec/test-look'
 describe('generate with translations and free-text facts', () => {
   const d = DEMOS[1]
   const isTranslate = (system: string) => /^You translate/.test(system)
@@ -102,6 +103,7 @@ describe('generate with translations and free-text facts', () => {
     return {
       calls,
       writeCopy: async (system: string, user: string) => {
+        if (isLookQuestion(system)) return LOOK_REPLY
         if (/^You decide which language/.test(system)) {
           calls.push({ kind: 'languages', user })
           return { text: JSON.stringify({ languages: ['hi'], why: 'test' }), inputTokens: 1, outputTokens: 1 }

@@ -1,6 +1,7 @@
 import { getDirectionById } from '../design-directions'
 import { directionFontsUrl } from '../direction-fonts'
 import type { LangId } from './types'
+import { recolorTokens, type Look } from './look'
 
 const TOKEN_ORDER = [
   'background', 'foreground', 'card', 'card-foreground', 'popover', 'popover-foreground', 'primary', 'primary-foreground',
@@ -37,9 +38,11 @@ p, li, dd, blockquote, figcaption { text-wrap: pretty; }
 }
 @media print { [data-sv] { animation: none; } }`
 
-export function renderTokensCss(directionId: string, langs: LangId[] = ['en'], extra = ''): string {
-  const d = getDirectionById(directionId)
-  if (!d) throw new Error('unknown direction ' + directionId)
+export function renderTokensCss(directionId: string, langs: LangId[] = ['en'], extra = '', look?: Look | null): string {
+  const d0 = getDirectionById(directionId)
+  if (!d0) throw new Error('unknown direction ' + directionId)
+  // the art director's skin: a hue for this business and a font pairing (colour contrast is re-checked in recolorTokens)
+  const d = look ? { ...d0, palette: { ...d0.palette, tokens: recolorTokens(d0.palette.tokens, look.hue) }, fonts: { ...d0.fonts, display: look.fonts.display, body: look.fonts.body, displayWeight: look.fonts.displayWeight, displayTracking: look.fonts.displayTracking } } : d0
   const scriptFallback = langs.map(l => SCRIPT_FONTS[l]?.css).filter(Boolean).map(x => x + ', ').join('')
   const vars = TOKEN_ORDER.filter(k => d.palette.tokens[k]).map(k => '  --' + k + ': ' + d.palette.tokens[k] + ';').join('\n')
   return `@tailwind base;
@@ -76,9 +79,10 @@ ${extra}
 `
 }
 
-export function fontsHrefFor(directionId: string, langs: LangId[] = ['en']): string {
-  const d = getDirectionById(directionId)
-  if (!d) throw new Error('unknown direction ' + directionId)
+export function fontsHrefFor(directionId: string, langs: LangId[] = ['en'], look?: Look | null): string {
+  const d0 = getDirectionById(directionId)
+  if (!d0) throw new Error('unknown direction ' + directionId)
+  const d = look ? { ...d0, fonts: { ...d0.fonts, display: look.fonts.display, body: look.fonts.body } } : d0
   const base = directionFontsUrl([d.fonts.display, d.fonts.body, d.fonts.mono]) ?? 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap'
   const extra = langs.map(l => SCRIPT_FONTS[l]?.family).filter(Boolean).map(f => '&family=' + f).join('')
   return extra ? base.replace('&display=swap', extra + '&display=swap') : base

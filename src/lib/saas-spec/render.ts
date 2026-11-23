@@ -60,7 +60,7 @@ export interface RenderedSaas { files: Record<string, string> }
 
 export function renderSaas(spec: SaasSpec, model: SaasModel, copy: SiteCopy): RenderedSaas {
   const app = model.app
-  const html = renderIndexHtml(spec.site, copy, fontsHrefFor(spec.direction.id, ['en']))
+  const html = renderIndexHtml(spec.site, copy, fontsHrefFor(spec.direction.id, ['en'], spec.look))
   return {
     files: {
       'src/App.tsx': ROUTER_TSX,
@@ -96,7 +96,7 @@ export function renderSaas(spec: SaasSpec, model: SaasModel, copy: SiteCopy): Re
       'api/subscription.ts': SUBSCRIPTION_TS,
       'api/status.ts': STATUS_TS,
       'api/send-email.ts': EMAIL_TS,
-      'src/index.css': renderTokensCss(spec.direction.id, ['en'], PRINT_CSS),
+      'src/index.css': renderTokensCss(spec.direction.id, ['en'], PRINT_CSS, spec.look),
       'index.html': html,
       'public/robots.txt': robotsTxt(spec.site),
       'public/sitemap.xml': sitemapXml(spec.site),

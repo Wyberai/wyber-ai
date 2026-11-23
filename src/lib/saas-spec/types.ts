@@ -45,6 +45,8 @@ export interface SaasLayoutPlan {
 }
 
 export interface SaasSpec {
+  /** The art director's skin (hue and font pairing) on top of the direction. */
+  look?: import('../build-spec/look').Look
   version: 1
   kind: 'saas'
   /** The marketing site plan from the website pipeline (product intent). Carries the copy slots and SEO. */

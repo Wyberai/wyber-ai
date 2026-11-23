@@ -3,6 +3,7 @@ import { askForJson } from '../build-spec/ask'
 import { parseFactsFromPrompt, stripFactsSuffix } from '../build-spec/facts'
 import type { ModelCall } from '../build-spec/types'
 import { chooseShape } from './choose'
+import { resolveLook } from '../build-spec/look'
 import { buildModelPrompt, normalizeModel, validateModel } from './model'
 import { planApp } from './plan'
 import { renderApp } from './render'
@@ -20,7 +21,9 @@ export async function generateApp(input: AppGenerateInput, deps: { writeModel: M
   const notes: string[] = []
   let spec: AppSpec
   try {
-    spec = planApp(input.prompt, { seed: input.seed, facts: input.facts ?? parseFactsFromPrompt(input.prompt), directionId: input.directionId, avoid: input.avoid })
+    const art = input.directionId ? null : await resolveLook(stripFactsSuffix(input.prompt), input.seed, 'app', deps.writeModel, r => { usage.inputTokens += r.inputTokens; usage.outputTokens += r.outputTokens }, { named: true, avoid: input.avoid })
+    if (!art) notes.push('look: kept the keyword choice')
+    spec = planApp(input.prompt, { seed: input.seed, facts: input.facts ?? parseFactsFromPrompt(input.prompt), directionId: art?.directionId ?? input.directionId, avoid: input.avoid, look: art?.look })
   } catch (e) { return { ok: false, reason: 'plan: ' + String(e), usage } }
   if (spec.brief.note) notes.push(spec.brief.note)
 

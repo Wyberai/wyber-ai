@@ -8,11 +8,11 @@ export { directiveRatio, IMAGE_HYGIENE, imageDirective } from './render-images'
 export { renderApp, navLabels, type Translations } from './render-app'
 
 export function renderIndexCss(spec: BuildSpec, langs: LangId[] = ['en']): string {
-  return renderTokensCss(spec.direction.id, langs, 'section[id] { scroll-margin-top: 5rem; }\n')
+  return renderTokensCss(spec.direction.id, langs, 'section[id] { scroll-margin-top: 5rem; }\n', spec.look)
 }
 
 export function fontsHref(spec: BuildSpec, langs: LangId[] = ['en']): string {
-  return fontsHrefFor(spec.direction.id, langs)
+  return fontsHrefFor(spec.direction.id, langs, spec.look)
 }
 
 export function renderOwnerDetails(spec: BuildSpec): string {
