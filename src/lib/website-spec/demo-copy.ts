@@ -9,7 +9,7 @@ export const DEMOS: DemoSite[] = [
   {
     key: 'dental',
     prompt: 'Website for a family dental clinic in Ahmedabad for check-ups, braces and root canals',
-    seed: 'demo-1',
+    seed: 'demo-5',
     facts: { city: 'Ahmedabad', email: 'hello@example.com' },
     copy: {
       brand: 'Family dental clinic',
@@ -79,7 +79,7 @@ export const DEMOS: DemoSite[] = [
   {
     key: 'rice',
     prompt: 'Website for a basmati and sona masoori rice exporter in Hyderabad supplying wholesale buyers',
-    seed: 'demo-1',
+    seed: 'demo-5',
     facts: { city: 'Hyderabad', email: 'hello@example.com' },
     copy: {
       brand: 'Rice exporter, Hyderabad',
@@ -151,7 +151,7 @@ export const DEMOS: DemoSite[] = [
   {
     key: 'meetup',
     prompt: 'Website for a two-day startup meetup in Pune with talks, demos and a hiring corner',
-    seed: 'demo-1',
+    seed: 'demo-5',
     facts: { city: 'Pune', email: 'hello@example.com' },
     copy: {
       brand: 'Startup meetup, Pune',

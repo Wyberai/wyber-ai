@@ -49,6 +49,11 @@ function score(dir: Direction, prompt: string): number {
   return s
 }
 
+/** How strongly a direction fits a prompt (0 = no signal, 3+ = a clear business match). */
+export function directionFit(dir: Direction, prompt: string): number {
+  return score(dir, prompt)
+}
+
 function shuffle<T>(arr: T[], rnd: () => number): T[] {
   const a = [...arr]
   for (let i = a.length - 1; i > 0; i--) {
@@ -114,7 +119,8 @@ export function dealDirections(
   // defaults for the surface (apps: appDefault; websites: generalist), which still vary build to build.
   const neutral = (c: { d: Direction }) => (surface === 'app' ? c.d.appDefault : c.d.generalist)
   if (n > 1 || !hasSignal) take(zero.filter(neutral))
-  take(zero)
+  // (a direction already picked as a neutral filler must not be dealt twice: with a large n the duplicates doubled its odds)
+  take(zero.filter(c => !picked.includes(c.d)))
   return picked
 }
 

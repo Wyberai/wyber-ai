@@ -1,6 +1,7 @@
 import { seededRandom } from '../build-spec/random'
 import { feelScore } from '../build-spec/feel'
-import { dealDirections } from '../direction-brief'
+import { dealDirections, directionFit } from '../direction-brief'
+import { pickWeighted } from '../design-variety'
 import { getDirectionById, type Direction } from '../design-directions'
 import { appLayoutFor } from '../app-spec/plan'
 import { classifyAppIntent, APP_BLUEPRINTS } from '../app-spec/intents'
@@ -29,10 +30,12 @@ export function pickSaasDirection(prompt: string, o: SaasPlanOptions): Direction
   const modeBonus = (d: Direction) => ((wantsDark && d.palette.mode === 'dark') || (wantsLight && d.palette.mode === 'light') ? 2 : 0)
   const scored = pool.map((d, i) => ({ d, i, f: feelScore(prompt, d) + modeBonus(d) })).sort((a, b) => b.f - a.f || a.i - b.i)
   const top = scored[0]?.f ?? 0
-  const ranked = scored.filter(x => top === 0 || x.f === top).slice(0, 3).map(x => x.d)
+  // up to six of the best fits (the word "SaaS" itself matches the developer direction, so every brief looks like a strong match and a tight
+  // pool would always be the same four); the weighted pick spreads grounds and hues (see design-variety.ts)
+  const ranked = scored.filter(x => top === 0 || x.f === top).slice(0, 6).map(x => x.d)
   const fresh = ranked.filter(d => !(o.avoid ?? []).includes(d.id))
   const picks = fresh.length ? fresh : ranked
-  return picks[Math.floor(rnd() * picks.length)]
+  return pickWeighted(picks, rnd, d => directionFit(d, prompt))
 }
 
 export function saasLayoutFor(d: Direction, seed: string): SaasLayoutPlan {
