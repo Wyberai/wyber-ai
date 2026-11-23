@@ -45,7 +45,7 @@ import { UpgradeModal, type NextFeatureSuggestion } from './UpgradeModal';
 import { PLAN_FACTS } from '@/lib/plans';
 import { PlanMode } from './PlanMode';
 import { DirectionCards } from './DirectionCards';
-import { VoiceButton } from './VoiceButton';
+import { VoiceBuildButton } from '@/components/voice/VoiceBuildButton';
 import { FileMentionDropdown } from './FileMentionDropdown';
 import { useT } from '@/lib/i18n/useT';
 import { useLocale } from '@/lib/i18n/LocaleProvider';
@@ -4498,11 +4498,12 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
                 style={{ background:'none', border:'none', color:'var(--ide-text3)', cursor:'pointer', padding:'3px 5px', borderRadius:5, transition:'var(--t)', display:'flex', alignItems:'center' }}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
               </button>
-              <VoiceButton
+              <VoiceBuildButton
                 size={24}
+                surface="editor"
+                showType={false}
                 disabled={isGenerating}
-                lang={LOCALE_SPEECH_CODE[locale]}
-                onTranscript={txt => setInput(prev => prev ? prev + ' ' + txt : txt)}
+                onConfirm={({ prompt }) => setInput(prev => prev ? prev + ' ' + prompt : prompt)}
               />
               {/* Cost estimate — Haiku only */}
               {(() => {

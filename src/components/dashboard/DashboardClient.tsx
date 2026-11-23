@@ -19,7 +19,7 @@ import { SecurityChrome } from '@/components/dashboard/SecurityChrome';
 import { WyberLogo } from '@/components/shared/WyberLogo'
 import { NotificationBell } from '@/components/shared/NotificationBell';
 import { creditsLine } from '@/lib/plans';
-import { VoiceButton } from '@/components/editor/VoiceButton';
+import { VoiceBuildButton } from '@/components/voice/VoiceBuildButton';
 import { TemplatesShowcase } from '@/components/dashboard/TemplatesShowcase';
 import { useT } from '@/lib/i18n/useT';
 import { useLocale } from '@/lib/i18n/LocaleProvider';
@@ -159,6 +159,8 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
   const [factsGate, setFactsGate] = useState<{ prompt: string; nameOverride?: string } | null>(null);
   const [promptInput, setPromptInput] = useState('');
   const [buildMode, setBuildMode] = useState<'app' | 'mobile' | 'website' | 'saas'>('app');
+  // True when the type chip came from a confirmed voice brief: the chip then wins over keyword guessing, so the type shown is the type built.
+  const [voiceLockedType, setVoiceLockedType] = useState(false);
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isMobile, setIsMobile] = useState(false);
@@ -379,6 +381,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
     if (buildMode === 'mobile') return 'mobile';
     if (buildMode === 'saas') return 'saas';
     if (buildMode === 'website') return 'website';
+    if (voiceLockedType) return 'app';
     // Keyword detection as fallback when user is in default 'app' mode
     if (MOBILE_KEYWORDS.test(prompt)) return 'mobile';
     if (SAAS_KEYWORDS.test(prompt)) return 'saas';
@@ -685,7 +688,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
                     { mode: 'website' as const, label: t('websiteLabel'), color: '#a5b4fc', icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M2 9h20"/><path d="M7 3v6"/></svg> },
                     { mode: 'saas' as const, label: t('saasLabel'), color: '#ec4899', icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><rect x="2" y="3" width="7" height="18" rx="1.5"/><rect x="12" y="3" width="10" height="8" rx="1.5"/><rect x="12" y="14" width="10" height="7" rx="1.5"/></svg> },
                   ]).map(({ mode, label, color, icon }) => (
-                    <button key={mode} onClick={() => setBuildMode(mode)} aria-pressed={buildMode === mode}
+                    <button key={mode} onClick={() => { setBuildMode(mode); setVoiceLockedType(false); }} aria-pressed={buildMode === mode}
                       style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 6, border: buildMode === mode ? `1px solid ${color}72` : '1px solid transparent', background: buildMode === mode ? `${color}2e` : 'transparent', color: buildMode === mode ? color : '#9a9fad', fontSize: 12, fontWeight: 650, cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
                       {icon}
                       {label}
@@ -694,8 +697,8 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
                 </div>
                 <span style={{ fontSize: 12, color: credits <= 10 ? '#ef4444' : '#8797ab', fontWeight: credits <= 10 ? 600 : 400 }}>{credits} {t('creditsWord')}</span>
                 <span style={{ fontSize: 12, color: '#8797ab' }}>{t('enterToBuild')}</span>
-                <VoiceButton size={26} disabled={creating} lang={LOCALE_SPEECH_CODE[locale]}
-                  onTranscript={txt => { setPromptInput(prev => (prev ? prev + ' ' + txt : txt)); textareaRef.current?.focus(); track('dashboard_voice_used', { length: txt.length }); }} />
+                <VoiceBuildButton size={26} surface="dashboard" disabled={creating}
+                  onConfirm={({ prompt, type }) => { setPromptInput(prev => (prev.trim() ? prev.trim() + ' ' + prompt : prompt)); setBuildMode(type); setVoiceLockedType(true); textareaRef.current?.focus(); track('dashboard_voice_used', { length: prompt.length, type }); }} />
                 <button type="button" aria-label="Start building" onClick={submitPrompt} disabled={creating}
                   style={{ width: 34, height: 34, borderRadius: 9, border: 'none', background: creating ? '#162231' : BRAND, color: '#03111c', cursor: creating ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}>
                   {creating

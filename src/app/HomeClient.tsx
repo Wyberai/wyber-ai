@@ -6,7 +6,7 @@ import { WyberLogo } from '@/components/shared/WyberLogo';
 import { Footer } from '@/components/shared/FooterClient';
 import { type Currency } from '@/lib/currency';
 import { track } from '@/lib/track';
-import { VoiceButton } from '@/components/editor/VoiceButton';
+import { VoiceBuildButton } from '@/components/voice/VoiceBuildButton';
 import { LanguageToggle } from '@/components/shared/LanguageToggle';
 import { I18N_ENABLED, LOCALE_SPEECH_CODE, LOCALE_STORAGE_KEY, LOCALES, type Locale } from '@/lib/i18n/locales';
 import { localePath } from '@/lib/i18n/hreflang';
@@ -618,11 +618,12 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
                     ))}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--brand-text-dim)' }}>
-                    <VoiceButton
-                      lang={LOCALE_SPEECH_CODE[locale]}
-                      onTranscript={txt => {
-                        setHeroPrompt(prev => (prev ? prev + ' ' + txt : txt));
-                        track('homepage_voice_used', { length: txt.length, locale });
+                    <VoiceBuildButton
+                      surface="hero"
+                      onConfirm={({ prompt, type }) => {
+                        setHeroPrompt(prev => (prev.trim() ? prev.trim() + ' ' + prompt : prompt));
+                        setHeroTarget(type);
+                        track('homepage_voice_used', { length: prompt.length, locale });
                       }}
                     />
                     <button type="submit" className="mk-btn" style={{ padding: '10px 22px', fontSize: 14 }}>
