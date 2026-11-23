@@ -503,7 +503,8 @@ describe('route wiring', () => {
   it('runs only for new launch-ready SaaS and replacement builds, reviews the files and falls back on any failure', () => {
     const start = route.indexOf('Spec-driven SaaS and Replace-your-SaaS build')
     expect(start).toBeGreaterThan(0)
-    const block = route.slice(start, route.indexOf('let handledByParallel = handledBySpec'))
+    const mobileAt = route.indexOf('Spec-driven mobile build', start)
+    const block = route.slice(start, mobileAt > 0 ? mobileAt : route.indexOf('let handledByParallel = handledBySpec'))
     expect(block).toContain("projectType === 'saas'")
     expect(block).toContain("!handledBySpec && isNewBuild && stage === 'full' && !selfHeal")
     expect(block).toContain('saasSpecEnabled()')
