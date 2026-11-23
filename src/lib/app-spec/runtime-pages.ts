@@ -344,12 +344,17 @@ export default function HomePage({ api }: { api: Api }) {
   const { store } = api
   const empty = isEmpty(store)
   const first = APP.entities[0]
+  // Never an orphan row: 2, 4 and 6 fill two or four columns; 3 fills three; 5 is three over two, each row full width.
+  const shown = APP.metrics.slice(0, 6)
+  const n = shown.length
+  const gridCls = n === 5 ? 'grid grid-cols-2 gap-4 lg:grid-cols-6' : n === 3 || n === 6 ? 'grid grid-cols-2 gap-4 lg:grid-cols-3' : n === 2 ? 'grid grid-cols-2 gap-4 lg:grid-cols-2' : n === 1 ? 'grid grid-cols-1 gap-4' : 'grid grid-cols-2 gap-4 lg:grid-cols-4'
+  const spanCls = (i: number) => (n === 5 ? (i < 3 ? 'lg:col-span-2' : 'lg:col-span-3') + (i === 4 ? ' col-span-2' : '') : n === 3 && i === 2 ? 'col-span-2 lg:col-span-1' : '')
   const metrics = (
-    <section aria-label="Numbers" className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-      {APP.metrics.map(m => {
+    <section aria-label="Numbers" className={gridCls}>
+      {shown.map((m, i) => {
         const v = metricValue(store, m)
         return (
-          <Card key={m.id} className="overflow-hidden p-0 shadow-sm">
+          <Card key={m.id} className={'overflow-hidden p-0 shadow-sm ' + spanCls(i)}>
             <div aria-hidden="true" className="h-1 bg-primary" />
             <div className="p-5">
               <span className="mb-4 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-muted text-foreground">{metricIcon(m.label, m.money)}</span>
