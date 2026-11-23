@@ -12,6 +12,8 @@ export interface AskOptions {
   timeoutMs?: number
   /** Called for every model reply, so the caller can add up token use. */
   onUsage?: (reply: ModelReply) => void
+  /** Last resort after the final failed attempt: clean the last parsed reply (for example strip unproven claims) and re-check it once. */
+  scrub?: (value: unknown) => unknown
 }
 export type AskResult<T> = { ok: true; value: T } | { ok: false; problems: string[] }
 
@@ -24,6 +26,7 @@ export async function askForJson<T>(o: AskOptions): Promise<AskResult<T>> {
   const attempts = o.attempts ?? 2
   let problems: string[] = []
   let last = ''
+  let lastValue: unknown
   for (let attempt = 0; attempt < attempts; attempt++) {
     try {
       const user = attempt === 0
@@ -34,11 +37,18 @@ export async function askForJson<T>(o: AskOptions): Promise<AskResult<T>> {
       o.onUsage?.(reply)
       last = reply.text
       const value = parseJsonObject(reply.text)
+      lastValue = value
       problems = o.validate(value)
       if (problems.length === 0) return { ok: true, value: value as T }
     } catch (e) {
       problems = [String(e).slice(0, 160)]
     }
+  }
+  if (o.scrub && lastValue !== undefined) {
+    try {
+      const cleaned = o.scrub(lastValue)
+      if (o.validate(cleaned).length === 0) return { ok: true, value: cleaned as T }
+    } catch { /* fall through to the failure below */ }
   }
   return { ok: false, problems }
 }

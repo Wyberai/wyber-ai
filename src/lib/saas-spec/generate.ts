@@ -1,3 +1,4 @@
+import { scrubClaims } from '../build-spec/claims'
 import { askForJson } from '../build-spec/ask'
 import { parseFactsFromPrompt, stripFactsSuffix } from '../build-spec/facts'
 import type { ModelCall, ModelReply } from '../build-spec/types'
@@ -39,7 +40,7 @@ export async function generateSaas(input: SaasGenerateInput, deps: { write: Mode
   } catch (e) { return { ok: false, reason: 'plan: ' + String(e), usage } }
 
   const mp = buildSaasModelPrompt(brief)
-  const asked = await askForJson<unknown>({
+  const asked = await askForJson<unknown>({ scrub: scrubClaims,
     call: deps.write, system: mp.system, user: mp.user, attempts: 2, onUsage,
     validate: v => validateSaasModel(normalizeSaasModel(v), brief),
   })
@@ -47,7 +48,7 @@ export async function generateSaas(input: SaasGenerateInput, deps: { write: Mode
   const model = normalizeSaasModel(asked.value)
 
   const cp = buildSaasCopyPrompt(spec, brief, model)
-  const written = await askForJson<SiteCopy>({
+  const written = await askForJson<SiteCopy>({ scrub: scrubClaims,
     call: deps.write, system: cp.system, user: cp.user, attempts: 2, onUsage,
     validate: v => validateCopy(spec.site, v as SiteCopy).map(i => `${i.path}: ${i.message}`),
   })

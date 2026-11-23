@@ -1,3 +1,4 @@
+import { scrubClaims } from '../build-spec/claims'
 import { askForJson } from '../build-spec/ask'
 import { parseFactsFromPrompt, stripFactsSuffix } from '../build-spec/facts'
 import type { ModelCall, ModelReply } from '../build-spec/types'
@@ -42,7 +43,7 @@ export async function generateWebsite(input: GenerateInput, deps: GenerateDeps):
   if (spec.brief.unsupported.length) notes.push('Not built yet: ' + spec.brief.unsupported.join(', '))
 
   const { system, user } = buildCopyPrompt(spec, stripFactsSuffix(input.prompt))
-  const written = await askForJson<SiteCopy>({
+  const written = await askForJson<SiteCopy>({ scrub: scrubClaims,
     call: deps.writeCopy, system, user, onUsage,
     validate: v => validateCopy(spec, v as SiteCopy).map(i => `${i.path}: ${i.message}`),
   })

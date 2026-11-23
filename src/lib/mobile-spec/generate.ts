@@ -1,3 +1,4 @@
+import { scrubClaims } from '../build-spec/claims'
 import { askForJson } from '../build-spec/ask'
 import { parseFactsFromPrompt, stripFactsSuffix } from '../build-spec/facts'
 import type { ModelCall } from '../build-spec/types'
@@ -34,7 +35,7 @@ export async function generateMobileApp(input: MobileGenerateInput, deps: { writ
   if (spec.brief.note) notes.push(spec.brief.note)
 
   const { system, user } = buildMobileModelPrompt(spec.brief, stripFactsSuffix(input.prompt))
-  const asked = await askForJson<AppModel>({
+  const asked = await askForJson<AppModel>({ scrub: scrubClaims,
     call: deps.writeModel, system, user, attempts: 2,
     onUsage: r => { usage.inputTokens += r.inputTokens; usage.outputTokens += r.outputTokens },
     validate: v => validateModel(normalizeModel(v)),
