@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import s from './DomainsManager.module.css'
 
 // "Domains" screen, used inside the editor (projectId given: the bought domain is connected to that site) and on
@@ -56,6 +56,10 @@ export default function DomainsManager({ projectId = null }: { projectId?: strin
   const [sandbox, setSandbox] = useState(false)
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
+  // Any message (an error from the payment step, a price change) must be seen, even when the person has scrolled down
+  // to the Pay button: bring it into view whenever it appears.
+  const msgRef = useRef<HTMLDivElement | null>(null)
+  useEffect(() => { if (msg) msgRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }) }, [msg])
   const [mine, setMine] = useState<{ domains: Row[]; workspaces: WorkspaceRow[]; orders: { id: string; domain: string; status: string; error: string | null }[]; projects?: Site[]; workspaceEnabled?: boolean } | null>(null)
   const [wsDomain, setWsDomain] = useState('')
   const [seats, setSeats] = useState(3)
@@ -261,7 +265,7 @@ export default function DomainsManager({ projectId = null }: { projectId?: strin
         </div>
       )}
       {sandbox && <div className={`${s.notice} ${s.noticeWarn}`}><span className={s.dot} />Sandbox mode: prices are examples and nothing is charged or registered.</div>}
-      {msg && <div role="status" className={s.notice}><span className={s.dot} />{msg}</div>}
+      {msg && <div ref={msgRef} role="alert" className={`${s.notice} ${s.noticeBad}`}><span className={s.dot} />{msg}</div>}
 
       {tab === 'domains' && (
         <>

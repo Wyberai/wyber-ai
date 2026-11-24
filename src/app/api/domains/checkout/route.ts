@@ -25,7 +25,11 @@ export async function POST(req: NextRequest) {
     })
     if (isSandbox(ctx.provider)) return NextResponse.json({ orderId: order.id, sandbox: true, url: null })
     const origin = req.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'https://wyberai.com'
-    const { url, checkoutId } = await startDodoCheckout(order, user, origin, `/dashboard/domains?order=${order.id}`)
+    const { url, checkoutId } = await startDodoCheckout(order, user, origin, `/dashboard/domains?order=${order.id}`).catch(async e => {
+      // No payment page, nothing taken: close the order so it does not sit waiting for a payment that cannot happen.
+      await ctx.store.patchOrder(order.id, { status: 'cancelled', error: e instanceof Error ? e.message : String(e) })
+      throw e
+    })
     if (checkoutId) await ctx.store.patchOrder(order.id, { dodo_checkout_id: checkoutId })
     return NextResponse.json({ orderId: order.id, url })
   } catch (e) {

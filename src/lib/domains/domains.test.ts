@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { FakeDomainsProvider } from './fake-provider'
 import { memoryStore } from './memory-store'
 import { createDomainOrder, fulfilOrder, QuoteChangedError } from './orders'
@@ -385,5 +385,20 @@ describe('settings pasted with hidden whitespace', () => {
     expect(p).not.toBeNull()
     expect((p as unknown as { currency: string }).currency).toBe('INR')
     expect(getProvider({ DOMAINS_RELAY_URL: 'https://relay.example', DOMAINS_RELAY_SECRET: '  \n' })).toBeNull()
+  })
+})
+
+describe('payment page errors keep the provider reason', () => {
+  it("reports the payment provider's status and message (never the key) when the page cannot start", async () => {
+    const { startDodoCheckout } = await import('./checkout')
+    const f = vi.fn(async () => new Response(JSON.stringify({ code: 'INVALID_REQUEST', message: 'Amount below the product minimum' }), { status: 422 }))
+    vi.stubGlobal('fetch', f)
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const order = { id: 'o1', user_id: 'u1', kind: 'domain', domain: 'a.in', total_cents: 857, contact } as never
+    await expect(startDodoCheckout(order, { id: 'u1', email: 'a@b.com' }, 'https://wyberai.com', '/x', { DODO_PRODUCT_DOMAIN: 'prd_1', DODO_PAYMENTS_API_KEY: 'sk_secret_key' }))
+      .rejects.toThrow(/422: Amount below the product minimum\). You have not been charged\./)
+    const logged = JSON.stringify(spy.mock.calls)
+    expect(logged).not.toContain('sk_secret_key')
+    spy.mockRestore(); vi.unstubAllGlobals()
   })
 })

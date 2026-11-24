@@ -39,8 +39,13 @@ export async function startDodoCheckout(order: Order, user: { id: string; email?
       metadata: { user_id: user.id, purchase_type: 'commerce_order', commerce_order_id: order.id, kind: order.kind, domain: order.domain },
     }),
   })
-  const data = (await res.json().catch(() => ({}))) as { checkout_url?: string; url?: string; payment_link?: string; id?: string }
+  const data = (await res.json().catch(() => ({}))) as { checkout_url?: string; url?: string; payment_link?: string; id?: string; message?: unknown; code?: unknown }
   const url = data.checkout_url || data.url || data.payment_link
-  if (!res.ok || !url) throw new Error('The payment page could not be started. You have not been charged.')
+  if (!res.ok || !url) {
+    // Keep the payment provider's own reason (never the key): it is what support needs, and it was being thrown away.
+    const reason = typeof data.message === 'string' ? data.message : typeof data.code === 'string' ? data.code : ''
+    console.error('[domains] payment page could not be started', res.status, JSON.stringify(data).slice(0, 400))
+    throw new Error(`The payment page could not be started (${res.status}${reason ? ': ' + reason.slice(0, 160) : ''}). You have not been charged.`)
+  }
   return { url, checkoutId: data.id ?? null }
 }
