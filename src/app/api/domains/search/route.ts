@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { searchDomains } from '@/lib/domains/search'
+import { searchDomains, suggestAlternatives } from '@/lib/domains/search'
 import { getProvider, inrPerUsd, isSandbox } from '@/lib/domains'
 import { policyLines } from '@/lib/domains/policy'
 import { SUPPORTED_YEARS } from '@/lib/domains/config'
@@ -15,7 +15,10 @@ export async function GET(req: NextRequest) {
   if (!(SUPPORTED_YEARS as readonly number[]).includes(years)) return NextResponse.json({ error: 'Choose 1, 2, 3, 5 or 10 years' }, { status: 400 })
   try {
     const { label, results } = await searchDomains(provider, q, { years, inrPerUsd: inrPerUsd() })
-    return NextResponse.json({ label, years, sandbox: isSandbox(provider), results, policyByTld: Object.fromEntries(results.map(r => [r.tld, policyLines(r.tld)])) })
+    // The .com is what most people want. When it is taken, offer a few close names that are free.
+    const com = results.find(r => r.tld === 'com')
+    const alternatives = label.length >= 2 && com && com.status === 'taken' ? await suggestAlternatives(provider, label, { years, inrPerUsd: inrPerUsd() }).catch(() => []) : []
+    return NextResponse.json({ label, years, sandbox: isSandbox(provider), results, alternatives, policyByTld: Object.fromEntries([...results, ...alternatives].map(r => [r.tld, policyLines(r.tld)])) })
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : 'Search failed' }, { status: 502 })
   }

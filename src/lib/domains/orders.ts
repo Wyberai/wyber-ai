@@ -61,11 +61,12 @@ type Env = Record<string, string | undefined>
 type FulfilDeps = { provider: DomainsProvider; store: OrderStore; env?: Env; attach?: typeof attachDomain }
 
 /** Runs after the payment provider confirms payment. Safe to call twice: only the first call moves the order out of awaiting_payment. */
-export async function fulfilOrder(deps: FulfilDeps, orderId: string): Promise<{ ok: boolean; status: OrderStatus }> {
+export async function fulfilOrder(deps: FulfilDeps, orderId: string): Promise<{ ok: boolean; status: OrderStatus; ran: boolean }> {
   const { provider, store } = deps
   const order = await store.getOrder(orderId)
-  if (!order) return { ok: false, status: 'needs_attention' }
-  if (!(await store.transition(orderId, 'awaiting_payment', 'registering'))) return { ok: order.status === 'active', status: order.status }
+  if (!order) return { ok: false, status: 'needs_attention', ran: false }
+  // `ran` is true only for the call that actually did the work, so a retried webhook never sends a second email.
+  if (!(await store.transition(orderId, 'awaiting_payment', 'registering'))) return { ok: order.status === 'active', status: order.status, ran: false }
   try {
     const r = await store.getReseller(order.user_id)
     const customerId = await provider.ensureCustomer({ email: order.contact.email, contact: order.contact, existingCustomerId: r.customerId })
@@ -74,11 +75,11 @@ export async function fulfilOrder(deps: FulfilDeps, orderId: string): Promise<{ 
     if (order.kind === 'domain') await fulfilDomain(deps, order, customerId, contactId)
     else await fulfilWorkspace(deps, order, customerId)
     await store.patchOrder(orderId, { status: 'active', error: null })
-    return { ok: true, status: 'active' }
+    return { ok: true, status: 'active', ran: true }
   } catch (e) {
     // Money was taken but a provider step failed: keep the order visible for a person to finish or refund.
     await store.patchOrder(orderId, { status: 'needs_attention', error: e instanceof Error ? e.message : String(e) })
-    return { ok: false, status: 'needs_attention' }
+    return { ok: false, status: 'needs_attention', ran: true }
   }
 }
 

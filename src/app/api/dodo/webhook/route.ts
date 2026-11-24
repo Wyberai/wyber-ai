@@ -271,8 +271,20 @@ export async function POST(req: NextRequest) {
         if (!provider) {
           sendAdminPaymentAlert(userEmail || 'unknown', `Domain order ${orderId} was paid but the domain provider is not configured. Fulfil it by hand.`).catch(() => {})
         } else {
-          const r = await fulfilOrder({ provider, store: supabaseStore(admin) }, orderId)
+          const store = supabaseStore(admin)
+          const r = await fulfilOrder({ provider, store }, orderId)
           if (!r.ok) sendAdminPaymentAlert(userEmail || 'unknown', `Domain order ${orderId} was paid but did not finish (${r.status}). Open it in commerce_orders.`).catch(() => {})
+          // Tell the customer, once: only the delivery that did the work sends the email. Awaited so a frozen function cannot drop it.
+          if (r.ran) {
+            try {
+              const [{ orderMail }, { sendEmail }] = await Promise.all([import('@/lib/domains/notify'), import('@/lib/email/transport')])
+              const order = await store.getOrder(orderId)
+              if (order) {
+                const mail = orderMail(order, r.ok ? 'done' : 'attention', process.env.NEXT_PUBLIC_APP_URL || 'https://wyberai.com')
+                await sendEmail({ from: 'WyberAi <hello@wyberai.com>', to: mail.to, subject: mail.subject, text: mail.text })
+              }
+            } catch (e) { console.error('[domains] customer email failed', orderId, e instanceof Error ? e.message : e) }
+          }
         }
       }
       return NextResponse.json({ received: true })

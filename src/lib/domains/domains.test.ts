@@ -93,7 +93,7 @@ describe('buying a domain', () => {
     const o = await createDomainOrder({ provider, store: mem.store }, input)
     expect(o.total_cents).toBe(1199)
     const r = await fulfilOrder({ provider, store: mem.store, attach: attachOk }, o.id)
-    expect(r).toEqual({ ok: true, status: 'active' })
+    expect(r).toMatchObject({ ok: true, status: 'active' })
     expect(provider.state.dns.get('ashabakery.com')?.map(x => `${x.type} ${x.host}`)).toEqual(['A @', 'CNAME www'])
     expect(mem.domains.get('ashabakery.com')).toMatchObject({ dns_written: true, vercel_attached: true })
     expect(mem.linked.p1).toBe('ashabakery.com')
@@ -232,5 +232,49 @@ describe('provider answers found in the sandbox', () => {
       expect(p.length).toBeGreaterThanOrEqual(9); expect(p.length).toBeLessThanOrEqual(16)
       expect(p).toMatch(/[A-Z]/); expect(p).toMatch(/[a-z]/); expect(p).toMatch(/[0-9]/); expect(p).toMatch(/[!@#%+]/)
     }
+  })
+})
+
+describe('smooth journey: alternatives, emails, once-only notification', () => {
+  it('offers close names that are free when the wanted name is taken, with real prices', async () => {
+    const { suggestAlternatives } = await import('./search')
+    const alts = await suggestAlternatives(new FakeDomainsProvider(), 'takenshop')
+    // "taken..." is reported as taken by the fake; "gettakenshop" is the only variant that does not start with it.
+    expect(alts.map(a => a.domain)).toEqual(['gettakenshop.com'])
+    expect(alts[0].quote?.totalCents).toBe(1099 + 100)
+  })
+  it('finds nothing to suggest when every variant is taken, and never more than four', async () => {
+    const { suggestAlternatives } = await import('./search')
+    const none = await suggestAlternatives({ ...new FakeDomainsProvider(), checkAvailability: async () => ({ com: 'taken', in: 'taken' }), getCostTable: async () => new FakeDomainsProvider().getCostTable(), name: 'x' } as never, 'abc')
+    expect(none).toEqual([])
+    const many = await suggestAlternatives(new FakeDomainsProvider(), 'freshname')
+    expect(many.length).toBeLessThanOrEqual(4)
+    expect(many.length).toBeGreaterThan(0)
+  })
+  const mailOrder = { id: '12345678-aaaa-bbbb-cccc-1234567890ab', kind: 'domain' as const, domain: 'ashabakery.com', seats: null, months: null, total_cents: 1199, contact }
+  it('writes honest customer emails that pass the copy rules', async () => {
+    const { orderMail } = await import('./notify')
+    const mails = [
+      orderMail(mailOrder, 'done', 'https://wyberai.com'),
+      orderMail({ ...mailOrder, kind: 'workspace', seats: 3, months: 12, total_cents: 12600 }, 'done', 'https://wyberai.com'),
+      orderMail(mailOrder, 'attention', 'https://wyberai.com'),
+    ]
+    for (const m of mails) {
+      expect(m.to).toBe('asha@example.com')
+      expect(breaksCopyRules(m.text)).toBeNull()
+      expect(m.text).not.toMatch(/resell|reseller|ResellerClub|solo|founder/i)
+    }
+    expect(mails[0].text).toContain('a few minutes to a few hours')
+    expect(mails[1].text).toContain('admin@ashabakery.com')
+    expect(mails[2].subject).toContain('needs one more step')
+    expect(mails[2].text).toContain('12345678')
+  })
+  it('only the delivery that did the work reports it ran, so a retried webhook sends no second email', async () => {
+    const { provider, mem } = (() => ({ provider: new FakeDomainsProvider(), mem: memoryStore() }))()
+    const o = await mem.store.insertOrder({ user_id: 'u1', kind: 'domain', domain: 'ashabakery.com', project_id: null, years: 1, months: null, seats: null, region: null, registry_cents: 1099, margin_cents: 100, total_cents: 1199, contact, policy_version: 'x' })
+    const first = await fulfilOrder({ provider, store: mem.store, attach: attachOk }, o.id)
+    const second = await fulfilOrder({ provider, store: mem.store, attach: attachOk }, o.id)
+    expect(first).toMatchObject({ ok: true, ran: true })
+    expect(second).toMatchObject({ ok: true, ran: false })
   })
 })

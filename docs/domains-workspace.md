@@ -14,6 +14,8 @@ Search (availability + cost, cached 10 min) → confirmation (item, term, regist
 
 Automatic connection **is** possible here: the provider has a DNS API and published sites are served by our own Vercel project, so the customer does nothing. Domains not bought here still use the existing `/api/custom-domain` guided flow.
 
+Also in the journey: after paying, the customer returns to a live status panel (waiting, registering, done) and gets an email once (domain ready, Workspace set up, or "needs one more step"; only the webhook delivery that did the work sends it); a domain can be pointed at one of their sites when buying or later from My domains; when the .com is taken, up to four free close names are offered; a daily job finishes any domain whose DNS or expiry was not ready at purchase.
+
 Not built yet: in-app renewal checkout (copy says to write to support; reminders are built), adding seats after purchase, INR checkout, the Google site-verification TXT (the provider API we read does not return it), sandbox/live real-API proof.
 
 ## Founder checklist, in this order

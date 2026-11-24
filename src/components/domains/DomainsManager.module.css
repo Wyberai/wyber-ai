@@ -118,3 +118,14 @@
   .resultRight { width: 100%; justify-content: space-between; }
   .btnSearch { width: 100%; }
 }
+
+/* after payment: where the order is */
+.track { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 16px 18px; border-radius: var(--r-lg); border: 1px solid rgba(14,165,233,.35); background: var(--accent-dim); }
+.trackDone { border-color: rgba(34,197,94,.4); background: rgba(34,197,94,.08); }
+.trackBad { border-color: rgba(245,158,11,.4); background: rgba(245,158,11,.08); }
+.trackTitle { font-weight: 700; font-size: 15px; letter-spacing: -.01em; }
+
+/* taken-name suggestions and "use it on a site" */
+.altTitle { margin: 4px 0 -8px; color: var(--ide-text2); font-size: 13px; }
+.attachRow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.attachRow .input { height: 36px; max-width: 260px; }

@@ -10,6 +10,7 @@ type Quote = { domain: string; years: number; registryCents: number; marginCents
 type Result = { domain: string; tld: string; status: 'available' | 'taken' | 'unknown' | 'not_offered'; quote: Quote | null }
 type Contact = { name: string; company: string; email: string; address1: string; city: string; state: string; zip: string; country: string; phoneCc: string; phone: string }
 type Row = { domain: string; connection: 'dns_pending' | 'certificate_pending' | 'live' | 'needs_attention'; expires_at: string | null; daysLeft: number | null; project_id: string | null }
+type Site = { id: string; name: string | null }
 type WorkspaceRow = { domain: string; seats: number; expires_at: string | null; daysLeft: number | null; records: { records: { type: string; host: string; value: string; priority?: number }[]; written: boolean } | null }
 type WsQuote = { seats: number; months: number; perSeatMonthCostCents: number; perSeatMonthMarginCents: number; registryCents: number; marginCents: number; totalCents: number }
 
@@ -55,12 +56,15 @@ export default function DomainsManager({ projectId = null }: { projectId?: strin
   const [sandbox, setSandbox] = useState(false)
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
-  const [mine, setMine] = useState<{ domains: Row[]; workspaces: WorkspaceRow[]; orders: { id: string; domain: string; status: string; error: string | null }[] } | null>(null)
+  const [mine, setMine] = useState<{ domains: Row[]; workspaces: WorkspaceRow[]; orders: { id: string; domain: string; status: string; error: string | null }[]; projects?: Site[] } | null>(null)
   const [wsDomain, setWsDomain] = useState('')
   const [seats, setSeats] = useState(3)
   const [wsQuote, setWsQuote] = useState<WsQuote | null>(null)
   const [wsPolicy, setWsPolicy] = useState<string[]>([])
   const [wsConfirm, setWsConfirm] = useState(false)
+  const [alternatives, setAlternatives] = useState<Result[]>([])
+  const [siteId, setSiteId] = useState('')
+  const [track, setTrack] = useState<{ id: string; domain: string; kind: string; status: string } | null>(null)
 
   const loadMine = useCallback(async () => {
     const r = await fetch('/api/domains/mine')
@@ -68,13 +72,46 @@ export default function DomainsManager({ projectId = null }: { projectId?: strin
   }, [])
   useEffect(() => { loadMine() }, [loadMine])
 
+  // The payment page sends people back with ?order=<id>. Show where that order is, and keep checking until it is done,
+  // so nobody is left on a blank search screen wondering whether the payment worked.
+  useEffect(() => {
+    const id = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('order') : null
+    if (!id) return
+    let stop = false
+    let tries = 0
+    const tick = async () => {
+      if (stop) return
+      const r = await fetch(`/api/domains/order?id=${encodeURIComponent(id)}`).catch(() => null)
+      if (r && r.ok) {
+        const o = await r.json()
+        setTrack(o)
+        if (o.status === 'active' || o.status === 'needs_attention') { loadMine(); return }
+      }
+      if (++tries < 60) setTimeout(tick, 3000)
+    }
+    tick()
+    return () => { stop = true }
+  }, [loadMine])
+
+  function leaveTrack() {
+    setTrack(null)
+    try { const u = new URL(window.location.href); u.searchParams.delete('order'); window.history.replaceState({}, '', u.toString()) } catch { /* not important */ }
+    setTab('mine'); loadMine()
+  }
+
   async function search() {
     setBusy(true); setMsg(''); setPick(null); setAck(false)
     const r = await fetch(`/api/domains/search?q=${encodeURIComponent(q)}&years=${years}`)
     const j = await r.json().catch(() => ({}))
     setBusy(false)
     if (!r.ok) return setMsg(j.error || 'Search failed')
-    setResults(j.results); setSandbox(j.sandbox); setPolicyByTld(j.policyByTld ?? {})
+    setResults(j.results); setAlternatives(j.alternatives ?? []); setSandbox(j.sandbox); setPolicyByTld(j.policyByTld ?? {})
+  }
+
+  async function attachSite(domain: string, project: string) {
+    if (!project) return
+    await fetch('/api/domains/connect', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ domain, projectId: project }) })
+    loadMine()
   }
 
   function choose(res: Result) {
@@ -86,7 +123,7 @@ export default function DomainsManager({ projectId = null }: { projectId?: strin
   async function pay(kind: 'domain' | 'workspace') {
     setBusy(true); setMsg('')
     const body = kind === 'domain'
-      ? { domain: pick!.domain, years: pick!.years, projectId, contact, confirmedTotalCents: pick!.totalCents, acknowledged: ack }
+      ? { domain: pick!.domain, years: pick!.years, projectId: projectId ?? (siteId || null), contact, confirmedTotalCents: pick!.totalCents, acknowledged: ack }
       : { domain: wsDomain, seats, months: 12, contact, confirmedTotalCents: wsQuote!.totalCents, acknowledged: ack }
     const r = await fetch(kind === 'domain' ? '/api/domains/checkout' : '/api/workspace/checkout', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
     const j = await r.json().catch(() => ({}))
@@ -141,6 +178,25 @@ export default function DomainsManager({ projectId = null }: { projectId?: strin
           </button>
         ))}
       </div>
+      {track && (
+        <div className={`${s.track} ${track.status === 'needs_attention' ? s.trackBad : track.status === 'active' ? s.trackDone : ''}`} role="status" aria-live="polite">
+          <div>
+            <div className={s.trackTitle}>
+              {track.status === 'awaiting_payment' && 'Waiting for your payment to be confirmed'}
+              {track.status === 'registering' && (track.kind === 'workspace' ? `Setting up Google Workspace on ${track.domain}` : `Registering ${track.domain}`)}
+              {track.status === 'active' && (track.kind === 'workspace' ? `Google Workspace is set up on ${track.domain}` : `${track.domain} is yours`)}
+              {track.status === 'needs_attention' && `Your payment for ${track.domain} is safe`}
+              {track.status === 'cancelled' && 'This order was cancelled'}
+            </div>
+            <div className={s.meta}>
+              {(track.status === 'awaiting_payment' || track.status === 'registering') && 'This can take a minute. You can leave this page: we email you when it is ready.'}
+              {track.status === 'active' && (track.kind === 'workspace' ? 'We have emailed you what happens next.' : 'It is being connected to your site now. We have emailed you the details.')}
+              {track.status === 'needs_attention' && 'One step did not finish on its own. We have been told and will complete the order or refund you. We have emailed you.'}
+            </div>
+          </div>
+          {(track.status === 'active' || track.status === 'needs_attention') && <button className={s.ghost} onClick={leaveTrack}>See my domains</button>}
+        </div>
+      )}
       {sandbox && <div className={`${s.notice} ${s.noticeWarn}`}><span className={s.dot} />Sandbox mode: prices are examples and nothing is charged or registered.</div>}
       {msg && <div role="status" className={s.notice}><span className={s.dot} />{msg}</div>}
 
@@ -174,6 +230,26 @@ export default function DomainsManager({ projectId = null }: { projectId?: strin
             </ul>
           )}
 
+          {alternatives.length > 0 && !pick && (
+            <>
+              <p className={s.altTitle}>That name is taken as a .com. These close names are free:</p>
+              <ul className={s.results}>
+                {alternatives.map(r => r.quote && (
+                  <li key={r.domain} className={s.result}>
+                    <DomainName domain={r.domain} />
+                    <span className={s.resultRight}>
+                      <span className={s.price}>
+                        <div className={s.priceTotal}>{usd(r.quote.totalCents)}</div>
+                        <div className={s.priceNote}>{usd(r.quote.registryCents)} + $1 fee, per year</div>
+                      </span>
+                      <button className={`${s.btn} ${s.btnSmall}`} onClick={() => choose(r)}>Select</button>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+
           {pick && (
             <div className={s.confirm}>
               <div className={s.card}>
@@ -185,6 +261,15 @@ export default function DomainsManager({ projectId = null }: { projectId?: strin
                   <tr><td className={s.label}>Our fee</td><td>{usd(pick.marginCents)}</td></tr>
                   <tr className={s.total}><td className={s.label}>Total</td><td>{usd(pick.totalCents)}</td></tr>
                 </tbody></table>
+                {!projectId && (mine?.projects?.length ?? 0) > 0 && (
+                  <div className={s.field}>
+                    <label htmlFor="dm-site">Use it on</label>
+                    <select id="dm-site" className={s.input} value={siteId} onChange={e => setSiteId(e.target.value)}>
+                      <option value="">Decide later</option>
+                      {mine!.projects!.map(p => <option key={p.id} value={p.id}>{p.name || 'Untitled site'}</option>)}
+                    </select>
+                  </div>
+                )}
                 <ul className={s.policy}>{policy.map(l => <li key={l}>{l}</li>)}</ul>
                 <label className={s.ack}><input type="checkbox" checked={ack} onChange={e => setAck(e.target.checked)} /><span>I have read this and want to buy {pick.domain} for {usd(pick.totalCents)}.</span></label>
                 <div className={s.actions}>
@@ -257,6 +342,15 @@ export default function DomainsManager({ projectId = null }: { projectId?: strin
                   <span className={s.meta}>{st.note}</span>
                   {d.connection !== 'live' && <button className={s.ghost} onClick={() => retry(d.domain)}>Try again</button>}
                 </div>
+                {!d.project_id && (mine?.projects?.length ?? 0) > 0 && (
+                  <div className={s.attachRow}>
+                    <label className={s.meta} htmlFor={`attach-${d.domain}`}>Not on a site yet. Use it on</label>
+                    <select id={`attach-${d.domain}`} className={s.input} defaultValue="" onChange={e => attachSite(d.domain, e.target.value)}>
+                      <option value="" disabled>Choose a site</option>
+                      {mine!.projects!.map(p => <option key={p.id} value={p.id}>{p.name || 'Untitled site'}</option>)}
+                    </select>
+                  </div>
+                )}
               </div>
             )
           })}

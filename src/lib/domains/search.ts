@@ -41,6 +41,29 @@ export async function searchDomains(p: DomainsProvider, input: string, opts: { y
   return { label, results }
 }
 
+/**
+ * When the name someone wants is taken, offer a few close variants that ARE free, with real prices. A plain, honest
+ * list (get{name}, {name}hq, {name}online, {name}shop) on .com and .in; never more than four, never a name we have not
+ * checked, never one without a backed price.
+ */
+export async function suggestAlternatives(p: DomainsProvider, label: string, opts: { years?: number; inrPerUsd?: number } = {}): Promise<SearchResult[]> {
+  const variants = [...new Set([`get${label}`, `${label}hq`, `${label}online`, `${label}shop`])].filter(v => v.length <= 63)
+  const years = opts.years ?? 1
+  const table = await costTable(p)
+  const checked = await Promise.all(variants.map(async v => ({ v, avail: await p.checkAvailability(v, ['com', 'in']).catch(() => ({} as Record<string, string>)) })))
+  const out: SearchResult[] = []
+  for (const { v, avail } of checked) {
+    for (const tld of ['com', 'in']) {
+      if (avail[tld] !== 'available') continue
+      const quote = quoteDomain(`${v}.${tld}`, years, table, opts.inrPerUsd)
+      if (!quote) continue
+      out.push({ domain: `${v}.${tld}`, tld, status: 'available', quote })
+      break // one extension per variant keeps the list short
+    }
+  }
+  return out.slice(0, 4)
+}
+
 export async function workspaceQuoteFor(p: DomainsProvider, region: WorkspaceRegion, seats: number, months: number, inr?: number, env: Record<string, string | undefined> = process.env) {
   const table = await costTable(p)
   const cost = table.workspacePerSeatMonth[region]
