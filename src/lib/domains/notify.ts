@@ -102,3 +102,14 @@ export function orderMail(order: MailOrder, outcome: 'done' | 'attention', appUr
     ].join('\n'),
   }
 }
+
+/** Sent whenever a transfer code is shown or the transfer lock is changed: the owner should know, in case it was not them. */
+export function transferNoticeMail(to: string, domain: string, action: 'unlocked' | 'locked', appUrl: string): OrderMail {
+  return {
+    to,
+    subject: action === 'unlocked' ? `${domain} was unlocked for transfer` : `${domain} was locked against transfer`,
+    text: action === 'unlocked'
+      ? [`The transfer lock on ${domain} was switched off and its transfer code was shown in your account, so it can be moved to another provider.`, '', 'If this was you, no action is needed.', `If it was not you, lock it again now from ${appUrl}/dashboard/domains and reply to this email.`].join('\n')
+      : [`${domain} is locked against transfer again.`, '', `If this was not you, reply to this email. You can check it here: ${appUrl}/dashboard/domains`].join('\n'),
+  }
+}

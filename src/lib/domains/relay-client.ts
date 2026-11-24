@@ -214,6 +214,16 @@ export class RelayDomainsClient implements DomainsProvider {
     }
   }
 
+  async getTransferInfo(orderId: number): Promise<{ authCode: string | null; locked: boolean }> {
+    const r = (await this.call('GET', 'domains/details.json', { 'order-id': orderId, options: 'OrderDetails' })) as Record<string, unknown>
+    const flags = Array.isArray(r.orderstatus) ? (r.orderstatus as unknown[]).map(String) : []
+    return { authCode: typeof r.domsecret === 'string' && r.domsecret ? r.domsecret : null, locked: flags.includes('transferlock') }
+  }
+
+  async setTransferLock(orderId: number, locked: boolean) {
+    await this.call('POST', locked ? 'domains/enable-theft-protection.json' : 'domains/disable-theft-protection.json', { 'order-id': orderId })
+  }
+
   async activateDns(orderId: number) {
     await this.call('POST', 'dns/activate.json', { 'order-id': orderId })
   }

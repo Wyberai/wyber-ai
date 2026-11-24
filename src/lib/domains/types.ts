@@ -61,6 +61,9 @@ export interface DomainsProvider {
   registerDomain(input: { domain: string; years: number; customerId: number; contactId: number; nameservers: string[] }): Promise<{ orderId: number }>
   renewDomain(input: { orderId: number; years: number; currentExpiryEpoch: number }): Promise<void>
   getDomainDetails(orderId: number): Promise<DomainDetails>
+  /** What a person needs to move the domain to another provider: its transfer (authorization) code, and whether it is locked against transfer. */
+  getTransferInfo(orderId: number): Promise<{ authCode: string | null; locked: boolean }>
+  setTransferLock(orderId: number, locked: boolean): Promise<void>
   activateDns(orderId: number): Promise<void>
   addDnsRecord(domain: string, record: DnsRecord): Promise<void>
   addWorkspace(input: { domain: string; months: number; seats: number; customerId: number; region: 'in' | 'se' | 'gbl' }): Promise<{ orderId: number }>

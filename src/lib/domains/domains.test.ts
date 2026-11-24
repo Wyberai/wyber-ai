@@ -477,3 +477,40 @@ describe('after the expiry date', () => {
     expect(m.text).not.toMatch(/resell|ResellerClub|solo|founder/i)
   })
 })
+
+describe('moving a domain to another provider', () => {
+  it('reads the transfer code and lock from the provider, and switches the lock through the right calls', async () => {
+    const seen: string[] = []
+    const f = (async (_u: unknown, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body ?? '{}'))
+      seen.push(`${body.method} ${body.path}`)
+      if (body.path === 'domains/details.json') return new Response(JSON.stringify({ orderstatus: ['transferlock'], domsecret: 'Abc123xyz' }), { status: 200 })
+      return new Response(JSON.stringify({ status: 'Success' }), { status: 200 })
+    }) as typeof fetch
+    const c = new RelayDomainsClient({ url: 'https://relay.example', secret: 's', fetchImpl: f })
+    expect(await c.getTransferInfo(7)).toEqual({ authCode: 'Abc123xyz', locked: true })
+    await c.setTransferLock(7, false)
+    await c.setTransferLock(7, true)
+    expect(seen).toContain('POST domains/disable-theft-protection.json')
+    expect(seen).toContain('POST domains/enable-theft-protection.json')
+  })
+  it('the fake provider starts locked, unlocks, and locks again', async () => {
+    const provider = new FakeDomainsProvider(); const mem = memoryStore()
+    const o = await mem.store.insertOrder({ user_id: 'u1', kind: 'domain', domain: 'ashabakery.com', project_id: null, years: 1, months: null, seats: null, region: null, registry_cents: 1099, margin_cents: 100, total_cents: 1199, contact, policy_version: 'x' })
+    await fulfilOrder({ provider, store: mem.store, attach: attachOk }, o.id)
+    const id = mem.domains.get('ashabakery.com')!.rc_order_id
+    expect((await provider.getTransferInfo(id)).locked).toBe(true)
+    await provider.setTransferLock(id, false)
+    expect(await provider.getTransferInfo(id)).toMatchObject({ locked: false, authCode: expect.stringContaining('FAKE-AUTH') })
+    await provider.setTransferLock(id, true)
+    expect((await provider.getTransferInfo(id)).locked).toBe(true)
+  })
+  it('tells the owner whenever the lock changes, in plain words', async () => {
+    const { transferNoticeMail } = await import('./notify')
+    for (const a of ['unlocked', 'locked'] as const) {
+      const m = transferNoticeMail('a@b.com', 'ashabakery.com', a, 'https://wyberai.com')
+      expect(m.subject).toContain(a === 'unlocked' ? 'unlocked for transfer' : 'locked against transfer')
+      expect(breaksCopyRules(m.text)).toBeNull()
+    }
+  })
+})

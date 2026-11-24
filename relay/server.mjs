@@ -25,7 +25,7 @@ if (!RELAY_SECRET || !RESELLERCLUB_USERID || !RESELLERCLUB_API_KEY) {
 const ALLOWED = new Map([
   ['domains/available.json', 'GET'], ['products/reseller-cost-price.json', 'GET'], ['customers/v2/signup.json', 'POST'], ['customers/details.json', 'GET'],
   ['contacts/add.json', 'POST'], ['domains/customer-default-ns.json', 'GET'], ['domains/register.json', 'POST'],
-  ['domains/renew.json', 'POST'], ['domains/details.json', 'GET'], ['domains/orderid.json', 'GET'], ['dns/activate.json', 'POST'],
+  ['domains/renew.json', 'POST'], ['domains/enable-theft-protection.json', 'POST'], ['domains/disable-theft-protection.json', 'POST'], ['domains/details.json', 'GET'], ['domains/orderid.json', 'GET'], ['dns/activate.json', 'POST'],
   ['dns/manage/add-ipv4-record.json', 'POST'], ['dns/manage/add-ipv6-record.json', 'POST'], ['dns/manage/add-cname-record.json', 'POST'],
   ['dns/manage/add-mx-record.json', 'POST'], ['dns/manage/add-txt-record.json', 'POST'],
   ...['in', 'se', 'gbl'].flatMap(r => [

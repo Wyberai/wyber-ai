@@ -46,6 +46,25 @@ Do not change anything during the expo.
 
 Env var names: see `.env.example` (section "Domains + Google Workspace") and `relay/.env.example`. Keys and reseller id are read only from the relay's environment.
 
+## After a purchase: what the customer gets, and what can go wrong
+**What happens.** Dodo confirms payment, the webhook registers the domain, writes `A @ 76.76.21.21` and `CNAME www cname.vercel-dns.com` (TTL 7200, the provider's minimum) at the registrar, and adds the domain and `www` to the Vercel project. The customer is emailed a thank-you with the order, next steps and the email-verification warning; the screen shows a live status panel.
+**Free SSL.** Vercel issues and renews the certificate automatically once DNS points at it (no ResellerClub SSL product is needed). If it stays "Certificate pending", the cause is DNS not yet spread, or the hosting refusing the domain.
+**Moving away.** My domains, "Move to another provider": the owner unlocks the domain and sees the transfer code themselves; the registrant is emailed on every lock change; the screen lists the two records that keep the site working after a move. The provider refuses transfers in the first 60 days and says why.
+**Failure angles and who handles them**
+| What goes wrong | What happens |
+|---|---|
+| Payment handler cut off midway | It has a 60 second limit now; if it is still cut off, the 15 minute sweep resumes the order without registering twice |
+| Registrar step fails (balance empty, provider down) | Order goes to "needs attention"; the sweep retries for 6 hours; you are emailed at 30 minutes, 6 hours and 24 hours; refund in Dodo if it cannot be finished |
+| Customer already exists at the registrar from an earlier attempt | Looked up and reused |
+| Domain registered but the order did not save it | Found by name and reused, not registered again |
+| New .in not Active yet, DNS cannot be written | "DNS pending"; sweep finishes it; "Try again" shows the reason |
+| Hosting refuses the domain (limit, already used elsewhere) | Shown with Vercel's reason; you are not told separately, so watch for domains stuck on "needs attention" |
+| Payment page cannot start | Order closed as cancelled; the screen shows the payment provider's reason |
+| Payment taken but the notice never arrives | Daily email at about 10:30 India time lists checkouts opened but not confirmed |
+| Renewal cut off after the provider renewed | Resumed order sees the new date and does not renew twice |
+| Domain expires | 30, 14, 7, 1 day reminders, then one "has expired" notice |
+Not covered yet: refunds are done by hand in Dodo; a domain moved away is not detected automatically (reminders keep going until its old date); WHOIS privacy is not sold.
+
 ## Policy lines shown to customers (from the provider's knowledge base, read 2026-11-23)
 - Refund: delete within the money-back grace period for a refund: 4 days for .com and .in; not published for the others (the UI says so). A deletion charge can apply; deleting stops the site and email.
 - Transfer: with the authorization code. The 60-day lock on new .com registrations is ICANN's general rule; the provider's pages did not confirm a period, so verify before launch.

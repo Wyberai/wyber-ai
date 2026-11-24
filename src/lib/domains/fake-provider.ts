@@ -98,6 +98,20 @@ export class FakeDomainsProvider implements DomainsProvider {
     d.expiresAt = addYears(d.expiresAt, i.years)
   }
 
+  private locks = new Map<number, boolean>()
+
+  async getTransferInfo(orderId: number) {
+    if (!this.state.domains.has(orderId)) throw new ProviderError('Unknown order')
+    return { authCode: `FAKE-AUTH-${orderId}`, locked: this.locks.get(orderId) ?? true }
+  }
+
+  async setTransferLock(orderId: number, locked: boolean) {
+    this.state.calls.push('setTransferLock')
+    this.maybeFail('setTransferLock')
+    if (!this.state.domains.has(orderId)) throw new ProviderError('Unknown order')
+    this.locks.set(orderId, locked)
+  }
+
   async getDomainDetails(orderId: number): Promise<DomainDetails> {
     const d = this.state.domains.get(orderId)
     if (!d) throw new ProviderError('Unknown order')

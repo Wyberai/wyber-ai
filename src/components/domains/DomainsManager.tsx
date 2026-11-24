@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import s from './DomainsManager.module.css'
+import { VERCEL_A_IP, VERCEL_CNAME } from '@/lib/dns-records'
 
 // "Domains" screen, used inside the editor (projectId given: the bought domain is connected to that site) and on
 // /dashboard/domains. Search, confirm (item, price, term, total, policy), pay, then watch the connection status.
@@ -72,6 +73,7 @@ export default function DomainsManager({ projectId = null }: { projectId?: strin
   const [renew, setRenew] = useState<{ kind: 'domain' | 'workspace'; domain: string; term: number } | null>(null)
   const [rq, setRq] = useState<{ preview: { seats: number | null; term: number; registryCents: number; marginCents: number; totalCents: number; expiresAt: string; newExpiresAt: string }; policy: string[] } | null>(null)
   const [rAck, setRAck] = useState(false)
+  const [move, setMove] = useState<{ domain: string; code: string | null; locked: boolean | null } | null>(null)
 
   const loadMine = useCallback(async () => {
     const r = await fetch('/api/domains/mine')
@@ -114,6 +116,48 @@ export default function DomainsManager({ projectId = null }: { projectId?: strin
     if (!r.ok) return setMsg(j.error || 'Search failed')
     setResults(j.results); setAlternatives(j.alternatives ?? []); setSandbox(j.sandbox); setPolicyByTld(j.policyByTld ?? {})
   }
+
+  // ── Move to another provider ──
+  async function transferAction(domain: string, action: 'unlock' | 'lock') {
+    setBusy(true); setMsg('')
+    const r = await fetch('/api/domains/transfer-out', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ domain, action }) })
+    const j = await r.json().catch(() => ({}))
+    setBusy(false)
+    if (!r.ok) { setMsg(`We could not ${action} ${domain}: ${j.error || 'please try again in a few minutes'}.`); return }
+    setMove({ domain, code: j.authCode ?? null, locked: Boolean(j.locked) })
+  }
+  const movePanel = (domain: string) => move?.domain === domain && (
+    <div className={s.card}>
+      <h3 className={s.cardTitle}>Move {domain} to another provider</h3>
+      <p className={s.cardHint}>You own this domain, so you can take it anywhere. We do not charge to let it go.</p>
+      <ol className={s.policy} style={{ listStyle: 'decimal', paddingLeft: 30 }}>
+        <li>Unlock it and get the transfer code (below).</li>
+        <li>Give the code to your new provider, on their &ldquo;transfer a domain in&rdquo; page, and pay their transfer fee. Most providers add a year to the domain when it moves.</li>
+        <li>It usually takes a few days. Either provider may email you to approve it.</li>
+        <li>Keep your site working: add the records below at the new provider, or your site stops loading on this domain after the move.</li>
+      </ol>
+      {move.code ? (
+        <div className={s.field}>
+          <label>Transfer code (keep it private: anyone with it can start a transfer)</label>
+          <pre className={s.records} style={{ userSelect: 'all' }}>{move.code}</pre>
+          <div className={s.actions}>
+            <button className={s.ghost} onClick={() => navigator.clipboard?.writeText(move.code!)}>Copy code</button>
+            <button className={s.ghost} disabled={busy} onClick={() => transferAction(domain, 'lock')}>Lock it again</button>
+          </div>
+        </div>
+      ) : (
+        <div className={s.actions}>
+          <button className={s.btn} disabled={busy} onClick={() => transferAction(domain, 'unlock')}>{move.locked === false ? 'Show the code again' : 'Unlock and show the transfer code'}</button>
+          <button className={s.ghost} onClick={() => setMove(null)}>Close</button>
+        </div>
+      )}
+      <div className={s.field}>
+        <label>Records to keep your site working</label>
+        <pre className={s.records}>{`A      @    ${VERCEL_A_IP}\nCNAME  www  ${VERCEL_CNAME}`}</pre>
+      </div>
+      <p className={s.after}>A domain cannot be moved in its first 60 days after registration. If the provider refuses, its reason is shown above. We email the owner whenever the lock changes.</p>
+    </div>
+  )
 
   // ── Renew ──
   async function loadRenewQuote(kind: 'domain' | 'workspace', domain: string, term: number) {
@@ -415,9 +459,11 @@ export default function DomainsManager({ projectId = null }: { projectId?: strin
                   <span className={s.actions}>
                     {d.expires_at && <button className={s.ghost} onClick={() => openRenew('domain', d.domain)}>{renew?.domain === d.domain && renew.kind === 'domain' ? 'Close' : 'Renew'}</button>}
                     {d.connection !== 'live' && <button className={s.ghost} onClick={() => retry(d.domain)}>Try again</button>}
+                    <button className={s.ghost} onClick={() => setMove(move?.domain === d.domain ? null : { domain: d.domain, code: null, locked: null })}>{move?.domain === d.domain ? 'Close move' : 'Move to another provider'}</button>
                   </span>
                 </div>
                 {renewPanel('domain', d.domain)}
+                {movePanel(d.domain)}
                 {!d.project_id && (mine?.projects?.length ?? 0) > 0 && (
                   <div className={s.attachRow}>
                     <label className={s.meta} htmlFor={`attach-${d.domain}`}>Not on a site yet. Use it on</label>
