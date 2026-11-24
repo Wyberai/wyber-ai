@@ -113,7 +113,7 @@ export default function Page() {
         </p>
       </DocSection>
 
-      <Note>Treat your API key like a password. A full-access key can build with your credits, publish and delete under your account. When you create a key you can make it read-only (it can look but not change) and give it an expiry, so choose read-only unless the agent needs to build. If a key leaks, revoke it from Settings → API Keys and it stops working on its next request. Claude.ai needs no key: it asks for your permission instead.</Note>
+      <Note>Treat your API key like a password. A full-access key can build with your credits, publish and delete under your account. When you create a key you can make it read-only (it can look but not change) and give it an expiry, so choose read-only unless the agent needs to build. If a key leaks, revoke it from Settings → API Keys and it stops working on its next request. Claude.ai needs no key: it asks for your permission instead. For tools that do not speak MCP (ChatGPT custom actions, n8n, Zapier, scripts), the same keys work with a plain web API: list the tools at /api/v1/tools, run one at /api/v1/tools/{name}, and import /api/v1/openapi.json.</Note>
     </DocsPage>
   )
 }

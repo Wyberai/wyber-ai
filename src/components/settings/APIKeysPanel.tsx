@@ -6,16 +6,27 @@ import { useState, useEffect } from 'react';
 // already in it, and test that it works. A key is shown once and only its hash is stored (see /api/wyber-api).
 
 interface APIKey { id: string; name: string; key_preview: string; active: boolean; created_at: string; last_used_at?: string | null; scope?: 'full' | 'read'; expires_at?: string | null }
-type Client = 'claude' | 'code' | 'cursor' | 'vscode' | 'other';
+type Client = 'claude' | 'code' | 'cursor' | 'vscode' | 'rest' | 'other';
 
 const URL_MCP = 'https://wyberai.com/api/mcp';
-const CLIENTS: Array<[Client, string]> = [['claude', 'Claude'], ['code', 'Claude Code'], ['cursor', 'Cursor'], ['vscode', 'VS Code'], ['other', 'Other agent']];
+const CLIENTS: Array<[Client, string]> = [['claude', 'Claude'], ['code', 'Claude Code'], ['cursor', 'Cursor'], ['vscode', 'VS Code'], ['rest', 'ChatGPT, n8n, scripts'], ['other', 'Other MCP agent']];
 
 function setup(client: Client, key: string): { where: string; text: string } | null {
   switch (client) {
     case 'code': return { where: 'Run this in your terminal:', text: `claude mcp add --transport http wyberai ${URL_MCP} --header "x-api-key: ${key}"` };
     case 'cursor': return { where: 'Add this to ~/.cursor/mcp.json (or the project\'s .cursor/mcp.json):', text: JSON.stringify({ mcpServers: { wyberai: { url: URL_MCP, headers: { 'x-api-key': key } } } }, null, 2) };
     case 'vscode': return { where: 'Add this to .vscode/mcp.json in your project:', text: JSON.stringify({ servers: { wyberai: { type: 'http', url: URL_MCP, headers: { 'x-api-key': key } } } }, null, 2) };
+    case 'rest': return {
+      where: 'Anything that can send a web request can use WyberAi: ChatGPT custom actions, n8n, Zapier, Make, a script. List the tools, then run one by name:',
+      text: [
+        `curl -H "x-api-key: ${key}" https://wyberai.com/api/v1/tools`,
+        '',
+        `curl -X POST -H "x-api-key: ${key}" -H "content-type: application/json" -d '{}' https://wyberai.com/api/v1/tools/list_projects`,
+        '',
+        '# ChatGPT custom actions: import https://wyberai.com/api/v1/openapi.json',
+        '# and set authentication to API key, header name x-api-key.',
+      ].join('\n'),
+    };
     case 'other': return { where: 'Any agent or tool that speaks MCP over HTTP needs two things: this address and the key sent as the x-api-key header (or as Authorization: Bearer).', text: `URL:      ${URL_MCP}\nHeader:   x-api-key: ${key}` };
     default: return null;
   }
