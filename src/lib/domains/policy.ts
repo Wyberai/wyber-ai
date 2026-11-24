@@ -30,7 +30,7 @@ export function policyLines(tld: string): string[] {
 export function workspacePolicyLines(marginCentsPerSeatMonth: number): string[] {
   const margin = marginCentsPerSeatMonth % 100 === 0 ? `$${marginCentsPerSeatMonth / 100}` : `${marginCentsPerSeatMonth} cents`
   return [
-    `Our price is the reseller price for Google Workspace plus a flat ${margin} per seat per month.`,
+    `Our price is the Google Workspace price plus a flat ${margin} per seat per month.`,
     'Workspace does not renew by itself. We email you 30, 14, 7 and 1 days before it ends.',
     'We do not promise a refund window for Workspace. If you need a refund, write to support and we will check the order with the provider.',
   ]

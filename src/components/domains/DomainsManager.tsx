@@ -201,7 +201,7 @@ export default function DomainsManager({ projectId = null }: { projectId?: strin
 
       {tab === 'workspace' && (
         <>
-          <p className={s.lead}>Email on your own domain with <strong>Google Workspace Business Starter</strong>. Our price is the reseller price plus a flat 50 cents per seat per month, sold for 12 months.</p>
+          <p className={s.lead}>Email on your own domain with <strong>Google Workspace Business Starter</strong>. Our price is the Google Workspace price plus a flat 50 cents per seat per month, sold for 12 months.</p>
           <div className={s.wsRow}>
             <div className={s.field}><label htmlFor="ws-domain">Your domain</label><input id="ws-domain" className={s.big} placeholder="yourdomain.com" value={wsDomain} onChange={e => setWsDomain(e.target.value)} /></div>
             <div className={s.field}><label htmlFor="ws-seats">Seats</label><input id="ws-seats" className={s.big} type="number" min={1} max={50} value={seats} onChange={e => setSeats(Number(e.target.value))} /></div>
@@ -214,7 +214,7 @@ export default function DomainsManager({ projectId = null }: { projectId?: strin
                 <table className={s.summary}><tbody>
                   <tr><td className={s.label}>Item</td><td>Google Workspace Business Starter for <strong>{wsDomain}</strong></td></tr>
                   <tr><td className={s.label}>Seats and term</td><td>{wsQuote.seats} seats, {wsQuote.months} months</td></tr>
-                  <tr><td className={s.label}>Reseller price</td><td>{usd(wsQuote.registryCents)}</td></tr>
+                  <tr><td className={s.label}>Google Workspace price</td><td>{usd(wsQuote.registryCents)}</td></tr>
                   <tr><td className={s.label}>Our fee ({usd(wsQuote.perSeatMonthMarginCents)} per seat per month)</td><td>{usd(wsQuote.marginCents)}</td></tr>
                   <tr className={s.total}><td className={s.label}>Total</td><td>{usd(wsQuote.totalCents)}</td></tr>
                 </tbody></table>
