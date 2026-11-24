@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { headers } from 'next/headers'
 import { createServiceClient } from '@/lib/supabase/server'
 import { verifyToken, userIdFromAuth } from '@/lib/mcp/auth'
+import { guardTools } from '@/lib/mcp/guard'
 import { getProjectSupabase } from '@/lib/mcp/project-db'
 import { runSql } from '@/lib/supabase-management'
 import { runProjectRlsScan } from '@/lib/rls-scan-project'
@@ -90,6 +91,8 @@ Or top-up credits: https://wyberai.com/credits`
 
 const handler = createMcpHandler(
   (server) => {
+    // A read-only key may only call tools that only read. One rule in front of every tool below.
+    guardTools(server)
     server.tool(
       'list_projects',
       'List the projects in your WyberAi workspace (most recently updated first).',

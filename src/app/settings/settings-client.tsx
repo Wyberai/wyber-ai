@@ -7,6 +7,7 @@ import { MODEL_META, MODEL_MULTIPLIERS, estimateCost, tierAllowedForPlan, type M
 import { WyberLogo } from '@/components/shared/WyberLogo';
 import { PLAN_FACTS, creditsLine } from '@/lib/plans';
 import { TwoFactorPanel } from '@/components/settings/TwoFactorPanel';
+import { APIKeysPanel } from '@/components/settings/APIKeysPanel';
 import { useT } from '@/lib/i18n/useT';
 import { useLocale } from '@/lib/i18n/LocaleProvider';
 import { COMMON_STRINGS } from '@/lib/i18n/dict/common';
@@ -314,9 +315,6 @@ export default function SettingsPage({ isIndia }: { isIndia?: boolean }) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [name, setName] = useState('');
-  const [apiKey, setApiKey] = useState('');
-  const [newApiKey, setNewApiKey] = useState('');
-  const [showKey, setShowKey] = useState(false);
   const [githubConnected, setGithubConnected] = useState(false);
   const [notifications, setNotifications] = useState({ email: true, credits: true, deploy: false });
   const [deleteConfirm, setDeleteConfirm] = useState('');
@@ -353,8 +351,6 @@ export default function SettingsPage({ isIndia }: { isIndia?: boolean }) {
       supabase.from('credit_usage').select('reason, amount, created_at').eq('user_id', user.id).order('created_at', { ascending: false }).limit(5)
         .then(({ data }) => { if (data) setRecentSpend(data); });
     });
-    // Generate fake API key for display
-    setApiKey('wai-' + Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 10));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -677,40 +673,13 @@ export default function SettingsPage({ isIndia }: { isIndia?: boolean }) {
           </>
         })()}
 
-        {/* API KEYS */}
+        {/* API KEYS: the real keys, and how to connect an AI agent. (This tab used to show a random string made in the
+            browser and hard-coded zero counters; it never held a real key.) */}
         {tab === 'api-keys' && <>
           <h1 style={S.h2}>{t('apiKeysTitle')}</h1>
           <p style={S.sub}>{t('apiKeysSub')}</p>
-
-          <div style={S.card}>
-            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>{t('yourApiKeyLabel')}</div>
-            <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-              <div style={{ flex: 1, padding: '9px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: '#111b28', fontSize: 13, fontFamily: 'monospace', color: '#0EA5E9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {showKey ? apiKey : '•'.repeat(32)}
-              </div>
-              <button onClick={() => setShowKey(v => !v)} style={S.ghost}>{showKey ? t('hideLabel') : t('showLabel')}</button>
-              <button onClick={() => { navigator.clipboard.writeText(apiKey) }} style={S.btn()}>{tc('copy')}</button>
-            </div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={() => setApiKey('wai-' + Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 10))} style={{ ...S.ghost, fontSize: 12 }}>{t('regenerateKeyBtn')}</button>
-            </div>
-            <div style={{ marginTop: 14, padding: 12, borderRadius: 8, background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', fontSize: 12, color: '#f59e0b' }}>
-              {t('apiKeyWarning')}
-            </div>
-          </div>
-
-          <div style={S.card}>
-            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>{t('usageThisMonthTitle')}</div>
-            <div style={{ fontSize: 12, color: '#8797ab', marginBottom: 12 }}>{t('usageThisMonthDesc')}</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
-              {[[t('apiCallsLabel'), '0'], [t('creditsUsedLabel'), '0'], [t('errorsLabel'), '0']].map(([l, v]) => (
-                <div key={l} style={{ padding: '12px', background: '#111b28', borderRadius: 8, textAlign: 'center' }}>
-                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700 }}>{v}</div>
-                  <div style={{ fontSize: 11, color: '#8797ab', marginTop: 2 }}>{l}</div>
-                </div>
-              ))}
-            </div>
-          </div>
+          {/* data-theme="dark": the panel is built on the site's theme colours, and this page paints its own dark surfaces. */}
+          <div data-theme="dark" style={S.card}><APIKeysPanel /></div>
         </>}
 
         {/* GITHUB */}

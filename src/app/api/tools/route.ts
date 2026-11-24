@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { encryptCredential, decryptCredential, maskCredential } from '@/lib/encryption'
 import { getToolById } from '@/lib/tool-registry'
+import { mayActOnProject } from '@/lib/project-access'
 
 // GET — list connected tools for a project
 export async function GET(req: NextRequest) {
@@ -70,6 +71,10 @@ export async function POST(req: NextRequest) {
     }
 
     const admin = await createAdminClient()
+    // This write bypasses the database's own rules (service role), so the rule has to be here: a project that exists but
+    // that the caller may not change is refused. Without it, anyone who knew a project id could replace the saved
+    // connection on someone else's project, and take it over.
+    if (!(await mayActOnProject(admin, user.id, projectId))) return NextResponse.json({ error: 'Project not found' }, { status: 404 })
     const { error } = await admin
       .from('project_connectors')
       .upsert({

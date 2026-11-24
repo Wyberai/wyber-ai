@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
+import { mayActOnProject } from '@/lib/project-access';
 import { encrypt, decrypt } from '@/lib/secrets-crypto';
 
 function safeDecrypt(val: string): string | null {
@@ -52,6 +53,12 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { projectId, service, apiKey, config } = await req.json();
+  if (typeof projectId !== 'string' || !projectId || typeof service !== 'string' || !service || typeof apiKey !== 'string' || !apiKey.trim()) {
+    return NextResponse.json({ error: 'projectId, service and apiKey are required' }, { status: 400 });
+  }
+  // Only on a project the caller may change. Otherwise a row could be planted on someone else's project, which then
+  // blocks the owner from connecting that service.
+  if (!(await mayActOnProject(await createAdminClient(), user.id, projectId))) return NextResponse.json({ error: 'Project not found' }, { status: 404 });
 
   const { data, error } = await supabase
     .from('project_connectors')
