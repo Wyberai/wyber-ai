@@ -293,7 +293,7 @@ describe('renewals', () => {
     const t = await new FakeDomainsProvider().getCostTable()
     const q = quoteRenewal('ashabakery.com', 1, t)
     expect(q).toMatchObject({ registryCents: 1199, marginCents: 100, totalCents: 1299 })
-    expect(quoteRenewal('ashabakery.com', 4, t)).toBeNull() // no renewal price for a 4 year term
+    expect(quoteRenewal('ashabakery.com', 4, t)?.registryCents).toBe(4 * 1199) // a term the list does not state is the one-year price times the years
   })
   it('renews a domain for the term, adds it after the current expiry, and resets the reminders', async () => {
     const { createRenewalOrder, renewalPreview } = await import('./orders')
@@ -562,5 +562,29 @@ describe('Workspace tester list', () => {
     expect(workspaceEnabled(env, 'stranger@example.com')).toBe(false)
     expect(workspaceEnabled(env, null)).toBe(false)
     expect(workspaceEnabled({ ...env, DOMAINS_WORKSPACE: 'on' }, 'stranger@example.com')).toBe(true)
+  })
+})
+
+describe('longer terms when the list states only one year', () => {
+  // The live list gives only the one-year price for these extensions (seen 2026-11-24), in rupees.
+  const live: import('./types').CostTable = { currency: 'INR', domains: { dotin: { register: { 1: 71900 }, renew: { 1: 78900 } }, domcno: { register: { 1: 118900 }, renew: { 1: 125900 } } }, workspacePerSeatMonth: {} }
+  it('prices 2, 3 and 5 years as the one-year price times the years, with the $1 once', () => {
+    for (const years of [1, 2, 3, 5]) {
+      const q = quoteDomain('ashabakery.in', years, live, 95)
+      expect(q).not.toBeNull()
+      // 71900 paise / 95 per dollar, rounded up, times the years: never below the registry's cost
+      expect(q!.registryCents).toBe(Math.ceil(71900 * years / 95))
+      expect(q!.marginCents).toBe(100)
+      expect(q!.totalCents).toBe(q!.registryCents + 100)
+    }
+  })
+  it('the renewal price for a longer term works the same way', async () => {
+    const { quoteRenewal } = await import('./pricing')
+    expect(quoteRenewal('ashabakery.in', 3, live, 95)!.registryCents).toBe(Math.ceil(78900 * 3 / 95))
+  })
+  it('a term the list states itself is used as stated, and an extension with no price is still not offered', () => {
+    const stated: import('./types').CostTable = { currency: 'USD', domains: { dotin: { register: { 1: 700, 2: 1300 }, renew: { 1: 700 } } }, workspacePerSeatMonth: {} }
+    expect(quoteDomain('a.in', 2, stated)!.registryCents).toBe(1300)
+    expect(quoteDomain('a.io', 2, stated)).toBeNull()
   })
 })

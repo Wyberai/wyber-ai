@@ -12,6 +12,16 @@ export function toUsdCents(minor: number, currency: 'USD' | 'INR', inrPerUsd?: n
   return Math.ceil(minor / inrPerUsd)
 }
 
+/**
+ * A price for a term. The live cost list states only the one-year price for most extensions, and registries charge by the
+ * year, so a longer term is the one-year price times the years. A term the list states itself is used as it is.
+ */
+function perTerm(map: Record<number, number> | undefined, years: number): number | undefined {
+  if (!map) return undefined
+  if (map[years] != null) return map[years]
+  return map[1] != null && years >= 1 ? map[1] * years : undefined
+}
+
 export interface DomainQuote {
   domain: string
   years: number
@@ -47,10 +57,10 @@ export function quoteDomain(
   const cfg = tldConfig(parts.tld)
   if (!cfg) return null
   const row = table.domains[cfg.productKey]
-  const reg = row?.register?.[years]
+  const reg = perTerm(row?.register, years)
   if (reg == null || !(reg > 0)) return null
   const registryCents = toUsdCents(reg, table.currency, inrPerUsd)
-  const ren = row.renew?.[years]
+  const ren = perTerm(row.renew, years)
   const renewalRegistry = ren != null && ren > 0 ? toUsdCents(ren, table.currency, inrPerUsd) : null
   return {
     domain: `${parts.label}.${parts.tld}`,
@@ -74,7 +84,7 @@ export function quoteRenewal(
   if (!parts) return null
   const cfg = tldConfig(parts.tld)
   if (!cfg) return null
-  const ren = table.domains[cfg.productKey]?.renew?.[years]
+  const ren = perTerm(table.domains[cfg.productKey]?.renew, years)
   if (ren == null || !(ren > 0)) return null
   const registryCents = toUsdCents(ren, table.currency, inrPerUsd)
   return { domain: `${parts.label}.${parts.tld}`, years, registryCents, marginCents: DOMAIN_MARGIN_CENTS, totalCents: registryCents + DOMAIN_MARGIN_CENTS, currency: 'USD' }

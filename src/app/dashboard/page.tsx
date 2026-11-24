@@ -1,4 +1,5 @@
 import { DashboardClient } from '@/components/dashboard/DashboardClient';
+import { getProvider } from '@/lib/domains';
 import { OnboardingTour } from '@/components/shared/OnboardingTour';
 import { createClient, createAdminClient, createServiceClient } from '@/lib/supabase/server';
 import { sendWelcomeEmail, sendAdminSignupAlert } from '@/lib/email';
@@ -113,7 +114,7 @@ export default async function DashboardPage() {
   return (
     <>
       <OnboardingTour isNewUser={isNewUser} />
-      <DashboardClient profile={profile} projects={projects ?? []} securityByProject={securityByProject} />
+      <DashboardClient profile={profile} projects={projects ?? []} securityByProject={securityByProject} domainsEnabled={getProvider() !== null} />
     </>
   );
 }
