@@ -15,10 +15,12 @@ export function getProvider(env: Record<string, string | undefined> = process.en
     if (!fakeAllowed(env)) return null
     return (fakeSingleton ??= new FakeDomainsProvider(newFakeState()))
   }
-  const url = env[ENV_NAMES.relayUrl]
-  const secret = env[ENV_NAMES.relaySecret]
+  // A value pasted into a settings page can carry a hidden newline or space. That alone makes the relay answer "Bad
+  // signature", so the settings are trimmed before use.
+  const url = env[ENV_NAMES.relayUrl]?.trim()
+  const secret = env[ENV_NAMES.relaySecret]?.trim()
   if (!url || !secret) return null
-  const currency = env[ENV_NAMES.currency] === 'INR' ? 'INR' : 'USD'
+  const currency = env[ENV_NAMES.currency]?.trim().toUpperCase() === 'INR' ? 'INR' : 'USD'
   return new RelayDomainsClient({ url, secret, currency, env })
 }
 

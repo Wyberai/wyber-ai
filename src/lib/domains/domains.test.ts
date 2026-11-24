@@ -378,3 +378,12 @@ describe('Google Workspace stays hidden until switched on', () => {
     expect(workspaceEnabled({ DOMAINS_PROVIDER: 'fake' })).toBe(true)
   })
 })
+
+describe('settings pasted with hidden whitespace', () => {
+  it('trims the relay url, secret and currency so a stray newline cannot cause "Bad signature"', () => {
+    const p = getProvider({ DOMAINS_RELAY_URL: 'https://relay.example\n', DOMAINS_RELAY_SECRET: ' abc123\r\n', DOMAINS_PROVIDER_CURRENCY: 'inr ' })
+    expect(p).not.toBeNull()
+    expect((p as unknown as { currency: string }).currency).toBe('INR')
+    expect(getProvider({ DOMAINS_RELAY_URL: 'https://relay.example', DOMAINS_RELAY_SECRET: '  \n' })).toBeNull()
+  })
+})
