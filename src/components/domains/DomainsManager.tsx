@@ -56,7 +56,7 @@ export default function DomainsManager({ projectId = null }: { projectId?: strin
   const [sandbox, setSandbox] = useState(false)
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
-  const [mine, setMine] = useState<{ domains: Row[]; workspaces: WorkspaceRow[]; orders: { id: string; domain: string; status: string; error: string | null }[]; projects?: Site[] } | null>(null)
+  const [mine, setMine] = useState<{ domains: Row[]; workspaces: WorkspaceRow[]; orders: { id: string; domain: string; status: string; error: string | null }[]; projects?: Site[]; workspaceEnabled?: boolean } | null>(null)
   const [wsDomain, setWsDomain] = useState('')
   const [seats, setSeats] = useState(3)
   const [wsQuote, setWsQuote] = useState<WsQuote | null>(null)
@@ -235,7 +235,7 @@ export default function DomainsManager({ projectId = null }: { projectId?: strin
   return (
     <div className={s.root}>
       <div className={s.tabs} role="tablist">
-        {(['domains', 'workspace', 'mine'] as const).map(t => (
+        {(['domains', 'workspace', 'mine'] as const).filter(t => t !== 'workspace' || mine?.workspaceEnabled).map(t => (
           <button key={t} role="tab" aria-selected={tab === t} className={`${s.tab} ${tab === t ? s.tabActive : ''}`} onClick={() => { setTab(t); setMsg(''); if (t === 'mine') loadMine() }}>
             {t === 'domains' ? 'Buy a domain' : t === 'workspace' ? 'Google Workspace' : 'My domains'}
           </button>

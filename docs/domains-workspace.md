@@ -33,6 +33,17 @@ Not built yet: adding seats after purchase, INR checkout, the Google site-verifi
 10. Switch the relay to live (`RESELLERCLUB_BASE=https://httpapi.com/api/`, live id and new key). Place one real order of your own (cheapest .in) and check it end to end before telling anyone.
 11. Promote to production by hand.
 
+## Go-live runbook (decided 2026-11-24: domains and renewals first, Google Workspace later)
+Do these in order. The same relay serves the demo and live account, so after step 3 any Preview using it would act on the real account: remove the Preview variables in step 4.
+1. **Promote** the latest build. Safe: domains stay "not available yet" on production until step 5.
+2. **Live ResellerClub panel:** rotate the API key; copy the reseller id (profile icon, Manage Profile); whitelist `209.38.122.197` (Settings, API); add Rs 2,000 to 5,000 of funds.
+3. **Switch the relay to live:** on the server run `/root/go-live.sh` (asks for the live id and key; keeps a demo copy; `/root/go-demo.sh` switches back). It must end with `{"ok":true,"mode":"live"}`.
+4. **Vercel, remove the three Preview variables** (`DOMAINS_RELAY_URL`, `DOMAINS_RELAY_SECRET`, `DOMAINS_PROVIDER_CURRENCY`) so no Preview can reach the live account.
+5. **Vercel, Production variables:** `DOMAINS_RELAY_URL=https://relay.wyberai.com`, `DOMAINS_RELAY_SECRET` (copy it from the server without displaying it), `DOMAINS_PROVIDER_CURRENCY=INR`, `DOMAINS_INR_PER_USD` (today's rate, set slightly above the real one). Leave `DOMAINS_WORKSPACE` unset: Workspace stays hidden. Confirm `DODO_PRODUCT_DOMAIN`, `DODO_PAYMENTS_API_KEY`, `VERCEL_TOKEN`/`WYBERAI_DOMAINS`, `VERCEL_TEAM_ID`, `VERCEL_PROJECT_ID`, `CRON_SECRET` are all set for Production. Redeploy Production.
+6. **One real order of your own** (cheapest .in) at `/dashboard/domains`. Check: the price matches the registrar's price plus $1 (and check Dodo's fee), the payment panel moves to "is yours", you get the email, the status reaches Live, and the site loads on the domain. Then renew it once.
+7. **Then** decide Workspace: set `WORKSPACE_COST_MINOR_PER_SEAT_MONTH_IN` / `_GBL`, place one real 1-seat order of your own, and only then set `DOMAINS_WORKSPACE=on`.
+Do not change anything during the expo.
+
 Env var names: see `.env.example` (section "Domains + Google Workspace") and `relay/.env.example`. Keys and reseller id are read only from the relay's environment.
 
 ## Policy lines shown to customers (from the provider's knowledge base, read 2026-11-23)

@@ -3,6 +3,7 @@ import { QuoteChangedError } from '@/lib/domains/orders'
 import { createWorkspaceOrder, startDodoCheckout } from '@/lib/domains/checkout'
 import { parseContact } from '@/lib/domains/contact'
 import { isSandbox } from '@/lib/domains'
+import { workspaceEnabled } from '@/lib/domains/config'
 import { splitDomain } from '@/lib/domains/pricing'
 import { context, notConfigured, requireUser, unauthorized } from '@/lib/domains/route-helpers'
 
@@ -10,6 +11,7 @@ import { context, notConfigured, requireUser, unauthorized } from '@/lib/domains
 export async function POST(req: NextRequest) {
   const user = await requireUser()
   if (!user) return unauthorized()
+  if (!workspaceEnabled()) return NextResponse.json({ error: 'Google Workspace is not available yet' }, { status: 503 })
   const ctx = await context()
   if (!ctx) return notConfigured()
   const b = (await req.json().catch(() => ({}))) as Record<string, unknown>

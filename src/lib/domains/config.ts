@@ -51,9 +51,15 @@ export const ENV_NAMES = {
   currency: 'DOMAINS_PROVIDER_CURRENCY', // 'USD' (default) or 'INR': the currency of the reseller account's prices
   inrPerUsd: 'DOMAINS_INR_PER_USD', // required when the currency is INR
   workspaceMargin: 'WORKSPACE_MARGIN_CENTS_PER_SEAT_MONTH',
+  workspace: 'DOMAINS_WORKSPACE', // 'on' shows and sells Google Workspace. Off by default: it is switched on only after one real order has been proven.
   nameservers: 'DOMAINS_NAMESERVERS', // optional comma list; otherwise the customer's default nameservers from the provider
   vercelProjectId: 'VERCEL_PROJECT_ID', // already used by /api/custom-domain
 } as const
+
+/** Google Workspace is hidden from customers until this is switched on (or in the local fake sandbox). */
+export function workspaceEnabled(env: Record<string, string | undefined> = process.env): boolean {
+  return env[ENV_NAMES.workspace] === 'on' || env[ENV_NAMES.provider] === 'fake'
+}
 
 export function workspaceMarginCents(env: Record<string, string | undefined> = process.env): number {
   const raw = env[ENV_NAMES.workspaceMargin]

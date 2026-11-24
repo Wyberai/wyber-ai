@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { workspaceQuoteFor } from '@/lib/domains/search'
 import { getProvider, inrPerUsd, isSandbox } from '@/lib/domains'
-import { workspaceMarginCents, workspaceRegionFor, WORKSPACE_PLANS, WORKSPACE_MAX_SEATS } from '@/lib/domains/config'
+import { workspaceEnabled, workspaceMarginCents, workspaceRegionFor, WORKSPACE_PLANS, WORKSPACE_MAX_SEATS } from '@/lib/domains/config'
 import { workspacePolicyLines } from '@/lib/domains/policy'
 import { workspaceRecords, recordsAsText } from '@/lib/domains/dns'
 import { notConfigured, requireUser, unauthorized } from '@/lib/domains/route-helpers'
@@ -9,6 +9,7 @@ import { notConfigured, requireUser, unauthorized } from '@/lib/domains/route-he
 // GET /api/workspace/quote?seats=3&country=IN&domain=example.com: price and the mail records that will be connected.
 export async function GET(req: NextRequest) {
   if (!(await requireUser())) return unauthorized()
+  if (!workspaceEnabled()) return NextResponse.json({ error: 'Google Workspace is not available yet' }, { status: 503 })
   const provider = getProvider()
   if (!provider) return notConfigured()
   const p = req.nextUrl.searchParams

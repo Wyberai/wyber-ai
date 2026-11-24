@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { connectionStatus, type ConnectionStatus } from '@/lib/domains/vercel'
 import { requireUser, unauthorized } from '@/lib/domains/route-helpers'
 import { daysBetween } from '@/lib/domains/dates'
+import { workspaceEnabled } from '@/lib/domains/config'
 
 // GET /api/domains/mine: the person's domains with a live connection status (DNS pending, certificate pending, live),
 // plus workspace subscriptions and any paid order that still needs attention.
@@ -24,5 +25,5 @@ export async function GET() {
     return { ...d, connection: status === 'needs_attention' ? (d.dns_written ? 'needs_attention' : 'dns_pending') : status, daysLeft: exp ? daysBetween(now, exp) : null }
   }))
   const ws = (workspaces ?? []).map((w: Record<string, unknown>) => ({ ...w, daysLeft: w.expires_at ? daysBetween(now, new Date(String(w.expires_at))) : null }))
-  return NextResponse.json({ domains: rows, workspaces: ws, orders: orders ?? [], projects: projects ?? [] })
+  return NextResponse.json({ domains: rows, workspaces: ws, orders: orders ?? [], projects: projects ?? [], workspaceEnabled: workspaceEnabled() })
 }

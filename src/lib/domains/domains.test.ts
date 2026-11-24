@@ -368,3 +368,13 @@ describe('renewals', () => {
     expect(b.text).toContain('3 seats')
   })
 })
+
+describe('Google Workspace stays hidden until switched on', () => {
+  it('is off by default and on only with DOMAINS_WORKSPACE=on or the local fake sandbox', async () => {
+    const { workspaceEnabled } = await import('./config')
+    expect(workspaceEnabled({})).toBe(false)
+    expect(workspaceEnabled({ DOMAINS_WORKSPACE: 'off' })).toBe(false)
+    expect(workspaceEnabled({ DOMAINS_WORKSPACE: 'on' })).toBe(true)
+    expect(workspaceEnabled({ DOMAINS_PROVIDER: 'fake' })).toBe(true)
+  })
+})
