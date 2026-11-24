@@ -33,8 +33,8 @@ export const TLDS: TldConfig[] = [
   { tld: 'com', productKey: 'domcno', keyVerified: true, moneyBackDays: 4 },
   { tld: 'in', productKey: 'dotin', keyVerified: true, moneyBackDays: 4 },
   { tld: 'co.in', productKey: 'thirdleveldotin', keyVerified: true, moneyBackDays: null },
-  { tld: 'app', productKey: 'dotapp', keyVerified: false, moneyBackDays: null },
-  { tld: 'io', productKey: 'dotio', keyVerified: false, moneyBackDays: null },
+  { tld: 'app', productKey: 'dotapp', keyVerified: true, moneyBackDays: null }, // confirmed against the sandbox 2026-11-24
+  { tld: 'io', productKey: 'dotio', keyVerified: true, moneyBackDays: null }, // confirmed against the sandbox 2026-11-24
 ]
 
 export const DEFAULT_TLDS = TLDS.map(t => t.tld)

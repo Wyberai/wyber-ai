@@ -6,7 +6,7 @@ through the same account at `gapps/{in|se|gbl}`). Status: built and tested again
 ## Prices (stated openly in the product)
 - Domains: registry price + flat **$1**, also on renewal. Customers pay USD through the existing Dodo checkout.
 - Workspace: reseller price + flat **50 cents per seat per month** (assumption, change with `WORKSPACE_MARGIN_CENTS_PER_SEAT_MONTH`). Sold for 12 months, Business Starter only: the provider documents a plan id only for transfers, so Standard and Plus are shown as not offered.
-- Extensions: .com, .in, .co.in, .app, .io. `.app` and `.io` product keys are not in the provider's published table, so each is offered only if the live price table has a price for it. A name with no backed price is never shown with one.
+- Extensions: .com, .in, .co.in, .app, .io. All five product keys were confirmed against the sandbox on 2026-11-24 (availability and cost-price calls through the relay both answered). A name with no backed price is never shown with one.
 - Cost comes from `products/reseller-cost-price.json`. The documented layout covers domains but not Workspace, so set your Workspace cost per seat per month in `WORKSPACE_COST_MINOR_PER_SEAT_MONTH_IN` / `_GBL` until confirmed live.
 
 ## How it flows
