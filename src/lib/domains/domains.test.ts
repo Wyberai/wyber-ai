@@ -514,3 +514,53 @@ describe('moving a domain to another provider', () => {
     }
   })
 })
+
+describe('Google Workspace prices from the live list', () => {
+  // The layout read from the live ResellerClub account on 2026-11-24 (rupees per seat per month).
+  const live = {
+    gappsin: { plans: { '1554': { renew: { '1': 2999, '12': 2549 }, add: { '1': 2999, '12': 2549 } }, '1660': { renew: { '1': 289, '12': 249 }, add: { '1': 289, '12': 135 } }, '1661': { renew: { '1': 1139, '12': 959 }, add: { '1': 1139, '12': 959 } }, '1662': { renew: { '1': 1999, '12': 1679 }, add: { '1': 1999, '12': 1679 } } } },
+    gappsgbl: { plans: { '1557': { renew: { '12': 2359 }, add: { '12': 2359 } }, '1657': { renew: { '12': 449 }, add: { '12': 449 } }, '1658': { renew: { '12': 1059 }, add: { '12': 1059 } } } },
+    gappsse: { plans: { '1560': { renew: { '12': 2359 }, add: { '12': 2359 } }, '1663': { renew: { '12': 449 }, add: { '12': 449 } } } },
+  }
+  it('picks the cheapest plan (Business Starter) per region and keeps the renewal price apart', async () => {
+    const { parseWorkspacePrices } = await import('./workspace-prices')
+    const p = parseWorkspacePrices(live)
+    expect(p.planId).toEqual({ in: 1660, gbl: 1657, se: 1663 })
+    expect(p.add).toEqual({ in: 13500, gbl: 44900, se: 44900 })
+    expect(p.renew.in).toBe(24900) // renewal is higher than the first year
+    expect(p.renew.in!).toBeGreaterThan(p.add.in!)
+  })
+  it('reads nothing from a list that has no Workspace entries, rather than guessing', async () => {
+    const { parseWorkspacePrices } = await import('./workspace-prices')
+    expect(parseWorkspacePrices({ domcno: {} })).toEqual({ add: {}, renew: {}, planId: {} })
+    expect(parseWorkspacePrices(null)).toEqual({ add: {}, renew: {}, planId: {} })
+  })
+  it('the live client takes the cost from the list, and a figure set by hand still wins', async () => {
+    const list = { domcno: { addnewdomain: { '1': '1189.00' }, renewdomain: { '1': '1259.00' } }, ...live }
+    const make = (env: Record<string, string>) => new RelayDomainsClient({ url: 'https://r.example', secret: 's', currency: 'INR', env, fetchImpl: (async () => new Response(JSON.stringify(list), { status: 200 })) as typeof fetch })
+    const t = await make({}).getCostTable()
+    expect(t.workspacePerSeatMonth.in).toBe(13500)
+    expect(t.workspaceRenewPerSeatMonth?.in).toBe(24900)
+    const o = await make({ WORKSPACE_COST_MINOR_PER_SEAT_MONTH_IN: '20000' }).getCostTable()
+    expect(o.workspacePerSeatMonth.in).toBe(20000)
+  })
+  it('prices a renewal from the renewal price, higher than the first year', async () => {
+    const { workspaceQuoteFor } = await import('./search')
+    const provider = new FakeDomainsProvider()
+    const first = await workspaceQuoteFor(provider, 'in', 2, 12)
+    const renewal = await workspaceQuoteFor(provider, 'in', 2, 12, undefined, process.env, 'renew')
+    expect(first!.registryCents).toBe(300 * 2 * 12)
+    expect(renewal!.registryCents).toBe(500 * 2 * 12)
+  })
+})
+
+describe('Workspace tester list', () => {
+  it('lets only the named accounts in before it is switched on for everyone', async () => {
+    const { workspaceEnabled } = await import('./config')
+    const env = { DOMAINS_WORKSPACE_TESTERS: ' Founder@Example.com , other@example.com ' }
+    expect(workspaceEnabled(env, 'founder@example.com')).toBe(true)
+    expect(workspaceEnabled(env, 'stranger@example.com')).toBe(false)
+    expect(workspaceEnabled(env, null)).toBe(false)
+    expect(workspaceEnabled({ ...env, DOMAINS_WORKSPACE: 'on' }, 'stranger@example.com')).toBe(true)
+  })
+})

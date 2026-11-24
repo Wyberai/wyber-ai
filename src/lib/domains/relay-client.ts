@@ -1,5 +1,6 @@
 import { randomBytes } from 'crypto'
 import { providerPath } from './dns'
+import { parseWorkspacePrices } from './workspace-prices'
 import { signRelayBody } from './relay-sign'
 import { ENV_NAMES, TLDS } from './config'
 import {
@@ -119,8 +120,9 @@ export class RelayDomainsClient implements DomainsProvider {
       for (const [y, p] of Object.entries(row.renewdomain ?? {})) ren[Number(y)] = major(p)
       domains[t.productKey] = { register: reg, renew: ren }
     }
-    // The cost-price documentation shows the layout for domains and hosting but not for Google Workspace, so the
-    // per-seat cost is read from the founder's own figures (set from the reseller panel) until it is confirmed live.
+    // Google Workspace comes from the same list (see workspace-prices.ts). A figure set by hand in the environment still
+    // wins, so a wrong list entry can be overridden without a release.
+    const ws = parseWorkspacePrices(json)
     const wsEnv = (k: string) => {
       const v = this.env[k]
       return v && Number(v) > 0 ? Math.round(Number(v)) : null
@@ -128,7 +130,8 @@ export class RelayDomainsClient implements DomainsProvider {
     return {
       currency: this.currency,
       domains,
-      workspacePerSeatMonth: { in: wsEnv(ENV_NAMES_WS.in), gbl: wsEnv(ENV_NAMES_WS.gbl), se: wsEnv(ENV_NAMES_WS.gbl) },
+      workspacePerSeatMonth: { in: wsEnv(ENV_NAMES_WS.in) ?? ws.add.in ?? null, gbl: wsEnv(ENV_NAMES_WS.gbl) ?? ws.add.gbl ?? null, se: ws.add.se ?? wsEnv(ENV_NAMES_WS.gbl) ?? null },
+      workspaceRenewPerSeatMonth: { in: ws.renew.in ?? null, gbl: ws.renew.gbl ?? null, se: ws.renew.se ?? null },
     }
   }
 

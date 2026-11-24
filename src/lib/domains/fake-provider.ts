@@ -60,6 +60,7 @@ export class FakeDomainsProvider implements DomainsProvider {
         // .io is deliberately absent: shows the "price table has no entry, so it is not offered" path.
       },
       workspacePerSeatMonth: { in: 300, gbl: 600, se: 600 },
+      workspaceRenewPerSeatMonth: { in: 500, gbl: 900, se: 900 },
     }
   }
 

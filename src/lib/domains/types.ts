@@ -22,6 +22,8 @@ export interface CostTable {
   domains: Record<string, { register: Record<number, number>; renew: Record<number, number> }>
   /** Workspace cost per seat per month in minor units, by region. null when the provider table does not state it. */
   workspacePerSeatMonth: Partial<Record<'in' | 'se' | 'gbl', number | null>>
+  /** Per seat per month when renewing. Higher than the first-year price above, so renewals are priced from this, not that. */
+  workspaceRenewPerSeatMonth?: Partial<Record<'in' | 'se' | 'gbl', number | null>>
 }
 
 export interface DnsRecord {

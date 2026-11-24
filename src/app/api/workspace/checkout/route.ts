@@ -11,7 +11,7 @@ import { context, notConfigured, requireUser, unauthorized } from '@/lib/domains
 export async function POST(req: NextRequest) {
   const user = await requireUser()
   if (!user) return unauthorized()
-  if (!workspaceEnabled()) return NextResponse.json({ error: 'Google Workspace is not available yet' }, { status: 503 })
+  if (!workspaceEnabled(process.env, user.email)) return NextResponse.json({ error: 'Google Workspace is not available yet' }, { status: 503 })
   const ctx = await context()
   if (!ctx) return notConfigured()
   const b = (await req.json().catch(() => ({}))) as Record<string, unknown>

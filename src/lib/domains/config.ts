@@ -51,14 +51,18 @@ export const ENV_NAMES = {
   currency: 'DOMAINS_PROVIDER_CURRENCY', // 'USD' (default) or 'INR': the currency of the reseller account's prices
   inrPerUsd: 'DOMAINS_INR_PER_USD', // required when the currency is INR
   workspaceMargin: 'WORKSPACE_MARGIN_CENTS_PER_SEAT_MONTH',
+  workspaceTesters: 'DOMAINS_WORKSPACE_TESTERS', // comma list of account emails that can use Workspace before it is switched on for everyone
   workspace: 'DOMAINS_WORKSPACE', // 'on' shows and sells Google Workspace. Off by default: it is switched on only after one real order has been proven.
   nameservers: 'DOMAINS_NAMESERVERS', // optional comma list; otherwise the customer's default nameservers from the provider
   vercelProjectId: 'VERCEL_PROJECT_ID', // already used by /api/custom-domain
 } as const
 
 /** Google Workspace is hidden from customers until this is switched on (or in the local fake sandbox). */
-export function workspaceEnabled(env: Record<string, string | undefined> = process.env): boolean {
-  return env[ENV_NAMES.workspace] === 'on' || env[ENV_NAMES.provider] === 'fake'
+export function workspaceEnabled(env: Record<string, string | undefined> = process.env, email?: string | null): boolean {
+  if (env[ENV_NAMES.workspace]?.trim() === 'on' || env[ENV_NAMES.provider] === 'fake') return true
+  // Before it is on for everyone: only the accounts named here (to prove one real order end to end).
+  const testers = (env[ENV_NAMES.workspaceTesters] ?? '').split(',').map(x => x.trim().toLowerCase()).filter(Boolean)
+  return Boolean(email && testers.includes(email.trim().toLowerCase()))
 }
 
 export function workspaceMarginCents(env: Record<string, string | undefined> = process.env): number {

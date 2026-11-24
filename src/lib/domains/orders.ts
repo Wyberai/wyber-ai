@@ -205,7 +205,7 @@ export async function renewalPreview(deps: RenewDeps, input: RenewInput): Promis
   if (!w.expires_at) throw new Error('The end date is not confirmed yet. Try again in a few minutes.')
   const months = Number(input.months ?? 12)
   if (!(WORKSPACE_MONTH_OPTIONS as readonly number[]).includes(months)) throw new Error('Workspace is renewed for 12 months')
-  const q = await workspaceQuoteFor(deps.provider, w.region as WorkspaceRegion, w.seats, months, deps.inrPerUsd, deps.env)
+  const q = await workspaceQuoteFor(deps.provider, w.region as WorkspaceRegion, w.seats, months, deps.inrPerUsd, deps.env, 'renew')
   if (!q) throw new Error('Workspace pricing is not available yet')
   return { kind: 'workspace', domain, term: months, seats: w.seats, registryCents: q.registryCents, marginCents: q.marginCents, totalCents: q.totalCents, expiresAt: w.expires_at, newExpiresAt: addMonths(new Date(w.expires_at), months).toISOString() }
 }

@@ -12,7 +12,7 @@ type Result = { domain: string; tld: string; status: 'available' | 'taken' | 'un
 type Contact = { name: string; company: string; email: string; address1: string; city: string; state: string; zip: string; country: string; phoneCc: string; phone: string }
 type Row = { domain: string; connection: 'dns_pending' | 'certificate_pending' | 'live' | 'needs_attention'; expires_at: string | null; daysLeft: number | null; project_id: string | null }
 type Site = { id: string; name: string | null }
-type WorkspaceRow = { domain: string; seats: number; expires_at: string | null; daysLeft: number | null; records: { records: { type: string; host: string; value: string; priority?: number }[]; written: boolean } | null }
+type WorkspaceRow = { domain: string; admin_email?: string | null; seats: number; expires_at: string | null; daysLeft: number | null; records: { records: { type: string; host: string; value: string; priority?: number }[]; written: boolean } | null }
 type WsQuote = { seats: number; months: number; perSeatMonthCostCents: number; perSeatMonthMarginCents: number; registryCents: number; marginCents: number; totalCents: number }
 
 const usd = (c: number) => `$${(c / 100).toFixed(2)}`
@@ -82,6 +82,9 @@ export default function DomainsManager({ projectId = null, initialContact = null
   const [wsQuote, setWsQuote] = useState<WsQuote | null>(null)
   const [wsPolicy, setWsPolicy] = useState<string[]>([])
   const [wsConfirm, setWsConfirm] = useState(false)
+  const [wsRenewal, setWsRenewal] = useState<number | null>(null)
+  const [wsOther, setWsOther] = useState(false)
+  const [wsPricing, setWsPricing] = useState(false)
   const [alternatives, setAlternatives] = useState<Result[]>([])
   const [siteId, setSiteId] = useState('')
   const [track, setTrack] = useState<{ id: string; domain: string; kind: string; status: string } | null>(null)
@@ -95,6 +98,18 @@ export default function DomainsManager({ projectId = null, initialContact = null
     if (r.ok) setMine(await r.json())
   }, [])
   useEffect(() => { loadMine() }, [loadMine])
+
+  // Workspace: start from a domain bought here, and price it as soon as there is a domain and a seat count.
+  useEffect(() => {
+    if (wsOther || wsDomain || !mine?.domains?.length) return
+    setWsDomain(mine.domains[0].domain)
+  }, [mine?.domains, wsOther, wsDomain])
+  useEffect(() => {
+    if (tab !== 'workspace' || !wsDomain.includes('.') || !(seats >= 1)) return
+    const t = setTimeout(() => { wsPreview() }, 400)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, wsDomain, seats, contact.country])
 
   // Saved owner details (the last order's, or the account's name and email): a returning buyer sees one line and one button.
   useEffect(() => {
@@ -283,7 +298,7 @@ export default function DomainsManager({ projectId = null, initialContact = null
     // Pressing Buy on a screen that shows the item, term, price, total and terms is the confirmation. The server still re-prices.
     const body = kind === 'domain'
       ? { domain: pick!.domain, years: pick!.years, projectId: projectId ?? (siteId || null), contact, confirmedTotalCents: pick!.totalCents, acknowledged: true }
-      : { domain: wsDomain, seats, months: 12, contact, confirmedTotalCents: wsQuote!.totalCents, acknowledged: ack }
+      : { domain: wsDomain, seats, months: 12, contact, confirmedTotalCents: wsQuote!.totalCents, acknowledged: true }
     const r = await fetch(kind === 'domain' ? '/api/domains/checkout' : '/api/workspace/checkout', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
     const j = await r.json().catch(() => ({}))
     if (r.status === 409) { tab?.close(); setBusy(false); setMsg(`The price changed to ${usd(j.totalCents)}. Search again to see it.`); return }
@@ -297,13 +312,13 @@ export default function DomainsManager({ projectId = null, initialContact = null
   }
 
   async function wsPreview() {
-    setBusy(true); setMsg('')
+    setWsPricing(true)
     const r = await fetch(`/api/workspace/quote?seats=${seats}&country=${contact.country}&domain=${encodeURIComponent(wsDomain || 'yourdomain.com')}`)
     const j = await r.json().catch(() => ({}))
-    setBusy(false)
-    if (!r.ok) return setMsg(j.error || 'Could not price this')
-    if (!j.quote) return setMsg('Workspace pricing is not available yet')
-    setWsQuote(j.quote); setWsPolicy(j.policy); setWsConfirm(false); setAck(false)
+    setWsPricing(false)
+    if (!r.ok) { setWsQuote(null); return setMsg(j.error || 'Could not price this') }
+    if (!j.quote) { setWsQuote(null); return setMsg('Workspace pricing is not available yet') }
+    setMsg(''); setWsQuote(j.quote); setWsPolicy(j.policy); setWsRenewal(j.renewalTotalCents ?? null)
   }
 
   async function retry(domain: string) {
@@ -459,33 +474,48 @@ export default function DomainsManager({ projectId = null, initialContact = null
 
       {tab === 'workspace' && (
         <>
-          <p className={s.lead}>Email on your own domain with <strong>Google Workspace Business Starter</strong>. Our price is the Google Workspace price plus a flat 50 cents per seat per month, sold for 12 months.</p>
+          <p className={s.lead}>Email on your own domain with <strong>Google Workspace Business Starter</strong>: name@yourdomain, Gmail, Calendar and Drive. Our price is the Google Workspace price plus a flat 50 cents per seat per month, for 12 months.</p>
           <div className={s.wsRow}>
-            <div className={s.field}><label htmlFor="ws-domain">Your domain</label><input id="ws-domain" className={s.big} placeholder="yourdomain.com" value={wsDomain} onChange={e => setWsDomain(e.target.value)} /></div>
+            <div className={s.field}>
+              <label htmlFor="ws-domain">Your domain</label>
+              {(mine?.domains?.length ?? 0) > 0 && !wsOther ? (
+                <select id="ws-domain" className={s.big} value={wsDomain} onChange={e => { if (e.target.value === '__other') { setWsOther(true); setWsDomain(''); setWsQuote(null) } else setWsDomain(e.target.value) }}>
+                  {mine!.domains.map(d => <option key={d.domain} value={d.domain}>{d.domain}</option>)}
+                  <option value="__other">A domain I own somewhere else</option>
+                </select>
+              ) : (
+                <input id="ws-domain" className={s.big} placeholder="yourdomain.com" value={wsDomain} onChange={e => setWsDomain(e.target.value.trim().toLowerCase())} />
+              )}
+            </div>
             <div className={s.field}><label htmlFor="ws-seats">Seats</label><input id="ws-seats" className={s.big} type="number" min={1} max={50} value={seats} onChange={e => setSeats(Number(e.target.value))} /></div>
-            <button className={`${s.btn} ${s.btnSearch}`} disabled={busy || !wsDomain.includes('.')} onClick={wsPreview}>Price it</button>
           </div>
+          {wsPricing && !wsQuote && <p className={s.cardHint}>Getting the price</p>}
           {wsQuote && (
-            <div className={s.confirm}>
-              <div className={s.card}>
-                <h3 className={s.cardTitle}>Confirm your purchase</h3>
-                <table className={s.summary}><tbody>
-                  <tr><td className={s.label}>Item</td><td>Google Workspace Business Starter for <strong>{wsDomain}</strong></td></tr>
-                  <tr><td className={s.label}>Seats and term</td><td>{wsQuote.seats} seats, {wsQuote.months} months</td></tr>
-                  <tr><td className={s.label}>Google Workspace price</td><td>{usd(wsQuote.registryCents)}</td></tr>
-                  <tr><td className={s.label}>Our fee ({usd(wsQuote.perSeatMonthMarginCents)} per seat per month)</td><td>{usd(wsQuote.marginCents)}</td></tr>
-                  <tr className={s.total}><td className={s.label}>Total</td><td>{usd(wsQuote.totalCents)}</td></tr>
-                </tbody></table>
-                {!wsConfirm ? <div className={s.actions}><button className={s.btn} onClick={() => setWsConfirm(true)}>Continue</button></div> : (
-                  <>
-                    <ul className={s.policy}>{wsPolicy.map(l => <li key={l}>{l}</li>)}</ul>
-                    <label className={s.ack}><input type="checkbox" checked={ack} onChange={e => setAck(e.target.checked)} /><span>I have read this and want to buy {wsQuote.seats} seats for {usd(wsQuote.totalCents)}.</span></label>
-                    <div className={s.actions}><button className={s.btn} disabled={!ack || busy} onClick={() => pay('workspace')}>{sandbox ? 'Buy in sandbox' : `Pay ${usd(wsQuote.totalCents)}`}</button></div>
-                  </>
-                )}
-                <p className={s.after}>Only Business Starter is offered for now. If the domain was bought here, the mail records are added for you. Otherwise copy them from My domains.</p>
+            <div className={s.card}>
+              <h3 className={s.cardTitle}>Email for {wsDomain}</h3>
+              <table className={s.summary}><tbody>
+                <tr><td className={s.label}>Item</td><td>Google Workspace Business Starter</td></tr>
+                <tr><td className={s.label}>Seats and term</td><td>{wsQuote.seats} seat{wsQuote.seats === 1 ? '' : 's'}, {wsQuote.months} months</td></tr>
+                <tr><td className={s.label}>Google Workspace price</td><td>{usd(wsQuote.registryCents)}</td></tr>
+                <tr><td className={s.label}>Our fee ({usd(wsQuote.perSeatMonthMarginCents)} per seat per month)</td><td>{usd(wsQuote.marginCents)}</td></tr>
+                <tr className={s.total}><td className={s.label}>Total</td><td>{usd(wsQuote.totalCents)}</td></tr>
+                {wsRenewal != null && <tr><td className={s.label}>Renews at, for the same seats</td><td>{usd(wsRenewal)} for 12 months</td></tr>}
+              </tbody></table>
+              {contactComplete && !editOwner ? (
+                <div className={s.ownerLine}>
+                  <div>
+                    <div className={s.meta}>Account owner</div>
+                    <strong>{contact.name}</strong> <span className={s.meta}>{contact.email}</span>
+                  </div>
+                  <button className={s.ghost} onClick={() => setEditOwner(true)}>Change</button>
+                </div>
+              ) : registrantFields}
+              <ul className={s.policy}>{wsPolicy.map(l => <li key={l}>{l}</li>)}</ul>
+              <div className={s.actions}>
+                <button className={s.btn} disabled={busy || !contactComplete || wsPricing} onClick={() => pay('workspace')}>{busy ? 'Opening payment' : sandbox ? 'Buy in sandbox' : `Buy for ${usd(wsQuote.totalCents)}`}</button>
               </div>
-              {wsConfirm && registrant}
+              {!contactComplete && <p className={s.after}>Add the owner&apos;s details to continue.</p>}
+              <p className={s.after}>By pressing Buy you accept the terms above. We set up <strong>admin@{wsDomain}</strong> and ask Google to send its sign-in setup to {contact.email || 'your email'}. {mine?.domains?.some(d => d.domain === wsDomain) ? 'The mail records are added to your domain for you.' : 'The mail records to add at your domain\'s DNS provider appear under My domains after payment.'} Only Business Starter is offered for now.</p>
             </div>
           )}
         </>
@@ -539,6 +569,7 @@ export default function DomainsManager({ projectId = null, initialContact = null
                 <div><div className={s.itemName}>Google Workspace on {w.domain}</div><div className={s.meta}>{w.seats} seats{w.expires_at ? `. Ends ${new Date(w.expires_at).toLocaleDateString()} (${w.daysLeft} days)` : ''}</div></div>
                 <span className={`${s.pill} ${w.records?.written ? s.pillLive : s.pillWait}`}>{w.records?.written ? 'Mail connected' : 'Records needed'}</span>
               </div>
+              <div className={s.meta}>Admin account: <strong>{w.admin_email || `admin@${w.domain}`}</strong> &middot; <a className={s.link} href={`https://mail.google.com/a/${w.domain}`} target="_blank" rel="noopener noreferrer">Open Gmail</a> &middot; <a className={s.link} href="https://admin.google.com" target="_blank" rel="noopener noreferrer">Google Admin</a>. Google sends the admin sign-in setup to the email you gave us.</div>
               {!w.records?.written && <p className={s.meta} style={{ margin: 0 }}>Add these records where your domain is managed:</p>}
               <pre className={s.records}>{(w.records?.records ?? []).map(r => `${r.type}  ${r.host}  ${r.priority != null ? r.priority + '  ' : ''}${r.value}`).join('\n')}</pre>
               <div className={s.actions}>

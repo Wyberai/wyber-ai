@@ -8,8 +8,9 @@ import { notConfigured, requireUser, unauthorized } from '@/lib/domains/route-he
 
 // GET /api/workspace/quote?seats=3&country=IN&domain=example.com: price and the mail records that will be connected.
 export async function GET(req: NextRequest) {
-  if (!(await requireUser())) return unauthorized()
-  if (!workspaceEnabled()) return NextResponse.json({ error: 'Google Workspace is not available yet' }, { status: 503 })
+  const user = await requireUser()
+  if (!user) return unauthorized()
+  if (!workspaceEnabled(process.env, user.email)) return NextResponse.json({ error: 'Google Workspace is not available yet' }, { status: 503 })
   const provider = getProvider()
   if (!provider) return notConfigured()
   const p = req.nextUrl.searchParams
@@ -18,10 +19,11 @@ export async function GET(req: NextRequest) {
   const region = workspaceRegionFor(p.get('country'))
   try {
     const quote = await workspaceQuoteFor(provider, region, seats, 12, inrPerUsd())
+    const renewal = await workspaceQuoteFor(provider, region, seats, 12, inrPerUsd(), process.env, 'renew').catch(() => null)
     const domain = (p.get('domain') ?? 'yourdomain.com').toLowerCase()
     const records = workspaceRecords()
     return NextResponse.json({
-      sandbox: isSandbox(provider), plans: WORKSPACE_PLANS, quote, region,
+      sandbox: isSandbox(provider), plans: WORKSPACE_PLANS, quote, renewalTotalCents: renewal?.totalCents ?? null, region,
       policy: workspacePolicyLines(workspaceMarginCents()), records, recordsText: recordsAsText(domain, records),
     })
   } catch (e) {

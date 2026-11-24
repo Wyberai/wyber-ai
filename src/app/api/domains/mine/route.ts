@@ -29,5 +29,5 @@ export async function GET() {
     return { ...d, connection: status === 'needs_attention' ? (d.dns_written ? 'needs_attention' : 'dns_pending') : status, daysLeft: exp ? daysBetween(now, exp) : null }
   }))
   const ws = (workspaces ?? []).map((w: Record<string, unknown>) => ({ ...w, daysLeft: w.expires_at ? daysBetween(now, new Date(String(w.expires_at))) : null }))
-  return NextResponse.json({ domains: rows, workspaces: ws, orders: orders ?? [], projects: projects ?? [], workspaceEnabled: workspaceEnabled(), defaultContact })
+  return NextResponse.json({ domains: rows, workspaces: ws, orders: orders ?? [], projects: projects ?? [], workspaceEnabled: workspaceEnabled(process.env, user.email), defaultContact })
 }

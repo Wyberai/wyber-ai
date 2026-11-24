@@ -64,9 +64,10 @@ export async function suggestAlternatives(p: DomainsProvider, label: string, opt
   return out.slice(0, 4)
 }
 
-export async function workspaceQuoteFor(p: DomainsProvider, region: WorkspaceRegion, seats: number, months: number, inr?: number, env: Record<string, string | undefined> = process.env) {
+export async function workspaceQuoteFor(p: DomainsProvider, region: WorkspaceRegion, seats: number, months: number, inr?: number, env: Record<string, string | undefined> = process.env, kind: 'add' | 'renew' = 'add') {
   const table = await costTable(p)
-  const cost = table.workspacePerSeatMonth[region]
+  // A renewal is priced from the renewal price, which is higher than the first-year price.
+  const cost = kind === 'renew' ? (table.workspaceRenewPerSeatMonth?.[region] ?? table.workspacePerSeatMonth[region]) : table.workspacePerSeatMonth[region]
   if (!cost) return null
   return quoteWorkspace({ seats, months, costPerSeatMonthMinor: cost, currency: table.currency, inrPerUsd: inr, marginPerSeatMonthCents: workspaceMarginCents(env) })
 }

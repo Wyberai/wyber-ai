@@ -133,3 +133,6 @@
 /* the saved owner, as one line */
 .ownerLine { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border-radius: var(--r); border: 1px solid var(--ide-border); background: var(--bg-elevated); }
 .ownerLine .meta { margin-bottom: 2px; }
+
+.link { color: var(--accent); text-decoration: none; font-weight: 600; }
+.link:hover { text-decoration: underline; }
