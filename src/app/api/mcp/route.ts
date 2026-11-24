@@ -549,33 +549,25 @@ const handler = createMcpHandler(
 
     server.tool(
       'search_domains',
-      'Search domain availability and price. Upsells premium domains.',
+      'Search a name across .com, .in, .co.in, .app and .io with our real prices (registry price plus a flat $1).',
       {
-        domain_name: z.string().describe('Domain to search (e.g., "myapp.com")'),
+        domain_name: z.string().describe('Name to search (e.g., "myapp" or "myapp.com")'),
       },
       { title: 'Search domains', readOnlyHint: true, openWorldHint: true },
       async (args, extra) => {
         const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
         if (!userId) return errorResult('Unauthorized')
-
         try {
-          const res = await fetch(`${APP_URL}/api/domain/search?name=${encodeURIComponent(args.domain_name)}`, {
-            headers: {
-              'X-Scheduler-User-Id': userId,
-              'X-Scheduler-Secret': internalSecret(),
-            },
-          })
-          const data = await res.json()
-          if (!res.ok) return errorResult(data.error || 'Domain search failed')
-
-          const priceCents = data.priceCents as number | null
+          const { getProvider, inrPerUsd } = await import('@/lib/domains')
+          const { searchDomains } = await import('@/lib/domains/search')
+          const provider = getProvider()
+          if (!provider) return errorResult('Domain search is not available yet.')
+          const { label, results } = await searchDomains(provider, args.domain_name, { inrPerUsd: inrPerUsd() })
+          if (!label) return errorResult('Type a name to search, for example "myapp".')
           return jsonResult({
-            domain: args.domain_name,
-            available: data.available,
-            price_usd: priceCents ? priceCents / 100 : null,
-            message: data.available
-              ? `✅ ${args.domain_name} is available!\n\nPrice: $${priceCents ? (priceCents / 100).toFixed(2) : '9-15'}/year\n\nReady to buy? I'll collect your contact info.`
-              : `❌ ${args.domain_name} is taken.\n\nTry another or use your free subdomain.`,
+            name: label,
+            results: results.map(r => ({ domain: r.domain, status: r.status, price_usd_per_year: r.quote ? r.quote.totalCents / 100 : null })),
+            message: `Prices are the registry price plus a flat $1 a year. To buy, open ${APP_URL}/dashboard/domains?q=${encodeURIComponent(label)}`,
           })
         } catch (err) {
           return errorResult(`Could not search domains: ${String(err).slice(0, 100)}`)
@@ -585,74 +577,20 @@ const handler = createMcpHandler(
 
     server.tool(
       'buy_domain',
-      'Purchase a domain. Requires contact information. Costs $9–15/year.',
+      'Open the domain purchase screen for a name. The person confirms the price and pays in WyberAi; nothing is bought from this tool.',
       {
         domain_name: z.string().describe('Domain name to buy'),
-        project_id: z.string().describe('Project ID to attach domain to'),
-        first_name: z.string().describe('First name'),
-        last_name: z.string().describe('Last name'),
-        email: z.string().describe('Email'),
-        phone: z.string().describe('Phone number'),
-        address: z.string().describe('Street address'),
-        city: z.string().describe('City'),
-        state: z.string().describe('State/province'),
-        zip: z.string().describe('Postal code'),
-        country: z.string().describe('Country'),
       },
-      { title: 'Buy domain', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+      { title: 'Buy domain', readOnlyHint: true, openWorldHint: true },
       async (args, extra) => {
         const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
         if (!userId) return errorResult('Unauthorized')
-
-        const schedulerHeaders = {
-          'Content-Type': 'application/json',
-          'X-Scheduler-User-Id': userId,
-          'X-Scheduler-Secret': internalSecret(),
-        }
-
-        try {
-          // The purchase endpoint needs the real Vercel-quoted price on the
-          // request — look it up fresh rather than trust a stale value.
-          const priceRes = await fetch(`${APP_URL}/api/domain/search?name=${encodeURIComponent(args.domain_name)}`, { headers: schedulerHeaders })
-          const priceData = await priceRes.json()
-          if (!priceRes.ok) return errorResult(priceData.error || 'Could not price this domain')
-          if (!priceData.available || !priceData.priceCents) return errorResult(`${args.domain_name} is no longer available.`)
-
-          const res = await fetch(`${APP_URL}/api/domain/purchase`, {
-            method: 'POST',
-            headers: schedulerHeaders,
-            body: JSON.stringify({
-              projectId: args.project_id,
-              domain: args.domain_name,
-              priceCents: priceData.priceCents,
-              contactInfo: {
-                firstName: args.first_name,
-                lastName: args.last_name,
-                email: args.email,
-                phone: args.phone,
-                address1: args.address,
-                city: args.city,
-                state: args.state,
-                zip: args.zip,
-                country: args.country,
-              },
-            }),
-          })
-          const data = await res.json()
-
-          if (!res.ok) return errorResult(data.error || 'Purchase failed')
-          if (!data.url) return errorResult('Checkout could not be created')
-
-          return jsonResult({
-            success: true,
-            domain: args.domain_name,
-            checkout_url: data.url,
-            price_usd: priceData.priceCents / 100,
-            message: `Almost there — complete payment to register ${args.domain_name} ($${(priceData.priceCents / 100).toFixed(2)}/year):\n\n${data.url}\n\nThe domain registers automatically once payment confirms.`,
-          })
-        } catch (err) {
-          return errorResult(`Could not purchase domain: ${String(err).slice(0, 100)}`)
-        }
+        const url = `${APP_URL}/dashboard/domains?q=${encodeURIComponent(args.domain_name)}`
+        return jsonResult({
+          success: true,
+          url,
+          message: `To buy ${args.domain_name}, open this link, check the price and press Buy. The domain is connected to your site automatically after payment:\n\n${url}`,
+        })
       },
     )
 

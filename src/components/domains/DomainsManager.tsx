@@ -39,18 +39,33 @@ const CONTACT_FIELDS: { k: keyof Contact; label: string; span2?: boolean; type?:
   { k: 'country', label: 'Country (2 letters, such as IN or US)', auto: 'country' },
 ]
 
+const CC: Record<string, string> = { IN: '91', US: '1', GB: '44', AE: '971', CA: '1', AU: '61', SG: '65' }
+const COUNTRY_BY_NAME: Record<string, string> = { india: 'IN', 'united states': 'US', usa: 'US', 'united kingdom': 'GB', uk: 'GB', uae: 'AE', 'united arab emirates': 'AE', canada: 'CA', australia: 'AU', singapore: 'SG' }
+/** The Clients page leaves the client's details so the client, not the freelancer, is the legal owner of the domain. */
+function fromHandoff(h: Record<string, string>): Contact {
+  const raw = (h.country || 'IN').trim()
+  const country = raw.length === 2 ? raw.toUpperCase() : (COUNTRY_BY_NAME[raw.toLowerCase()] ?? raw.slice(0, 2).toUpperCase())
+  const digits = (h.phone || '').replace(/\D/g, '')
+  const cc = CC[country] ?? ''
+  const national = cc && digits.startsWith(cc) && digits.length > cc.length + 6 ? digits.slice(cc.length) : digits
+  return { ...EMPTY, name: `${h.firstName ?? ''} ${h.lastName ?? ''}`.trim(), email: h.email ?? '', address1: h.address1 ?? '', city: h.city ?? '', state: h.state ?? '', zip: h.zip ?? '', country, phoneCc: cc || '91', phone: national }
+}
+
 function DomainName({ domain }: { domain: string }) {
   const i = domain.indexOf('.')
   return <span className={s.name}>{domain.slice(0, i)}<span>{domain.slice(i)}</span></span>
 }
 
-export default function DomainsManager({ projectId = null }: { projectId?: string | null }) {
+export default function DomainsManager({ projectId = null, initialContact = null }: { projectId?: string | null; initialContact?: Record<string, string> | null }) {
   const [tab, setTab] = useState<'domains' | 'workspace' | 'mine'>('domains')
   const [q, setQ] = useState('')
   const [years, setYears] = useState(1)
   const [results, setResults] = useState<Result[] | null>(null)
   const [pick, setPick] = useState<Quote | null>(null)
   const [contact, setContact] = useState<Contact>(EMPTY)
+  const [editOwner, setEditOwner] = useState(false)
+  const [siteTouched, setSiteTouched] = useState(false)
+  const [info, setInfo] = useState('')
   const [ack, setAck] = useState(false)
   const [policy, setPolicy] = useState<string[]>([])
   const [policyByTld, setPolicyByTld] = useState<Record<string, string[]>>({})
@@ -61,7 +76,7 @@ export default function DomainsManager({ projectId = null }: { projectId?: strin
   // to the Pay button: bring it into view whenever it appears.
   const msgRef = useRef<HTMLDivElement | null>(null)
   useEffect(() => { if (msg) msgRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }) }, [msg])
-  const [mine, setMine] = useState<{ domains: Row[]; workspaces: WorkspaceRow[]; orders: { id: string; domain: string; status: string; error: string | null }[]; projects?: Site[]; workspaceEnabled?: boolean } | null>(null)
+  const [mine, setMine] = useState<{ domains: Row[]; workspaces: WorkspaceRow[]; orders: { id: string; domain: string; status: string; error: string | null }[]; projects?: Site[]; workspaceEnabled?: boolean; defaultContact?: Contact | null } | null>(null)
   const [wsDomain, setWsDomain] = useState('')
   const [seats, setSeats] = useState(3)
   const [wsQuote, setWsQuote] = useState<WsQuote | null>(null)
@@ -80,6 +95,25 @@ export default function DomainsManager({ projectId = null }: { projectId?: strin
     if (r.ok) setMine(await r.json())
   }, [])
   useEffect(() => { loadMine() }, [loadMine])
+
+  // Saved owner details (the last order's, or the account's name and email): a returning buyer sees one line and one button.
+  useEffect(() => {
+    const d = mine?.defaultContact
+    if (d) setContact(c => (c.name || c.address1 ? c : { ...EMPTY, ...d }))
+  }, [mine?.defaultContact])
+  // The agency hand-off: the client's details, so the client is the legal owner.
+  useEffect(() => { if (initialContact) setContact(fromHandoff(initialContact)) }, [initialContact])
+  // The most recently edited site is the default, so the domain connects without a choice (outside a site's own editor).
+  useEffect(() => {
+    if (projectId || siteTouched || siteId || !mine?.projects?.length) return
+    setSiteId(mine.projects[0].id)
+  }, [projectId, siteTouched, siteId, mine?.projects])
+  // /dashboard/domains?q=name opens with that name already searched (the Claude connector and "get a domain" links use it).
+  useEffect(() => {
+    const term = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('q') : null
+    if (term && term.trim().length >= 2) { setQ(term); search(term) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // The payment page sends people back with ?order=<id>. Show where that order is, and keep checking until it is done,
   // so nobody is left on a blank search screen wondering whether the payment worked.
@@ -108,9 +142,9 @@ export default function DomainsManager({ projectId = null }: { projectId?: strin
     setTab('mine'); loadMine()
   }
 
-  async function search() {
+  async function search(term = q) {
     setBusy(true); setMsg(''); setPick(null); setAck(false)
-    const r = await fetch(`/api/domains/search?q=${encodeURIComponent(q)}&years=${years}`)
+    const r = await fetch(`/api/domains/search?q=${encodeURIComponent(term)}&years=${years}`)
     const j = await r.json().catch(() => ({}))
     setBusy(false)
     if (!r.ok) return setMsg(j.error || 'Search failed')
@@ -174,17 +208,19 @@ export default function DomainsManager({ projectId = null }: { projectId?: strin
   }
   async function payRenew() {
     if (!renew || !rq) return
-    setBusy(true); setMsg('')
-    const body = { kind: renew.kind, domain: renew.domain, years: renew.term, months: renew.term, confirmedTotalCents: rq.preview.totalCents, acknowledged: rAck }
+    setBusy(true); setMsg(''); setInfo('')
+    const tab = openPaymentTab()
+    const body = { kind: renew.kind, domain: renew.domain, years: renew.term, months: renew.term, confirmedTotalCents: rq.preview.totalCents, acknowledged: true }
     const r = await fetch('/api/domains/renew', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
     const j = await r.json().catch(() => ({}))
-    if (r.status === 409) { setBusy(false); setMsg(`The price changed to ${usd(j.totalCents)}. Open Renew again to see it.`); setRenew(null); return }
-    if (!r.ok) { setBusy(false); return setMsg(j.error || 'Could not start the renewal') }
+    if (r.status === 409) { tab?.close(); setBusy(false); setMsg(`The price changed to ${usd(j.totalCents)}. Open Renew again to see it.`); setRenew(null); return }
+    if (!r.ok) { tab?.close(); setBusy(false); return setMsg(j.error || 'Could not start the renewal') }
     if (j.sandbox) {
+      tab?.close()
       await fetch('/api/domains/sandbox-pay', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ orderId: j.orderId }) })
-      setBusy(false); setRenew(null); setMsg('Sandbox renewal complete. No money was taken.'); loadMine(); return
+      setBusy(false); setRenew(null); setInfo('Sandbox renewal complete. No money was taken.'); loadMine(); return
     }
-    window.location.href = j.url
+    goToPayment(j.url, tab)
   }
   const dateOf = (iso: string) => new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
   const renewPanel = (kind: 'domain' | 'workspace', domain: string) => renew?.kind === kind && renew.domain === domain && (
@@ -209,9 +245,9 @@ export default function DomainsManager({ projectId = null }: { projectId?: strin
             <tr className={s.total}><td className={s.label}>Total</td><td>{usd(rq.preview.totalCents)}</td></tr>
           </tbody></table>
           <ul className={s.policy}>{rq.policy.map(l => <li key={l}>{l}</li>)}</ul>
-          <label className={s.ack}><input type="checkbox" checked={rAck} onChange={e => setRAck(e.target.checked)} /><span>I have read this and want to renew {domain} for {usd(rq.preview.totalCents)}.</span></label>
+          <p className={s.after}>By pressing Renew you accept the terms above.</p>
           <div className={s.actions}>
-            <button className={s.btn} disabled={!rAck || busy} onClick={payRenew}>{sandbox ? 'Renew in sandbox' : `Pay ${usd(rq.preview.totalCents)}`}</button>
+            <button className={s.btn} disabled={busy} onClick={payRenew}>{busy ? 'Opening payment' : sandbox ? 'Renew in sandbox' : `Renew for ${usd(rq.preview.totalCents)}`}</button>
             <button className={s.ghost} onClick={() => setRenew(null)}>Cancel</button>
           </div>
         </>
@@ -231,20 +267,33 @@ export default function DomainsManager({ projectId = null }: { projectId?: strin
     setPolicy(policyByTld[res.tld] ?? [])
   }
 
+  const contactComplete = [contact.name, contact.email, contact.address1, contact.city, contact.state, contact.zip, contact.phoneCc, contact.phone].every(v => v.trim().length > 0) && contact.country.trim().length === 2
+
+  // Inside a site's editor the payment page opens in a NEW tab, so a build in progress is never lost. The blank tab has to be
+  // opened inside the click itself, or the browser's popup blocker swallows it.
+  function openPaymentTab(): Window | null { return projectId ? window.open('about:blank', '_blank') : null }
+  function goToPayment(url: string, tab: Window | null) {
+    if (tab) { tab.location.href = url; setBusy(false); setInfo('The payment page opened in a new tab. When you have paid, it shows up under My domains.'); return }
+    window.location.href = url
+  }
+
   async function pay(kind: 'domain' | 'workspace') {
-    setBusy(true); setMsg('')
+    setBusy(true); setMsg(''); setInfo('')
+    const tab = openPaymentTab()
+    // Pressing Buy on a screen that shows the item, term, price, total and terms is the confirmation. The server still re-prices.
     const body = kind === 'domain'
-      ? { domain: pick!.domain, years: pick!.years, projectId: projectId ?? (siteId || null), contact, confirmedTotalCents: pick!.totalCents, acknowledged: ack }
+      ? { domain: pick!.domain, years: pick!.years, projectId: projectId ?? (siteId || null), contact, confirmedTotalCents: pick!.totalCents, acknowledged: true }
       : { domain: wsDomain, seats, months: 12, contact, confirmedTotalCents: wsQuote!.totalCents, acknowledged: ack }
     const r = await fetch(kind === 'domain' ? '/api/domains/checkout' : '/api/workspace/checkout', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
     const j = await r.json().catch(() => ({}))
-    if (r.status === 409) { setBusy(false); setMsg(`The price changed to ${usd(j.totalCents)}. Search again to see it.`); return }
-    if (!r.ok) { setBusy(false); return setMsg(j.error || 'Could not start checkout') }
+    if (r.status === 409) { tab?.close(); setBusy(false); setMsg(`The price changed to ${usd(j.totalCents)}. Search again to see it.`); return }
+    if (!r.ok) { tab?.close(); setBusy(false); return setMsg(j.error || 'Could not start checkout') }
     if (j.sandbox) {
+      tab?.close()
       await fetch('/api/domains/sandbox-pay', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ orderId: j.orderId }) })
-      setBusy(false); setMsg('Sandbox purchase complete. No money was taken.'); setTab('mine'); loadMine(); return
+      setBusy(false); setInfo('Sandbox purchase complete. No money was taken.'); setTab('mine'); loadMine(); return
     }
-    window.location.href = j.url
+    goToPayment(j.url, tab)
   }
 
   async function wsPreview() {
@@ -268,8 +317,8 @@ export default function DomainsManager({ projectId = null }: { projectId?: strin
   }
 
   const set = (k: keyof Contact) => (e: React.ChangeEvent<HTMLInputElement>) => setContact(c => ({ ...c, [k]: e.target.value }))
-  const registrant = (
-    <div className={s.card}>
+  const registrantFields = (
+    <>
       <h3 className={s.cardTitle}>Who owns the domain</h3>
       <p className={s.cardHint}>The registrant is the legal owner of the domain. Use the real owner&apos;s details.</p>
       <div className={s.fields}>
@@ -280,8 +329,9 @@ export default function DomainsManager({ projectId = null }: { projectId?: strin
           </div>
         ))}
       </div>
-    </div>
+    </>
   )
+  const registrant = <div className={s.card}>{registrantFields}</div>
 
   const available = results ? [...results].sort((a, b) => Number(b.status === 'available') - Number(a.status === 'available')) : null
 
@@ -314,6 +364,7 @@ export default function DomainsManager({ projectId = null }: { projectId?: strin
         </div>
       )}
       {sandbox && <div className={`${s.notice} ${s.noticeWarn}`}><span className={s.dot} />Sandbox mode: prices are examples and nothing is charged or registered.</div>}
+      {info && <div role="status" className={s.notice}><span className={s.dot} />{info}</div>}
       {msg && <div ref={msgRef} role="alert" className={`${s.notice} ${s.noticeBad}`}><span className={s.dot} />{msg}</div>}
 
       {tab === 'domains' && (
@@ -324,7 +375,7 @@ export default function DomainsManager({ projectId = null }: { projectId?: strin
               <input className={s.big} placeholder="ashabakery" aria-label="Domain name" value={q} onChange={e => setQ(e.target.value)} onKeyDown={e => e.key === 'Enter' && q.trim().length >= 2 && search()} />
             </div>
             <select className={s.select} aria-label="Years" value={years} onChange={e => setYears(Number(e.target.value))}>{[1, 2, 3, 5].map(y => <option key={y} value={y}>{y} year{y > 1 ? 's' : ''}</option>)}</select>
-            <button className={`${s.btn} ${s.btnSearch}`} disabled={busy || q.trim().length < 2} onClick={search}>{busy && !pick ? 'Searching' : 'Search'}</button>
+            <button className={`${s.btn} ${s.btnSearch}`} disabled={busy || q.trim().length < 2} onClick={() => search()}>{busy && !pick ? 'Searching' : 'Search'}</button>
           </div>
 
           {available && !pick && (
@@ -367,34 +418,40 @@ export default function DomainsManager({ projectId = null }: { projectId?: strin
           )}
 
           {pick && (
-            <div className={s.confirm}>
-              <div className={s.card}>
-                <h3 className={s.cardTitle}>Confirm your purchase</h3>
-                <table className={s.summary}><tbody>
-                  <tr><td className={s.label}>Domain</td><td><strong>{pick.domain}</strong></td></tr>
-                  <tr><td className={s.label}>Term</td><td>{pick.years} year{pick.years > 1 ? 's' : ''}</td></tr>
-                  <tr><td className={s.label}>Registry price</td><td>{usd(pick.registryCents)}</td></tr>
-                  <tr><td className={s.label}>Our fee</td><td>{usd(pick.marginCents)}</td></tr>
-                  <tr className={s.total}><td className={s.label}>Total</td><td>{usd(pick.totalCents)}</td></tr>
-                </tbody></table>
-                {!projectId && (mine?.projects?.length ?? 0) > 0 && (
-                  <div className={s.field}>
-                    <label htmlFor="dm-site">Use it on</label>
-                    <select id="dm-site" className={s.input} value={siteId} onChange={e => setSiteId(e.target.value)}>
-                      <option value="">Decide later</option>
-                      {mine!.projects!.map(p => <option key={p.id} value={p.id}>{p.name || 'Untitled site'}</option>)}
-                    </select>
-                  </div>
-                )}
-                <ul className={s.policy}>{policy.map(l => <li key={l}>{l}</li>)}</ul>
-                <label className={s.ack}><input type="checkbox" checked={ack} onChange={e => setAck(e.target.checked)} /><span>I have read this and want to buy {pick.domain} for {usd(pick.totalCents)}.</span></label>
-                <div className={s.actions}>
-                  <button className={s.btn} disabled={!ack || busy} onClick={() => pay('domain')}>{sandbox ? 'Buy in sandbox' : `Pay ${usd(pick.totalCents)}`}</button>
-                  <button className={s.ghost} onClick={() => setPick(null)}>Back to results</button>
+            <div className={s.card}>
+              <h3 className={s.cardTitle}>Buy {pick.domain}</h3>
+              <table className={s.summary}><tbody>
+                <tr><td className={s.label}>Domain</td><td><strong>{pick.domain}</strong></td></tr>
+                <tr><td className={s.label}>Term</td><td>{pick.years} year{pick.years > 1 ? 's' : ''}</td></tr>
+                <tr><td className={s.label}>Registry price</td><td>{usd(pick.registryCents)}</td></tr>
+                <tr><td className={s.label}>Our fee</td><td>{usd(pick.marginCents)}</td></tr>
+                <tr className={s.total}><td className={s.label}>Total</td><td>{usd(pick.totalCents)}</td></tr>
+              </tbody></table>
+              {!projectId && (mine?.projects?.length ?? 0) > 0 && (
+                <div className={s.field}>
+                  <label htmlFor="dm-site">Use it on</label>
+                  <select id="dm-site" className={s.input} value={siteId} onChange={e => { setSiteTouched(true); setSiteId(e.target.value) }}>
+                    <option value="">Decide later</option>
+                    {mine!.projects!.map(p => <option key={p.id} value={p.id}>{p.name || 'Untitled site'}</option>)}
+                  </select>
                 </div>
-                <p className={s.after}>After payment we register the domain, point it at your site and issue the certificate. You do nothing.</p>
+              )}
+              {contactComplete && !editOwner ? (
+                <div className={s.ownerLine}>
+                  <div>
+                    <div className={s.meta}>Registered to</div>
+                    <strong>{contact.name}</strong> <span className={s.meta}>{contact.email} &middot; {contact.city}, {contact.country}</span>
+                  </div>
+                  <button className={s.ghost} onClick={() => setEditOwner(true)}>Change</button>
+                </div>
+              ) : registrantFields}
+              <ul className={s.policy}>{policy.map(l => <li key={l}>{l}</li>)}</ul>
+              <div className={s.actions}>
+                <button className={s.btn} disabled={busy || !contactComplete} onClick={() => pay('domain')}>{busy ? 'Opening payment' : sandbox ? 'Buy in sandbox' : `Buy for ${usd(pick.totalCents)}`}</button>
+                <button className={s.ghost} onClick={() => setPick(null)}>Back to results</button>
               </div>
-              {registrant}
+              {!contactComplete && <p className={s.after}>Add the owner&apos;s details to continue.</p>}
+              <p className={s.after}>By pressing Buy you accept the terms above. After payment we register the domain, connect it to your site and issue the free certificate. You do nothing.</p>
             </div>
           )}
         </>

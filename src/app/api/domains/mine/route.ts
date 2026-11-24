@@ -18,6 +18,10 @@ export async function GET() {
     // The person's own sites, so a bought domain can be pointed at one of them.
     admin.from('projects').select('id,name').eq('user_id', user.id).order('updated_at', { ascending: false }).limit(50),
   ])
+  // The owner details to start from: the last order's, else the account's own name and email.
+  const { data: last } = await admin.from('commerce_orders').select('contact').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1)
+  const { data: prof } = await admin.from('profiles').select('full_name,email').eq('id', user.id).maybeSingle()
+  const defaultContact = last?.[0]?.contact ?? { name: prof?.full_name ?? '', company: '', email: prof?.email ?? user.email ?? '', address1: '', city: '', state: '', zip: '', country: 'IN', phoneCc: '91', phone: '' }
   const now = new Date()
   const rows = await Promise.all((domains ?? []).map(async (d: Record<string, unknown>) => {
     const status: ConnectionStatus = !d.vercel_attached || !d.dns_written ? 'needs_attention' : await connectionStatus(String(d.domain))
@@ -25,5 +29,5 @@ export async function GET() {
     return { ...d, connection: status === 'needs_attention' ? (d.dns_written ? 'needs_attention' : 'dns_pending') : status, daysLeft: exp ? daysBetween(now, exp) : null }
   }))
   const ws = (workspaces ?? []).map((w: Record<string, unknown>) => ({ ...w, daysLeft: w.expires_at ? daysBetween(now, new Date(String(w.expires_at))) : null }))
-  return NextResponse.json({ domains: rows, workspaces: ws, orders: orders ?? [], projects: projects ?? [], workspaceEnabled: workspaceEnabled() })
+  return NextResponse.json({ domains: rows, workspaces: ws, orders: orders ?? [], projects: projects ?? [], workspaceEnabled: workspaceEnabled(), defaultContact })
 }

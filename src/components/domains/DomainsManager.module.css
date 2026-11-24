@@ -129,3 +129,7 @@
 .altTitle { margin: 4px 0 -8px; color: var(--ide-text2); font-size: 13px; }
 .attachRow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .attachRow .input { height: 36px; max-width: 260px; }
+
+/* the saved owner, as one line */
+.ownerLine { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border-radius: var(--r); border: 1px solid var(--ide-border); background: var(--bg-elevated); }
+.ownerLine .meta { margin-bottom: 2px; }
