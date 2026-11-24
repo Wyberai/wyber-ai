@@ -135,14 +135,27 @@ export class RelayDomainsClient implements DomainsProvider {
   async ensureCustomer(input: { email: string; contact: ContactDetails; existingCustomerId?: number | null }): Promise<number> {
     if (input.existingCustomerId) return input.existingCustomerId
     const c = input.contact
-    const res = await this.call('POST', 'customers/v2/signup.json', {
-      username: input.email,
-      // The customer never signs in to the provider's panel; everything happens inside WyberAi. A random password is set and discarded.
-      passwd: providerPassword(),
-      name: c.name, company: c.company || 'N/A', 'address-line-1': c.address1, city: c.city, state: c.state,
-      country: c.country, zipcode: c.zip, 'phone-cc': c.phoneCc, phone: c.phone, 'lang-pref': 'en',
-    })
-    return Number(res)
+    try {
+      const res = await this.call('POST', 'customers/v2/signup.json', {
+        username: input.email,
+        // The customer never signs in to the provider's panel; everything happens inside WyberAi. A random password is set and discarded.
+        passwd: providerPassword(),
+        name: c.name, company: c.company || 'N/A', 'address-line-1': c.address1, city: c.city, state: c.state,
+        country: c.country, zipcode: c.zip, 'phone-cc': c.phoneCc, phone: c.phone, 'lang-pref': 'en',
+      })
+      return Number(res)
+    } catch (e) {
+      // An earlier attempt may have created this customer and then failed before we saved them. Find them instead of
+      // failing on "already exists", so a retry carries on.
+      if (e instanceof ProviderError && /already|exist/i.test(e.message)) {
+        try {
+          const d = (await this.call('GET', 'customers/details.json', { username: input.email })) as { customerid?: string | number }
+          const n = Number(d?.customerid)
+          if (Number.isFinite(n) && n > 0) return n
+        } catch { /* fall through to the original error */ }
+      }
+      throw e
+    }
   }
 
   async ensureContact(input: { customerId: number; contact: ContactDetails; existingContactId?: number | null }): Promise<number> {
@@ -171,6 +184,14 @@ export class RelayDomainsClient implements DomainsProvider {
     })) as { entityid?: string | number }
     if (!res?.entityid) throw new ProviderError('The provider did not return an order id for the registration')
     return { orderId: Number(res.entityid) }
+  }
+
+  async findDomainOrderId(domain: string): Promise<number | null> {
+    try {
+      const r = await this.call('GET', 'domains/orderid.json', { 'domain-name': domain })
+      const n = Number(r)
+      return Number.isFinite(n) && n > 0 ? n : null
+    } catch { return null }
   }
 
   async renewDomain(i: { orderId: number; years: number; currentExpiryEpoch: number }) {

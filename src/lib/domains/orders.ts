@@ -68,40 +68,76 @@ export async function createDomainOrder(
 type Env = Record<string, string | undefined>
 type FulfilDeps = { provider: DomainsProvider; store: OrderStore; env?: Env; attach?: typeof attachDomain }
 
+type Result = { ok: boolean; status: OrderStatus; ran: boolean }
+
 /** Runs after the payment provider confirms payment. Safe to call twice: only the first call moves the order out of awaiting_payment. */
-export async function fulfilOrder(deps: FulfilDeps, orderId: string): Promise<{ ok: boolean; status: OrderStatus; ran: boolean }> {
-  const { provider, store } = deps
+export async function fulfilOrder(deps: FulfilDeps, orderId: string): Promise<Result> {
+  const { store } = deps
   const order = await store.getOrder(orderId)
   if (!order) return { ok: false, status: 'needs_attention', ran: false }
   // `ran` is true only for the call that actually did the work, so a retried webhook never sends a second email.
   if (!(await store.transition(orderId, 'awaiting_payment', 'registering'))) return { ok: order.status === 'active', status: order.status, ran: false }
+  return runFulfilment(deps, order)
+}
+
+/**
+ * Carries on with an order that was paid but did not finish: stuck on "registering" (the function was cut off) or on
+ * "needs_attention" (a provider step failed, for example the balance was empty and has since been topped up). Steps
+ * already done are not repeated: the registration is recorded as rc_order_id, and a renewal checks the provider's date.
+ */
+export async function resumeOrder(deps: FulfilDeps, orderId: string, from: 'registering' | 'needs_attention'): Promise<Result> {
+  const { store } = deps
+  const order = await store.getOrder(orderId)
+  if (!order) return { ok: false, status: 'needs_attention', ran: false }
+  if (!(await store.transition(orderId, from, 'registering', { error: null }))) return { ok: order.status === 'active', status: order.status, ran: false }
+  return runFulfilment(deps, { ...order, status: 'registering', error: null })
+}
+
+async function runFulfilment(deps: FulfilDeps, order: Order): Promise<Result> {
+  const { provider, store } = deps
   try {
     if (order.kind === 'domain_renewal' || order.kind === 'workspace_renewal') {
       await fulfilRenewal(deps, order)
     } else {
-      const r = await store.getReseller(order.user_id)
-      const customerId = await provider.ensureCustomer({ email: order.contact.email, contact: order.contact, existingCustomerId: r.customerId })
-      const contactId = await provider.ensureContact({ customerId, contact: order.contact, existingContactId: r.contactId })
-      await store.saveReseller(order.user_id, customerId, contactId)
+      let customerId = 0
+      let contactId = 0
+      // A resumed order that already has its provider order needs no customer or contact steps.
+      if (!order.rc_order_id) {
+        const r = await store.getReseller(order.user_id)
+        customerId = await provider.ensureCustomer({ email: order.contact.email, contact: order.contact, existingCustomerId: r.customerId })
+        contactId = await provider.ensureContact({ customerId, contact: order.contact, existingContactId: r.contactId })
+        await store.saveReseller(order.user_id, customerId, contactId)
+      }
       if (order.kind === 'domain') await fulfilDomain(deps, order, customerId, contactId)
       else await fulfilWorkspace(deps, order, customerId)
     }
-    await store.patchOrder(orderId, { status: 'active', error: null })
+    await store.patchOrder(order.id, { status: 'active', error: null })
     return { ok: true, status: 'active', ran: true }
   } catch (e) {
-    // Money was taken but a provider step failed: keep the order visible for a person to finish or refund.
-    await store.patchOrder(orderId, { status: 'needs_attention', error: e instanceof Error ? e.message : String(e) })
+    // Money was taken but a provider step failed: keep the order visible. The sweep tries again, and tells a person if it keeps failing.
+    await store.patchOrder(order.id, { status: 'needs_attention', error: e instanceof Error ? e.message : String(e) })
     return { ok: false, status: 'needs_attention', ran: true }
   }
 }
 
 async function fulfilDomain(deps: FulfilDeps, o: Order, customerId: number, contactId: number) {
   const { provider, store } = deps
-  const ns = await provider.defaultNameservers(customerId)
-  const { orderId } = await provider.registerDomain({ domain: o.domain, years: o.years ?? 1, customerId, contactId, nameservers: ns })
-  await store.patchOrder(o.id, { rc_order_id: orderId })
-  const details = await provider.getDomainDetails(orderId)
-  // Connection steps are best-effort and retryable from My domains: the domain is already paid for and registered.
+  let orderId = o.rc_order_id
+  if (!orderId) {
+    const ns = await provider.defaultNameservers(customerId)
+    try {
+      orderId = (await provider.registerDomain({ domain: o.domain, years: o.years ?? 1, customerId, contactId, nameservers: ns })).orderId
+    } catch (e) {
+      // The registration may have gone through on an earlier attempt that was cut off before we saved it. Look for it.
+      const existing = /already|exist|registered/i.test(e instanceof Error ? e.message : '') ? await provider.findDomainOrderId(o.domain) : null
+      if (!existing) throw e
+      orderId = existing
+    }
+    await store.patchOrder(o.id, { rc_order_id: orderId })
+  }
+  // The registry can take a while to confirm (seen with .in): no date yet is not a failure.
+  const details = await provider.getDomainDetails(orderId).catch(() => null)
+  // Connection steps are best-effort and retryable from My domains and by the sweep: the domain is already paid for and registered.
   let dnsWritten = false
   try {
     await provider.activateDns(orderId).catch(() => undefined)
@@ -109,26 +145,30 @@ async function fulfilDomain(deps: FulfilDeps, o: Order, customerId: number, cont
     dnsWritten = true
   } catch { /* shown as "DNS pending" */ }
   const v = await (deps.attach ?? attachDomain)(o.domain, deps.env ?? process.env).catch(() => ({ attached: false, verified: false }))
-  await store.upsertDomain({ user_id: o.user_id, project_id: o.project_id, domain: o.domain, rc_order_id: orderId, expires_at: details.expiresAt, dns_written: dnsWritten, vercel_attached: v.attached })
+  await store.upsertDomain({ user_id: o.user_id, project_id: o.project_id, domain: o.domain, rc_order_id: orderId, expires_at: details?.expiresAt ?? null, dns_written: dnsWritten, vercel_attached: v.attached })
   if (o.project_id && v.attached) await store.linkProject(o.project_id, o.domain)
 }
 
 async function fulfilWorkspace(deps: FulfilDeps, o: Order, customerId: number) {
   const { provider, store } = deps
   const region = (o.region as 'in' | 'se' | 'gbl') ?? 'gbl'
-  const { orderId } = await provider.addWorkspace({ domain: o.domain, months: o.months ?? 12, seats: o.seats ?? 1, customerId, region })
-  await store.patchOrder(o.id, { rc_order_id: orderId })
+  let orderId = o.rc_order_id
+  if (!orderId) {
+    orderId = (await provider.addWorkspace({ domain: o.domain, months: o.months ?? 12, seats: o.seats ?? 1, customerId, region })).orderId
+    await store.patchOrder(o.id, { rc_order_id: orderId })
+  }
   const c = o.contact
   const [first, ...rest] = c.name.split(' ')
   const admin = `admin@${o.domain}`
+  // On a resumed order the admin account may already exist; that is not a reason to stop.
   await provider.setupWorkspaceAdmin({ orderId, region, adminEmail: admin, firstName: first, lastName: rest.join(' ') || first, alternateEmail: c.email, name: c.name, company: c.company || c.name, zip: c.zip })
+    .catch(e => { if (!o.rc_order_id) throw e })
   const details = await provider.getWorkspaceDetails(orderId, region)
   const records = workspaceRecords()
   let written = false
   try { for (const r of records) await provider.addDnsRecord(o.domain, r); written = true } catch { /* the screen shows the records to copy */ }
   await store.upsertWorkspace({ user_id: o.user_id, domain: o.domain, rc_order_id: orderId, region, seats: o.seats ?? 1, expires_at: details.expiresAt, records: { records, written }, admin_email: admin })
 }
-
 
 // -- Renewals ------------------------------------------------------------------------------------------------------
 
@@ -187,6 +227,7 @@ export async function createRenewalOrder(deps: RenewDeps, input: RenewInput & { 
 
 async function fulfilRenewal(deps: FulfilDeps, o: Order) {
   const { provider, store } = deps
+  const DAY = 86_400_000
   if (o.kind === 'domain_renewal') {
     const d = await store.getDomain(o.user_id, o.domain)
     if (!d) throw new Error('Domain not found for renewal')
@@ -195,7 +236,11 @@ async function fulfilRenewal(deps: FulfilDeps, o: Order) {
     const current = before?.expiresAt ?? d.expires_at
     if (!current) throw new Error('The current expiry date is not confirmed yet')
     const years = o.years ?? 1
-    await provider.renewDomain({ orderId: d.rc_order_id, years, currentExpiryEpoch: Math.floor(new Date(current).getTime() / 1000) })
+    // A resumed order may already have been renewed at the provider before the function was cut off. Renewing again would
+    // charge twice, so when the provider's date is already about a term past the one we stored, only record it.
+    const stored = d.expires_at ? new Date(d.expires_at) : null
+    const alreadyRenewed = Boolean(stored && before?.expiresAt && new Date(before.expiresAt).getTime() >= addYears(stored, years).getTime() - 10 * DAY)
+    if (!alreadyRenewed) await provider.renewDomain({ orderId: d.rc_order_id, years, currentExpiryEpoch: Math.floor(new Date(current).getTime() / 1000) })
     const after = await provider.getDomainDetails(d.rc_order_id).catch(() => null)
     await store.setExpiry('domain', o.user_id, o.domain, after?.expiresAt ?? addYears(new Date(current), years).toISOString())
     return
@@ -203,7 +248,10 @@ async function fulfilRenewal(deps: FulfilDeps, o: Order) {
   const w = await store.getWorkspace(o.user_id, o.domain)
   if (!w) throw new Error('Workspace order not found for renewal')
   const months = o.months ?? 12
-  await provider.renewWorkspace({ orderId: w.rc_order_id, months, region: w.region as WorkspaceRegion })
+  const stored = w.expires_at ? new Date(w.expires_at) : null
+  const before = await provider.getWorkspaceDetails(w.rc_order_id, w.region as WorkspaceRegion).catch(() => null)
+  const alreadyRenewed = Boolean(stored && before?.expiresAt && new Date(before.expiresAt).getTime() >= addMonths(stored, months).getTime() - 10 * DAY)
+  if (!alreadyRenewed) await provider.renewWorkspace({ orderId: w.rc_order_id, months, region: w.region as WorkspaceRegion })
   const after = await provider.getWorkspaceDetails(w.rc_order_id, w.region as WorkspaceRegion).catch(() => null)
   const base = w.expires_at ? new Date(w.expires_at) : new Date()
   await store.setExpiry('workspace', o.user_id, o.domain, after?.expiresAt ?? addMonths(base, months).toISOString())

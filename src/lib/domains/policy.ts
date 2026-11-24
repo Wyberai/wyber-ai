@@ -40,8 +40,11 @@ export function renewalPolicyLines(kind: 'domain' | 'workspace', workspaceMargin
   ]
 }
 
+export const OWNER_LINE =
+  'Owner details: you are the registrant, the legal owner of the domain. The registry holds the details you enter, and some extensions may show part of them in a public lookup.'
+
 export function policyLines(tld: string): string[] {
-  return [PRICE_RULE_LINE, refundLine(tld), TRANSFER_LINE, RENEWAL_LINE]
+  return [PRICE_RULE_LINE, refundLine(tld), TRANSFER_LINE, OWNER_LINE, RENEWAL_LINE]
 }
 
 export function workspacePolicyLines(marginCentsPerSeatMonth: number): string[] {

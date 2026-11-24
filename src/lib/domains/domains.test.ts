@@ -153,13 +153,14 @@ describe('dns records', () => {
 })
 
 describe('reminders', () => {
-  it('sends one reminder per threshold and never for the past', () => {
+  it('sends one reminder per threshold, then one notice after it has expired', () => {
     expect(dueReminder(40, [])).toBeNull()
     expect(dueReminder(30, [])).toBe(30)
     expect(dueReminder(13, [30])).toBe(14)
     expect(dueReminder(13, [30, 14])).toBeNull()
     expect(dueReminder(1, [30, 14, 7])).toBe(1)
-    expect(dueReminder(-1, [])).toBeNull()
+    expect(dueReminder(-1, [])).toBe(0) // the single "it has expired" notice
+    expect(dueReminder(-1, [0])).toBeNull()
   })
 })
 
@@ -400,5 +401,79 @@ describe('payment page errors keep the provider reason', () => {
     const logged = JSON.stringify(spy.mock.calls)
     expect(logged).not.toContain('sk_secret_key')
     spy.mockRestore(); vi.unstubAllGlobals()
+  })
+})
+
+describe('resilience: resume without doing anything twice', () => {
+  const newOrder = (mem: ReturnType<typeof memoryStore>, kind: 'domain' | 'workspace' = 'domain') =>
+    mem.store.insertOrder({ user_id: 'u1', kind, domain: 'ashabakery.com', project_id: null, years: kind === 'domain' ? 1 : null, months: kind === 'workspace' ? 12 : null, seats: kind === 'workspace' ? 2 : null, region: kind === 'workspace' ? 'in' : null, registry_cents: 1099, margin_cents: 100, total_cents: 1199, contact, policy_version: 'x' })
+  it('resumes a failed order once the cause is fixed, and registers the domain only once', async () => {
+    const { resumeOrder } = await import('./orders')
+    const provider = new FakeDomainsProvider(); const mem = memoryStore()
+    const o = await newOrder(mem)
+    provider.failNext.registerDomain = 'Registry unavailable'
+    expect(await fulfilOrder({ provider, store: mem.store, attach: attachOk }, o.id)).toMatchObject({ ok: false, status: 'needs_attention' })
+    const r = await resumeOrder({ provider, store: mem.store, attach: attachOk }, o.id, 'needs_attention')
+    expect(r).toMatchObject({ ok: true, status: 'active', ran: true })
+    expect(provider.state.domains.size).toBe(1)
+    expect(mem.domains.get('ashabakery.com')).toBeTruthy()
+  })
+  it('carries on after a cut-off: a domain registered but not recorded is found, not registered again', async () => {
+    const { resumeOrder } = await import('./orders')
+    const provider = new FakeDomainsProvider(); const mem = memoryStore()
+    const o = await newOrder(mem)
+    // The earlier attempt registered the domain, then the function was cut off before the order saved its id.
+    await provider.registerDomain({ domain: 'ashabakery.com', years: 1, customerId: 1, contactId: 1, nameservers: [] })
+    await mem.store.transition(o.id, 'awaiting_payment', 'registering')
+    const r = await resumeOrder({ provider, store: mem.store, attach: attachOk }, o.id, 'registering')
+    expect(r).toMatchObject({ ok: true, status: 'active' })
+    expect(provider.state.domains.size).toBe(1)
+    expect(mem.orders.get(o.id)?.rc_order_id).toBeGreaterThan(0)
+  })
+  it('does not resume an order that is already done or that someone else is resuming', async () => {
+    const { resumeOrder } = await import('./orders')
+    const provider = new FakeDomainsProvider(); const mem = memoryStore()
+    const o = await newOrder(mem)
+    await fulfilOrder({ provider, store: mem.store, attach: attachOk }, o.id)
+    expect(await resumeOrder({ provider, store: mem.store }, o.id, 'needs_attention')).toMatchObject({ ran: false, ok: true })
+  })
+  it('never renews twice: a renewal the provider already applied is only recorded', async () => {
+    const { createRenewalOrder, resumeOrder } = await import('./orders')
+    const provider = new FakeDomainsProvider(); const mem = memoryStore()
+    const o = await newOrder(mem)
+    await fulfilOrder({ provider, store: mem.store, attach: attachOk }, o.id)
+    const before = new Date(mem.domains.get('ashabakery.com')!.expires_at!)
+    const rn = await createRenewalOrder({ provider, store: mem.store }, { userId: 'u1', kind: 'domain', domain: 'ashabakery.com', years: 1, confirmedTotalCents: 1299, acknowledged: true })
+    // The provider renews, then the function is cut off before the new date is saved.
+    const rcId = mem.domains.get('ashabakery.com')!.rc_order_id
+    await provider.renewDomain({ orderId: rcId, years: 1, currentExpiryEpoch: Math.floor(before.getTime() / 1000) })
+    await mem.store.transition(rn.id, 'awaiting_payment', 'registering')
+    const r = await resumeOrder({ provider, store: mem.store }, rn.id, 'registering')
+    expect(r.ok).toBe(true)
+    // exactly one year added, not two
+    expect(new Date(mem.domains.get('ashabakery.com')!.expires_at!).getUTCFullYear()).toBe(before.getUTCFullYear() + 1)
+    expect(provider.state.calls.filter(c => c === 'renewDomain').length).toBe(1) // only the one the provider already applied; the resumed order did not call it again
+  })
+})
+
+describe('after the expiry date', () => {
+  it('sends one "it has expired" notice, only once and only for a month', async () => {
+    const { dueReminder } = await import('./dates')
+    const { reminderMail } = await import('./reminders')
+    expect(dueReminder(-1, [30, 14, 7, 1])).toBe(0)
+    expect(dueReminder(-5, [30, 14, 7, 1, 0])).toBeNull()
+    expect(dueReminder(-31, [])).toBeNull()
+    const m = reminderMail('domain', 'ashabakery.com', -3, 'https://wyberai.com')
+    expect(m.subject).toBe('ashabakery.com has expired')
+    expect(m.text).toContain('3 days ago')
+    expect(breaksCopyRules(m.text)).toBeNull()
+  })
+  it('the purchase email is a thank-you with the order, next steps and the verification warning', async () => {
+    const { orderMail } = await import('./notify')
+    const m = orderMail({ id: '12345678-aaaa-bbbb-cccc-1234567890ab', kind: 'domain', domain: 'ashabakery.in', seats: null, months: null, years: 2, total_cents: 857, contact }, 'done', 'https://wyberai.com')
+    expect(m.subject).toBe('Thank you: ashabakery.in is yours')
+    for (const piece of ['ashabakery.in', '2 years', '$8.57', '12345678', 'within 15 days', 'free security certificate', '30, 14, 7 and 1 days']) expect(m.text).toContain(piece)
+    expect(breaksCopyRules(m.text)).toBeNull()
+    expect(m.text).not.toMatch(/resell|ResellerClub|solo|founder/i)
   })
 })

@@ -85,6 +85,11 @@ export class FakeDomainsProvider implements DomainsProvider {
     return { orderId }
   }
 
+  async findDomainOrderId(domain: string) {
+    for (const [id, d] of this.state.domains) if (d.domain === domain) return id
+    return null
+  }
+
   async renewDomain(i: { orderId: number; years: number; currentExpiryEpoch: number }) {
     this.state.calls.push('renewDomain')
     this.maybeFail('renewDomain')

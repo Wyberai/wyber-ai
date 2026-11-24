@@ -6,6 +6,13 @@ export interface ReminderMail { to: string; subject: string; text: string }
 
 export function reminderMail(kind: 'domain' | 'workspace', domain: string, daysLeft: number, appUrl: string): { subject: string; text: string } {
   const what = kind === 'domain' ? `The domain ${domain}` : `Google Workspace for ${domain}`
+  if (daysLeft < 0) {
+    const ago = Math.abs(daysLeft)
+    return {
+      subject: `${domain} has expired`,
+      text: `${what} expired ${ago} day${ago === 1 ? '' : 's'} ago.\n\n${kind === 'domain' ? 'Your website and any email on this domain have stopped working.' : 'The email accounts on this domain have stopped working.'}\n\nIt may still be possible to renew it. Open this page and press Renew as soon as you can: ${appUrl}/dashboard/domains\n\nAfter a grace period, renewing can cost more or stop being possible. If the Renew button does not work, reply to this email.`,
+    }
+  }
   const when = daysLeft <= 1 ? 'tomorrow' : `in ${daysLeft} days`
   const consequence = kind === 'domain'
     ? 'If it is not renewed, your website and any email on this domain stop working.'

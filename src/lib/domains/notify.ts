@@ -77,16 +77,28 @@ export function orderMail(order: MailOrder, outcome: 'done' | 'attention', appUr
       ].join('\n'),
     }
   }
+  const y = order.years ?? 1
   return {
     to,
-    subject: `${order.domain} is yours`,
+    subject: `Thank you: ${order.domain} is yours`,
     text: [
-      `${order.domain} is registered in your name. You paid ${usd(order.total_cents)}.`,
+      `Thank you for your order. ${order.domain} is registered in your name.`,
       '',
-      'We are pointing it at your site now. It can take anywhere from a few minutes to a few hours for the internet to pick it up, and the security certificate follows. You can watch the status here, and press Try again if a step is stuck:',
-      link,
+      'Your order',
+      `  Domain:     ${order.domain}`,
+      `  Term:       ${y} year${y === 1 ? '' : 's'}`,
+      `  Paid:       ${usd(order.total_cents)}`,
+      `  Reference:  ${ref}`,
       '',
-      'The domain does not renew by itself. We email you 30, 14, 7 and 1 days before it expires.',
+      'What happens next',
+      '1. We are pointing the domain at your site. It can take anywhere from a few minutes to a few hours for the internet to pick it up, and the free security certificate (https) follows on its own. You can watch the status here, and press Try again if a step is stuck:',
+      `   ${link}`,
+      '2. Some extensions require you to confirm your email address. If you get an email asking you to verify it, please do it within 15 days: if the address is not confirmed, the registry can suspend the domain and your website stops.',
+      '3. The domain does not renew by itself. We email you 30, 14, 7 and 1 days before it expires, and you renew it with one button on the same page.',
+      '',
+      'Moving the domain to another provider later is possible: reply to this email and we will give you the transfer code.',
+      '',
+      'Questions about anything here? Reply to this email.',
     ].join('\n'),
   }
 }

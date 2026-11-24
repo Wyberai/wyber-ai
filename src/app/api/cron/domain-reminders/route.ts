@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
 import { sendEmail } from '@/lib/email/transport'
 import { remindersDue, reminderMail, type ExpiryRow } from '@/lib/domains/reminders'
-import { healDomain } from '@/lib/domains/heal'
-import { context } from '@/lib/domains/route-helpers'
 
 export const maxDuration = 60
 
@@ -16,20 +14,6 @@ export async function GET(req: NextRequest) {
   const horizon = new Date(Date.now() + 31 * 86_400_000).toISOString()
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://wyberai.com'
   const sent: string[] = []
-  // First finish any domain whose connection or expiry date was not ready when it was bought (a new .in order is not
-  // Active straight away). Skipped on a dry run, and when domains are not configured.
-  const healed: string[] = []
-  if (!dry) {
-    const ctx = await context()
-    if (ctx) {
-      const { data: pending } = await admin.from('managed_domains').select('domain,rc_order_id,project_id,dns_written,expires_at')
-        .or('dns_written.eq.false,expires_at.is.null').order('created_at', { ascending: false }).limit(15)
-      for (const d of pending ?? []) {
-        try { const r = await healDomain({ provider: ctx.provider, admin: ctx.admin, store: ctx.store }, d); healed.push(`${d.domain}:${r.dnsWritten ? 'ok' : 'pending'}`) }
-        catch (e) { console.error('[domain-reminders] heal failed', d.domain, e instanceof Error ? e.message : e) }
-      }
-    }
-  }
   for (const [table, kind] of [['managed_domains', 'domain'], ['workspace_subscriptions', 'workspace']] as const) {
     const { data } = await admin.from(table).select('id,domain,expires_at,reminders_sent,user_id').lte('expires_at', horizon)
     const rows = (data ?? []) as (Omit<ExpiryRow, 'email'> & { user_id: string })[]
@@ -49,5 +33,5 @@ export async function GET(req: NextRequest) {
       }
     }
   }
-  return NextResponse.json({ ok: true, dry, sent, healed })
+  return NextResponse.json({ ok: true, dry, sent })
 }

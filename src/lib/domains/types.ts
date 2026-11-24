@@ -56,6 +56,8 @@ export interface DomainsProvider {
   ensureCustomer(input: { email: string; contact: ContactDetails; existingCustomerId?: number | null }): Promise<number>
   ensureContact(input: { customerId: number; contact: ContactDetails; existingContactId?: number | null }): Promise<number>
   defaultNameservers(customerId: number): Promise<string[]>
+  /** The provider order id of a domain already registered on our account, or null. Lets a retry carry on instead of registering twice. */
+  findDomainOrderId(domain: string): Promise<number | null>
   registerDomain(input: { domain: string; years: number; customerId: number; contactId: number; nameservers: string[] }): Promise<{ orderId: number }>
   renewDomain(input: { orderId: number; years: number; currentExpiryEpoch: number }): Promise<void>
   getDomainDetails(orderId: number): Promise<DomainDetails>

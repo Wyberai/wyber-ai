@@ -214,7 +214,12 @@ export default function DomainsManager({ projectId = null }: { projectId?: strin
   }
 
   async function retry(domain: string) {
-    await fetch('/api/domains/connect', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ domain }) })
+    setMsg('')
+    const r = await fetch('/api/domains/connect', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ domain }) })
+    const j = await r.json().catch(() => ({}))
+    // Say why, not just "it did not work": the registrar or the hosting gives a reason.
+    if (!r.ok) setMsg(`We could not finish connecting ${domain} yet: ${j.error || 'please try again in a few minutes'}.`)
+    else if (j.error) setMsg(`${domain} is connected at the registrar, but our hosting said: ${j.error}. We will keep trying.`)
     loadMine()
   }
 

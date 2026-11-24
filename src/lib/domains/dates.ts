@@ -14,7 +14,8 @@ export const REMINDER_DAYS = [30, 14, 7, 1] as const
  * and that has not been sent yet. Sending only one per run keeps a long-silent cron from emailing four times at once.
  */
 export function dueReminder(daysLeft: number, alreadySent: number[]): number | null {
-  if (daysLeft < 0) return null
+  // Once it has expired: one "it has expired" notice (threshold 0), for up to 30 days after, so a missed renewal is not silent.
+  if (daysLeft < 0) return alreadySent.includes(0) || daysLeft < -30 ? null : 0
   const due = REMINDER_DAYS.filter(t => daysLeft <= t && !alreadySent.includes(t))
   return due.length ? Math.min(...due) : null
 }
