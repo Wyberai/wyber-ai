@@ -31,6 +31,21 @@ export function supabaseStore(admin: Admin): OrderStore {
     },
     async upsertDomain(d) { await admin.from('managed_domains').upsert({ ...d }, { onConflict: 'domain' }) },
     async upsertWorkspace(w) { await admin.from('workspace_subscriptions').upsert({ ...w }, { onConflict: 'domain' }) },
+    async getDomain(userId, domain) {
+      const { data } = await admin.from('managed_domains').select('*').eq('user_id', userId).eq('domain', domain).maybeSingle()
+      return data ?? null
+    },
+    async getWorkspace(userId, domain) {
+      const { data } = await admin.from('workspace_subscriptions').select('*').eq('user_id', userId).eq('domain', domain).maybeSingle()
+      return data ?? null
+    },
+    async latestContact(userId, domain) {
+      const { data } = await admin.from('commerce_orders').select('contact').eq('user_id', userId).eq('domain', domain).in('kind', ['domain', 'workspace']).order('created_at', { ascending: false }).limit(1)
+      return data?.[0]?.contact ?? null
+    },
+    async setExpiry(kind, userId, domain, expiresAt) {
+      await admin.from(kind === 'domain' ? 'managed_domains' : 'workspace_subscriptions').update({ expires_at: expiresAt, reminders_sent: [] }).eq('user_id', userId).eq('domain', domain)
+    },
     async linkProject(projectId, domain) {
       await admin.from('projects').update({ custom_domain: domain, updated_at: new Date().toISOString() }).eq('id', projectId)
     },

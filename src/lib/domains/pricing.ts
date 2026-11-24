@@ -63,6 +63,23 @@ export function quoteDomain(
   }
 }
 
+/** Renewal of a domain we already sold: the registry's RENEWAL price for the term plus the same flat margin. Null when the provider table has no renewal price. */
+export function quoteRenewal(
+  domain: string,
+  years: number,
+  table: CostTable,
+  inrPerUsd?: number,
+): Omit<DomainQuote, 'renewalTotalCents'> | null {
+  const parts = splitDomain(domain)
+  if (!parts) return null
+  const cfg = tldConfig(parts.tld)
+  if (!cfg) return null
+  const ren = table.domains[cfg.productKey]?.renew?.[years]
+  if (ren == null || !(ren > 0)) return null
+  const registryCents = toUsdCents(ren, table.currency, inrPerUsd)
+  return { domain: `${parts.label}.${parts.tld}`, years, registryCents, marginCents: DOMAIN_MARGIN_CENTS, totalCents: registryCents + DOMAIN_MARGIN_CENTS, currency: 'USD' }
+}
+
 export interface WorkspaceQuote {
   seats: number
   months: number

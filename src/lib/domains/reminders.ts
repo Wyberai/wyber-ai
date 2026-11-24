@@ -12,7 +12,7 @@ export function reminderMail(kind: 'domain' | 'workspace', domain: string, daysL
     : 'If it is not renewed, the email accounts on this domain stop working.'
   return {
     subject: `${domain} expires ${when}`,
-    text: `${what} expires ${when}.\n\n${consequence}\n\nSee it here: ${appUrl}/dashboard/domains\n\nTo renew, reply to this email or write to support before the date. Nothing renews by itself.`,
+    text: `${what} expires ${when}.\n\n${consequence}\n\nSee it here: ${appUrl}/dashboard/domains\n\nTo renew, open that page and press Renew. It adds the new term after the current date, so you lose no time. Nothing renews by itself.`,
   }
 }
 

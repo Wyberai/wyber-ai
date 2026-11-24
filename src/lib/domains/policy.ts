@@ -21,7 +21,24 @@ export const TRANSFER_LINE =
   'Transfer: the domain is registered in your name and you can move it to another registrar with its authorization code. New registrations of .com are locked against transfer for 60 days under ICANN rules, and each registry sets its own rule for other extensions.'
 
 export const RENEWAL_LINE =
-  'Renewal: domains do not renew by themselves. We email you 30, 14, 7 and 1 days before the domain expires. To renew, write to support before that date and we renew it at the registry price plus $1.'
+  'Renewal: domains do not renew by themselves. We email you 30, 14, 7 and 1 days before the domain expires. To renew, open My domains and press Renew. We renew it at the registry price plus $1.'
+
+/** Shown on the renewal confirmation. A renewal adds its term after the current end date, so no time is lost. */
+export function renewalPolicyLines(kind: 'domain' | 'workspace', workspaceMarginCentsPerSeatMonth = 50): string[] {
+  if (kind === 'domain') {
+    return [
+      PRICE_RULE_LINE,
+      'Renewing adds the new term after the current expiry date, so you do not lose any time.',
+      'We email you 30, 14, 7 and 1 days before each expiry. Nothing renews by itself.',
+    ]
+  }
+  const margin = workspaceMarginCentsPerSeatMonth % 100 === 0 ? `$${workspaceMarginCentsPerSeatMonth / 100}` : `${workspaceMarginCentsPerSeatMonth} cents`
+  return [
+    `Our price is the Google Workspace price plus a flat ${margin} per seat per month.`,
+    'Renewing adds the new term after the current end date, so you do not lose any time. It keeps the same number of seats.',
+    'We email you 30, 14, 7 and 1 days before each end date. Nothing renews by itself.',
+  ]
+}
 
 export function policyLines(tld: string): string[] {
   return [PRICE_RULE_LINE, refundLine(tld), TRANSFER_LINE, RENEWAL_LINE]

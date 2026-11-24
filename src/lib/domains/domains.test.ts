@@ -251,7 +251,7 @@ describe('smooth journey: alternatives, emails, once-only notification', () => {
     expect(many.length).toBeLessThanOrEqual(4)
     expect(many.length).toBeGreaterThan(0)
   })
-  const mailOrder = { id: '12345678-aaaa-bbbb-cccc-1234567890ab', kind: 'domain' as const, domain: 'ashabakery.com', seats: null, months: null, total_cents: 1199, contact }
+  const mailOrder = { id: '12345678-aaaa-bbbb-cccc-1234567890ab', kind: 'domain' as const, domain: 'ashabakery.com', seats: null, months: null, years: null, total_cents: 1199, contact }
   it('writes honest customer emails that pass the copy rules', async () => {
     const { orderMail } = await import('./notify')
     const mails = [
@@ -276,5 +276,95 @@ describe('smooth journey: alternatives, emails, once-only notification', () => {
     const second = await fulfilOrder({ provider, store: mem.store, attach: attachOk }, o.id)
     expect(first).toMatchObject({ ok: true, ran: true })
     expect(second).toMatchObject({ ok: true, ran: false })
+  })
+})
+
+describe('renewals', () => {
+  const buyDomain = async () => {
+    const provider = new FakeDomainsProvider()
+    const mem = memoryStore()
+    const o = await mem.store.insertOrder({ user_id: 'u1', kind: 'domain', domain: 'ashabakery.com', project_id: null, years: 1, months: null, seats: null, region: null, registry_cents: 1099, margin_cents: 100, total_cents: 1199, contact, policy_version: 'x' })
+    await fulfilOrder({ provider, store: mem.store, attach: attachOk }, o.id)
+    return { provider, mem }
+  }
+  it('prices a renewal at the registry renewal price plus the flat $1', async () => {
+    const { quoteRenewal } = await import('./pricing')
+    const t = await new FakeDomainsProvider().getCostTable()
+    const q = quoteRenewal('ashabakery.com', 1, t)
+    expect(q).toMatchObject({ registryCents: 1199, marginCents: 100, totalCents: 1299 })
+    expect(quoteRenewal('ashabakery.com', 4, t)).toBeNull() // no renewal price for a 4 year term
+  })
+  it('renews a domain for the term, adds it after the current expiry, and resets the reminders', async () => {
+    const { createRenewalOrder, renewalPreview } = await import('./orders')
+    const { provider, mem } = await buyDomain()
+    const before = new Date(mem.domains.get('ashabakery.com')!.expires_at!)
+    const preview = await renewalPreview({ provider, store: mem.store }, { userId: 'u1', kind: 'domain', domain: 'ashabakery.com', years: 2 })
+    expect(preview.totalCents).toBe(2 * 1199 + 100)
+    expect(new Date(preview.newExpiresAt).getUTCFullYear()).toBe(before.getUTCFullYear() + 2)
+    const order = await createRenewalOrder({ provider, store: mem.store }, { userId: 'u1', kind: 'domain', domain: 'ashabakery.com', years: 2, confirmedTotalCents: preview.totalCents, acknowledged: true })
+    expect(order.kind).toBe('domain_renewal')
+    const r = await fulfilOrder({ provider, store: mem.store }, order.id)
+    expect(r).toMatchObject({ ok: true, status: 'active', ran: true })
+    expect(new Date(mem.domains.get('ashabakery.com')!.expires_at!).getUTCFullYear()).toBe(before.getUTCFullYear() + 2)
+    // a retried payment notification must not renew a second time
+    const again = await fulfilOrder({ provider, store: mem.store }, order.id)
+    expect(again.ran).toBe(false)
+    expect(new Date(mem.domains.get('ashabakery.com')!.expires_at!).getUTCFullYear()).toBe(before.getUTCFullYear() + 2)
+  })
+  it('holds the same money rules as a purchase', async () => {
+    const { createRenewalOrder } = await import('./orders')
+    const { provider, mem } = await buyDomain()
+    const base = { userId: 'u1', kind: 'domain' as const, domain: 'ashabakery.com', years: 1 }
+    await expect(createRenewalOrder({ provider, store: mem.store }, { ...base, confirmedTotalCents: 1299, acknowledged: false })).rejects.toThrow(/confirm/)
+    await expect(createRenewalOrder({ provider, store: mem.store }, { ...base, confirmedTotalCents: 999, acknowledged: true })).rejects.toBeInstanceOf(QuoteChangedError)
+    await expect(createRenewalOrder({ provider, store: mem.store }, { ...base, years: 7, confirmedTotalCents: 1299, acknowledged: true })).rejects.toThrow(/Choose 1, 2, 3, 5 or 10/)
+    expect([...mem.orders.values()].filter(o => o.kind === 'domain_renewal')).toHaveLength(0)
+  })
+  it("will not renew someone else's domain", async () => {
+    const { createRenewalOrder } = await import('./orders')
+    const { provider, mem } = await buyDomain()
+    await expect(createRenewalOrder({ provider, store: mem.store }, { userId: 'someone-else', kind: 'domain', domain: 'ashabakery.com', years: 1, confirmedTotalCents: 1299, acknowledged: true })).rejects.toThrow(/not found/)
+  })
+  it('renews Workspace for 12 months with the same seats', async () => {
+    const { createRenewalOrder, renewalPreview } = await import('./orders')
+    const provider = new FakeDomainsProvider()
+    const mem = memoryStore()
+    const o = await mem.store.insertOrder({ user_id: 'u1', kind: 'workspace', domain: 'ashabakery.com', project_id: null, years: null, months: 12, seats: 3, region: 'in', registry_cents: 10800, margin_cents: 1800, total_cents: 12600, contact, policy_version: 'x' })
+    await fulfilOrder({ provider, store: mem.store }, o.id)
+    const before = new Date(mem.workspaces.get('ashabakery.com')!.expires_at!)
+    const preview = await renewalPreview({ provider, store: mem.store }, { userId: 'u1', kind: 'workspace', domain: 'ashabakery.com' })
+    expect(preview).toMatchObject({ seats: 3, term: 12 })
+    const order = await createRenewalOrder({ provider, store: mem.store }, { userId: 'u1', kind: 'workspace', domain: 'ashabakery.com', confirmedTotalCents: preview.totalCents, acknowledged: true })
+    expect(order).toMatchObject({ kind: 'workspace_renewal', seats: 3, months: 12, region: 'in' })
+    expect((await fulfilOrder({ provider, store: mem.store }, order.id)).ok).toBe(true)
+    expect(new Date(mem.workspaces.get('ashabakery.com')!.expires_at!).getUTCFullYear()).toBe(before.getUTCFullYear() + 1)
+  })
+  it('keeps a paid renewal visible when the provider step fails, and says so by email', async () => {
+    const { createRenewalOrder } = await import('./orders')
+    const { orderMail } = await import('./notify')
+    const { provider, mem } = await buyDomain()
+    const order = await createRenewalOrder({ provider, store: mem.store }, { userId: 'u1', kind: 'domain', domain: 'ashabakery.com', years: 1, confirmedTotalCents: 1299, acknowledged: true })
+    provider.failNext.renewDomain = 'Registry unavailable'
+    const r = await fulfilOrder({ provider, store: mem.store }, order.id)
+    expect(r).toMatchObject({ ok: false, status: 'needs_attention', ran: true })
+    expect(mem.orders.get(order.id)?.status).toBe('needs_attention')
+    const m = orderMail(mem.orders.get(order.id)!, 'attention', 'https://wyberai.com')
+    expect(m.text).toContain('the renewal of ashabakery.com')
+    expect(breaksCopyRules(m.text)).toBeNull()
+  })
+  it('writes renewal emails and policy lines that pass the copy rules and no longer send people to support', async () => {
+    const { orderMail } = await import('./notify')
+    const { renewalPolicyLines, RENEWAL_LINE } = await import('./policy')
+    const { reminderMail } = await import('./reminders')
+    const base = { id: '12345678-aaaa-bbbb-cccc-1234567890ab', domain: 'ashabakery.com', total_cents: 1199, contact }
+    const a = orderMail({ ...base, kind: 'domain_renewal', years: 2, months: null, seats: null }, 'done', 'https://wyberai.com')
+    const b = orderMail({ ...base, kind: 'workspace_renewal', years: null, months: 12, seats: 3, total_cents: 12600 }, 'done', 'https://wyberai.com')
+    for (const t of [a.text, b.text, ...renewalPolicyLines('domain'), ...renewalPolicyLines('workspace'), RENEWAL_LINE, reminderMail('domain', 'ashabakery.com', 7, 'https://wyberai.com').text]) {
+      expect(breaksCopyRules(t)).toBeNull()
+      expect(t).not.toMatch(/write to support|reseller/i)
+    }
+    expect(a.subject).toBe('ashabakery.com has been renewed')
+    expect(a.text).toContain('2 more years')
+    expect(b.text).toContain('3 seats')
   })
 })

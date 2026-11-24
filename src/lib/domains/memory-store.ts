@@ -27,6 +27,13 @@ export function memoryStore() {
     async upsertDomain(d) { domains.set(d.domain, d) },
     async upsertWorkspace(w) { workspaces.set(w.domain, w) },
     async linkProject(p, d) { linked[p] = d },
+    async getDomain(u, domain) { const d = domains.get(domain); return d && d.user_id === u ? d : null },
+    async getWorkspace(u, domain) { const w = workspaces.get(domain); return w && w.user_id === u ? w : null },
+    async latestContact(u, domain) { const rows = [...orders.values()].filter(o => o.user_id === u && o.domain === domain && (o.kind === 'domain' || o.kind === 'workspace')); return rows.length ? rows[rows.length - 1].contact : null },
+    async setExpiry(kind, u, domain, expiresAt) {
+      if (kind === 'domain') { const d = domains.get(domain); if (d && d.user_id === u) domains.set(domain, { ...d, expires_at: expiresAt }) }
+      else { const w = workspaces.get(domain); if (w && w.user_id === u) workspaces.set(domain, { ...w, expires_at: expiresAt }) }
+    },
   }
   return { store, orders, domains, workspaces, linked }
 }

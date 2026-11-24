@@ -65,6 +65,9 @@ export default function DomainsManager({ projectId = null }: { projectId?: strin
   const [alternatives, setAlternatives] = useState<Result[]>([])
   const [siteId, setSiteId] = useState('')
   const [track, setTrack] = useState<{ id: string; domain: string; kind: string; status: string } | null>(null)
+  const [renew, setRenew] = useState<{ kind: 'domain' | 'workspace'; domain: string; term: number } | null>(null)
+  const [rq, setRq] = useState<{ preview: { seats: number | null; term: number; registryCents: number; marginCents: number; totalCents: number; expiresAt: string; newExpiresAt: string }; policy: string[] } | null>(null)
+  const [rAck, setRAck] = useState(false)
 
   const loadMine = useCallback(async () => {
     const r = await fetch('/api/domains/mine')
@@ -107,6 +110,66 @@ export default function DomainsManager({ projectId = null }: { projectId?: strin
     if (!r.ok) return setMsg(j.error || 'Search failed')
     setResults(j.results); setAlternatives(j.alternatives ?? []); setSandbox(j.sandbox); setPolicyByTld(j.policyByTld ?? {})
   }
+
+  // ── Renew ──
+  async function loadRenewQuote(kind: 'domain' | 'workspace', domain: string, term: number) {
+    setRq(null)
+    const r = await fetch(`/api/domains/renew?kind=${kind}&domain=${encodeURIComponent(domain)}&${kind === 'domain' ? 'years' : 'months'}=${term}`)
+    const j = await r.json().catch(() => ({}))
+    if (!r.ok) { setRenew(null); setMsg(j.error || 'Could not price this renewal'); return }
+    setRq({ preview: j.preview, policy: j.policy }); if (j.sandbox) setSandbox(true)
+  }
+  function openRenew(kind: 'domain' | 'workspace', domain: string) {
+    if (renew?.domain === domain && renew.kind === kind) { setRenew(null); return }
+    const term = kind === 'domain' ? 1 : 12
+    setMsg(''); setRAck(false); setRenew({ kind, domain, term }); loadRenewQuote(kind, domain, term)
+  }
+  async function payRenew() {
+    if (!renew || !rq) return
+    setBusy(true); setMsg('')
+    const body = { kind: renew.kind, domain: renew.domain, years: renew.term, months: renew.term, confirmedTotalCents: rq.preview.totalCents, acknowledged: rAck }
+    const r = await fetch('/api/domains/renew', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
+    const j = await r.json().catch(() => ({}))
+    if (r.status === 409) { setBusy(false); setMsg(`The price changed to ${usd(j.totalCents)}. Open Renew again to see it.`); setRenew(null); return }
+    if (!r.ok) { setBusy(false); return setMsg(j.error || 'Could not start the renewal') }
+    if (j.sandbox) {
+      await fetch('/api/domains/sandbox-pay', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ orderId: j.orderId }) })
+      setBusy(false); setRenew(null); setMsg('Sandbox renewal complete. No money was taken.'); loadMine(); return
+    }
+    window.location.href = j.url
+  }
+  const dateOf = (iso: string) => new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
+  const renewPanel = (kind: 'domain' | 'workspace', domain: string) => renew?.kind === kind && renew.domain === domain && (
+    <div className={s.card}>
+      <h3 className={s.cardTitle}>Renew {domain}</h3>
+      {!rq && <p className={s.cardHint}>Getting the price</p>}
+      {rq && (
+        <>
+          {kind === 'domain' ? (
+            <div className={s.field} style={{ maxWidth: 220 }}>
+              <label htmlFor={`rn-${domain}`}>Renew for</label>
+              <select id={`rn-${domain}`} className={s.input} value={renew.term} onChange={e => { const t = Number(e.target.value); setRenew({ ...renew, term: t }); setRAck(false); loadRenewQuote(kind, domain, t) }}>
+                {[1, 2, 3, 5, 10].map(y => <option key={y} value={y}>{y} year{y > 1 ? 's' : ''}</option>)}
+              </select>
+            </div>
+          ) : <p className={s.cardHint}>{rq.preview.seats} seats, {rq.preview.term} months. Renewing keeps the same seats.</p>}
+          <table className={s.summary}><tbody>
+            <tr><td className={s.label}>Now ends</td><td>{dateOf(rq.preview.expiresAt)}</td></tr>
+            <tr><td className={s.label}>After renewing</td><td><strong>{dateOf(rq.preview.newExpiresAt)}</strong></td></tr>
+            <tr><td className={s.label}>{kind === 'domain' ? 'Registry renewal price' : 'Google Workspace price'}</td><td>{usd(rq.preview.registryCents)}</td></tr>
+            <tr><td className={s.label}>Our fee</td><td>{usd(rq.preview.marginCents)}</td></tr>
+            <tr className={s.total}><td className={s.label}>Total</td><td>{usd(rq.preview.totalCents)}</td></tr>
+          </tbody></table>
+          <ul className={s.policy}>{rq.policy.map(l => <li key={l}>{l}</li>)}</ul>
+          <label className={s.ack}><input type="checkbox" checked={rAck} onChange={e => setRAck(e.target.checked)} /><span>I have read this and want to renew {domain} for {usd(rq.preview.totalCents)}.</span></label>
+          <div className={s.actions}>
+            <button className={s.btn} disabled={!rAck || busy} onClick={payRenew}>{sandbox ? 'Renew in sandbox' : `Pay ${usd(rq.preview.totalCents)}`}</button>
+            <button className={s.ghost} onClick={() => setRenew(null)}>Cancel</button>
+          </div>
+        </>
+      )}
+    </div>
+  )
 
   async function attachSite(domain: string, project: string) {
     if (!project) return
@@ -183,14 +246,14 @@ export default function DomainsManager({ projectId = null }: { projectId?: strin
           <div>
             <div className={s.trackTitle}>
               {track.status === 'awaiting_payment' && 'Waiting for your payment to be confirmed'}
-              {track.status === 'registering' && (track.kind === 'workspace' ? `Setting up Google Workspace on ${track.domain}` : `Registering ${track.domain}`)}
-              {track.status === 'active' && (track.kind === 'workspace' ? `Google Workspace is set up on ${track.domain}` : `${track.domain} is yours`)}
+              {track.status === 'registering' && (track.kind === 'workspace' ? `Setting up Google Workspace on ${track.domain}` : track.kind.endsWith('_renewal') ? `Renewing ${track.domain}` : `Registering ${track.domain}`)}
+              {track.status === 'active' && (track.kind === 'workspace' ? `Google Workspace is set up on ${track.domain}` : track.kind.endsWith('_renewal') ? `${track.domain} is renewed` : `${track.domain} is yours`)}
               {track.status === 'needs_attention' && `Your payment for ${track.domain} is safe`}
               {track.status === 'cancelled' && 'This order was cancelled'}
             </div>
             <div className={s.meta}>
               {(track.status === 'awaiting_payment' || track.status === 'registering') && 'This can take a minute. You can leave this page: we email you when it is ready.'}
-              {track.status === 'active' && (track.kind === 'workspace' ? 'We have emailed you what happens next.' : 'It is being connected to your site now. We have emailed you the details.')}
+              {track.status === 'active' && (track.kind === 'workspace' ? 'We have emailed you what happens next.' : track.kind.endsWith('_renewal') ? 'The new date is on My domains. We have emailed you.' : 'It is being connected to your site now. We have emailed you the details.')}
               {track.status === 'needs_attention' && 'One step did not finish on its own. We have been told and will complete the order or refund you. We have emailed you.'}
             </div>
           </div>
@@ -340,8 +403,12 @@ export default function DomainsManager({ projectId = null }: { projectId?: strin
                 </ol>
                 <div className={s.itemHead}>
                   <span className={s.meta}>{st.note}</span>
-                  {d.connection !== 'live' && <button className={s.ghost} onClick={() => retry(d.domain)}>Try again</button>}
+                  <span className={s.actions}>
+                    {d.expires_at && <button className={s.ghost} onClick={() => openRenew('domain', d.domain)}>{renew?.domain === d.domain && renew.kind === 'domain' ? 'Close' : 'Renew'}</button>}
+                    {d.connection !== 'live' && <button className={s.ghost} onClick={() => retry(d.domain)}>Try again</button>}
+                  </span>
                 </div>
+                {renewPanel('domain', d.domain)}
                 {!d.project_id && (mine?.projects?.length ?? 0) > 0 && (
                   <div className={s.attachRow}>
                     <label className={s.meta} htmlFor={`attach-${d.domain}`}>Not on a site yet. Use it on</label>
@@ -362,7 +429,11 @@ export default function DomainsManager({ projectId = null }: { projectId?: strin
               </div>
               {!w.records?.written && <p className={s.meta} style={{ margin: 0 }}>Add these records where your domain is managed:</p>}
               <pre className={s.records}>{(w.records?.records ?? []).map(r => `${r.type}  ${r.host}  ${r.priority != null ? r.priority + '  ' : ''}${r.value}`).join('\n')}</pre>
-              <div><button className={s.ghost} onClick={() => navigator.clipboard?.writeText((w.records?.records ?? []).map(r => `${r.type}\t${r.host}\t${r.priority ?? ''}\t${r.value}`).join('\n'))}>Copy records</button></div>
+              <div className={s.actions}>
+                <button className={s.ghost} onClick={() => navigator.clipboard?.writeText((w.records?.records ?? []).map(r => `${r.type}\t${r.host}\t${r.priority ?? ''}\t${r.value}`).join('\n'))}>Copy records</button>
+                {w.expires_at && <button className={s.ghost} onClick={() => openRenew('workspace', w.domain)}>{renew?.domain === w.domain && renew.kind === 'workspace' ? 'Close' : 'Renew'}</button>}
+              </div>
+              {renewPanel('workspace', w.domain)}
             </div>
           ))}
         </div>

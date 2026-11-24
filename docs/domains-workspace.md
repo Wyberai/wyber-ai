@@ -16,7 +16,9 @@ Automatic connection **is** possible here: the provider has a DNS API and publis
 
 Also in the journey: after paying, the customer returns to a live status panel (waiting, registering, done) and gets an email once (domain ready, Workspace set up, or "needs one more step"; only the webhook delivery that did the work sends it); a domain can be pointed at one of their sites when buying or later from My domains; when the .com is taken, up to four free close names are offered; a daily job finishes any domain whose DNS or expiry was not ready at purchase.
 
-Not built yet: in-app renewal checkout (copy says to write to support; reminders are built), adding seats after purchase, INR checkout, the Google site-verification TXT (the provider API we read does not return it), sandbox/live real-API proof.
+Renewal is in the app: My domains has a **Renew** button on every domain and Workspace order. It shows the current end date, the new end date (the term is added after the current one), the registry renewal price + the flat $1 (or the Workspace price + the per-seat fee), the policy lines and a tick box; the server re-prices before payment, Dodo takes payment, the webhook renews with the provider, resets the reminders and emails the customer once. It needs the second migration, `supabase/migrations/20261124010000_domains_renewals.sql` (widens the order kinds; safe to run twice). Reminder emails and the policy lines now point to the Renew button.
+
+Not built yet: adding seats after purchase, INR checkout, the Google site-verification TXT (the provider API we read does not return it), sandbox/live real-API proof.
 
 ## Founder checklist, in this order
 1. **Rotate the ResellerClub API key now.** The key pasted in chat on 2026-11-18 is exposed. Panel: Settings > API > Regenerate. Never paste keys in chat again.
@@ -24,7 +26,7 @@ Not built yet: in-app renewal checkout (copy says to write to support; reminders
 3. Create a **demo reseller account** for the sandbox (its own id and key).
 4. Buy a small VPS with a fixed IPv4; deploy `relay/` (see `relay/README.md`), sandbox base URL, demo credentials.
 5. Whitelist the VPS IP in Settings > API (max 3, no ranges, allow up to an hour).
-6. Run the migration `supabase/migrations/20261124000000_domains_workspace.sql` in Supabase. **It has not been applied.**
+6. Run the migrations in Supabase, in order: `supabase/migrations/20261124000000_domains_workspace.sql` (applied 2026-11-24) and then `supabase/migrations/20261124010000_domains_renewals.sql` (renewals; **not applied yet**, the Renew button fails until it is).
 7. Set app env on Vercel: `DOMAINS_RELAY_URL`, `DOMAINS_RELAY_SECRET`, `DOMAINS_PROVIDER_CURRENCY` (+ `DOMAINS_INR_PER_USD` if INR), `WORKSPACE_*` cost values. `DODO_PRODUCT_DOMAIN`, Vercel and `CRON_SECRET` are already used elsewhere.
 8. Test on preview against the sandbox: search, price, one mock order, DNS records, Workspace order. Confirm Workspace cost keys and how `NoInvoice` debits the balance on the first sandbox order.
 9. Add a prepaid balance to the reseller account: **Rs 2,000 to 5,000 to start.**

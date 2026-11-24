@@ -18,3 +18,9 @@ export function dueReminder(daysLeft: number, alreadySent: number[]): number | n
   const due = REMINDER_DAYS.filter(t => daysLeft <= t && !alreadySent.includes(t))
   return due.length ? Math.min(...due) : null
 }
+
+export function addMonths(d: Date, months: number): Date {
+  const out = new Date(d)
+  out.setUTCMonth(out.getUTCMonth() + months)
+  return out
+}

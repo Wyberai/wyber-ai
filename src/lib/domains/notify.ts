@@ -5,9 +5,16 @@ import type { Order } from './orders'
 
 export interface OrderMail { to: string; subject: string; text: string }
 
-type MailOrder = Pick<Order, 'id' | 'kind' | 'domain' | 'seats' | 'months' | 'total_cents' | 'contact'>
+type MailOrder = Pick<Order, 'id' | 'kind' | 'domain' | 'seats' | 'months' | 'years' | 'total_cents' | 'contact'>
 
 const usd = (c: number) => `$${(c / 100).toFixed(2)}`
+
+function itemLabel(o: MailOrder): string {
+  if (o.kind === 'workspace') return `Google Workspace on ${o.domain}`
+  if (o.kind === 'workspace_renewal') return `the Google Workspace renewal for ${o.domain}`
+  if (o.kind === 'domain_renewal') return `the renewal of ${o.domain}`
+  return o.domain
+}
 
 export function orderMail(order: MailOrder, outcome: 'done' | 'attention', appUrl: string): OrderMail {
   const to = order.contact.email
@@ -18,11 +25,39 @@ export function orderMail(order: MailOrder, outcome: 'done' | 'attention', appUr
       to,
       subject: `Your order for ${order.domain} needs one more step`,
       text: [
-        `Your payment of ${usd(order.total_cents)} for ${order.kind === 'workspace' ? `Google Workspace on ${order.domain}` : order.domain} is safe.`,
+        `Your payment of ${usd(order.total_cents)} for ${itemLabel(order)} is safe.`,
         '',
         'One step of the setup did not finish on its own, so a person on our team is finishing it. We will complete the order or refund you in full.',
         '',
         `Reference: ${ref}. Reply to this email if you want an update.`,
+      ].join('\n'),
+    }
+  }
+  if (order.kind === 'domain_renewal') {
+    const y = order.years ?? 1
+    return {
+      to,
+      subject: `${order.domain} has been renewed`,
+      text: [
+        `${order.domain} is renewed for ${y} more year${y === 1 ? '' : 's'}, added after its previous expiry date. You paid ${usd(order.total_cents)}.`,
+        '',
+        `The new expiry date is on this page: ${link}`,
+        '',
+        'It does not renew by itself. We email you 30, 14, 7 and 1 days before it expires.',
+      ].join('\n'),
+    }
+  }
+  if (order.kind === 'workspace_renewal') {
+    const seats = order.seats ?? 1
+    return {
+      to,
+      subject: `Google Workspace for ${order.domain} has been renewed`,
+      text: [
+        `Google Workspace on ${order.domain} is renewed for ${order.months ?? 12} more months with ${seats} seat${seats === 1 ? '' : 's'}, added after its previous end date. You paid ${usd(order.total_cents)}.`,
+        '',
+        `The new end date is on this page: ${link}`,
+        '',
+        'It does not renew by itself. We email you 30, 14, 7 and 1 days before it ends.',
       ].join('\n'),
     }
   }
