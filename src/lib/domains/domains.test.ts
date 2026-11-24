@@ -126,16 +126,20 @@ describe('buying a domain', () => {
     const o = await mem.store.insertOrder({ user_id: 'u1', kind: 'workspace', domain: 'ashabakery.com', project_id: null, years: null, months: 12, seats: 3, region: 'in', registry_cents: 10800, margin_cents: 1800, total_cents: 12600, contact, policy_version: 'x' })
     expect((await fulfilOrder({ provider, store: mem.store }, o.id)).ok).toBe(true)
     expect(mem.workspaces.get('ashabakery.com')?.seats).toBe(3)
-    expect(provider.state.dns.get('ashabakery.com')?.some(r => r.type === 'MX' && r.value === 'smtp.google.com')).toBe(true)
+    expect(provider.state.dns.get('ashabakery.com')?.some(r => r.type === 'MX' && r.value === 'aspmx.l.google.com' && r.priority === 1)).toBe(true)
+    expect(provider.state.dns.get('ashabakery.com')?.filter(r => r.type === 'MX')).toHaveLength(5)
   })
 })
 
 describe('dns records', () => {
   it('uses the same site records the custom-domain check expects', () => {
     expect(siteRecords()).toEqual([
-      { type: 'A', host: '@', value: '76.76.21.21', ttl: 300 },
-      { type: 'CNAME', host: 'www', value: 'cname.vercel-dns.com', ttl: 300 },
+      { type: 'A', host: '@', value: '76.76.21.21', ttl: 7200 },
+      { type: 'CNAME', host: 'www', value: 'cname.vercel-dns.com', ttl: 7200 },
     ])
+  })
+  it('never sends a TTL the provider would refuse', () => {
+    for (const r of [...siteRecords(), ...workspaceRecords({ verificationToken: 'x' })]) expect(r.ttl).toBeGreaterThanOrEqual(7200)
   })
   it('maps records to provider calls', () => {
     expect(providerPath({ type: 'A', host: '@', value: '1.2.3.4', ttl: 300 })).toEqual({ path: 'dns/manage/add-ipv4-record.json', params: { value: '1.2.3.4', ttl: '300' } })
@@ -143,8 +147,8 @@ describe('dns records', () => {
     expect(providerPath({ type: 'CNAME', host: 'www', value: 'x.example', ttl: 300 }).params.host).toBe('www')
   })
   it('adds a verification record only when we have one', () => {
-    expect(workspaceRecords()).toHaveLength(2)
-    expect(workspaceRecords({ verificationToken: 'google-site-verification=abc' })).toHaveLength(3)
+    expect(workspaceRecords()).toHaveLength(6) // five MX + SPF
+    expect(workspaceRecords({ verificationToken: 'google-site-verification=abc' })).toHaveLength(7)
   })
 })
 
@@ -206,5 +210,27 @@ describe('customer copy', () => {
     expect(policyLines('com').join(' ')).toMatch(/registry price plus a flat \$1/)
     expect(policyLines('com').join(' ')).toMatch(/4 days/)
     expect(policyLines('io').join(' ')).toMatch(/not published/)
+  })
+})
+
+describe('provider answers found in the sandbox', () => {
+  const clientFor = (reply: unknown) =>
+    new RelayDomainsClient({ url: 'https://relay.example', secret: 's', fetchImpl: (async () => new Response(JSON.stringify(reply), { status: 200 })) as typeof fetch })
+  it('treats HTTP 200 with status "Failed" as an error, not a success', async () => {
+    await expect(clientFor({ status: 'Failed', msg: 'ttl : TTL should not be less than 7200.' }).addDnsRecord('a.com', { type: 'A', host: '@', value: '1.2.3.4', ttl: 7200 })).rejects.toThrow('TTL')
+  })
+  it('reads an unfinished domain order as pending, and a finished one with its expiry', async () => {
+    expect((await clientFor({ domainname: 'a.in', orderstatus: [] }).getDomainDetails(1))).toMatchObject({ status: 'pending', expiresAt: null })
+    const done = await clientFor({ domainname: 'a.com', orderstatus: ['transferlock'], endtime: '1827027350' }).getDomainDetails(2)
+    expect(done.expiresAt).toBe('2027-11-24T03:35:50.000Z')
+    expect(done.status).toBe('transferlock')
+  })
+  it('makes provider passwords that meet the rule: 9-16 chars with upper, lower, digit, special', async () => {
+    const { providerPassword } = await import('./relay-client')
+    for (let i = 0; i < 50; i++) {
+      const p = providerPassword()
+      expect(p.length).toBeGreaterThanOrEqual(9); expect(p.length).toBeLessThanOrEqual(16)
+      expect(p).toMatch(/[A-Z]/); expect(p).toMatch(/[a-z]/); expect(p).toMatch(/[0-9]/); expect(p).toMatch(/[!@#%+]/)
+    }
   })
 })

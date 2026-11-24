@@ -39,6 +39,15 @@ function cleanParams(p: Params): Record<string, string | string[]> {
 
 const major = (v: unknown): number => Math.round(Number(v) * 100)
 
+/** A random password that meets the provider's rule (found in the sandbox: 9 to 16 characters with upper case, lower case,
+ *  a digit and a special character from ~*!@$#%_+.?:,{}). 14 characters, never stored or shown. */
+export function providerPassword(): string {
+  const pick = (set: string, n: number) => Array.from(randomBytes(n), b => set[b % set.length]).join('')
+  const chars = [pick('ABCDEFGHJKLMNPQRSTUVWXYZ', 3), pick('abcdefghijkmnopqrstuvwxyz', 5), pick('23456789', 3), pick('!@#%+', 3)].join('')
+  const bytes = randomBytes(chars.length)
+  return Array.from(chars).map((c, i) => ({ c, k: bytes[i] })).sort((a, b) => a.k - b.k).map(x => x.c).join('')
+}
+
 export class RelayDomainsClient implements DomainsProvider {
   readonly name = 'resellerclub-relay'
   private readonly doFetch: Fetch
@@ -80,8 +89,9 @@ export class RelayDomainsClient implements DomainsProvider {
     if (json && typeof json === 'object' && !Array.isArray(json)) {
       const o = json as Record<string, unknown>
       const st = String(o.status ?? '').toLowerCase()
-      if (st === 'error' || (o.error && !o.entityid)) {
-        throw new ProviderError(String(o.message ?? o.error ?? 'The domain provider refused the request'))
+      // The provider also answers HTTP 200 with status "Failed" and a `msg` (seen on DNS records in the sandbox).
+      if (st === 'error' || st === 'failed' || (o.error && !o.entityid)) {
+        throw new ProviderError(String(o.message ?? o.msg ?? o.error ?? 'The domain provider refused the request'))
       }
     }
     return json
@@ -128,7 +138,7 @@ export class RelayDomainsClient implements DomainsProvider {
     const res = await this.call('POST', 'customers/v2/signup.json', {
       username: input.email,
       // The customer never signs in to the provider's panel; everything happens inside WyberAi. A random password is set and discarded.
-      passwd: randomBytes(18).toString('base64url') + 'aA1!',
+      passwd: providerPassword(),
       name: c.name, company: c.company || 'N/A', 'address-line-1': c.address1, city: c.city, state: c.state,
       country: c.country, zipcode: c.zip, 'phone-cc': c.phoneCc, phone: c.phone, 'lang-pref': 'en',
     })
@@ -172,11 +182,14 @@ export class RelayDomainsClient implements DomainsProvider {
   async getDomainDetails(orderId: number): Promise<DomainDetails> {
     const r = (await this.call('GET', 'domains/details.json', { 'order-id': orderId, options: 'OrderDetails' })) as Record<string, unknown>
     const end = Number(r.endtime)
+    const expiresAt = Number.isFinite(end) && end > 0 ? new Date(end * 1000).toISOString() : null
+    // Domain orders carry no `currentstatus`: a finished order has an `endtime`, a fresh one (seen with .in) has none yet.
+    const flags = Array.isArray(r.orderstatus) ? (r.orderstatus as unknown[]).map(String).join(',') : ''
     return {
       orderId,
       domain: String(r.domainname ?? r.description ?? ''),
-      status: String(r.currentstatus ?? 'unknown'),
-      expiresAt: Number.isFinite(end) && end > 0 ? new Date(end * 1000).toISOString() : null,
+      status: String(r.currentstatus ?? (expiresAt ? (flags || 'active') : 'pending')),
+      expiresAt,
     }
   }
 

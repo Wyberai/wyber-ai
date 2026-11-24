@@ -5,25 +5,37 @@ import type { DnsRecord } from './types'
 // The site records are the same ones /api/custom-domain checks (src/lib/dns-records.ts), so connection and
 // verification agree.
 
+/** The provider refuses a record with a TTL under 7200 seconds (it answers HTTP 200 with status "Failed"; found in the sandbox). */
+export const MIN_TTL = 7200
+
 export function siteRecords(): DnsRecord[] {
   return [
-    { type: 'A', host: '@', value: VERCEL_A_IP, ttl: 300 },
-    { type: 'CNAME', host: 'www', value: VERCEL_CNAME, ttl: 300 },
+    { type: 'A', host: '@', value: VERCEL_A_IP, ttl: MIN_TTL },
+    { type: 'CNAME', host: 'www', value: VERCEL_CNAME, ttl: MIN_TTL },
   ]
 }
 
 /**
- * Google's current mail setup is one MX record, smtp.google.com at priority 1 (Google Workspace Admin Help,
- * "Set up MX records for Google Workspace"), plus an SPF record. The Google site-verification TXT value is specific to
- * each customer and is not returned by the reseller API we read, so it is carried separately when we have it.
+ * The mail records the provider itself returns for Google Workspace (its gapps/{region}/dns-record.json call, read from
+ * the sandbox 2026-11-24): the five classic Google MX records at priorities 1, 5, 5, 10, 10. We use the provider's own
+ * list so it matches what its panel tells customers. Plus an SPF record. The Google site-verification TXT value is
+ * specific to each customer and that call does not return it, so it is carried separately when we have it.
  */
+export const GOOGLE_MX: { value: string; priority: number }[] = [
+  { value: 'aspmx.l.google.com', priority: 1 },
+  { value: 'alt1.aspmx.l.google.com', priority: 5 },
+  { value: 'alt2.aspmx.l.google.com', priority: 5 },
+  { value: 'alt3.aspmx.l.google.com', priority: 10 },
+  { value: 'alt4.aspmx.l.google.com', priority: 10 },
+]
+
 export function workspaceRecords(opts: { verificationToken?: string | null } = {}): DnsRecord[] {
   const recs: DnsRecord[] = [
-    { type: 'MX', host: '@', value: 'smtp.google.com', ttl: 3600, priority: 1 },
-    { type: 'TXT', host: '@', value: 'v=spf1 include:_spf.google.com ~all', ttl: 3600 },
+    ...GOOGLE_MX.map(m => ({ type: 'MX' as const, host: '@', value: m.value, ttl: MIN_TTL, priority: m.priority })),
+    { type: 'TXT', host: '@', value: 'v=spf1 include:_spf.google.com ~all', ttl: MIN_TTL },
   ]
   if (opts.verificationToken) {
-    recs.push({ type: 'TXT', host: '@', value: opts.verificationToken, ttl: 3600 })
+    recs.push({ type: 'TXT', host: '@', value: opts.verificationToken, ttl: MIN_TTL })
   }
   return recs
 }

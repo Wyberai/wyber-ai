@@ -31,6 +31,7 @@ const ALLOWED = new Map([
   ...['in', 'se', 'gbl'].flatMap(r => [
     [`gapps/${r}/add.json`, 'POST'], [`gapps/${r}/admin/add.json`, 'POST'], [`gapps/${r}/add-account.json`, 'POST'],
     [`gapps/${r}/renew.json`, 'POST'], [`gapps/${r}/details.json`, 'GET'], [`gapps/${r}/orderid.json`, 'GET'],
+    [`gapps/${r}/dns-record.json`, 'GET'],
   ]),
 ])
 

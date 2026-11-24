@@ -41,6 +41,16 @@ Env var names: see `.env.example` (section "Domains + Google Workspace") and `re
 - **Domain limit:** I could not confirm Vercel's current per-project domain cap from here. Check Vercel's limits page (Pro and Enterprise differ) before selling at volume. Each purchase adds two names (apex and `www`), so the count doubles.
 - **Watch as traffic grows:** domains per project, function and bandwidth usage (every custom-domain page view runs through our app), certificate issuance failures (`certificate pending` for long), DNS API errors in the `needs_attention` list, reseller balance (an empty balance stops registrations), and the relay (single VPS: add monitoring on `/healthz`, and a second whitelisted IP).
 
+## What the real sandbox proved (2026-11-24, ResellerClub demo account through the relay)
+Proved: availability and cost for all five extensions; creating a customer and contact; default nameservers; registering a .com (completed, with expiry date); DNS activation; writing A, CNAME, MX and TXT records.
+Found and fixed:
+- Customer password rule (9 to 16 characters with upper, lower, digit, special): the first version was refused.
+- DNS records need a TTL of at least 7200. The provider answers **HTTP 200 with status "Failed"** otherwise, which the first version counted as success. Now treated as an error.
+- Domain details have no `currentstatus`. A finished order has `endtime`; a fresh .in order had none and its DNS could not be activated yet. The domain now shows "DNS pending" and the daily job (and "Try again") finishes it and fills in the expiry.
+- Workspace mail records now use the provider's own list (five Google MX records), from `gapps/{region}/dns-record.json`.
+Not proved: **Google Workspace ordering** ("Plan Not Found" in every region: the demo account has no Workspace plan, so only a live order will tell), a .in order completing (the demo's .in stayed pending), and a .com that the demo registry sometimes failed on ("error retrieving host check response", demo flakiness). The demo account resets daily.
+The demo account is in dollars, so set `DOMAINS_PROVIDER_CURRENCY=USD` while testing against it, and `INR` against your live account.
+
 ## Sandbox walkthrough
 `npx vitest run src/lib/domains/walkthrough.test.ts --reporter=verbose` prints search with prices, the confirmation text, order, DNS records written, Workspace mail records and a reminder, against the fake provider. For a click-through locally set `DOMAINS_PROVIDER=fake` (refused on production); state is in memory per process.
 
