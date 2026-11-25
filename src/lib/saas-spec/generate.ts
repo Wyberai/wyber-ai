@@ -5,6 +5,7 @@ import type { ModelCall, ModelReply } from '../build-spec/types'
 import { isIndianPrompt } from '../build-spec/locale'
 import { chooseShape, SAAS_LIMITS } from '../app-spec/choose'
 import { resolveLook } from '../build-spec/look'
+import { repairLengths } from '../build-spec/trim'
 import { normalizeCopy, validateCopy } from '../website-spec/copy'
 import type { SiteCopy } from '../website-spec/types'
 import { buildSaasCopyPrompt, buildSaasModelPrompt, normalizeSaasModel, validateSaasModel } from './model'
@@ -56,7 +57,7 @@ export async function generateSaas(input: SaasGenerateInput, deps: { write: Mode
   const model = normalizeSaasModel(asked.value)
 
   const cp = buildSaasCopyPrompt(spec, brief, model)
-  const written = await askForJson<SiteCopy>({ scrub: scrubClaims,
+  const written = await askForJson<SiteCopy>({ scrub: scrubClaims, prepare: v => repairLengths(v, validateCopy(spec.site, v as SiteCopy)),
     call: deps.write, system: cp.system, user: cp.user, attempts: 2, onUsage,
     validate: v => validateCopy(spec.site, v as SiteCopy).map(i => `${i.path}: ${i.message}`),
   })

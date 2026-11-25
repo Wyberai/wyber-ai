@@ -5,6 +5,7 @@ import { buildLanguagePrompt, languagesFromReply, validateLanguageReply } from '
 import type { ModelCall, ModelReply } from '../build-spec/types'
 import { buildCopyPrompt, normalizeCopy, validateCopy } from './copy'
 import { resolveLook } from '../build-spec/look'
+import { repairLengths } from '../build-spec/trim'
 import { planWebsite } from './plan'
 import { renderWebsite, type Translations } from './render'
 import { buildTranslatePrompt, completeTranslation, translatable, validateTranslation } from './translate'
@@ -60,7 +61,7 @@ export async function generateWebsite(input: GenerateInput, deps: GenerateDeps):
   }
 
   const { system, user } = buildCopyPrompt(spec, stripFactsSuffix(input.prompt))
-  const written = await askForJson<SiteCopy>({ scrub: scrubClaims,
+  const written = await askForJson<SiteCopy>({ scrub: scrubClaims, prepare: v => repairLengths(v, validateCopy(spec, v as SiteCopy)),
     call: deps.writeCopy, system, user, onUsage,
     validate: v => validateCopy(spec, v as SiteCopy).map(i => `${i.path}: ${i.message}`),
   })

@@ -14,6 +14,8 @@ export interface AskOptions {
   onUsage?: (reply: ModelReply) => void
   /** Last resort after the final failed attempt: clean the last parsed reply (for example strip unproven claims) and re-check it once. */
   scrub?: (value: unknown) => unknown
+  /** Applied to every parsed reply BEFORE validation (and to what is returned): small safe repairs such as trimming slightly over-long text. */
+  prepare?: (value: unknown) => unknown
 }
 export type AskResult<T> = { ok: true; value: T } | { ok: false; problems: string[] }
 
@@ -36,7 +38,10 @@ export async function askForJson<T>(o: AskOptions): Promise<AskResult<T>> {
       const reply = await (o.timeoutMs ? withTimeout(call, o.timeoutMs) : call)
       o.onUsage?.(reply)
       last = reply.text
-      const value = parseJsonObject(reply.text)
+      const parsed = parseJsonObject(reply.text)
+      // Cheap, safe repairs (for example trimming text that is two characters over its limit) before the checks, so a trivial
+      // slip never costs a retry or the whole build.
+      const value = o.prepare ? o.prepare(parsed) : parsed
       lastValue = value
       problems = o.validate(value)
       if (problems.length === 0) return { ok: true, value: value as T }

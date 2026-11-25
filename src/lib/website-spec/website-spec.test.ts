@@ -192,6 +192,20 @@ describe('generate (model injected)', () => {
     expect(r.text).toContain('<file path="src/owner-details.ts">')
   })
 
+  it('text only slightly over its limit is trimmed, so the spec build still succeeds in ONE call (live, 24 Nov: imageAlt 142 > 140 sent a dental site to the free-form build)', async () => {
+    const over = structuredClone(d.copy) as typeof d.copy
+    const id = Object.keys(over.sections)[0]
+    const longTitle = 'Title words that run on and on '.repeat(3).trim()
+    over.sections[id].title = longTitle
+    expect(longTitle.length).toBeGreaterThan(80)
+    expect(longTitle.length).toBeLessThan(104)
+    let calls = 0
+    const r = await generateWebsite({ prompt: d.prompt + ' English only.', seed: d.seed, facts: d.facts }, { writeCopy: withLook(async () => { calls++; return reply(over) }) })
+    expect(r.ok).toBe(true)
+    expect(calls).toBe(1)
+    if (r.ok) expect(r.text).not.toContain(longTitle)
+  })
+
   it('repairs once when the first reply breaks the rules, and tells the model what was wrong', async () => {
     const bad = structuredClone(d.copy)
     bad.hero.headline = 'The best clinic in the city!'
