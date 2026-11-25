@@ -4,7 +4,8 @@ import { parseFactsFromPrompt, stripFactsSuffix } from '../build-spec/facts'
 import type { ModelCall, ModelReply } from '../build-spec/types'
 import { isIndianPrompt } from '../build-spec/locale'
 import { chooseShape, SAAS_LIMITS } from '../app-spec/choose'
-import { resolveLook } from '../build-spec/look'
+import { askLookBrief, drawLook } from '../build-spec/look'
+import { claimUnique, designKey, wantsSameDesign, type DesignRegistry } from '../build-spec/design-registry'
 import { repairLengths } from '../build-spec/trim'
 import { normalizeCopy, validateCopy } from '../website-spec/copy'
 import type { SiteCopy } from '../website-spec/types'
@@ -32,16 +33,29 @@ export function toFileBlocks(files: Record<string, string>): { text: string; pat
  * written after the first so the features describe screens that exist. Everything else is code. Any failure returns ok:false and the caller
  * falls back to the free-form build.
  */
-export async function generateSaas(input: SaasGenerateInput, deps: { write: ModelCall }): Promise<SaasGenerateResult> {
+export async function generateSaas(input: SaasGenerateInput, deps: { write: ModelCall; designs?: DesignRegistry | null }): Promise<SaasGenerateResult> {
   const usage = { inputTokens: 0, outputTokens: 0 }
   const onUsage = (r: ModelReply) => { usage.inputTokens += r.inputTokens; usage.outputTokens += r.outputTokens }
   const notes: string[] = []
   const brief = stripFactsSuffix(input.prompt)
   let spec: SaasSpec
   try {
-    const art = input.directionId ? null : await resolveLook(brief, input.seed, 'saas', deps.write, onUsage, { named: true, avoid: input.avoid })
-    if (!art) notes.push('look: kept the keyword choice')
-    spec = planSaas(input.prompt, { seed: input.seed, facts: input.facts ?? parseFactsFromPrompt(input.prompt), directionId: art?.directionId ?? input.directionId, avoid: input.avoid, currency: currencyFor(input.prompt), look: art?.look })
+    const facts = input.facts ?? parseFactsFromPrompt(input.prompt)
+    const lookBrief = input.directionId ? null : await askLookBrief(brief, 'saas', deps.write, onUsage)
+    if (!lookBrief && !input.directionId) notes.push('look: kept the keyword choice')
+    // THE RULE: a design that exists is never built again unless the user asked for exactly that.
+    const sameOnPurpose = Boolean(input.directionId) || wantsSameDesign(input.prompt)
+    const picked = await claimUnique({
+      seed: input.seed, registry: sameOnPurpose ? null : deps.designs, owner: input.seed,
+      build: seed => {
+        const art = lookBrief ? drawLook(lookBrief, seed, 'saas', { named: true, avoid: input.avoid }) : null
+        return planSaas(input.prompt, { seed, facts, directionId: art?.directionId ?? input.directionId, avoid: input.avoid, currency: currencyFor(input.prompt), look: art?.look })
+      },
+      keyOf: s => designKey({ directionId: s.direction.id, look: s.look, layout: [...Object.values(s.layout), ...Object.values(s.app.layout)].join('.') }),
+      directionOf: s => s.direction.id,
+    })
+    if (!picked.unique) notes.push('design: every draw was already taken, the last one was used')
+    spec = picked.value
   } catch (e) { return { ok: false, reason: 'plan: ' + String(e), usage } }
 
   // The model reads the whole brief to choose what the product is for (see app-spec/choose), and says what this kind of product cannot do.

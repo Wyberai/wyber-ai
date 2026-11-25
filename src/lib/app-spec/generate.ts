@@ -3,7 +3,8 @@ import { askForJson } from '../build-spec/ask'
 import { parseFactsFromPrompt, stripFactsSuffix } from '../build-spec/facts'
 import type { ModelCall } from '../build-spec/types'
 import { chooseShape } from './choose'
-import { resolveLook } from '../build-spec/look'
+import { askLookBrief, drawLook } from '../build-spec/look'
+import { claimUnique, designKey, wantsSameDesign, type DesignRegistry } from '../build-spec/design-registry'
 import { buildModelPrompt, normalizeModel, validateModel } from './model'
 import { planApp } from './plan'
 import { renderApp } from './render'
@@ -16,14 +17,27 @@ export type AppGenerateResult =
 
 import { isIndianPrompt } from '../build-spec/locale'
 
-export async function generateApp(input: AppGenerateInput, deps: { writeModel: ModelCall }): Promise<AppGenerateResult> {
+export async function generateApp(input: AppGenerateInput, deps: { writeModel: ModelCall; designs?: DesignRegistry | null }): Promise<AppGenerateResult> {
   const usage = { inputTokens: 0, outputTokens: 0 }
   const notes: string[] = []
   let spec: AppSpec
   try {
-    const art = input.directionId ? null : await resolveLook(stripFactsSuffix(input.prompt), input.seed, 'app', deps.writeModel, r => { usage.inputTokens += r.inputTokens; usage.outputTokens += r.outputTokens }, { named: true, avoid: input.avoid })
-    if (!art) notes.push('look: kept the keyword choice')
-    spec = planApp(input.prompt, { seed: input.seed, facts: input.facts ?? parseFactsFromPrompt(input.prompt), directionId: art?.directionId ?? input.directionId, avoid: input.avoid, look: art?.look })
+    const facts = input.facts ?? parseFactsFromPrompt(input.prompt)
+    const lookBrief = input.directionId ? null : await askLookBrief(stripFactsSuffix(input.prompt), 'app', deps.writeModel, r => { usage.inputTokens += r.inputTokens; usage.outputTokens += r.outputTokens })
+    if (!lookBrief && !input.directionId) notes.push('look: kept the keyword choice')
+    // THE RULE: a design that exists is never built again unless the user asked for exactly that.
+    const sameOnPurpose = Boolean(input.directionId) || wantsSameDesign(input.prompt)
+    const picked = await claimUnique({
+      seed: input.seed, registry: sameOnPurpose ? null : deps.designs, owner: input.seed,
+      build: seed => {
+        const art = lookBrief ? drawLook(lookBrief, seed, 'app', { named: true, avoid: input.avoid }) : null
+        return planApp(input.prompt, { seed, facts, directionId: art?.directionId ?? input.directionId, avoid: input.avoid, look: art?.look })
+      },
+      keyOf: s => designKey({ directionId: s.direction.id, look: s.look, layout: Object.values(s.layout).join('.') }),
+      directionOf: s => s.direction.id,
+    })
+    if (!picked.unique) notes.push('design: every draw was already taken, the last one was used')
+    spec = picked.value
   } catch (e) { return { ok: false, reason: 'plan: ' + String(e), usage } }
   if (spec.brief.note) notes.push(spec.brief.note)
 

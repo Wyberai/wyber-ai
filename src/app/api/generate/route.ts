@@ -117,6 +117,11 @@ const HEARTBEAT_BYTES = new TextEncoder().encode('\n[agent:{"agent":"heartbeat",
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
+// The shared record of every design ever built (see src/lib/build-spec/design-registry.ts). Null when it cannot be reached: a build is never blocked by it.
+async function designRegistry() {
+  try { const { supabaseDesignRegistry } = await import('@/lib/build-spec/design-registry'); return supabaseDesignRegistry(await createAdminClient()) } catch { return null }
+}
+
 // A dropped TCP connection to Anthropic (ECONNRESET, or undici's generic
 // "terminated") while OPENING a new stream() call is a transient network
 // blip, not a real failure — but the tool-use loop's one outer try/catch
@@ -5292,14 +5297,27 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
       // from Plan Mode still wins. One small Haiku call; any failure keeps the existing selection below.
       if (!(typeof paletteId === 'string' && paletteId) && (projectType === 'website' || projectType === 'saas' || projectType === 'app' || projectType === 'webapp' || !projectType)) {
         try {
-          const { resolveLook, skinDirection } = await import('@/lib/build-spec/look')
+          const { askLookBrief, drawLook, skinDirection } = await import('@/lib/build-spec/look')
+          const { claimUnique, designKey, wantsSameDesign } = await import('@/lib/build-spec/design-registry')
           const { getDirectionById } = await import('@/lib/design-directions')
           const { renderDirectionBrief } = await import('@/lib/direction-brief')
           const surface = projectType === 'website' ? 'website' : projectType === 'saas' ? 'saas' : 'app'
-          const art = await resolveLook(prompt, String(projectId ?? buildId ?? prompt), surface, async (system, user) => {
+          const lookBrief = await askLookBrief(prompt, surface, async (system, user) => {
             const m = await client.messages.create({ model: CHEAP_MODEL, thinking: CHEAP_THINKING, max_tokens: 500, system, messages: [{ role: 'user', content: user }] })
             return { text: m.content.map(b => (b.type === 'text' ? b.text : '')).join(''), inputTokens: m.usage.input_tokens ?? 0, outputTokens: m.usage.output_tokens ?? 0 }
-          }, () => {}, { named: true })
+          }, () => {})
+          const owner = String(projectId ?? buildId ?? prompt)
+          // THE RULE: a design that exists is never built again unless the user asked for exactly that.
+          const picked = lookBrief
+            ? await claimUnique({
+                seed: owner, registry: wantsSameDesign(prompt) ? null : await designRegistry(), owner,
+                build: seed => drawLook(lookBrief, seed, surface, { named: true }),
+                keyOf: r => designKey({ directionId: r.directionId, look: r.look }),
+                directionOf: r => r.directionId,
+              })
+            : null
+          if (picked && !picked.unique) console.warn('[design-registry] every draw was taken for this brief; using the last one')
+          const art = picked?.value ?? null
           const base = art ? getDirectionById(art.directionId) : undefined
           if (art && base) {
             perRequestParts.push(renderDirectionBrief(skinDirection(base, art.look)))
@@ -5680,6 +5698,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
             generateWebsite(
               { prompt, seed: String(projectId ?? buildId ?? prompt) },
               {
+                designs: await designRegistry(),
                 writeCopy: async (system, user) => {
                   const m = await client.messages.create({ model, max_tokens: 8000, system, messages: [{ role: 'user', content: user }] })
                   const text = m.content.map(b => (b.type === 'text' ? b.text : '')).join('')
@@ -5743,6 +5762,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
             generateApp(
               { prompt, seed: String(projectId ?? buildId ?? prompt) },
               {
+                designs: await designRegistry(),
                 writeModel: async (system, user) => {
                   const m = await client.messages.create({ model, max_tokens: 10000, system, messages: [{ role: 'user', content: user }] })
                   const text = m.content.map(b => (b.type === 'text' ? b.text : '')).join('')
@@ -5801,7 +5821,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
           const SAAS_SPEC_TIMEOUT_MS = Number(process.env.SAAS_SPEC_TIMEOUT_MS) || 240000
           let saasTimer: ReturnType<typeof setTimeout> | undefined
           const saasResult = await Promise.race([
-            runSaasSpec({ prompt, seed: String(projectId ?? buildId ?? prompt) }, async (system, user) => {
+            runSaasSpec({ prompt, seed: String(projectId ?? buildId ?? prompt), designs: await designRegistry() }, async (system, user) => {
               const m = await client.messages.create({ model, max_tokens: 12000, system, messages: [{ role: 'user', content: user }] })
               return { text: m.content.map(b => (b.type === 'text' ? b.text : '')).join(''), inputTokens: m.usage.input_tokens ?? 0, outputTokens: m.usage.output_tokens ?? 0 }
             }),

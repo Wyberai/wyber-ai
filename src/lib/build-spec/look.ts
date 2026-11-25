@@ -11,7 +11,7 @@ import { seededRandom } from './random'
 import type { ModelCall, ModelReply } from './types'
 
 export interface Pairing { display: string; body: string; displayWeight: number; displayTracking: string }
-export interface Look { hue: number; family: string; fonts: Pairing; type: string; why?: string }
+export interface Look { hue: number; family: string; fonts: Pairing; type: string; radius: string; why?: string }
 
 /** Colour families: a hue range each (degrees). A build draws one hue inside the range from its seed, so two "teal" sites still differ. */
 export const HUE_FAMILIES: Record<string, { range: [number, number]; feel: string }> = {
@@ -179,8 +179,16 @@ export function pickDirectionForLook(b: LookBrief, seed: string, surface: 'websi
   const ranked = pool.map(d => ({ d, s: score(d) + rnd() * 0.4 })).sort((a, b2) => b2.s - a.s)
   const best = ranked[0]?.s ?? 0
   // everything within one point of the best fit is a fair choice; the seed decides among them
-  const near = ranked.filter(x => x.s >= best - 1).slice(0, 5)
+  const near = ranked.filter(x => x.s >= best - 1.5).slice(0, 8)
   return (near[Math.floor(rnd() * near.length)] ?? ranked[0] ?? { d: DIRECTIONS[0] }).d
+}
+
+/** Corner radius is a design dimension of its own: sharp for technical and loud type, soft for friendly type, a spread for the rest. */
+export const RADII: Record<string, string[]> = {
+  humanist: ['0.75rem', '1rem', '1.25rem', '1.5rem'],
+  technical: ['0rem', '0.125rem', '0.25rem'],
+  'display-bold': ['0rem', '0.125rem', '0.25rem', '0.5rem'],
+  default: ['0.125rem', '0.25rem', '0.5rem', '0.75rem', '1rem'],
 }
 
 export function lookFor(b: LookBrief, seed: string): Look {
@@ -188,29 +196,40 @@ export function lookFor(b: LookBrief, seed: string): Look {
   const [lo, hi] = HUE_FAMILIES[b.palette].range
   const hue = Math.round((lo + rnd() * (hi - lo)) * 10) / 10
   const list = PAIRINGS[b.type].list
-  return { hue, family: b.palette, type: b.type, fonts: list[Math.floor(rnd() * list.length)], why: b.why }
+  const fonts = list[Math.floor(rnd() * list.length)]
+  const radii = RADII[b.type] ?? RADII.default
+  return { hue, family: b.palette, type: b.type, fonts, radius: radii[Math.floor(rnd() * radii.length)], why: b.why }
 }
 
 /** The direction with the art director's skin applied: recoloured tokens and the chosen font pairing. Used for CSS and for the free-form design brief. */
 export function skinDirection(d: Direction, look: Look): Direction {
   return {
     ...d,
-    palette: { ...d.palette, tokens: recolorTokens(d.palette.tokens, look.hue) },
+    palette: { ...d.palette, tokens: recolorTokens(d.palette.tokens, look.hue), radius: look.radius ?? d.palette.radius },
     fonts: { ...d.fonts, display: look.fonts.display, body: look.fonts.body, displayWeight: look.fonts.displayWeight, displayTracking: look.fonts.displayTracking },
   }
 }
 
 export interface ResolvedLook { directionId: string; look: Look; brief: LookBrief }
 
-/** Ask the art director, then resolve a direction and a skin. Null when the model gives no usable answer (the caller keeps its old behaviour). */
+/** The one model question: how should this business look. Null when the model gives no usable answer (the caller keeps its old behaviour). */
+export async function askLookBrief(prompt: string, surface: 'website' | 'app' | 'saas', call: ModelCall, onUsage: (r: ModelReply) => void): Promise<LookBrief | null> {
+  const p = buildLookPrompt(prompt, surface)
+  const asked = await askForJson<LookBrief>({ call, system: p.system, user: p.user, attempts: 1, timeoutMs: 20000, onUsage, validate: validateLookBrief })
+  return asked.ok ? asked.value : null
+}
+
+/** A design drawn from the brief with a seed: cheap, synchronous, and different for every seed. */
+export function drawLook(brief: LookBrief, seed: string, surface: 'website' | 'app' | 'saas', opts: { named?: boolean; avoid?: string[] } = {}): ResolvedLook {
+  const d = pickDirectionForLook(brief, seed, surface, opts)
+  return { directionId: d.id, look: lookFor(brief, seed), brief }
+}
+
+/** Ask the art director, then draw one design. For callers that do not need the uniqueness loop. */
 export async function resolveLook(
   prompt: string, seed: string, surface: 'website' | 'app' | 'saas', call: ModelCall, onUsage: (r: ModelReply) => void,
   opts: { named?: boolean; avoid?: string[] } = {},
 ): Promise<ResolvedLook | null> {
-  const p = buildLookPrompt(prompt, surface)
-  const asked = await askForJson<LookBrief>({ call, system: p.system, user: p.user, attempts: 1, timeoutMs: 20000, onUsage, validate: validateLookBrief })
-  if (!asked.ok) return null
-  const brief = asked.value
-  const d = pickDirectionForLook(brief, seed, surface, opts)
-  return { directionId: d.id, look: lookFor(brief, seed), brief }
+  const brief = await askLookBrief(prompt, surface, call, onUsage)
+  return brief ? drawLook(brief, seed, surface, opts) : null
 }

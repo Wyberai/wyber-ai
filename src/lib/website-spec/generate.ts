@@ -4,7 +4,8 @@ import { parseFactsFromPrompt, stripFactsSuffix } from '../build-spec/facts'
 import { buildLanguagePrompt, languagesFromReply, validateLanguageReply } from '../build-spec/languages'
 import type { ModelCall, ModelReply } from '../build-spec/types'
 import { buildCopyPrompt, normalizeCopy, validateCopy } from './copy'
-import { resolveLook } from '../build-spec/look'
+import { askLookBrief, drawLook } from '../build-spec/look'
+import { claimUnique, designKey, wantsSameDesign, type DesignRegistry } from '../build-spec/design-registry'
 import { repairLengths } from '../build-spec/trim'
 import { planWebsite } from './plan'
 import { renderWebsite, type Translations } from './render'
@@ -19,6 +20,8 @@ export type { ModelReply }
 export interface GenerateDeps {
   /** One non-streaming model call. In production this is Sonnet; tests inject a fake. */
   writeCopy: ModelCall
+  /** Shared record of every design ever built: a build must claim a design nobody has, unless the user asked for the same one. */
+  designs?: DesignRegistry | null
 }
 export interface GenerateInput {
   prompt: string
@@ -32,6 +35,13 @@ export type GenerateResult =
   | { ok: true; text: string; spec: BuildSpec; usage: { inputTokens: number; outputTokens: number }; notes: string[]; paths: string[] }
   | { ok: false; reason: string; usage: { inputTokens: number; outputTokens: number } }
 
+/** The page composition as a short string: which header, hero, sections and flips this plan uses. Part of the design fingerprint. */
+export function websiteLayoutKey(s: BuildSpec): string {
+  const l = s.layout
+  if (!l) return ''
+  return [...Object.values(l.sx ?? {}), l.rhythm, l.heroFlip ? 1 : 0, l.heroMediaFirst ? 1 : 0, l.aboutFlip ? 1 : 0, l.contactFlip ? 1 : 0, s.hero, s.header].join('.')
+}
+
 const TRANSLATE_TIMEOUT_MS = 70000
 /** A little under the route's 220 s spec timeout (WEBSITE_SPEC_TIMEOUT_MS), leaving room to render. */
 const TOTAL_BUDGET_MS = 200000
@@ -44,9 +54,23 @@ export async function generateWebsite(input: GenerateInput, deps: GenerateDeps):
   let spec: BuildSpec
   try {
     // The art director decides how this business should look; a direction the owner chose in Plan Mode is never overridden.
-    const art = input.directionId ? null : await resolveLook(stripFactsSuffix(input.prompt), input.seed, 'website', deps.writeCopy, onUsage, { named: !!(input.facts ?? parseFactsFromPrompt(input.prompt)).name, avoid: input.avoid })
-    if (!art) notes.push('look: kept the keyword choice')
-    spec = planWebsite(input.prompt, { seed: input.seed, facts: input.facts ?? parseFactsFromPrompt(input.prompt), directionId: art?.directionId ?? input.directionId, avoid: input.avoid, look: art?.look })
+    const facts = input.facts ?? parseFactsFromPrompt(input.prompt)
+    const brief = input.directionId ? null : await askLookBrief(stripFactsSuffix(input.prompt), 'website', deps.writeCopy, onUsage)
+    if (!brief && !input.directionId) notes.push('look: kept the keyword choice')
+    // THE RULE: a design that exists is never built again unless the user asked for exactly that. Draw with new seeds until one is free.
+    const sameOnPurpose = Boolean(input.directionId) || wantsSameDesign(input.prompt)
+    const picked = await claimUnique({
+      seed: input.seed, registry: sameOnPurpose ? null : deps.designs, owner: input.seed,
+      build: seed => {
+        const art = brief ? drawLook(brief, seed, 'website', { named: !!facts.name, avoid: input.avoid }) : null
+        return planWebsite(input.prompt, { seed, facts, directionId: art?.directionId ?? input.directionId, avoid: input.avoid, look: art?.look })
+      },
+      keyOf: s => designKey({ directionId: s.direction.id, look: s.look, layout: websiteLayoutKey(s) }),
+      directionOf: s => s.direction.id,
+    })
+    if (!picked.unique) notes.push('design: every draw was already taken, the last one was used')
+    if (picked.attempts > 1) notes.push('design: drew ' + picked.attempts + ' times to get one nobody has')
+    spec = picked.value
   } catch (e) { return { ok: false, reason: 'plan: ' + String(e), usage } }
   if (spec.brief.note) notes.push(spec.brief.note)
   if (spec.brief.unsupported.length) notes.push('Not built yet: ' + spec.brief.unsupported.join(', '))
