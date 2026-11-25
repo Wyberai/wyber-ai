@@ -588,8 +588,9 @@ export function StepsTimeline({ eyebrow, title, description, items, tone, reveal
           <span aria-hidden="true" className="absolute bottom-0 left-5 top-2 w-px bg-border" />
           {items.map((it, i) => (
             <li key={i} className="relative pb-12 pl-16 last:pb-0">
+              {/* Outside the reveal wrapper on purpose: while the wrapper animates a transform it becomes the positioning parent, which moved this badge onto the heading (live, 25 Nov). */}
+              <span aria-hidden="true" className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-lg border border-foreground bg-background font-mono text-sm text-foreground">{pad(i + 1)}</span>
               <Rv on={reveal} y={12}>
-                <span aria-hidden="true" className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-lg border border-foreground bg-background font-mono text-sm text-foreground">{pad(i + 1)}</span>
                 <h3 className="pt-1 font-display text-2xl leading-tight tracking-[-0.015em] text-foreground md:text-3xl">{it.title}</h3>
                 <p className="mt-3 max-w-lg text-base leading-relaxed text-muted-foreground md:text-lg">{it.text}</p>
               </Rv>
