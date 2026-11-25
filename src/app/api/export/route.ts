@@ -3,6 +3,7 @@ import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { sanitizeFiles } from '@/lib/sanitize-files';
 import { scanForExposedSecrets } from '@/lib/security-scan';
 import { rateLimit } from '@/lib/rate-limit';
+import { buildStorePack } from '@/lib/mobile-store-pack';
 
 // GET — a plain clicked link (e.g. from the MCP export_code tool's response,
 // which can only ever offer a URL for the user to click, not fire a POST)
@@ -34,10 +35,11 @@ async function handleExport(projectId: string | null, format: string | null) {
     .from('projects')
     .select('*')
     .eq('id', projectId)
-    .eq('user_id', user.id)   // ownership check — service client used only after this gate
     .single();
 
-  if (!project) return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+  // Gate: the owner, or a workspace member / editor collaborator. The service client is used only after this check.
+  const { canEditProject } = await import('@/lib/project-access')
+  if (!project || !(await canEditProject(supabase, user.id, projectId))) return NextResponse.json({ error: 'Project not found' }, { status: 404 });
 
   if (format === 'json') {
     // Return all project data as JSON
@@ -45,6 +47,7 @@ async function handleExport(projectId: string | null, format: string | null) {
       .from('generations')
       .select('prompt, files_changed, created_at, credits_used')
       .eq('project_id', projectId)
+      .neq('status', 'turn-start')
       .order('created_at', { ascending: true });
 
     return NextResponse.json({
@@ -86,6 +89,11 @@ async function handleExport(projectId: string | null, format: string | null) {
     }
 
     const hasSupabaseEnv = Object.keys(files).some(p => /supabase/i.test(p));
+    const looksMobile = project.project_type === 'mobile' || Object.keys(files).some(p => /^(src\/)?screens\//i.test(p));
+    if (looksMobile) {
+      // Store pack: plain-language drafts for the Play Console and App Store Connect forms, built from what the code does.
+      for (const [path, text] of Object.entries(buildStorePack(files, String(project.name ?? '')))) zip.file(path, text);
+    }
     // Mobile projects are stored with project_type='mobile' (framework is often
     // still 'react-vite'), so key off project_type — with a framework/App.tsx
     // fallback — to decide Expo vs web run instructions.

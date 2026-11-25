@@ -4,11 +4,14 @@ import { useState, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createClient } from '@/lib/supabase/client';
+import { pendingIsStale } from '@/lib/signal/handoff';
 import { Profile, Project } from '@/lib/supabase/types';
 import { track } from '@/lib/track';
 import Link from 'next/link';
 import { ReferralCard } from '@/components/shared/ReferralCard';
 import { ProjectTypeChooser, type ProjectType } from '@/components/dashboard/ProjectTypeChooser';
+import { WebsiteFactsModal } from '@/components/dashboard/WebsiteFactsModal';
+import { factsSuffix, shouldAskWebsiteFacts } from '@/lib/website-facts';
 import { ImportModal } from '@/components/dashboard/ImportModal';
 import { DeleteProjectDialog } from '@/components/dashboard/DeleteProjectDialog';
 import { ProjectSecurityBadge, type ProjectSecurityInfo } from '@/components/dashboard/ProjectSecurityBadge';
@@ -16,7 +19,7 @@ import { SecurityChrome } from '@/components/dashboard/SecurityChrome';
 import { WyberLogo } from '@/components/shared/WyberLogo'
 import { NotificationBell } from '@/components/shared/NotificationBell';
 import { creditsLine } from '@/lib/plans';
-import { VoiceButton } from '@/components/editor/VoiceButton';
+import { VoiceBuildButton } from '@/components/voice/VoiceBuildButton';
 import { TemplatesShowcase } from '@/components/dashboard/TemplatesShowcase';
 import { useT } from '@/lib/i18n/useT';
 import { useLocale } from '@/lib/i18n/LocaleProvider';
@@ -25,6 +28,7 @@ import { DASHBOARD_STRINGS } from '@/lib/i18n/dict/dashboard';
 import { isLocale, LOCALE_SPEECH_CODE } from '@/lib/i18n/locales';
 import { WebsiteCreditGate } from '@/components/websites/WebsiteCreditGate';
 import { websiteLaunchEstimate } from '@/lib/credits';
+import { PLAN_FACTS, LARGE_PLAN_CREDITS } from '@/lib/plans';
 
 // Deterministic, timezone/locale-independent date label. toLocaleDateString()
 // renders differently on the server vs the client (different TZ/locale), which
@@ -43,25 +47,29 @@ interface Props {
   profile: Profile | null;
   projects: Partial<Project>[];
   securityByProject?: Record<string, ProjectSecurityInfo>;
+  /** True when buying domains is switched on: shows "Domains & email" in the sidebar. */
+  domainsEnabled?: boolean;
 }
 
 // SVG icons — no emojis
 const IconHome = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>;
 const IconGrid = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>;
+const IconClients = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>;
 const IconTemplates = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>;
+const IconGlobe = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18"/></svg>;
 const IconSettings = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>;
 const IconBolt = () => <svg width="14" height="14" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#0EA5E9"/><path d="M20 7L11 16L20 25" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/><path d="M23 11L28 16L23 21" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.4"/></svg>;
 const IconPhone = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>;
 const IconZap = () => <svg width="15" height="15" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#0EA5E9"/><path d="M20 7L11 16L20 25" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/><path d="M23 11L28 16L23 21" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.4"/></svg>;
-const IconArrowUp = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5,12 12,5 19,12"/></svg>;
+const IconArrowUp = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#03111c" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5,12 12,5 19,12"/></svg>;
 // Workflow / flow-diagram icon (nodes + connectors) — matches the Workflows concept on the marketing site.
 const IconWorkflow = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="6" height="6" rx="1.5"/><rect x="15" y="9" width="6" height="6" rx="1.5"/><rect x="3" y="15" width="6" height="6" rx="1.5"/><path d="M9 6h3a3 3 0 0 1 3 3M9 18h3a3 3 0 0 0 3-3"/></svg>;
-const IconChevronDown = ({ rotated }: { rotated?: boolean }) => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#52525b" strokeWidth="2" style={{ transform: rotated ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}><path d="M6 9l6 6 6-6"/></svg>;
+const IconChevronDown = ({ rotated }: { rotated?: boolean }) => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8797ab" strokeWidth="2" style={{ transform: rotated ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}><path d="M6 9l6 6 6-6"/></svg>;
 const IconDot = () => <div style={{ width: 6, height: 6, borderRadius: 2, background: '#0EA5E9', flexShrink: 0 }} />;
 const IconTrash = () => <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="3,6 5,6 21,6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>;
 const IconCopy = () => <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>;
-const IconPlaceholder = () => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3f3f46" strokeWidth="1.5" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M9 21V9"/></svg>;
-const IconEmpty = () => <svg width="40" height="40" viewBox="0 0 48 48" fill="none" stroke="#3f3f46" strokeWidth="1.5" strokeLinecap="round"><rect x="6" y="10" width="36" height="28" rx="4"/><path d="M16 10V6M32 10V6M6 18h36"/></svg>;
+const IconPlaceholder = () => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#8797ab" strokeWidth="1.5" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M9 21V9"/></svg>;
+const IconEmpty = () => <svg width="40" height="40" viewBox="0 0 48 48" fill="none" stroke="#8797ab" strokeWidth="1.5" strokeLinecap="round"><rect x="6" y="10" width="36" height="28" rx="4"/><path d="M16 10V6M32 10V6M6 18h36"/></svg>;
 const IconDocs = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>;
 const IconLearn = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>;
 const IconPeople = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>;
@@ -70,17 +78,17 @@ const IconAgents = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="n
 // Project type badge
 const TYPE_META: Record<string, { label: string; color: string }> = {
   app:      { label: 'Web App',  color: '#0EA5E9' },
-  website:  { label: 'Website',  color: '#6366f1' },
+  website:  { label: 'Website',  color: '#a5b4fc' },
   saas:     { label: 'SaaS',     color: '#ec4899' },
-  mobile:   { label: 'Mobile',   color: '#8b5cf6' },
-  agent:    { label: 'Agent',    color: '#10b981' },
+  mobile:   { label: 'Mobile',   color: '#a78bfa' },
+  agent:    { label: 'Agent',    color: '#34d399' },
   workflow: { label: 'Workflow', color: '#f59e0b' },
 };
 
 function TypeBadge({ type }: { type?: string }) {
   const meta = TYPE_META[type ?? ''] ?? { label: 'Web', color: '#0EA5E9' };
   return (
-    <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: meta.color, background: `${meta.color}18`, border: `1px solid ${meta.color}35`, borderRadius: 4, padding: '2px 6px', lineHeight: 1.4 }}>
+    <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: meta.color, background: `${meta.color}18`, border: `1px solid ${meta.color}35`, borderRadius: 4, padding: '2px 6px', lineHeight: 1.4 }}>
       {meta.label}
     </span>
   );
@@ -133,7 +141,7 @@ const DIM = 'var(--ide-text3)';
 const CARD_BG = 'var(--bg-elevated)';
 const BRAND = 'var(--accent)';
 
-export function DashboardClient({ profile, projects: initialProjects, securityByProject = {} }: Props) {
+export function DashboardClient({ profile, projects: initialProjects, securityByProject = {}, domainsEnabled = false }: Props) {
   const router = useRouter();
   const supabase = createClient();
   const { locale, setLocale } = useLocale();
@@ -151,8 +159,11 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
   const [pendingPrompt, setPendingPrompt] = useState<string | undefined>(undefined);
   // /websites upfront-credit gate (see WebsiteCreditGate).
   const [websiteGate, setWebsiteGate] = useState<{ go: () => void; name: string | null } | null>(null);
+  const [factsGate, setFactsGate] = useState<{ prompt: string; nameOverride?: string } | null>(null);
   const [promptInput, setPromptInput] = useState('');
   const [buildMode, setBuildMode] = useState<'app' | 'mobile' | 'website' | 'saas'>('app');
+  // True when the type chip came from a confirmed voice brief: the chip then wins over keyword guessing, so the type shown is the type built.
+  const [voiceLockedType, setVoiceLockedType] = useState(false);
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isMobile, setIsMobile] = useState(false);
@@ -259,6 +270,10 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
       if (pendingSource) localStorage.removeItem('wyber-pending-source');
       if (pendingName) localStorage.removeItem('wyber-pending-project-name');
       pending = localStorage.getItem('wyber-pending-prompt');
+      // A brief saved more than a week ago is dropped instead of silently starting a build (see pendingIsStale).
+      const pendingAt = localStorage.getItem('wyber-pending-at');
+      if (pendingAt) localStorage.removeItem('wyber-pending-at');
+      if (pending && pendingIsStale(pendingAt)) pending = null;
       pendingType = localStorage.getItem('wyber-pending-type');
       pendingLabel = localStorage.getItem('wyber-pending-project-label');
       if (pending) localStorage.removeItem('wyber-pending-prompt');
@@ -278,7 +293,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
       // /websites builds need the complete-website credits upfront (see
       // WebsiteCreditGate). Short → keep the plan stashed and open the gate.
       if (pendingSource === 'websites' && resolvedType === 'website') {
-        const go = () => { setWebsiteGate(null); startProject(pending!.trim(), 'website', pendingName || nameOverride); };
+        const go = () => { setWebsiteGate(null); startProject(pending!.trim(), 'website', pendingName || nameOverride, true); };
         if ((profile?.credits ?? 0) >= websiteLaunchEstimate().min) go();
         else {
           try {
@@ -291,7 +306,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
         }
         return;
       }
-      if (resolvedType) startProject(pending.trim(), resolvedType, nameOverride);
+      if (resolvedType) startProject(pending.trim(), resolvedType, pendingName || nameOverride);
       else openChooser(pending.trim(), nameOverride);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -357,10 +372,10 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
   const dismissBanner = () => { setBannerDismissed(true); localStorage.setItem(BANNER_KEY, '1'); };
   const showLowCreditsBanner = plan === 'free' && credits <= 20 && projects.length >= 2 && !bannerDismissed;
   const planStr = plan as string;
-  const totalCredits = planStr === 'scale' ? 10000 : planStr === 'growth' ? 4000 : planStr === 'pro' ? 1500 : planStr === 'builder' ? 500 : planStr === 'starter' ? 150 : 50;
+  const totalCredits = planStr === 'scale' ? LARGE_PLAN_CREDITS.scale : planStr === 'growth' ? LARGE_PLAN_CREDITS.growth : planStr === 'pro' ? PLAN_FACTS.pro.credits : planStr === 'builder' ? PLAN_FACTS.builder.credits : planStr === 'starter' ? PLAN_FACTS.starter.credits : planStr === 'spark' ? PLAN_FACTS.spark.credits : 50;
   const creditPct = Math.min(100, (credits / totalCredits) * 100);
 
-  const MOBILE_KEYWORDS = /\b(mobile app|ios app|android app|react native|phone app|iphone|smartphone app|expo)\b/i;
+  const MOBILE_KEYWORDS = /\b(mobile app|ios app|android app|react native|phone app|iphone|smartphone app|expo go|expo sdk|built with expo)\b/i;
   const WEBSITE_KEYWORDS = /\b(landing page|marketing site|marketing website|business website|portfolio site|portfolio website|company site|company website|product website|personal website|blog site|brochure site|one.?page site|one.?page website|coming soon page|event page|restaurant website|agency website)\b/i;
   const SAAS_KEYWORDS = /\b(saas|saas app|saas product|saas platform|subscription app|subscription platform|admin panel|admin dashboard|multi.?tenant|b2b app|b2b platform|api dashboard|developer dashboard|user management|role.?based|rbac)\b/i;
 
@@ -369,6 +384,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
     if (buildMode === 'mobile') return 'mobile';
     if (buildMode === 'saas') return 'saas';
     if (buildMode === 'website') return 'website';
+    if (voiceLockedType) return 'app';
     // Keyword detection as fallback when user is in default 'app' mode
     if (MOBILE_KEYWORDS.test(prompt)) return 'mobile';
     if (SAAS_KEYWORDS.test(prompt)) return 'saas';
@@ -388,8 +404,10 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
     if (!p) { openChooser(); return; }
     startProject(p, detectType(p));
   };
-  const startProject = async (prompt?: string, type: ProjectType = 'app', nameOverride?: string) => {
+  const startProject = async (prompt?: string, type: ProjectType = 'app', nameOverride?: string, skipFacts = false) => {
     if (!profile?.id || creating) return;
+    // A typed website brief with no business facts in it: ask once for the four that matter (optional, both buttons build).
+    if (!skipFacts && shouldAskWebsiteFacts(prompt, type)) { setFactsGate({ prompt: prompt as string, nameOverride }); return; }
     setCreating(true);
     setCreateError(null);
     try {
@@ -443,6 +461,8 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
     { label: 'Websites',          href: '/dashboard', icon: <IconDocs />,      view: 'website' as const },
     { label: 'SaaS',              href: '/dashboard', icon: <IconWorkflow />,  view: 'saas'    as const },
     { label: t('navMobileApps'), href: '/dashboard', icon: <IconPhone />,     view: 'mobile'  as const },
+    ...(domainsEnabled ? [{ label: 'Domains & email', href: '/dashboard/domains', icon: <IconGlobe /> }] : []),
+    { label: 'Clients',           href: '/clients',   icon: <IconClients /> },
     { label: tc('settings'),     href: '/settings',  icon: <IconSettings /> },
   ];
   const COMING_SOON: { label: string; href: string; icon: React.ReactNode; soon?: boolean }[] = [
@@ -456,7 +476,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
   const accentFor = (n?: string) => ACCENT_PALETTE[Math.abs((n?.charCodeAt(0) ?? 0) % ACCENT_PALETTE.length)];
 
   return (
-    <div style={{ display: 'flex', height: '100vh', background: BG, color: TEXT, fontFamily: 'var(--font-display)' }}>
+    <div className="sg-dash" style={{ display: 'flex', height: '100vh', background: BG, color: TEXT, fontFamily: 'var(--font-display)' }}>
 
       {/* Mobile top bar */}
       {isMobile && (
@@ -476,12 +496,12 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
             { label: t('navHome'),    href: '/dashboard',   icon: <IconHome /> },
             { label: t('buildLabel'),   href: '/gallery',     icon: <IconTemplates /> },
           ].map(item => (
-            <Link key={item.label} href={item.href} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, color: MUTED, textDecoration: 'none', fontSize: 10, fontWeight: 600 }}>
+            <Link key={item.label} href={item.href} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, color: MUTED, textDecoration: 'none', fontSize: 12, fontWeight: 600 }}>
               {item.icon}
               {item.label}
             </Link>
           ))}
-          <button onClick={() => setSidebarOpen(v => !v)} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, background: 'none', border: 'none', color: MUTED, cursor: 'pointer', fontSize: 10, fontWeight: 600 }}>
+          <button onClick={() => setSidebarOpen(v => !v)} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, background: 'none', border: 'none', color: MUTED, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
             {t('moreLabel')}
           </button>
@@ -513,12 +533,12 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
         {/* User row */}
         <button onClick={() => setSidebarExpanded(v => !v)}
           style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '10px 14px', border: 'none', background: 'transparent', color: TEXT, cursor: 'pointer', width: '100%', textAlign: 'left', borderBottom: `1px solid ${BORDER}` }}>
-          <div style={{ width: 26, height: 26, borderRadius: 8, background: 'linear-gradient(135deg, #0EA5E9, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#fff', flexShrink: 0 }}>
+          <div style={{ width: 26, height: 26, borderRadius: 8, background: '#0EA5E9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: '#03111c', flexShrink: 0 }}>
             {name[0]?.toUpperCase()}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 12, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</div>
-            <div style={{ fontSize: 10, color: DIM, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{plan} {t('planSuffix')}</div>
+            <div style={{ fontSize: 12, color: DIM, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{plan} {t('planSuffix')}</div>
           </div>
           <IconChevronDown rotated={sidebarExpanded} />
         </button>
@@ -526,15 +546,15 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
         {/* Credits panel */}
         {sidebarExpanded && (
           <div style={{ padding: '10px 14px', borderBottom: `1px solid ${BORDER}`, background: 'rgba(255,255,255,0.02)' }}>
-            <div style={{ fontSize: 11, color: MUTED, marginBottom: 8 }}>{t('creditsLabel')}</div>
+            <div style={{ fontSize: 12, color: MUTED, marginBottom: 8 }}>{t('creditsLabel')}</div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
               <span style={{ fontSize: 13, fontWeight: 700 }}>{credits} {t('creditsLeftShort')}</span>
-              <Link href="/settings?tab=billing" style={{ fontSize: 11, color: BRAND, textDecoration: 'none', fontWeight: 600 }}>{t('addCredits')}</Link>
+              <Link href="/settings?tab=billing" style={{ fontSize: 12, color: BRAND, textDecoration: 'none', fontWeight: 600 }}>{t('addCredits')}</Link>
             </div>
             <div style={{ height: 4, borderRadius: 9999, background: BORDER }}>
               <div style={{ height: '100%', borderRadius: 9999, background: creditPct < 20 ? '#ef4444' : BRAND, width: creditPct + '%', transition: 'width 0.5s ease' }} />
             </div>
-            {credits < 10 && <div style={{ fontSize: 10, color: '#ef4444', marginTop: 6, fontWeight: 600 }}>{t('lowCreditsWarning')}</div>}
+            {credits < 10 && <div style={{ fontSize: 12, color: '#ef4444', marginTop: 6, fontWeight: 600 }}>{t('lowCreditsWarning')}</div>}
           </div>
         )}
 
@@ -556,14 +576,14 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
               <Link key={n.label} href={n.soon ? '/coming-soon?product=' + encodeURIComponent(n.label) : n.href}
                 className="dash-nav-row" data-active={isActive} style={rowStyle}>
                 {n.icon}{n.label}
-                {n.soon && <span style={{ fontSize: 9, fontWeight: 700, padding: '1px 6px', borderRadius: 4, background: 'rgba(139,92,246,0.15)', color: '#a78bfa', marginLeft: 'auto' }}>{t('soonBadge')}</span>}
+                {n.soon && <span style={{ fontSize: 12, fontWeight: 700, padding: '1px 6px', borderRadius: 4, background: 'rgba(139,92,246,0.15)', color: '#a78bfa', marginLeft: 'auto' }}>{t('soonBadge')}</span>}
               </Link>
             );
           })}
 
           {COMING_SOON.length > 0 && (
             <div style={{ marginTop: 8, paddingTop: 8, borderTop: `1px solid ${BORDER}` }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '4px 10px 5px' }}>{tc('comingSoon')}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#8797ab', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '4px 10px 5px' }}>{tc('comingSoon')}</div>
               {COMING_SOON.map((n: any) => (
                 <Link key={n.label} href={'/coming-soon?product=' + encodeURIComponent(n.label)}
                   style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '6px 10px', borderRadius: 8, color: DIM, fontSize: 12, fontWeight: 400, textDecoration: 'none', marginBottom: 1, opacity: 0.6 }}>
@@ -574,9 +594,9 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
           )}
 
           {projects.length > 0 && <>
-            <div style={{ fontSize: 10, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '12px 10px 5px' }}>{t('recentLabel')}</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#8797ab', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '12px 10px 5px' }}>{t('recentLabel')}</div>
             {projects.slice(0, 4).map(p => (
-              <Link key={p.id} href={`/project/${p.id}`} className="dash-recent-link"
+              <Link key={p.id} href={`/project/${p.id}`} prefetch={false} className="dash-recent-link"
                 style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', borderRadius: 7, color: DIM, fontSize: 12, textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 1 }}>
                 <IconDot />
                 {p.name || tc('untitled')}
@@ -596,9 +616,9 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
               style={{ display: 'block', padding: '11px 13px', borderRadius: 10, background: 'linear-gradient(135deg,rgba(14,165,233,0.14),rgba(124,58,237,0.1))', border: '1px solid rgba(14,165,233,0.3)', textDecoration: 'none' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
                 <div style={{ fontSize: 12, fontWeight: 800, color: '#fafafa' }}>Go Annual — Save 20%</div>
-                <span style={{ fontSize: 9, fontWeight: 800, padding: '2px 7px', borderRadius: 20, background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.25)', color: '#22c55e', whiteSpace: 'nowrap' }}>BEST VALUE</span>
+                <span style={{ fontSize: 12, fontWeight: 800, padding: '2px 7px', borderRadius: 20, background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.25)', color: '#22c55e', whiteSpace: 'nowrap' }}>BEST VALUE</span>
               </div>
-              <div style={{ fontSize: 10, color: '#71717a' }}>150 credits/mo · 2 months free</div>
+              <div style={{ fontSize: 12, color: '#8797ab' }}>{PLAN_FACTS.starter.credits} credits/mo · 2 months free</div>
             </Link>
           </div>
         )}
@@ -613,18 +633,18 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
               <span style={{ fontSize: 16 }}>⚡</span>
               <div>
                 <span style={{ fontSize: 13, fontWeight: 700, color: '#fafafa' }}>You&apos;re almost out of credits. </span>
-                <span style={{ fontSize: 13, color: '#a1a1aa' }}>You have {credits} credits left. Annual plan = 150/mo + 2 months free — pays for itself in one build.</span>
+                <span style={{ fontSize: 13, color: '#9aa8bb' }}>You have {credits} credits left. Annual plan = {PLAN_FACTS.starter.credits}/mo + 2 months free — pays for itself in one build.</span>
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
               <Link
                 href="/pricing"
                 onClick={() => track('dashboard_low_credits_banner_annual_clicked')}
-                style={{ fontSize: 12, fontWeight: 700, padding: '6px 14px', borderRadius: 7, background: 'linear-gradient(135deg,#0ea5e9,#7c3aed)', color: '#fff', textDecoration: 'none', whiteSpace: 'nowrap' }}
+                style={{ fontSize: 12, fontWeight: 700, padding: '6px 14px', borderRadius: 7, background: '#0ea5e9', color: '#03111c', textDecoration: 'none', whiteSpace: 'nowrap' }}
               >
                 Get Annual Plan →
               </Link>
-              <button onClick={dismissBanner} style={{ background: 'none', border: 'none', color: '#52525b', cursor: 'pointer', fontSize: 18, lineHeight: 1, padding: 2 }}>×</button>
+              <button onClick={dismissBanner} style={{ background: 'none', border: 'none', color: '#8797ab', cursor: 'pointer', fontSize: 18, lineHeight: 1, padding: 2 }}>×</button>
             </div>
           </div>
         )}
@@ -655,7 +675,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
 
           <div data-tour="build" style={{ width: '100%', maxWidth: 640, zIndex: 1, position: 'relative' }}>
             <div style={{ background: 'rgba(16,18,26,0.9)', backdropFilter: 'blur(20px)', border: `1px solid ${BORDER}`, borderRadius: 14, overflow: 'hidden', boxShadow: '0 8px 40px rgba(0,0,0,0.5)' }}>
-              <textarea ref={textareaRef} value={promptInput} onChange={e => setPromptInput(e.target.value)} onKeyDown={handleKeyDown}
+              <textarea ref={textareaRef} value={promptInput} aria-label={t('promptPlaceholder')} onChange={e => setPromptInput(e.target.value)} onKeyDown={handleKeyDown}
                 placeholder={t('promptPlaceholder')} rows={3}
                 style={{ width: '100%', padding: '16px 18px 12px', border: 'none', background: 'transparent', color: TEXT, fontSize: 15, fontFamily: 'inherit', resize: 'none', outline: 'none', lineHeight: 1.55 }} />
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flexWrap: isMobile ? 'wrap' : 'nowrap', padding: '10px 14px 14px', gap: 10, borderTop: `1px solid ${BORDER}` }}>
@@ -665,26 +685,26 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
                     left, IT was the thing getting clipped off, taking Web App and
                     Mobile with it and leaving no way to scroll back to them. Full
                     width + its own scroll box on mobile keeps every option reachable. */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 2, padding: '3px 4px', borderRadius: 8, background: 'rgba(255,255,255,0.05)', border: `1px solid ${BORDER}`, marginRight: isMobile ? undefined : 'auto', width: isMobile ? '100%' : undefined, overflowX: isMobile ? 'auto' : undefined }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 2, padding: '3px 4px', borderRadius: 8, background: 'rgba(255,255,255,0.05)', border: `1px solid ${BORDER}`, marginRight: isMobile ? undefined : 'auto', width: isMobile ? '100%' : undefined, flexWrap: isMobile ? 'wrap' : undefined }}>
                   {([
                     { mode: 'app' as const, label: t('webAppLabel'), color: '#0EA5E9', icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg> },
                     { mode: 'mobile' as const, label: t('mobileAppLabel'), color: '#f97316', icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg> },
-                    { mode: 'website' as const, label: t('websiteLabel'), color: '#6366f1', icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M2 9h20"/><path d="M7 3v6"/></svg> },
+                    { mode: 'website' as const, label: t('websiteLabel'), color: '#a5b4fc', icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M2 9h20"/><path d="M7 3v6"/></svg> },
                     { mode: 'saas' as const, label: t('saasLabel'), color: '#ec4899', icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><rect x="2" y="3" width="7" height="18" rx="1.5"/><rect x="12" y="3" width="10" height="8" rx="1.5"/><rect x="12" y="14" width="10" height="7" rx="1.5"/></svg> },
                   ]).map(({ mode, label, color, icon }) => (
-                    <button key={mode} onClick={() => setBuildMode(mode)} aria-pressed={buildMode === mode}
+                    <button key={mode} onClick={() => { setBuildMode(mode); setVoiceLockedType(false); }} aria-pressed={buildMode === mode}
                       style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 6, border: buildMode === mode ? `1px solid ${color}72` : '1px solid transparent', background: buildMode === mode ? `${color}2e` : 'transparent', color: buildMode === mode ? color : '#9a9fad', fontSize: 12, fontWeight: 650, cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
                       {icon}
                       {label}
                     </button>
                   ))}
                 </div>
-                <span style={{ fontSize: 11, color: credits <= 10 ? '#ef4444' : '#3f3f46', fontWeight: credits <= 10 ? 600 : 400 }}>{credits} {t('creditsWord')}</span>
-                <span style={{ fontSize: 11, color: '#3f3f46' }}>{t('enterToBuild')}</span>
-                <VoiceButton size={26} disabled={creating} lang={LOCALE_SPEECH_CODE[locale]}
-                  onTranscript={txt => { setPromptInput(prev => (prev ? prev + ' ' + txt : txt)); textareaRef.current?.focus(); track('dashboard_voice_used', { length: txt.length }); }} />
-                <button onClick={submitPrompt} disabled={creating}
-                  style={{ width: 34, height: 34, borderRadius: 9, border: 'none', background: creating ? '#27272a' : BRAND, color: '#fff', cursor: creating ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}>
+                <span style={{ fontSize: 12, color: credits <= 10 ? '#ef4444' : '#8797ab', fontWeight: credits <= 10 ? 600 : 400 }}>{credits} {t('creditsWord')}</span>
+                <span style={{ fontSize: 12, color: '#8797ab' }}>{t('enterToBuild')}</span>
+                <VoiceBuildButton size={26} surface="dashboard" disabled={creating}
+                  onConfirm={({ prompt, type }) => { setPromptInput(prev => (prev.trim() ? prev.trim() + ' ' + prompt : prompt)); setBuildMode(type); setVoiceLockedType(true); textareaRef.current?.focus(); track('dashboard_voice_used', { length: prompt.length, type }); }} />
+                <button type="button" aria-label="Start building" onClick={submitPrompt} disabled={creating}
+                  style={{ width: 34, height: 34, borderRadius: 9, border: 'none', background: creating ? '#162231' : BRAND, color: '#03111c', cursor: creating ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}>
                   {creating
                     ? <div style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
                     : <IconArrowUp />
@@ -700,7 +720,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
               ).map(c => (
                 <button key={c.key} className="dash-chip" onClick={() => { setPromptInput(c.prompt); textareaRef.current?.focus() }}
                   title={c.prompt}
-                  style={{ padding: isMobile ? '8px 14px' : '4px 12px', borderRadius: 20, border: `1px solid ${BORDER}`, background: 'rgba(255,255,255,0.03)', color: DIM, fontSize: 11, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  style={{ padding: isMobile ? '8px 14px' : '4px 12px', borderRadius: 20, border: `1px solid ${BORDER}`, background: 'rgba(255,255,255,0.03)', color: DIM, fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {suggestions ? <>✦ {c.label}</> : c.label}
                 </button>
               ))}
@@ -729,7 +749,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
                     else if (view === 'app') startProject(undefined, 'app');
                     else openChooser();
                   }} disabled={creating}
-                    style={{ padding: '7px 16px', borderRadius: 8, border: 'none', background: BRAND, color: 'white', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                    style={{ padding: '7px 16px', borderRadius: 8, border: 'none', background: BRAND, color: '#03111c', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
                     {view === 'mobile' ? t('newMobileAppBtn') : view === 'website' ? 'New Website' : view === 'saas' ? 'New SaaS' : view === 'app' ? 'New Web App' : t('newProjectBtn')}
                   </button>
                 </div>
@@ -738,17 +758,17 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
               <motion.div layout style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }}>
                 {visibleProjects.slice(0, 11).map(p => (
                   <motion.div key={p.id} layout initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
-                  <Link href={`/project/${p.id}`} style={{ textDecoration: 'none' }}>
+                  <Link href={`/project/${p.id}`} prefetch={false} style={{ textDecoration: 'none' }}>
                     <div className="dash-project-card" style={{ height: 168, borderRadius: 12, border: `1px solid ${BORDER}`, background: CARD_BG, overflow: 'hidden', cursor: 'pointer', position: 'relative' }}>
 
                       {/* Action buttons */}
                       {p.id && <>
-                        <button onClick={e => requestDelete(e, p.id!, p.name)} disabled={deletingId === p.id} title={tc('delete')}
-                          style={{ position: 'absolute', top: 7, right: 7, zIndex: 10, width: 24, height: 24, borderRadius: 6, border: `1px solid ${BORDER}`, background: 'rgba(16,18,26,0.85)', color: MUTED, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
+                        <button type="button" className="wy-tap" aria-label={`${tc('delete')} ${p.name || ''}`.trim()} onClick={e => requestDelete(e, p.id!, p.name)} disabled={deletingId === p.id} title={tc('delete')}
+                          style={{ position: 'absolute', top: 7, right: 7, zIndex: 10, width: 32, height: 32, borderRadius: 6, border: `1px solid ${BORDER}`, background: 'rgba(16,18,26,0.85)', color: MUTED, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
                           {deletingId === p.id ? <div style={{ width: 10, height: 10, border: '1.5px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} /> : <IconTrash />}
                         </button>
-                        <button onClick={e => handleDuplicate(e, p.id!)} disabled={duplicatingId === p.id} title={tc('duplicate')}
-                          style={{ position: 'absolute', top: 7, right: 36, zIndex: 10, width: 24, height: 24, borderRadius: 6, border: `1px solid ${BORDER}`, background: 'rgba(16,18,26,0.85)', color: MUTED, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
+                        <button type="button" className="wy-tap" aria-label={`${tc('duplicate')} ${p.name || ''}`.trim()} onClick={e => handleDuplicate(e, p.id!)} disabled={duplicatingId === p.id} title={tc('duplicate')}
+                          style={{ position: 'absolute', top: 7, right: 52, zIndex: 10, width: 32, height: 32, borderRadius: 6, border: `1px solid ${BORDER}`, background: 'rgba(16,18,26,0.85)', color: MUTED, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
                           {duplicatingId === p.id ? <div style={{ width: 10, height: 10, border: '1.5px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} /> : <IconCopy />}
                         </button>
                       </>}
@@ -774,7 +794,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
                           <TypeBadge type={(p as any).project_type} />
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <span style={{ fontSize: 10, color: DIM, flex: 1 }}>{p.framework || 'react'} · {fmtDate(p.updated_at)}</span>
+                          <span style={{ fontSize: 12, color: DIM, flex: 1 }}>{p.framework || 'react'} · {fmtDate(p.updated_at)}</span>
                           {p.id && <ProjectSecurityBadge info={securityByProject[p.id]} />}
                         </div>
                       </div>
@@ -803,8 +823,8 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
                 else if (view === 'app') startProject(undefined, 'app');
                 else openChooser();
               }} disabled={creating}
-                style={{ padding: '9px 20px', borderRadius: 8, border: 'none', background: BRAND, color: '#fff', fontSize: 13, fontWeight: 700, cursor: creating ? 'wait' : 'pointer', fontFamily: 'inherit' }}>
-                {view === 'mobile' ? t('buildMobileAppBtn') : view === 'website' ? 'Build a Website' : view === 'saas' ? 'Build a SaaS' : view === 'app' ? 'Build a Web App' : t('newProjectBtn')}
+                style={{ padding: '9px 20px', borderRadius: 8, border: 'none', background: BRAND, color: '#03111c', fontSize: 13, fontWeight: 700, cursor: creating ? 'wait' : 'pointer', fontFamily: 'inherit' }}>
+                {creating ? 'Creating your project…' : view === 'mobile' ? t('buildMobileAppBtn') : view === 'website' ? 'Build a Website' : view === 'saas' ? 'Build a SaaS' : view === 'app' ? 'Build a Web App' : t('newProjectBtn')}
               </button>
             </div>
           ) : (
@@ -839,6 +859,15 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
           onCancel={() => { try { ['wyber-pending-prompt', 'wyber-pending-type', 'wyber-pending-source', 'wyber-pending-project-name'].forEach(k => localStorage.removeItem(k)); } catch { /* */ } setWebsiteGate(null); }}
         />
       )}
+      <WebsiteFactsModal
+        open={!!factsGate}
+        busy={creating}
+        onSkip={() => { const g = factsGate; setFactsGate(null); if (g) startProject(g.prompt, 'website', g.nameOverride, true); }}
+        onBuild={(facts) => {
+          const g = factsGate; setFactsGate(null);
+          if (g) startProject(g.prompt + factsSuffix(facts), 'website', facts.name.trim() ? facts.name.trim() : g.nameOverride, true);
+        }}
+      />
       <ProjectTypeChooser
         open={showTypePicker}
         onClose={() => setShowTypePicker(false)}

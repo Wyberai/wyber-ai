@@ -15,7 +15,7 @@ export const maxDuration = 120
 // Mondays (vercel.json): the week's report to the founder. Every part is best-effort, so a missing table
 // leaves a line out instead of cancelling the report. Off with WEEKLY_REPORT_DISABLED=true. ?dry=1 sends nothing.
 export async function GET(req: NextRequest) {
-  if (req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!process.env.CRON_SECRET || req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (process.env.WEEKLY_REPORT_DISABLED === 'true') return NextResponse.json({ skipped: true, reason: 'WEEKLY_REPORT_DISABLED' })
 
   const dry = req.nextUrl.searchParams.get('dry') === '1'

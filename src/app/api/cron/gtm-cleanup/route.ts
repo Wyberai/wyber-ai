@@ -11,7 +11,7 @@ import { createClient } from '@supabase/supabase-js'
 // Tunable: ?days=N (default 14) age cutoff; ?dryRun=1 to preview without deleting.
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!process.env.CRON_SECRET || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

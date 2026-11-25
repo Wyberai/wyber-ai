@@ -2,6 +2,10 @@
   "regions": ["iad1"],
   "crons": [
     {
+      "path": "/api/cron/uptime",
+      "schedule": "*/5 * * * *"
+    },
+    {
       "path": "/api/cron/daily-credits",
       "schedule": "0 0 * * *"
     },
@@ -52,6 +56,14 @@
     {
       "path": "/api/cron/consultation-reminders",
       "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/domain-sweep",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/domain-reminders",
+      "schedule": "0 5 * * *"
     },
     {
       "path": "/api/cron/wpl-monthly-reminder",

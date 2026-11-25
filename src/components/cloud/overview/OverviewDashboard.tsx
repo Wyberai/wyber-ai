@@ -77,7 +77,7 @@ export function OverviewDashboard({ projectId }: { projectId: string }) {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Cloud Overview</h1>
+          <h3 className="text-xl font-bold text-white mb-2">Cloud Overview</h3>
           <p className="text-slate-400">Manage your database, monitor performance, and track usage</p>
         </div>
         <button

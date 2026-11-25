@@ -73,7 +73,9 @@ export function applyEdits(
     let fileHadFailure = false;
 
     for (const block of blocks) {
-      if (!block.search) continue;
+      // An empty SEARCH cannot be located, so it is a failed edit (needs the full-file retry), never a silent skip: a skip let the turn
+      // be reported as 'already on the page' when nothing had been done.
+      if (!block.search) { fileHadFailure = true; continue; }
       // 1. Exact match
       const idx = workingContent.indexOf(block.search);
       if (idx !== -1) {

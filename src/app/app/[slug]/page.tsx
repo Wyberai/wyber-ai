@@ -1,4 +1,5 @@
 import { createServiceClient } from '@/lib/supabase/server'
+import { fixPlaceholderDomains } from '@/lib/seo/placeholder-domains'
 import { headers } from 'next/headers'
 import { logDemoEvent } from '@/lib/gtm/events'
 import { Metadata } from 'next'
@@ -100,13 +101,14 @@ async function loadHtmlInner(slug: string): Promise<{ id: string; name: string; 
     const { data: snap } = await supabase.storage.from('published-apps').download(`${project.id}/snapshot.html`)
     if (snap) snapshot = await snap.text()
   } catch { /* none yet */ }
-  return { id: project.id, name: project.name, html: await fileData.text(), ownerPlan, isDemo: !!project.is_demo, snapshot }
+  return { id: project.id, name: project.name, html: fixPlaceholderDomains(await fileData.text(), slug), ownerPlan, isDemo: !!project.is_demo, snapshot }
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
   const loaded = await loadHtml(slug)
-  if (!loaded) return { title: 'App — WyberAi', description: 'Built with WyberAi' }
+  // A slug that is not a published app: keep it out of the index (it answers 200, so it would otherwise look like a real page).
+  if (!loaded) return { title: 'App not found', description: 'This app is not available.', robots: { index: false, follow: false } }
 
   const seo = extractSeo(loaded.html)
   const title = seo.title || `${loaded.name} — Built with WyberAi`
@@ -120,7 +122,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const ogImage = seo.ogImage || `https://wyberai.com/api/og/app/${encodeURIComponent(slug)}`
 
   return {
-    title,
+    // absolute: the root layout's template would add " | WyberAi" to every customer's title. That pushed titles past 60
+    // characters (57 to 69 on four live sites) and put our name in front of their customers in search results.
+    title: { absolute: title },
     description,
     // Campaign demos are ~100 near-duplicate pages carrying real company names
     // with placeholder data — must never be indexed (thin/duplicate content +
@@ -157,9 +161,9 @@ export default async function PublishedAppPage({ params }: Props) {
   if (!loaded) {
     // App not built yet — show a building page
     return (
-      <div style={{ minHeight: '100vh', background: '#09090b', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-sans)', gap: 16 }}>
+      <div style={{ minHeight: '100vh', background: '#05080d', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-sans)', gap: 16 }}>
         <div style={{ width: 32, height: 32, border: '3px solid rgba(14,165,233,0.2)', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-        <div style={{ color: '#71717a', fontSize: 14 }}>Building your app...</div>
+        <div style={{ color: '#8797ab', fontSize: 14 }}>Building your app...</div>
         <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       </div>
     )
@@ -191,8 +195,8 @@ export default async function PublishedAppPage({ params }: Props) {
       )}
       {/* Free-tier attribution — paid plans publish clean, unbranded apps. */}
       {ownerPlan === 'free' && (
-        <div style={{ position: 'fixed', bottom: 12, right: 12, zIndex: 9999, display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', padding: '5px 10px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.08)' }}>
-          <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', fontFamily: 'var(--font-sans)' }}>Built with</span>
+        <div style={{ position: 'fixed', bottom: 6, right: 12, zIndex: 9999, display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', padding: '5px 10px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.08)' }}>
+          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', fontFamily: 'var(--font-sans)' }}>Built with</span>
           {/* Attributed link — every free published app is an acquisition
               channel; utm+ref make it measurable in GA/PostHog. */}
           <a href={`https://wyberai.com/?utm_source=made-with-badge&utm_medium=badge&utm_campaign=${encodeURIComponent(slug)}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, fontWeight: 700, color: '#0EA5E9', textDecoration: 'none', fontFamily: 'var(--font-sans)' }}>WyberAi</a>
@@ -212,6 +216,8 @@ export default async function PublishedAppPage({ params }: Props) {
           lib/published-app-sandbox.ts. It used to run with allow-same-origin,
           which let any published app read visitors' wyberai.com session. */}
       <SandboxedApp html={html} slug={slug} projectId={loaded.id} title={name} />
+      {/* Reserved strip under the app for the Report button and the badge: they used to sit on top of the app's bottom tabs. */}
+      <div aria-hidden style={{ position: 'fixed', left: 0, right: 0, bottom: 0, height: 36, background: '#0b0b0f', zIndex: 9998 }} />
       {/* UGC abuse-report control — required on every published app regardless of plan. */}
       <ReportButton slug={slug} />
       {/* Install pill — the shell is the top-level document Chrome reads the

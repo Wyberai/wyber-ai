@@ -46,7 +46,7 @@ export const SETTINGS_STRINGS: Record<Locale, Record<string, string>> = {
     actionQuickEdit: 'Quick edit / chat reply', actionComponentBuild: 'Component or feature build',
     actionFullWebBuild: 'Full web app build', actionMobileBuild: 'Mobile app build',
     actionImageGen: 'Image generation', actionCanvasExecution: 'Canvas execution (per AI node)',
-    creditsFootnote: 'Costs are per action. Prebuilt gallery templates are always 0 credits. Error fixes are always free.',
+    creditsFootnote: 'Costs are per action. Prebuilt gallery templates are always 0 credits. Error fixes are always free. These rows estimate a single change. A complete build (web app, SaaS, website or mobile app) is priced by what it includes, and the exact price is shown before you confirm, so it can be higher than the rows above.',
 
     // API Keys
     apiKeysTitle: 'API Keys', apiKeysSub: 'Use the WyberAi API to build on top of our platform. Keep your keys secret.',

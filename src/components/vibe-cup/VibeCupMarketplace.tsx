@@ -105,7 +105,7 @@ export function VibeCupMarketplace() {
         <Link href="/vibe-cup" style={{ color: BRAND, fontWeight: 700, fontSize: 15, textDecoration: 'none', letterSpacing: '-0.01em' }}>
           ← Wybe Cup
         </Link>
-        <Link href="/vibe-cup#enter" style={{ background: BRAND, color: '#fff', padding: '8px 18px', borderRadius: 8, fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>
+        <Link href="/vibe-cup#enter" style={{ background: BRAND, color: '#03111c', padding: '8px 18px', borderRadius: 8, fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>
           Submit Your App
         </Link>
       </nav>
@@ -147,7 +147,7 @@ export function VibeCupMarketplace() {
             <div style={{ fontSize: 32, marginBottom: 16 }}>🏆</div>
             <div style={{ fontSize: 18, fontWeight: 700, color: '#fff', marginBottom: 10 }}>No entries yet</div>
             <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', marginBottom: 28 }}>Be the first to submit your app.</div>
-            <Link href="/vibe-cup#enter" style={{ background: BRAND, color: '#fff', padding: '12px 28px', borderRadius: 10, fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
+            <Link href="/vibe-cup#enter" style={{ background: BRAND, color: '#03111c', padding: '12px 28px', borderRadius: 10, fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
               Enter the Cup →
             </Link>
           </div>

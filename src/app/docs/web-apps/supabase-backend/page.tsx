@@ -1,7 +1,7 @@
 import { DocsPage, DocSection, Steps, Step, ScreenshotPlaceholder, Note } from '@/components/docs/DocsPage'
 import Link from 'next/link'
 
-export const metadata = { title: 'Connecting Supabase — Docs' }
+export const metadata = { title: 'Connecting Supabase — Docs', description: "Wyber-generated web apps can connect to a Supabase project for auth, a Postgres database, and file storage — without writing any backend code." }
 
 export default function Page() {
   return (

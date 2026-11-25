@@ -23,17 +23,17 @@ export default function GoToProjectPage() {
   return (
     <div style={{
       minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center',
-      justifyContent: 'center', gap: 16, padding: 24, background: '#09090b', color: '#f4f4f5',
+      justifyContent: 'center', gap: 16, padding: 24, background: '#05080d', color: '#f4f4f5',
       textAlign: 'center', fontFamily: 'system-ui, sans-serif',
     }}>
       <div style={{ fontSize: 20, fontWeight: 700 }}>Opening in WyberAi…</div>
-      <div style={{ fontSize: 14, color: '#a1a1aa', maxWidth: 320, lineHeight: 1.6 }}>
+      <div style={{ fontSize: 14, color: '#9aa8bb', maxWidth: 320, lineHeight: 1.6 }}>
         If nothing happens, you probably don&apos;t have the app installed yet.
       </div>
       <a
         href="https://wyberai.com"
         style={{
-          marginTop: 8, textDecoration: 'none', background: '#0EA5E9', color: '#fff',
+          marginTop: 8, textDecoration: 'none', background: '#0EA5E9', color: '#03111c',
           fontWeight: 700, fontSize: 14, padding: '10px 20px', borderRadius: 10,
         }}
       >

@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { NON_ENGLISH_LOCALES } from '@/lib/i18n/locales'
 import { OWNER_COOKIE, isOwnerToken } from '@/lib/owner-preview'
+import { isProtectedPath } from '@/lib/route-gate'
+import { publicSupabaseKey } from '@/lib/supabase/keys'
 
 export async function proxy(request: NextRequest) {
   const rawPath = request.nextUrl.pathname
@@ -92,6 +94,11 @@ export async function proxy(request: NextRequest) {
     // "Build your own software" — paste a tool's URL, pick features, get a quote.
     // Top of an ad/outbound funnel, so anonymous visitors must reach it.
     path.startsWith('/byos') ||
+    // The three answer pages behind the homepage's question (Signal design). Anonymous visitors land here.
+    (process.env.NEXT_PUBLIC_DEV_SANDBOX === '1' && path.startsWith('/dev/')) ||
+    path === '/solve' ||
+    path === '/create' ||
+    path === '/agencies' ||
     // Paid-traffic / cold-email landing page — must stay public, anonymous
     // ad and outbound clicks land here before any account exists.
     path.startsWith('/ecommerce') ||
@@ -118,6 +125,10 @@ export async function proxy(request: NextRequest) {
     // A client's private quote link (/quote/<unguessable token>): clients are not
     // signed in. The page itself 404s for anything that is not a real, sent quote.
     path.startsWith('/quote/') ||
+    // A freelancer's client fills in an intake brief at /brief/<unguessable token> before they have any account.
+    path.startsWith('/brief/') ||
+    // A client's private preview of a project (/preview/<unguessable token>): clients are not signed in.
+    path.startsWith('/preview/') ||
     // Inventory intelligence demo — live under /app/inventory, public for customer demos.
     path.startsWith('/app/inventory') ||
     path.startsWith('/complexity-guide') ||
@@ -162,7 +173,6 @@ export async function proxy(request: NextRequest) {
     // so a link can be opened/tested by anyone, like a published app.
     path.startsWith('/m/') ||
     path.startsWith('/unsubscribe') ||
-    path.startsWith('/space-journey') ||
     // Client-facing sales demos (e.g. /showcase/glocal-electronics) — sent to
     // prospects who have no account, must be public.
     path.startsWith('/showcase') ||
@@ -175,6 +185,10 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next()
   }
 
+  // Not a known sign-in-only area: let Next.js answer (a real public page, or a proper 404) instead of bouncing the
+  // visitor to /login. See src/lib/route-gate.ts.
+  if (!isProtectedPath(path)) return NextResponse.next()
+
   // Protected routes: /dashboard, /project/*, /onboarding, /settings
   try {
     const { createServerClient } = await import('@supabase/ssr')
@@ -182,7 +196,7 @@ export async function proxy(request: NextRequest) {
 
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      publicSupabaseKey()!,
       {
         cookies: {
           getAll: () => request.cookies.getAll(),
@@ -212,7 +226,10 @@ export async function proxy(request: NextRequest) {
     // (migration not applied) the read yields false and the gate stays off.
     // Everything here is fail-open: an MFA hiccup must never lock out the app.
     try {
-      const { data: prof } = await supabase.from('profiles').select('mfa_enabled').eq('id', user.id).single()
+      // Only someone with a verified second factor can be asked for it, so everyone else skips two extra lookups on every
+      // page they open. If the factor list is not on the user object, the check below runs as before.
+      const hasFactor = user.factors === undefined ? true : user.factors.some(f => f.status === 'verified')
+      const { data: prof } = hasFactor ? await supabase.from('profiles').select('mfa_enabled').eq('id', user.id).single() : { data: null }
       if (prof?.mfa_enabled) {
         const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
         if (aal && aal.currentLevel === 'aal1' && aal.nextLevel === 'aal2') {

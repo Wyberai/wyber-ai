@@ -5,6 +5,9 @@ import { resolveHeroSegment } from '@/lib/hero-segments'
 import { buildPrior } from '@/lib/intent/prior'
 import { intentExperimentOn, decodeXp, XP_COOKIE } from '@/lib/intent/experiment'
 import { HomeClient } from './HomeClient'
+import { HomeSwitch } from '@/components/signal/HomeSwitch'
+import { SignalFrame } from '@/components/signal/SignalFrame'
+import { SignalHome } from '@/components/signal/SignalHome'
 import { OwnerRegionSwitcher } from '@/components/shared/OwnerRegionSwitcher'
 import { getScanStats } from '@/lib/security-stats'
 import { getAppsBuiltCount, formatAppsBuiltStat } from '@/lib/apps-built-stats'
@@ -52,7 +55,8 @@ export default async function HomePage({
   let initialAsking = false
   // The owner (a browser unlocked via /api/owner-preview) always gets it on the India view, so it can be tried live
   // before it is switched on for the public.
-  if ((intentExperimentOn(process.env.NEXT_PUBLIC_INTENT_EXPERIMENT) || owner) && currency === 'INR') {
+  // Off for everyone, the owner included, unless the flag is set. (Earlier the owner's browser always got it.)
+  if (intentExperimentOn(process.env.NEXT_PUBLIC_INTENT_EXPERIMENT) && currency === 'INR') {
     const params = await searchParams
     const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? null
     const h = await headers()
@@ -79,9 +83,12 @@ export default async function HomePage({
       initialAsking = !initialDoor
     }
   }
+  const legacy = <HomeClient initialCurrency={currency} scanStats={stats} initialSegment={segment} appsBuiltStat={appsBuiltStat} galleryApps={galleryApps} userBuilds={userBuilds} intentPrior={intentPrior} initialDoor={initialDoor} initialAsking={initialAsking} />
+  // The Signal design is on by default. NEXT_PUBLIC_SIGNAL_DESIGN=0 is the kill switch: it restores the previous homepage.
+  const signalOn = process.env.NEXT_PUBLIC_SIGNAL_DESIGN !== '0'
   return (
     <>
-      <HomeClient initialCurrency={currency} scanStats={stats} initialSegment={segment} appsBuiltStat={appsBuiltStat} galleryApps={galleryApps} userBuilds={userBuilds} intentPrior={intentPrior} initialDoor={initialDoor} initialAsking={initialAsking} />
+      {signalOn ? <HomeSwitch signal={<SignalFrame><SignalHome usd={currency !== 'INR'} /></SignalFrame>} legacy={legacy} /> : legacy}
       {owner && <OwnerRegionSwitcher current={currency} />}
     </>
   )

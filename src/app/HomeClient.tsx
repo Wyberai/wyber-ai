@@ -6,7 +6,7 @@ import { WyberLogo } from '@/components/shared/WyberLogo';
 import { Footer } from '@/components/shared/FooterClient';
 import { type Currency } from '@/lib/currency';
 import { track } from '@/lib/track';
-import { VoiceButton } from '@/components/editor/VoiceButton';
+import { VoiceBuildButton } from '@/components/voice/VoiceBuildButton';
 import { LanguageToggle } from '@/components/shared/LanguageToggle';
 import { I18N_ENABLED, LOCALE_SPEECH_CODE, LOCALE_STORAGE_KEY, LOCALES, type Locale } from '@/lib/i18n/locales';
 import { localePath } from '@/lib/i18n/hreflang';
@@ -59,7 +59,7 @@ function WindowChrome({ title }: { title: string }) {
       <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#ff5f57', boxShadow: '0 0 0 0.5px rgba(0,0,0,0.25)' }} />
       <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#ffbd2e', boxShadow: '0 0 0 0.5px rgba(0,0,0,0.25)' }} />
       <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#28c840', boxShadow: '0 0 0 0.5px rgba(0,0,0,0.25)' }} />
-      <span className="mk-mono" style={{ marginLeft: 10, fontSize: 10, color: 'var(--brand-text-faint)' }}>{title}</span>
+      <span className="mk-mono" style={{ marginLeft: 10, fontSize: 11, color: 'var(--brand-text-faint)' }}>{title}</span>
     </div>
   );
 }
@@ -81,7 +81,7 @@ function BuildConsole({ rows, accent = BRAND, title }: {
           </div>
           <div>
             <div style={{ color: s.active ? 'var(--brand-text)' : s.done ? 'var(--brand-text-dim)' : 'var(--brand-text-faint)', fontWeight: s.active ? 600 : 400, fontSize: 11, letterSpacing: '0.02em' }}>{s.label}</div>
-            <div style={{ color: 'var(--brand-text-faint)', fontSize: 10, marginTop: 2 }}>{s.detail}</div>
+            <div style={{ color: 'var(--brand-text-faint)', fontSize: 11, marginTop: 2 }}>{s.detail}</div>
           </div>
         </div>
       ))}
@@ -116,7 +116,7 @@ function ScanReadout({ stats, t }: { stats?: { totalScans: number; cleanPct: num
   return (
     <div className="mk-frame" style={{ position: 'relative', padding: 22, fontFamily: 'var(--brand-mono)', fontSize: 11 }}>
       <WindowChrome title={t.scanWindowTitle} />
-      <div style={{ color: 'var(--brand-text-faint)', fontSize: 10, marginBottom: 10, letterSpacing: '0.06em' }}>
+      <div style={{ color: 'var(--brand-text-faint)', fontSize: 11, marginBottom: 10, letterSpacing: '0.06em' }}>
         {t.scanProbingLine}
       </div>
       {[
@@ -126,15 +126,15 @@ function ScanReadout({ stats, t }: { stats?: { totalScans: number; cleanPct: num
       ].map(r => (
         <div key={r.table} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--brand-border)' }}>
           <span style={{ color: 'var(--brand-text-dim)', width: 76, flexShrink: 0 }}>{r.table}</span>
-          <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.1em', padding: '2px 8px', borderRadius: 4, flexShrink: 0, color: r.ok ? '#22c55e' : '#ef4444', border: `1px solid ${r.ok ? 'rgba(34,197,94,0.35)' : 'rgba(239,68,68,0.4)'}`, background: r.ok ? 'rgba(34,197,94,0.07)' : 'rgba(239,68,68,0.08)' }}>{r.status}</span>
-          <span style={{ color: 'var(--brand-text-faint)', fontSize: 10, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.note}</span>
+          <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', padding: '2px 8px', borderRadius: 4, flexShrink: 0, color: r.ok ? '#22c55e' : '#ef4444', border: `1px solid ${r.ok ? 'rgba(34,197,94,0.35)' : 'rgba(239,68,68,0.4)'}`, background: r.ok ? 'rgba(34,197,94,0.07)' : 'rgba(239,68,68,0.08)' }}>{r.status}</span>
+          <span style={{ color: 'var(--brand-text-faint)', fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.note}</span>
         </div>
       ))}
-      <div style={{ color: 'var(--brand-text-faint)', fontSize: 10, marginTop: 10 }}>
+      <div style={{ color: 'var(--brand-text-faint)', fontSize: 11, marginTop: 10 }}>
         {t.scanFooterLine}
       </div>
       {stats && (
-        <div style={{ color: 'var(--brand-accent-hot)', fontSize: 10, marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--brand-border)' }}>
+        <div style={{ color: 'var(--brand-accent-hot)', fontSize: 11, marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--brand-border)' }}>
           {t.scanStatsLine(stats.totalScans.toLocaleString(), stats.cleanPct)}
         </div>
       )}
@@ -163,7 +163,7 @@ function GalleryStrip({ apps, label, ctaLabel }: { apps: HomeGalleryApp[]; label
               <Link href="/gallery" style={{ textDecoration: 'none', color: 'inherit', display: 'block', height: '100%' }}>
                 <div className="mk-frame" style={{ padding: 18, height: '100%', display: 'flex', flexDirection: 'column', gap: 10, position: 'relative', overflow: 'hidden' }}>
                   <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: color }} />
-                  <div className="mk-mono" style={{ fontSize: 10, color: 'var(--brand-text-faint)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{app.category}</div>
+                  <div className="mk-mono" style={{ fontSize: 11, color: 'var(--brand-text-faint)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{app.category}</div>
                   <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--brand-text)', lineHeight: 1.3 }}>{app.name}</div>
                 </div>
               </Link>
@@ -203,7 +203,7 @@ function UserBuildsStrip({ builds, label, ctaLabel }: { builds: HomeUserBuild[];
                       : <span style={{ fontSize: 26, fontWeight: 700, color, opacity: 0.6 }}>{b.title[0]?.toUpperCase()}</span>}
                   </div>
                   <div style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
-                    <div className="mk-mono" style={{ fontSize: 10, color: 'var(--brand-text-faint)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{b.category}</div>
+                    <div className="mk-mono" style={{ fontSize: 11, color: 'var(--brand-text-faint)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{b.category}</div>
                     <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--brand-text)', lineHeight: 1.3 }}>{b.title}</div>
                     <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 11, color: 'var(--brand-text-faint)' }}>
                       <span>by {b.sellerName}</span>
@@ -227,25 +227,25 @@ function McpConsole() {
   return (
     <div className="mk-frame" style={{ position: 'relative', padding: 22, fontFamily: 'var(--brand-mono)', fontSize: 11 }}>
       <WindowChrome title="claude code — wyberai mcp" />
-      <div style={{ color: 'var(--brand-text-faint)', fontSize: 10, marginBottom: 4, letterSpacing: '0.04em' }}>
+      <div style={{ color: 'var(--brand-text-faint)', fontSize: 11, marginBottom: 4, letterSpacing: '0.04em' }}>
         $ claude mcp add --transport http wyberai \
       </div>
-      <div style={{ color: 'var(--brand-accent-hot)', fontSize: 10, marginBottom: 8, paddingLeft: 12, wordBreak: 'break-all' }}>
+      <div style={{ color: 'var(--brand-accent-hot)', fontSize: 11, marginBottom: 8, paddingLeft: 12, wordBreak: 'break-all' }}>
         https://wyberai.com/api/mcp --header &quot;x-api-key: wyb_•••&quot;
       </div>
-      <div style={{ color: '#22c55e', fontSize: 10, marginBottom: 14 }}>✓ connected · 34 tools available</div>
-      <div style={{ color: 'var(--brand-text-dim)', fontSize: 10, marginBottom: 8 }}>&gt; &quot;spin up a waitlist app and publish it&quot;</div>
+      <div style={{ color: '#22c55e', fontSize: 11, marginBottom: 14 }}>✓ connected · 34 tools available</div>
+      <div style={{ color: 'var(--brand-text-dim)', fontSize: 11, marginBottom: 8 }}>&gt; &quot;spin up a waitlist app and publish it&quot;</div>
       {[
         { t: 'create_project',  d: 'waitlist-app · react-vite' },
         { t: 'start_build',     d: 'building… 12 files generated' },
         { t: 'publish_to_web',  d: 'live at wyberai.com/app/waitlist-x1' },
       ].map((r, i) => (
         <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '7px 0', borderBottom: '1px solid var(--brand-border)' }}>
-          <span style={{ color: 'var(--brand-accent)', fontSize: 10, width: 128, flexShrink: 0 }}>{r.t}</span>
-          <span style={{ color: 'var(--brand-text-faint)', fontSize: 10, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.d}</span>
+          <span style={{ color: 'var(--brand-accent)', fontSize: 11, width: 128, flexShrink: 0 }}>{r.t}</span>
+          <span style={{ color: 'var(--brand-text-faint)', fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.d}</span>
         </div>
       ))}
-      <div style={{ color: 'var(--brand-text-faint)', fontSize: 10, marginTop: 10 }}>→ your workspace, driven from your editor.</div>
+      <div style={{ color: 'var(--brand-text-faint)', fontSize: 11, marginTop: 10 }}>→ your workspace, driven from your editor.</div>
     </div>
   );
 }
@@ -313,8 +313,8 @@ function buildStages(t: HomeStrings) {
           <span style={{ display: 'inline-block', width: 7, height: 15, background: 'var(--brand-accent-hot)', marginLeft: 3, verticalAlign: 'text-bottom', animation: 'blink 1.1s steps(1) infinite' }} />
         </div>
         <div style={{ marginTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span className="mk-mono" style={{ fontSize: 10 }}>{t.stageDescribeMeta}</span>
-          <span style={{ padding: '6px 14px', borderRadius: 7, background: 'var(--brand-accent)', color: '#fff', fontSize: 11, fontWeight: 700, fontFamily: 'var(--font-display)' }}>{t.stageDescribeButton}</span>
+          <span className="mk-mono" style={{ fontSize: 11 }}>{t.stageDescribeMeta}</span>
+          <span style={{ padding: '6px 14px', borderRadius: 7, background: 'var(--brand-accent)', color: '#03111c', fontSize: 11, fontWeight: 700, fontFamily: 'var(--font-display)' }}>{t.stageDescribeButton}</span>
         </div>
       </div>
     ),
@@ -334,12 +334,12 @@ function buildStages(t: HomeStrings) {
         <WindowChrome title="wyberai.com/app/crm-abc123" />
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 8, border: '1px solid var(--brand-border)', background: 'rgba(255,255,255,0.02)', marginBottom: 14 }}>
           <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 8px rgba(34,197,94,0.8)' }} />
-          <span className="mk-mono" style={{ fontSize: 10, color: 'var(--brand-text-dim)' }}>https://wyberai.com/app/crm-abc123 — LIVE</span>
+          <span className="mk-mono" style={{ fontSize: 11, color: 'var(--brand-text-dim)' }}>https://wyberai.com/app/crm-abc123 — LIVE</span>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 8 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {['Pipeline', 'Clients', 'Invoices', 'Settings'].map((x, i) => (
-              <div key={x} style={{ padding: '7px 10px', borderRadius: 6, fontSize: 10, fontFamily: 'var(--brand-mono)', color: i === 0 ? 'var(--brand-accent-hot)' : 'var(--brand-text-faint)', background: i === 0 ? 'rgba(14,165,233,0.08)' : 'transparent', border: i === 0 ? '1px solid rgba(14,165,233,0.25)' : '1px solid transparent' }}>{x}</div>
+              <div key={x} style={{ padding: '7px 10px', borderRadius: 6, fontSize: 11, fontFamily: 'var(--brand-mono)', color: i === 0 ? 'var(--brand-accent-hot)' : 'var(--brand-text-faint)', background: i === 0 ? 'rgba(14,165,233,0.08)' : 'transparent', border: i === 0 ? '1px solid rgba(14,165,233,0.25)' : '1px solid transparent' }}>{x}</div>
             ))}
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
@@ -491,9 +491,8 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
 
   // /use-cases/[slug] has a real locale route (src/app/[locale]/use-cases/[slug]) —
   // route it through localePath so picking a non-English locale doesn't get
-  // dropped the moment the visitor leaves the homepage. /space-journey and
-  // /pricing have no locale-prefixed variant and self-translate client-side.
-  const navLinks: [string, string][] = [[t.navWebApps, localePath('/use-cases/no-code-web-app-builder', locale)], [t.navMobileApps, localePath('/use-cases/build-mobile-app-with-ai', locale)], [t.navWebsites, '/websites'], [t.navGallery, '/gallery'], [t.navJourney, '/space-journey'], [t.navPricing, '/pricing']];
+  // dropped the moment the visitor leaves the homepage. /pricing has no locale-prefixed variant and self-translates client-side.
+  const navLinks: [string, string][] = [[t.navWebApps, localePath('/use-cases/no-code-web-app-builder', locale)], [t.navMobileApps, localePath('/use-cases/build-mobile-app-with-ai', locale)], [t.navWebsites, '/websites'], [t.navGallery, '/gallery'], [t.navPricing, '/pricing']];
 
   return (
     <div className="mk-page" data-theme="dark" data-persona={adaptDoor ?? undefined} data-asking={!adaptDoor && asking ? '' : undefined} style={adaptDoor ? ({ display: 'flex', flexDirection: 'column', overflowAnchor: 'none', ...personaVars(adaptDoor) } as React.CSSProperties) : undefined}>
@@ -608,7 +607,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
                     {([
                       { target: 'app' as const, label: t.targetWeb, color: 'var(--brand-accent)', rgba: 'rgba(14,165,233,0.18)', borderRgba: 'rgba(14,165,233,0.45)', icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg> },
                       { target: 'mobile' as const, label: t.targetMobile, color: '#f97316', rgba: 'rgba(249,115,22,0.18)', borderRgba: 'rgba(249,115,22,0.45)', icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg> },
-                      { target: 'website' as const, label: t.targetWebsite, color: '#6366f1', rgba: 'rgba(99,102,241,0.18)', borderRgba: 'rgba(99,102,241,0.45)', icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M2 9h20"/><path d="M7 3v6"/></svg> },
+                      { target: 'website' as const, label: t.targetWebsite, color: '#a5b4fc', rgba: 'rgba(99,102,241,0.18)', borderRgba: 'rgba(99,102,241,0.45)', icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M2 9h20"/><path d="M7 3v6"/></svg> },
                       { target: 'saas' as const, label: t.targetSaas, color: '#ec4899', rgba: 'rgba(236,72,153,0.18)', borderRgba: 'rgba(236,72,153,0.45)', icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><rect x="2" y="3" width="7" height="18" rx="1.5"/><rect x="12" y="3" width="10" height="8" rx="1.5"/><rect x="12" y="14" width="10" height="7" rx="1.5"/></svg> },
                     ]).map(({ target, label, color, rgba, borderRgba, icon }) => (
                       <button key={target} type="button" onClick={() => setHeroTarget(target)} aria-pressed={heroTarget === target}
@@ -619,11 +618,12 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
                     ))}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--brand-text-dim)' }}>
-                    <VoiceButton
-                      lang={LOCALE_SPEECH_CODE[locale]}
-                      onTranscript={txt => {
-                        setHeroPrompt(prev => (prev ? prev + ' ' + txt : txt));
-                        track('homepage_voice_used', { length: txt.length, locale });
+                    <VoiceBuildButton
+                      surface="hero"
+                      onConfirm={({ prompt, type }) => {
+                        setHeroPrompt(prev => (prev.trim() ? prev.trim() + ' ' + prompt : prompt));
+                        setHeroTarget(type);
+                        track('homepage_voice_used', { length: prompt.length, locale });
                       }}
                     />
                     <button type="submit" className="mk-btn" style={{ padding: '10px 22px', fontSize: 14 }}>
@@ -671,7 +671,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
       {!hideFor('websites') && (
       <Link href="/websites" data-sec="websites" className="wyb-websites-strip" onClick={() => track('homepage_websites_strip_clicked')} style={{ display: 'block', textDecoration: 'none', borderBottom: '1px solid var(--brand-border)', background: 'linear-gradient(90deg, rgba(14,165,233,0.06), transparent 70%)' }}>
         <div style={{ maxWidth: 1120, margin: '0 auto', padding: '16px clamp(20px,5vw,48px)', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px 14px' }}>
-          <span className="mk-mono" style={{ color: 'var(--brand-accent)', fontSize: 10 }}>WEBSITES</span>
+          <span className="mk-mono" style={{ color: 'var(--brand-accent)', fontSize: 11 }}>WEBSITES</span>
           <span style={{ color: 'var(--brand-text)', fontSize: 15, fontWeight: 600 }}>{t.websitesStripText}</span>
           <span style={{ color: 'var(--brand-accent-hot)', fontSize: 15, fontWeight: 600 }}>{t.websitesStripCta}</span>
         </div>
@@ -683,7 +683,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
       {locale === 'en' && !hideFor('byos') && (
         <Link href="/byos" data-sec="byos" onClick={() => track('homepage_byos_strip_clicked')} style={{ display: 'block', textDecoration: 'none', borderBottom: '1px solid var(--brand-border)', background: 'linear-gradient(90deg, rgba(14,165,233,0.06), transparent 70%)' }}>
           <div style={{ maxWidth: 1120, margin: '0 auto', padding: '16px clamp(20px,5vw,48px)', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px 14px' }}>
-            <span className="mk-mono" style={{ color: 'var(--brand-accent)', fontSize: 10 }}>OWN YOUR SOFTWARE</span>
+            <span className="mk-mono" style={{ color: 'var(--brand-accent)', fontSize: 11 }}>OWN YOUR SOFTWARE</span>
             <span style={{ color: 'var(--brand-text)', fontSize: 15, fontWeight: 600 }}>You pay for 100 features and use 5. Paste the tool you rent and build only what you use.</span>
             <span style={{ color: 'var(--brand-accent-hot)', fontSize: 15, fontWeight: 600 }}>Replace a tool →</span>
           </div>
@@ -695,9 +695,10 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
       <section data-sec="telemetry" style={{ borderBottom: '1px solid var(--brand-border)' }}>
         <div style={{ maxWidth: 1120, margin: '0 auto', padding: '28px clamp(20px,5vw,48px)', display: 'flex', justifyContent: 'space-between', gap: 'clamp(20px,4vw,48px)', flexWrap: 'wrap' }}>
           {[
-            { value: appsBuiltStat ?? '2,400+', label: t.statAppsBuilt },
-            { value: '5', label: t.statAvgBuildTime },
-            { value: '99.9%', label: t.statUptimeTarget, href: '/status' },
+            // Only the real count. When the query fails, show nothing rather than a made-up "2,400+".
+            ...(appsBuiltStat ? [{ value: appsBuiltStat, label: t.statAppsBuilt, href: undefined as string | undefined }] : []),
+            { value: '5', label: t.statAvgBuildTime, href: undefined as string | undefined },
+            { value: '99.9%', label: t.statUptimeTarget, href: '/status' as string | undefined },
           ].map(s => (
             <div key={s.label}>
               <div className="mk-stat">{s.value}</div>
@@ -895,7 +896,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
                 ]
             ).map(p => (
               <div key={p.name} className="mk-card" style={{ padding: '26px 22px', position: 'relative', borderColor: p.highlight ? 'var(--brand-border-accent)' : undefined, boxShadow: p.highlight ? '0 0 0 1px rgba(14,165,233,0.25), 0 20px 48px rgba(0,0,0,0.4)' : undefined }}>
-                {p.badge && <div className="mk-mono" style={{ display: 'inline-block', marginBottom: 14, background: p.highlight ? 'var(--brand-accent)' : 'rgba(255,255,255,0.06)', color: p.highlight ? '#fff' : 'var(--brand-text-dim)', fontSize: 9, padding: '3px 10px', borderRadius: 980, whiteSpace: 'nowrap', border: p.highlight ? 'none' : '1px solid var(--brand-border-strong)', letterSpacing: '0.1em' }}>{p.badge}</div>}
+                {p.badge && <div className="mk-mono" style={{ display: 'inline-block', marginBottom: 14, background: p.highlight ? 'var(--brand-accent)' : 'rgba(255,255,255,0.06)', color: p.highlight ? '#fff' : 'var(--brand-text-dim)', fontSize: 11, padding: '3px 10px', borderRadius: 980, whiteSpace: 'nowrap', border: p.highlight ? 'none' : '1px solid var(--brand-border-strong)', letterSpacing: '0.1em' }}>{p.badge}</div>}
                 <div className="mk-mono" style={{ color: p.highlight ? 'var(--brand-accent-hot)' : 'var(--brand-text-faint)', marginBottom: p.badge ? 0 : 12 }}>{p.name}</div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 14 }}>
                   <span style={{ fontFamily: 'var(--font-display)', fontSize: 38, fontWeight: 700, color: 'var(--brand-text)', letterSpacing: '-0.03em' }}>{p.price}</span>
@@ -928,11 +929,11 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
                 { name: t.buildComplexName, price: '$799', delivery: t.buildComplexDelivery, desc: t.buildComplexDesc },
               ].map(b => (
                 <div key={b.name} className="mk-card" style={{ padding: 16, position: 'relative', borderRadius: 12 }}>
-                  {b.badge && <div className="mk-mono" style={{ position: 'absolute', top: -9, left: 14, background: 'var(--brand-accent)', color: '#fff', fontSize: 9, padding: '2px 8px', borderRadius: 20 }}>{b.badge}</div>}
+                  {b.badge && <div className="mk-mono" style={{ position: 'absolute', top: -9, left: 14, background: 'var(--brand-accent)', color: '#03111c', fontSize: 11, padding: '2px 8px', borderRadius: 20 }}>{b.badge}</div>}
                   <div className="mk-mono" style={{ color: 'var(--brand-text-dim)', marginBottom: 8 }}>{b.name}</div>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 6 }}>
                     <span style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 700, color: 'var(--brand-text)' }}>{b.price}</span>
-                    <span className="mk-mono" style={{ fontSize: 9 }}>{b.delivery}</span>
+                    <span className="mk-mono" style={{ fontSize: 11 }}>{b.delivery}</span>
                   </div>
                   <div style={{ fontSize: 11.5, color: 'var(--brand-text-dim)', lineHeight: 1.5 }}>{b.desc}</div>
                 </div>
@@ -943,22 +944,6 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
         )}
 
         <Link href="/pricing" className="mk-btn-ghost" style={{ fontSize: 14 }}>{t.pricingSeeFullCta}</Link>
-      </section>
-
-      {/* ── SPACE JOURNEY INVITE ────────────────────────────────────── */}
-      <section data-sec="journey" style={{ position: 'relative', overflow: 'hidden', borderTop: '1px solid var(--brand-border)', borderBottom: '1px solid var(--brand-border)' }}>
-        <div className="mk-stars" aria-hidden />
-        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 60% 70% at 50% 100%, rgba(14,165,233,0.12) 0%, transparent 65%)', pointerEvents: 'none' }} />
-        <Link href="/space-journey" style={{ display: 'block', textDecoration: 'none', color: 'inherit', position: 'relative' }}>
-          <div style={{ maxWidth: 1120, margin: '0 auto', padding: 'clamp(48px,7vw,88px) clamp(20px,5vw,48px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap' }}>
-            <div>
-              <div className="mk-eyebrow" style={{ marginBottom: 14 }}>✦ {t.journeyLabel}</div>
-              <div className="mk-h2" style={{ fontSize: 'clamp(26px,3.5vw,42px)' }}>{t.journeyHeadingPre} <span className="mk-serif">{t.journeyHeadingEmphasis}</span></div>
-              <p className="mk-lead" style={{ marginTop: 10, fontSize: 15 }}>{t.journeyLead}</p>
-            </div>
-            <span className="mk-btn-ghost" style={{ flexShrink: 0 }}>{t.journeyCta}</span>
-          </div>
-        </Link>
       </section>
 
       {/* ── FAQ (with FAQPage schema for AEO) ───────────────────────── */}
@@ -1004,7 +989,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
               <Link href="/signup" className="mk-btn" style={{ padding: '16px 40px', fontSize: 16 }}>{t.finalCtaPrimary}</Link>
               <Link href="/pricing" className="mk-btn-ghost" style={{ fontSize: 16 }}>{t.finalCtaSecondary}</Link>
             </div>
-            <div className="mk-mono" style={{ marginTop: 20, fontSize: 10 }}>{t.finalCtaFootnote}</div>
+            <div className="mk-mono" style={{ marginTop: 20, fontSize: 11 }}>{t.finalCtaFootnote}</div>
           </Reveal>
         </div>
       </section>

@@ -82,26 +82,64 @@ async function sendOne(input: SendEmailInput, to: string, apiKey: string): Promi
   throw new Error(lastErr)
 }
 
+// Backup route. Continuum's web service was down from 2026-11-07 to 2026-11-09 (a failed Prisma migration kept it from
+// starting) and every email, including login links, silently failed for two days. When Continuum fails, the same message
+// is sent through Resend instead. The Resend key can be send-only. Off with EMAIL_FALLBACK_DISABLED=true.
+const RESEND_URL = 'https://api.resend.com/emails'
+
+async function sendViaResend(input: SendEmailInput, to: string, apiKey: string): Promise<{ id: string | null }> {
+  const payload: Record<string, unknown> = { from: input.from, to: [to], subject: input.subject }
+  if (input.html) payload.html = input.html
+  if (input.text) payload.text = input.text
+  if (!input.html && !input.text) payload.text = ' '
+  if (input.replyTo) payload.reply_to = input.replyTo
+  if (input.headers && Object.keys(input.headers).length) payload.headers = input.headers
+  const res = await fetch(RESEND_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify(payload),
+    signal: AbortSignal.timeout(SEND_TIMEOUT_MS),
+  })
+  if (!res.ok) throw new Error(`Resend HTTP ${res.status}: ${(await res.text().catch(() => '')).slice(0, 200)}`)
+  const data = (await res.json().catch(() => ({}))) as { id?: string }
+  return { id: data.id ?? null }
+}
+
 async function deliver(input: SendEmailInput): Promise<{ id: string | null }> {
   const apiKey = process.env.CONTINUUM_API_KEY
-  if (!apiKey) {
-    await alertFailure(`CONTINUUM_API_KEY is not set — cannot send "${input.subject}"`)
-    throw new Error('CONTINUUM_API_KEY is not set — cannot send email')
-  }
+  const resendKey = process.env.RESEND_API_KEY
+  const fallbackOn = !!resendKey && process.env.EMAIL_FALLBACK_DISABLED !== 'true'
 
   // Continuum's /v1/send takes a single recipient, so fan out.
   const recipients = Array.isArray(input.to) ? input.to : [input.to]
   let firstId: string | null = null
   for (const to of recipients) {
+    const domain = to.split('@')[1] ?? '?'
+    let reason: string
     try {
+      if (!apiKey) throw new Error('CONTINUUM_API_KEY is not set')
       const { id } = await sendOne(input, to, apiKey)
       firstId ??= id
+      continue
     } catch (err) {
-      const reason = err instanceof Error ? err.message : String(err)
-      const domain = to.split('@')[1] ?? '?'
-      await alertFailure(`send failed (subject "${input.subject.slice(0, 80)}", to *@${domain}): ${reason}`)
-      throw new Error(`Continuum send failed: ${reason}`)
+      reason = err instanceof Error ? err.message : String(err)
     }
+
+    if (fallbackOn) {
+      try {
+        const { id } = await sendViaResend(input, to, resendKey as string)
+        firstId ??= id
+        await alertFailure(`Continuum failed, sent through the Resend fallback instead (subject "${input.subject.slice(0, 80)}", to *@${domain}). Continuum said: ${reason}`)
+        continue
+      } catch (fallbackErr) {
+        const fb = fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr)
+        await alertFailure(`send failed on both routes (subject "${input.subject.slice(0, 80)}", to *@${domain}). Continuum: ${reason}. Resend: ${fb}`)
+        throw new Error(`Continuum send failed: ${reason}; Resend fallback failed: ${fb}`)
+      }
+    }
+
+    await alertFailure(`send failed (subject "${input.subject.slice(0, 80)}", to *@${domain}): ${reason}`)
+    throw new Error(`Continuum send failed: ${reason}`)
   }
   return { id: firstId }
 }

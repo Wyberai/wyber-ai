@@ -64,7 +64,7 @@ export function FounderChecklistPanel({ projectId }: { projectId: string }) {
         <span style={{ fontSize: 12, fontWeight: 600, color: progress.complete ? '#34D399' : 'var(--ide-text2)' }}>
           {t('checklistCompleteTemplate').replace('{done}', String(progress.done)).replace('{total}', String(progress.total))}
         </span>
-        {saved && <span style={{ fontSize: 11, color: '#34D399' }}>✓ {t('checklistSavedMsg')}</span>}
+        {saved && <span style={{ fontSize: 12, color: '#34D399' }}>✓ {t('checklistSavedMsg')}</span>}
       </div>
 
       {CHECKLIST_ITEMS.map((item) => {
@@ -76,11 +76,11 @@ export function FounderChecklistPanel({ projectId }: { projectId: string }) {
                 style={{ marginTop: 2, accentColor: '#A855F7', width: 15, height: 15, flexShrink: 0 }} />
               <span>
                 <div style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--ide-text)' }}>{item.label}</div>
-                <div style={{ fontSize: 11, color: 'var(--ide-text3)', marginTop: 2, lineHeight: 1.5 }}>{item.helper}</div>
+                <div style={{ fontSize: 12, color: 'var(--ide-text3)', marginTop: 2, lineHeight: 1.5 }}>{item.helper}</div>
               </span>
             </label>
             {item.notePrompt && (
-              <input
+              <input aria-label={item.notePrompt}
                 type="text"
                 placeholder={item.notePrompt}
                 value={itemState?.note ?? ''}

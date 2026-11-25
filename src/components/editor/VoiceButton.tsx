@@ -70,11 +70,12 @@ export function VoiceButton({ onTranscript, onInterim, disabled, size = 30, lang
   const icon = Math.round(size * 0.47)
   return (
     <button
-      onClick={toggle}
+      onClick={toggle} type="button" className="wy-tap" aria-pressed={listening}
       disabled={disabled}
+      aria-label={listening ? t('voiceStopRecording') : t('voiceSpeakIdea')}
       title={listening ? t('voiceStopRecording') : t('voiceSpeakIdea')}
       style={{
-        width: size, height: size, borderRadius: '50%', border: 'none', flexShrink: 0,
+        width: size, height: size, minWidth: size, borderRadius: '50%', border: 'none', flexShrink: 0,
         background: listening ? 'rgba(239,68,68,0.15)' : 'transparent',
         color: listening ? '#ef4444' : 'var(--ide-text3, currentColor)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',

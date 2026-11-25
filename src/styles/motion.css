@@ -1,0 +1,45 @@
+/*
+ * Shared motion for the whole site: the animated logo loader and a reduced-motion safeguard.
+ * One accent (sky blue), no decorative motion. Components that define their own `spin` or `pulse`
+ * keyframes keep working; this file only adds the loader and the user-preference rule.
+ */
+
+/* ---- animated logo ---- */
+.wy-mark { display: block; overflow: visible; }
+.wy-mark .wy-mark-bg { fill: #0ea5e9; transform-origin: 16px 16px; }
+.wy-mark .wy-chev { fill: none; stroke: #fff; stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 0; }
+.wy-mark .wy-chev-b { opacity: .4; }
+
+/* Loading: the two chevrons draw in one after the other, hold, then fade, on a 2.4s loop. The tile breathes gently. */
+.wy-mark[data-state="loading"] .wy-mark-bg { animation: wy-breathe 2.4s ease-in-out infinite; }
+.wy-mark[data-state="loading"] .wy-chev-a { animation: wy-draw-a 2.4s cubic-bezier(.4, 0, .2, 1) infinite; }
+.wy-mark[data-state="loading"] .wy-chev-b { animation: wy-draw-b 2.4s cubic-bezier(.4, 0, .2, 1) infinite; }
+/* Idle: a slow glow, for empty states where nothing is happening yet. */
+.wy-mark[data-state="idle"] .wy-mark-bg { animation: wy-breathe 4s ease-in-out infinite; }
+
+@keyframes wy-draw-a { 0% { stroke-dashoffset: 1; } 30%, 78% { stroke-dashoffset: 0; opacity: 1; } 92%, 100% { stroke-dashoffset: 0; opacity: 0; } }
+@keyframes wy-draw-b { 0%, 14% { stroke-dashoffset: 1; opacity: .4; } 44%, 78% { stroke-dashoffset: 0; opacity: .4; } 92%, 100% { stroke-dashoffset: 0; opacity: 0; } }
+@keyframes wy-breathe { 0%, 100% { opacity: .92; transform: scale(1); } 50% { opacity: 1; transform: scale(1.04); } }
+
+.wy-loader { min-height: 100vh; background: #05080d; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 22px; }
+.wy-loader-bar { width: 120px; height: 3px; border-radius: 999px; background: rgba(150, 190, 235, .14); overflow: hidden; }
+.wy-loader-bar i { display: block; height: 100%; width: 40%; border-radius: 999px; background: #0ea5e9; animation: wy-slide 1.4s cubic-bezier(.4, 0, .2, 1) infinite; }
+@keyframes wy-slide { 0% { transform: translateX(-110%); } 100% { transform: translateX(260%); } }
+.wy-loader-text { color: #8797ab; font: 13px var(--font-sans, system-ui); letter-spacing: .02em; }
+.wy-inline-load { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+
+/*
+ * People who ask their device for less motion get it. Loops stop and transitions are instant, so nothing keeps
+ * moving. Spinners and the loader bar are the exception: they are the only sign that work is happening, so
+ * they keep going (they do not travel across the screen, they turn or slide in place).
+ */
+@media (prefers-reduced-motion: reduce) {
+  *:not([style*="spin"]):not(.wy-loader-bar i), *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .wy-mark[data-state] .wy-mark-bg, .wy-mark[data-state] .wy-chev-a { animation: none !important; opacity: 1; }
+  .wy-mark[data-state] .wy-chev-b { animation: none !important; opacity: .4; }
+}

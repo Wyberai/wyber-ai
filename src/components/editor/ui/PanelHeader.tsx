@@ -15,7 +15,7 @@ export function PanelHeader({ icon, title, desc, right }: { icon?: ReactNode; ti
         </span>
       )}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ide-text)', letterSpacing: '-0.01em', lineHeight: 1.2 }}>{title}</div>
+        <h2 style={{ margin: 0, fontFamily: 'inherit', fontSize: 13, fontWeight: 700, color: 'var(--ide-text)', letterSpacing: '-0.01em', lineHeight: 1.2 }}>{title}</h2>
         {desc && <MicroLabel style={{ display: 'block', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{desc}</MicroLabel>}
       </div>
       {right}

@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { createAnthropic } from '@/lib/ai-usage'
 import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+const anthropic = createAnthropic('app/api/ai-employees/browser', { apiKey: process.env.ANTHROPIC_API_KEY! })
 
 // Internal-only endpoint called by the AI Employee run engine
 // Auth: verified via X-Internal-User-Id header (set only by the run engine)

@@ -1,4 +1,6 @@
 import { memeImg } from './memes'
+import { TOPUP_PACKS, PLAN_FACTS } from '@/lib/plans'
+import { readableOn } from '@/lib/color-contrast'
 import { formatPrice, type Currency } from '@/lib/currency'
 import { PLAN_VALUE, PLAN_VALUE_INR } from '@/lib/pricing-values'
 import { unsubscribeUrl } from './unsubscribe'
@@ -8,6 +10,7 @@ import { unsubscribeUrl } from './unsubscribe'
 // [email-transport] and posts to ALERT_WEBHOOK_URL. Every function below calls
 // sendMail({from, to, subject, html}), so call sites are unchanged.
 import { sendEmail } from './transport'
+import { buildCosts, editCost } from '../pricing-facts'
 
 async function sendMail(opts: { from: string; to: string; subject: string; html: string }): Promise<{ id: string | null }> {
   return sendEmail(opts)
@@ -59,16 +62,16 @@ ${preheader ? `<div style="display:none;max-height:0;overflow:hidden">${preheade
 }
 
 function btn(label: string, url: string, color = '#0EA5E9'): string {
-  return `<a href="${url}" style="display:inline-block;background:${color};color:#fff;text-decoration:none;font-size:15px;font-weight:600;padding:13px 28px;border-radius:9px;letter-spacing:-0.01em">${label}</a>`
+  return `<a href="${url}" style="display:inline-block;background:${color};color:${readableOn(color)};text-decoration:none;font-size:15px;font-weight:600;padding:13px 28px;border-radius:9px;letter-spacing:-0.01em">${label}</a>`
 }
 
 // Top-up options block. TABLE-based (not flex/grid — Gmail/Outlook strip those,
 // which collapsed the card spacing). Currency-aware: pass 'INR' to show rupee
 // price points to Indian users; defaults to USD so existing callers are unchanged.
 const TOPUPS: [label: string, key: string][] = [
-  ['40 credits', 'topup_200'],
-  ['100 credits', 'topup_600'],
-  ['200 credits', 'topup_2000'],
+  ['120 credits', 'topup_200'],
+  ['300 credits', 'topup_600'],
+  ['600 credits', 'topup_2000'],
 ]
 function topUpBlock(currency: Currency = 'USD'): string {
   const prices = currency === 'INR' ? PLAN_VALUE_INR : PLAN_VALUE
@@ -115,44 +118,42 @@ function divider(): string {
 }
 
 // ── 1. Welcome (on signup) ────────────────────────────────────────────────────
-// `source` branches the opener so a Meta-ad / referral signup doesn't read
-// identical to organic — the rest of the email (credits, feature list,
-// referral pitch) stays the same, only the hook line changes.
+// Short and specific: what they have, what it costs, what is free, who to reply to. `source` only changes
+// the first sentence for someone who was invited by a friend. (Removed: the ad-source wisecrack, the meme
+// image, the prize paragraph and "24 more integrations". Every claim below is one the product backs.)
 export type WelcomeSource = 'organic' | 'paid-ads' | 'referral'
-const WELCOME_HOOKS: Record<WelcomeSource, (name: string) => string> = {
-  organic:    (name) => `Hey ${name}, you're in. Your ideas + our AI — this is the handshake.`,
-  'paid-ads': (name) => `Hey ${name}, you're in. You clicked an ad — respect for making it this far through 2026's attention economy. Let's make it worth it.`,
-  referral:   (name) => `Hey ${name}, you're in — and someone already vouched for WyberAi by inviting you. Let's see if they were right.`,
-}
-function welcomeHook(source: WelcomeSource, name: string): string {
-  return WELCOME_HOOKS[source](name)
+function welcomeIntro(source: WelcomeSource): string {
+  return source === 'referral'
+    ? 'A friend invited you, so you are already set up with 30 free credits.'
+    : 'You have 30 free credits and no card on file.'
 }
 export async function sendWelcomeEmail(to: string, name?: string, source: WelcomeSource = 'organic') {
   const displayName = name ?? to.split('@')[0]
   const html = wrap(`
-    ${memeImg('welcome')}
-    ${h1('Welcome to WyberAi ⚡')}
-    ${p(welcomeHook(source, displayName))}
-    ${p('You have <strong style="color:#f0f0f4">30 free credits</strong> to start building — no credit card needed. Describe any app in plain English and watch WyberAi generate fresh code in real time.')}
-    ${p('Here\'s what you can do:')}
+    ${h1('Your 30 free credits are ready')}
+    ${p(`Hi ${displayName},`)}
+    ${p(`${welcomeIntro(source)} Describe what you want in plain English and watch it get built. People start with things like:`)}
     <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px">
-      <tr><td style="padding:8px 0;font-size:15px;color:#8888a0;border-bottom:1px solid #2e2e38">→ &nbsp;Build a <strong style="color:#f0f0f4">web app</strong> — just describe it in plain English</td></tr>
-      <tr><td style="padding:8px 0;font-size:15px;color:#8888a0;border-bottom:1px solid #2e2e38">→ &nbsp;Build a <strong style="color:#f0f0f4">mobile app</strong> — preview on your phone via QR code</td></tr>
-      <tr><td style="padding:8px 0;font-size:15px;color:#8888a0;border-bottom:1px solid #2e2e38">→ &nbsp;Paste a <strong style="color:#f0f0f4">screenshot or Figma file</strong> to clone any UI</td></tr>
-      <tr><td style="padding:8px 0;font-size:15px;color:#8888a0">→ &nbsp;Connect <strong style="color:#f0f0f4">Supabase, Stripe, OpenAI</strong> and 24 more integrations</td></tr>
+      <tr><td style="padding:8px 0;font-size:15px;color:#8888a0;border-bottom:1px solid #2e2e38">A waitlist page for a product launch</td></tr>
+      <tr><td style="padding:8px 0;font-size:15px;color:#8888a0;border-bottom:1px solid #2e2e38">An expense tracker split by category</td></tr>
+      <tr><td style="padding:8px 0;font-size:15px;color:#8888a0">A booking page for a studio</td></tr>
     </table>
     <div style="text-align:center;margin:28px 0">
       ${btn('Start building →', `${APP_URL}/dashboard`)}
     </div>
+    ${p('Three things worth knowing:')}
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px">
+      <tr><td style="padding:8px 0;font-size:15px;color:#8888a0;border-bottom:1px solid #2e2e38"><strong style="color:#f0f0f4">You see the cost first.</strong> A small build is about ${buildCosts().small} credits.</td></tr>
+      <tr><td style="padding:8px 0;font-size:15px;color:#8888a0;border-bottom:1px solid #2e2e38"><strong style="color:#f0f0f4">Fixing a broken build is free.</strong> So is publishing.</td></tr>
+      <tr><td style="padding:8px 0;font-size:15px;color:#8888a0"><strong style="color:#f0f0f4">The code is yours.</strong> Push it to your own GitHub any time.</td></tr>
+    </table>
     ${divider()}
-    ${p('<strong style="color:#f0f0f4">Bring a friend, you both win</strong> — share your invite link from Settings → Referrals. You get 50 credits per signup, they start with 30 free too.')}
-    ${p(`Also — <strong style="color:#f0f0f4">Wyber Premier League</strong> is running right now: build anything and enter for a shot at <strong style="color:#f0f0f4">$1,800</strong> in monthly prizes, free and unlimited entries, new winners on the 1st. <a href="${APP_URL}/premier-league" style="color:#0EA5E9">See this month's contest →</a>`)}
-    ${p(`I'm building WyberAi in the open — every feature, every number, real. <a href="${FOUNDER_X_URL}" style="color:#0EA5E9">Follow along on X</a> or <a href="${FOUNDER_LINKEDIN_URL}" style="color:#0EA5E9">LinkedIn</a> if that's useful to you.`)}
-    ${p('Questions? Just reply — this goes straight to me.')}
+    ${p('Invite a friend from Settings → Referrals and get 50 credits for each person who joins. They start with 30 free credits too.')}
+    ${p('Stuck on anything? Reply to this email and a person will read it.')}
     ${p('— Sumeet, founder')}
-  `, 'Your 30 free credits are ready')
+  `, 'Describe anything in plain English. The cost is shown before every build.')
 
-  return sendMail({ from: FROM, to, subject: 'Welcome to WyberAi ⚡', html })
+  return sendMail({ from: FROM, to, subject: 'Your 30 free credits are ready', html })
 }
 
 // ── 2. Magic link / OTP ───────────────────────────────────────────────────────
@@ -218,7 +219,7 @@ export async function sendAdminExpoLeadAlert(lead: ExpoLeadAlert) {
       ['Describes them', e(lead.audience)],
       ['Preferred day', e(lead.day)],
       ['Source', e(lead.source)],
-      ['Pain point', e(lead.painPoint)],
+      ['Pain point', e(lead.painPoint || '(not given)')],
     ])}
   `, `Booth request: ${lead.name}`)
   return sendMail({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `📅 Booth request: ${lead.name.slice(0, 60)}`, html })
@@ -240,6 +241,55 @@ export async function sendQuoteAcceptedAlert(a: { title: string; totalLabel: str
     <div style="text-align:center;margin:0 0 24px">${btn('Review agent drafts →', `${APP_URL}/admin/agents`)}</div>
   `, 'A client accepted a quote')
   return sendMail({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `Quote accepted: ${a.title.slice(0, 60)} (${a.totalLabel})`, html })
+}
+
+// Agency mode: tell the agency when their client approves or asks for changes on a deliverable.
+export async function sendClientFeedbackAlert(a: { to: string; clientName: string; deliverable: string; kind: 'approved' | 'changes_requested' | 'comment'; author: string | null; note: string | null }) {
+  const verb = a.kind === 'approved' ? 'approved' : a.kind === 'changes_requested' ? 'asked for changes on' : 'commented on'
+  const who = a.author ? escHtml(a.author) : escHtml(a.clientName)
+  const html = wrap(`
+    ${h1(a.kind === 'approved' ? 'A client approved your work' : a.kind === 'changes_requested' ? 'A client asked for changes' : 'A client left a comment')}
+    ${p(`<strong style="color:#f0f0f4">${who}</strong> ${verb} <strong style="color:#f0f0f4">${escHtml(a.deliverable)}</strong> for ${escHtml(a.clientName)}.`)}
+    ${a.note ? infoBox([['Their note', escHtml(a.note.slice(0, 600))]]) : ''}
+    <div style="text-align:center;margin:24px 0">${btn('Open the client →', `${APP_URL}/clients`)}</div>
+  `, `${a.clientName}: ${verb} ${a.deliverable}`)
+  const subject = a.kind === 'approved' ? `Approved: ${a.deliverable.slice(0, 50)} (${a.clientName.slice(0, 30)})` : a.kind === 'changes_requested' ? `Changes requested: ${a.deliverable.slice(0, 50)} (${a.clientName.slice(0, 30)})` : `New comment: ${a.deliverable.slice(0, 50)} (${a.clientName.slice(0, 30)})`
+  return sendMail({ from: FROM_NOTIF, to: a.to, subject, html })
+}
+
+// Agency mode: the freelancer's client gets an email about their project. It is sent in the freelancer's name
+// ("Asha via WyberAi"), replies go to the freelancer, and it carries one button to the client's page.
+const cleanName = (s: string) => s.replace(/[<>"\r\n]/g, '').trim().slice(0, 60) || 'Your developer'
+export async function sendClientPortalEmail(a: { to: string; fromName: string; replyTo?: string | null; clientName: string; kind: 'update' | 'quote' | 'delivered' | 'brief'; message?: string | null; link: string; quoteTitle?: string; quoteTotal?: string }) {
+  const who = cleanName(a.fromName)
+  const heading = a.kind === 'update' ? `An update on your project` : a.kind === 'quote' ? `A quote is ready for you` : a.kind === 'brief' ? `A few questions about your project` : `Your project has been delivered`
+  const body = a.kind === 'update'
+    ? p(escHtml((a.message ?? '').slice(0, 1000)).replace(/\n/g, '<br/>'))
+    : a.kind === 'brief'
+      ? p(`<strong style="color:#f0f0f4">${escHtml(who)}</strong> would like to start your project and sent a short form. It takes about five minutes, and short answers are fine.`)
+    : a.kind === 'quote'
+      ? `${p(`<strong style="color:#f0f0f4">${escHtml(who)}</strong> sent you a quote. You can read it and accept it on your project page.`)}${infoBox([['Quote', escHtml(a.quoteTitle ?? '')], ['Total', escHtml(a.quoteTotal ?? '')]])}`
+      : `${p(`<strong style="color:#f0f0f4">${escHtml(who)}</strong> has marked your project as delivered.`)}${a.message ? p(escHtml(a.message.slice(0, 1000)).replace(/\n/g, '<br/>')) : ''}`
+  const html = wrap(`
+    ${h1(heading)}
+    ${body}
+    <div style="text-align:center;margin:24px 0">${btn(a.kind === 'brief' ? 'Fill in the form →' : 'Open your project page →', a.link)}</div>
+    ${p(`You are getting this because ${escHtml(who)} shared a project page with you using WyberAi. Replying goes to them. If you were not expecting it, write to hello@wyberai.com and we will look into it.`)}
+  `, `${who}: ${heading.toLowerCase()}`)
+  const subject = a.kind === 'update' ? `Update on your project from ${who}` : a.kind === 'quote' ? `Quote from ${who}` : a.kind === 'brief' ? `A few questions about your project, from ${who}` : `Your project is delivered`
+  return sendEmail({ from: `${who} via WyberAi <hello@wyberai.com>`, to: a.to, subject, html, ...(a.replyTo ? { replyTo: a.replyTo } : {}) })
+}
+
+// Agency mode: tell the freelancer a client sent their intake brief, or answered a quote.
+export async function sendClientEventAlert(a: { to: string; clientName: string; event: 'brief' | 'quote_accepted' | 'quote_declined'; detail?: string | null }) {
+  const heading = a.event === 'brief' ? 'A client sent their brief' : a.event === 'quote_accepted' ? 'A client accepted your quote' : 'A client declined your quote'
+  const html = wrap(`
+    ${h1(heading)}
+    ${p(`<strong style="color:#f0f0f4">${escHtml(a.clientName)}</strong>${a.event === 'brief' ? ' filled in the intake form. You can build from it with one click.' : a.event === 'quote_accepted' ? ' accepted your quote.' : ' declined your quote.'}`)}
+    ${a.detail ? infoBox([['Details', escHtml(a.detail.slice(0, 500))]]) : ''}
+    <div style="text-align:center;margin:24px 0">${btn('Open the client →', `${APP_URL}/clients`)}</div>
+  `, `${a.clientName}: ${heading.toLowerCase()}`)
+  return sendMail({ from: FROM_NOTIF, to: a.to, subject: `${heading}: ${a.clientName.slice(0, 40)}`, html })
 }
 
 // Daily internal revenue brief for the founder (see lib/crm/brief.ts, /api/cron/crm-brief).
@@ -290,6 +340,7 @@ export function buildExpoSequenceEmail(
   const anyDay = !lead.day || lead.day === 'Any day'
   const dayLabel = anyDay ? 'any day of the expo (27–29 Nov)' : escHtml(lead.day as string)
   const unsub = unsubscribeUrl(to)
+  const hasPain = (lead.painPoint || '').trim().length > 0
   const signup = (campaign: string) => `${APP_URL}/signup?utm_source=expo-email&utm_campaign=${campaign}`
 
   if (kind === 'confirmation') {
@@ -305,8 +356,9 @@ export function buildExpoSequenceEmail(
           ['Your day', anyDay ? 'Any day' : dayLabel],
           ['Length', '15 minutes, free'],
         ])}
-        ${p('This is the pain point you gave us. It is what we&apos;ll bring with us:')}
-        ${expoQuote(lead.painPoint)}
+        ${hasPain
+          ? `${p('This is the pain point you gave us. It is what we&apos;ll bring with us:')}${expoQuote(lead.painPoint)}`
+          : p('Bring the one thing your current software cannot do. A spreadsheet, a screenshot or a WhatsApp thread is enough, and we&apos;ll build it with you.')}
         ${p('Need to change your day or add detail? Just reply to this email.')}
       `, 'Your slot request for booth S23 is in', unsub),
     }
@@ -321,7 +373,7 @@ export function buildExpoSequenceEmail(
           ? 'Tech Expo Gujarat starts tomorrow (27–29 Nov) and we are at booth S23. Come by whenever you are free.'
           : `You asked to meet on ${dayLabel}, which is tomorrow. We are at booth S23.`)}
         ${p('If you have one real example of the thing your software cannot do, bring it: a spreadsheet, a screenshot, a WhatsApp thread. It is the quickest way for us to show you something that fits.')}
-        ${expoQuote(lead.painPoint)}
+        ${hasPain ? expoQuote(lead.painPoint) : ''}
         ${p('Plans changed? Reply to this email and we will sort out another time.')}
       `, 'Tomorrow at booth S23', unsub),
     }
@@ -329,15 +381,18 @@ export function buildExpoSequenceEmail(
 
   if (kind === 'thanks') {
     return {
-      subject: 'Your pain point, and what happens next',
+      subject: hasPain ? 'Your pain point, and what happens next' : 'Thanks for stopping by, and what happens next',
       html: wrap(`
         ${h1(`Thanks, ${first}.`)}
-        ${p('Tech Expo Gujarat is over. Whether or not we met at the booth, the pain point you sent is still with us:')}
-        ${expoQuote(lead.painPoint)}
-        ${p('Reply with one more detail, such as the screens you would want or who would use it, and we will tell you what a first version would look like.')}
+        ${hasPain
+          ? `${p('Tech Expo Gujarat is over. Whether or not we met at the booth, the pain point you sent is still with us:')}${expoQuote(lead.painPoint)}`
+          : p('Tech Expo Gujarat is over. Whether or not we met at the booth, thank you for stopping by our page.')}
+        ${p(hasPain
+          ? 'Reply with one more detail, such as the screens you would want or who would use it, and we will tell you what a first version would look like.'
+          : 'Reply with the one thing your current software cannot do, and who would use the fix, and we will tell you what a first version would look like.')}
         <div style="text-align:center;margin:28px 0">${btn('Start building free →', signup('teg2026-thanks'))}</div>
         ${p('30 free credits when you sign up. No card needed.')}
-      `, 'The pain point you sent us', unsub),
+      `, hasPain ? 'The pain point you sent us' : 'Thanks for stopping by', unsub),
     }
   }
 
@@ -345,12 +400,101 @@ export function buildExpoSequenceEmail(
     subject: 'One last note from Tech Expo Gujarat',
     html: wrap(`
       ${h1(`Did you find a way around it, ${first}?`)}
-      ${p('When you asked for a slot with us, you told us:')}
-      ${expoQuote(lead.painPoint)}
-      ${p('If that is still a headache, reply and say so. If you have already solved it, ignore this. It is our last email about the expo.')}
+      ${hasPain
+        ? `${p('When you asked for a slot with us, you told us:')}${expoQuote(lead.painPoint)}${p('If that is still a headache, reply and say so. If you have already solved it, ignore this. It is our last email about the expo.')}`
+        : p('When you asked for a slot with us, we never got to hear what you wanted to fix. If something is still a headache, reply and say so. If you have already solved it, ignore this. It is our last email about the expo.')}
       <div style="text-align:center;margin:28px 0">${btn('Try it free →', signup('teg2026-followup'))}</div>
     `, 'Our last note about the expo', unsub),
   }
+}
+
+// ── WyberCode 1.0 announcement (one-off product update) ────────────────────
+// Three audiences, one voice. All numbers come from the plan file so they cannot drift:
+//   'spark-subscriber': a paying Spark customer (India), told their plan is now 3x
+//   'builder':          has spent credits on a build; told what is new and that their projects are safe
+//   'newcomer':         signed up but never built; invited to make a first build
+// Marketing email: always carries the recipient's signed unsubscribe link. Returns a plain-text twin for the multipart body.
+export type WyberCodeAnnouncementKind = 'spark-subscriber' | 'builder' | 'newcomer'
+
+export function buildWyberCodeAnnouncement(
+  kind: WyberCodeAnnouncementKind,
+  to: string,
+  opts: { name?: string | null; extraCreditsAdded?: boolean } = {},
+): { subject: string; preheader: string; html: string; text: string } {
+  const first = (opts.name || '').trim().split(/\s+/)[0]
+  const hi = first ? `Hi ${escHtml(first)},` : 'Hi,'
+  const hiText = first ? `Hi ${first},` : 'Hi,'
+  const unsub = unsubscribeUrl(to)
+  const n = (v: number) => v.toLocaleString('en-US')
+  const packs = TOPUP_PACKS.map(t => n(t.credits)).join(', ').replace(/, ([^,]*)$/, ' and $1')
+  const open = `${APP_URL}/dashboard?utm_source=email&utm_medium=announcement&utm_campaign=wybercode-1-0`
+  const start = `${APP_URL}/create?utm_source=email&utm_medium=announcement&utm_campaign=wybercode-1-0`
+  const sign = `<p style="font-size:14px;line-height:1.7;color:#c8c8d4;margin:22px 0 0">Thank you,<br/>Sumeet<br/><span style="color:#8888a0">Founder, WyberAi</span></p>`
+  const signText = 'Thank you,\nSumeet\nFounder, WyberAi'
+  const engine = 'WyberCode 1.0 is our new coding engine. It now builds every app on WyberAi, with staged builds, automatic repair of build errors, and a security scan of your database the moment you publish.'
+
+  if (kind === 'spark-subscriber') {
+    const planLine = opts.extraCreditsAdded
+      ? `Your Spark plan now includes <strong style="color:#f0f0f4">${n(PLAN_FACTS.spark.credits)} credits a month</strong>, up from 50, at the same ₹499. I have also added the extra 100 credits to your balance today, so you do not have to wait for your next renewal.`
+      : `Your Spark plan now includes <strong style="color:#f0f0f4">${n(PLAN_FACTS.spark.credits)} credits a month</strong>, up from 50, at the same ₹499. It applies from your next renewal.`
+    const planText = opts.extraCreditsAdded
+      ? `Your Spark plan now includes ${n(PLAN_FACTS.spark.credits)} credits a month, up from 50, at the same ₹499. I have also added the extra 100 credits to your balance today, so you do not have to wait for your next renewal.`
+      : `Your Spark plan now includes ${n(PLAN_FACTS.spark.credits)} credits a month, up from 50, at the same ₹499. It applies from your next renewal.`
+    const subject = 'Your Spark plan just got 3× the credits'
+    const preheader = 'Same ₹499 a month. WyberCode 1.0 is live.'
+    const html = wrap(`
+      ${h1('Your Spark plan just got 3× the credits')}
+      ${p(hi)}
+      ${p('A short personal note, because you backed WyberAi with a paid plan early. Two things changed this week.')}
+      ${infoBox([
+        ['1. WyberCode 1.0', 'Our new coding engine now builds every app on WyberAi.'],
+        ['2. Your credits', `${n(PLAN_FACTS.spark.credits)} a month, up from 50. Same price.`],
+      ])}
+      ${p(planLine)}
+      ${p(`Top-up packs are 3× bigger as well: ${packs} credits at the same prices.`)}
+      <div style="text-align:center;margin:28px 0">${btn('Open your dashboard →', open)}</div>
+      ${p('If any build has not worked the way you expected, reply to this email and tell me. I read every reply.')}
+      ${sign}
+    `, preheader, unsub)
+    const text = [subject, '', hiText, '', 'A short personal note, because you backed WyberAi with a paid plan early. Two things changed this week.', '', `1. ${engine}`, `2. ${planText}`, '', `Top-up packs are 3× bigger as well: ${packs} credits at the same prices.`, '', `Open your dashboard: ${open}`, '', 'If any build has not worked the way you expected, reply to this email and tell me. I read every reply.', '', signText, '', `Unsubscribe: ${unsub}`].join('\n')
+    return { subject, preheader, html, text }
+  }
+
+  if (kind === 'builder') {
+    const subject = 'WyberCode 1.0 is live, and your projects are right where you left them'
+    const preheader = 'A new coding engine behind every build, and 3× credits on paid plans.'
+    const html = wrap(`
+      ${h1('WyberCode 1.0 is live')}
+      ${p(hi)}
+      ${p('You have built with WyberAi, so you should hear this first.')}
+      ${p(engine)}
+      ${p(`Paid plans now include <strong style="color:#f0f0f4">3× the credits at the same price</strong>: Starter ${n(PLAN_FACTS.starter.credits)} a month, Builder ${n(PLAN_FACTS.builder.credits)}, Pro ${n(PLAN_FACTS.pro.credits)}. Top-up packs are ${packs} credits. Your free credits are unchanged, and everything you have built is still in your dashboard.`)}
+      <div style="text-align:center;margin:28px 0">${btn('Open your projects →', open)}</div>
+      ${p('One favour: if a build ever missed what you asked for, reply with what you typed and what you got. That is the most useful thing anyone can send me.')}
+      ${sign}
+    `, preheader, unsub)
+    const text = [subject, '', hiText, '', 'You have built with WyberAi, so you should hear this first.', '', engine, '', `Paid plans now include 3× the credits at the same price: Starter ${n(PLAN_FACTS.starter.credits)} a month, Builder ${n(PLAN_FACTS.builder.credits)}, Pro ${n(PLAN_FACTS.pro.credits)}. Top-up packs are ${packs} credits. Your free credits are unchanged, and everything you have built is still in your dashboard.`, '', `Open your projects: ${open}`, '', 'One favour: if a build ever missed what you asked for, reply with what you typed and what you got. That is the most useful thing anyone can send me.', '', signText, '', `Unsubscribe: ${unsub}`].join('\n')
+    return { subject, preheader, html, text }
+  }
+
+  const subject = 'Your first build on WyberAi takes about two minutes'
+  const preheader = 'Describe one small thing and watch it get built. No card needed.'
+  const html = wrap(`
+    ${h1('Your first build takes about two minutes')}
+    ${p(hi)}
+    ${p('You signed up for WyberAi but have not built anything yet. That is normal. The easiest way to see what it does is to describe one small thing you actually need.')}
+    ${infoBox([
+      ['An invoice tracker', 'Who owes what, and what is overdue'],
+      ['A booking page', 'For your shop, clinic or studio'],
+      ['A simple website', 'With your menu, prices and a contact button'],
+    ])}
+    ${p(`Your ${n(PLAN_FACTS.free.credits)} free credits are still there, no card needed, and you see the cost before anything runs. WyberCode 1.0, our new coding engine, builds it, repairs its own errors and checks your database for leaks as soon as you publish.`)}
+    <div style="text-align:center;margin:28px 0">${btn('Start your first build →', start)}</div>
+    ${p('If you tried it and it was not for you, reply and tell me why. That helps me more than a sale.')}
+    ${sign}
+  `, preheader, unsub)
+  const text = [subject, '', hiText, '', 'You signed up for WyberAi but have not built anything yet. That is normal. The easiest way to see what it does is to describe one small thing you actually need.', '', '- An invoice tracker: who owes what, and what is overdue', '- A booking page: for your shop, clinic or studio', '- A simple website: with your menu, prices and a contact button', '', `Your ${n(PLAN_FACTS.free.credits)} free credits are still there, no card needed, and you see the cost before anything runs. WyberCode 1.0, our new coding engine, builds it, repairs its own errors and checks your database for leaks as soon as you publish.`, '', `Start your first build: ${start}`, '', 'If you tried it and it was not for you, reply and tell me why. That helps me more than a sale.', '', signText, '', `Unsubscribe: ${unsub}`].join('\n')
+  return { subject, preheader, html, text }
 }
 
 export async function sendExpoSequenceEmail(kind: 'confirmation' | 'reminder' | 'thanks' | 'followup', to: string, lead: ExpoSequenceLead) {
@@ -580,7 +724,7 @@ export async function sendScannerReport(to: string, opts: {
   const issueWord = isSec ? 'leak' : 'issue'
   const issues = `${opts.findingsCount} ${issueWord}${opts.findingsCount === 1 ? '' : 's'}`
   const cta = isSec
-    ? 'Every app you build on WyberAi is scanned for these leaks before it can publish. Build the fixed version — web + mobile — in minutes.'
+    ? 'Every app you build on WyberAi is scanned for these leaks the moment you publish. Build the fixed version — web + mobile — in minutes.'
     : 'Apps built on WyberAi ship SEO-ready out of the box. Rebuild it findable — web + mobile — in minutes.'
   const html = wrap(`
     ${h1(`Your ${label} results`)}
@@ -818,7 +962,7 @@ export async function sendCreditLowEmail(to: string, remaining: number, currency
     ${p(`Everything is fine. Totally fine. You have <strong style="color:#f0a429">${remaining} credits</strong> left, which is roughly ${remaining >= 30 ? 'one build' : 'a few edits'} before the room is fully on fire.`)}
     ${p('Top up before the flames reach the desk — top-up credits never expire and are yours forever.')}
     ${topUpBlock(currency)}
-    ${p('Or upgrade to the <a href="' + APP_URL + '/pricing" style="color:#0EA5E9">Builder plan</a> — 500 credits/month at ' + formatPrice(prices.builder_monthly, currency) + '.')}
+    ${p('Or upgrade to the <a href="' + APP_URL + '/pricing" style="color:#0EA5E9">Builder plan</a> — 1,500 credits/month at ' + formatPrice(prices.builder_monthly, currency) + '.')}
   `, `${remaining} credits remaining`)
 
   return sendMail({ from: FROM_NOTIF, to, subject: `This is fine — ${remaining} credits remaining 🔥`, html })
@@ -842,7 +986,7 @@ export async function sendCreditsExhaustedEmail(to: string, sendNumber: number, 
     {
       subject: 'Your projects are waiting on WyberAi',
       heading: 'Still there. Still saved.',
-      body: `Everything you built is safe in your dashboard — it just needs credits to keep evolving. 40 credits is ${formatPrice(prices.topup_200, currency)} and they never expire.`,
+      body: `Everything you built is safe in your dashboard — it just needs credits to keep evolving. ${TOPUP_PACKS[0].credits} credits is ${formatPrice(prices.topup_200, currency)} and they never expire.`,
     },
     {
       subject: 'Your credits are still at zero and honestly... same 🚬',
@@ -894,27 +1038,24 @@ export async function sendGettingStartedNudgeEmail(to: string, name: string, uns
 export async function sendPublishNudgeEmail(to: string, projectName: string, projectId: string, unsubUrl: string, sendNumber = 1) {
   const variants = [
     {
-      subject: `${projectName} is one click from being live`,
-      heading: `${projectName} is done — but nobody can see it`,
-      meme: 'publish-nudge' as const,
-      body: `That's us, pointing at <strong style="color:#f0f0f4">${projectName}</strong>. You built a real app and it's been sitting unpublished like a movie that never premiered. Publishing is one click and completely free — you get a live link you can share anywhere.`,
+      subject: `${projectName} is built. Publishing is free.`,
+      heading: `${projectName} is built. Publishing is free.`,
+      body: `<strong style="color:#f0f0f4">${projectName}</strong> is finished, but nobody can see it yet. Publishing takes one click and costs nothing. A security check runs first. If it finds a leak, it tells you which table and how to fix it with one click, so you never publish something unsafe by accident.`,
     },
     {
-      subject: `Second reminder: ${projectName} is still unpublished`,
-      heading: `Okay, one more nudge`,
-      meme: undefined,
-      body: `${projectName} is still sitting there, finished and unpublished. Last time we'll bring it up — publishing takes one click, costs nothing, and gives you a real link to send people instead of a screen recording.`,
+      subject: `Last reminder: ${projectName} is still unpublished`,
+      heading: 'One last reminder',
+      body: `${projectName} is finished and still unpublished. Publishing takes one click, costs nothing, and gives you a real link to send people instead of a screen recording. This is the last time we will mention it.`,
     },
   ]
   const v = variants[Math.min(sendNumber - 1, variants.length - 1)]
   const html = wrap(`
-    ${v.meme ? memeImg(v.meme) : ''}
     ${h1(v.heading)}
     ${p(v.body)}
     <div style="text-align:center;margin:28px 0">
-      ${btn('Publish it now →', `${APP_URL}/project/${projectId}`)}
+      ${btn('Publish it →', `${APP_URL}/project/${projectId}`)}
     </div>
-    ${p('You can also connect your own domain, push to GitHub, or export the full source as a ZIP.')}
+    ${p('Pushing the code to your own GitHub and exporting it as a ZIP are free too. On any paid plan you can also connect your own domain.')}
   `, v.subject, unsubUrl)
   return sendMail({ from: FROM_NOTIF, to, subject: v.subject, html })
 }
@@ -1291,20 +1432,23 @@ export async function sendAIEmployeeFailedEmail(
 // Faster and lighter than the existing "still waiting" nudge (day 2–14),
 // which is now touch 2 for anyone who ignores this one.
 export async function sendQuickStartNudgeEmail(to: string, name: string, unsubUrl: string) {
+  // "About two minutes", not "60 seconds": the measured median build is about two minutes, and a promise that
+  // fails on the first try costs more trust than it earns clicks.
   const html = wrap(`
-    ${h1("You're one sentence away 👀")}
-    ${p(`Hey ${name} — you signed up but haven't built anything yet. That's the only thing standing between you and a working app: one sentence, plain English, about 60 seconds.`)}
+    ${h1('Your first app is about two minutes away')}
+    ${p(`Hi ${name},`)}
+    ${p('You signed up but have not built anything yet. People usually start with one of these:')}
     <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px">
-      <tr><td style="padding:8px 0;font-size:14px;color:#8888a0;border-bottom:1px solid #2e2e38">“A waitlist page for my product launch”</td></tr>
-      <tr><td style="padding:8px 0;font-size:14px;color:#8888a0;border-bottom:1px solid #2e2e38">“An expense tracker split by category”</td></tr>
-      <tr><td style="padding:8px 0;font-size:14px;color:#8888a0">“A booking page for my studio”</td></tr>
+      <tr><td style="padding:8px 0;font-size:14px;color:#8888a0;border-bottom:1px solid #2e2e38">A waitlist page for a product launch</td></tr>
+      <tr><td style="padding:8px 0;font-size:14px;color:#8888a0;border-bottom:1px solid #2e2e38">An expense tracker split by category</td></tr>
+      <tr><td style="padding:8px 0;font-size:14px;color:#8888a0">A booking page for a studio</td></tr>
     </table>
     <div style="text-align:center;margin:28px 0">
-      ${btn('Try it now →', `${APP_URL}/dashboard`)}
+      ${btn('Describe yours →', `${APP_URL}/dashboard`)}
     </div>
-    ${p('No pressure — your 30 free credits aren\'t going anywhere. Just didn\'t want you to forget.')}
-  `, "Your first app takes about 60 seconds", unsubUrl)
-  return sendMail({ from: FROM, to, subject: 'Quick one — your first app takes about 60 seconds', html })
+    ${p('No rush. Your 30 free credits are not going anywhere.')}
+  `, 'Your 30 free credits are still there.', unsubUrl)
+  return sendMail({ from: FROM, to, subject: 'Your first app is about two minutes away', html })
 }
 
 // ── 23. Post-first-build nurture — fires the day after the aha-moment email ─
@@ -1423,7 +1567,7 @@ export async function sendPaywallHitEmail(to: string, tier: string, currency: Cu
     <div style="text-align:center;margin:28px 0">
       ${btn('See what unlocks it →', `${APP_URL}/pricing`, '#f0a429')}
     </div>
-    ${p(`Builder plan starts at ${formatPrice(prices.builder_monthly, currency)}/mo and comes with 500 credits a month.`)}
+    ${p(`Builder plan starts at ${formatPrice(prices.builder_monthly, currency)}/mo and comes with 1,500 credits a month.`)}
   `, `${tier} needs a higher plan`)
   return sendMail({ from: FROM_NOTIF, to, subject: `That model needs a higher plan`, html })
 }
@@ -1464,15 +1608,15 @@ export async function sendWinBackEmail(to: string, name: string, remaining: numb
 export async function sendUnusedCreditsEmail(to: string, name: string, credits: number, unsubUrl: string, currency: Currency = 'USD') {
   const annualFrom = currency === 'INR' ? '₹399/mo' : '$23/mo'
   const annualDesc = currency === 'INR'
-    ? '50–150 credits/mo — 2 months free'
-    : '150 credits/mo — 2 months free'
+    ? '150–450 credits/mo — 2 months free'
+    : '450 credits/mo — 2 months free'
   const html = wrap(`
     ${h1('You have credits just sitting there.')}
     ${p(`${name} — you have <strong style="color:#f0f0f4">${credits} free credits</strong> in your account and haven't used a single one. That's a full working app you haven't built yet.`)}
     <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px">
       <tr><td style="padding:10px 0;font-size:14px;color:#8888a0;border-bottom:1px solid #2e2e38">→ &nbsp;<strong style="color:#f0f0f4">Pick any idea</strong> — landing page, dashboard, booking tool, anything</td></tr>
       <tr><td style="padding:10px 0;font-size:14px;color:#8888a0;border-bottom:1px solid #2e2e38">→ &nbsp;<strong style="color:#f0f0f4">Type one sentence</strong> — no code, no setup, no account to create</td></tr>
-      <tr><td style="padding:10px 0;font-size:14px;color:#8888a0">→ &nbsp;<strong style="color:#f0f0f4">See it live in ~60 seconds</strong> — real URL, shareable immediately</td></tr>
+      <tr><td style="padding:10px 0;font-size:14px;color:#8888a0">→ &nbsp;<strong style="color:#f0f0f4">See it live in about two minutes</strong> — real URL, shareable immediately</td></tr>
     </table>
     <div style="text-align:center;margin:28px 0">
       ${btn('Use your free credits now →', `${APP_URL}/dashboard`)}

@@ -9,9 +9,9 @@ import { evaluateHealth, type Issue } from './health'
 export async function pingModel(apiKey: string | undefined = process.env.ANTHROPIC_API_KEY, timeoutMs = 8000): Promise<{ ok: true } | { ok: false; reason: string }> {
   if (!apiKey) return { ok: false, reason: 'no key' }
   try {
-    const { default: Anthropic } = await import('@anthropic-ai/sdk')
+    const { createAnthropic } = await import('@/lib/ai-usage')
     const { CHEAP_MODEL, CHEAP_THINKING } = await import('@/lib/models')
-    await new Anthropic({ apiKey }).messages.create({ model: CHEAP_MODEL, max_tokens: 8, thinking: CHEAP_THINKING, messages: [{ role: 'user', content: 'Reply with the word ok.' }] }, { timeout: timeoutMs })
+    await createAnthropic('lib/ops/health-load', { apiKey }).messages.create({ model: CHEAP_MODEL, max_tokens: 8, thinking: CHEAP_THINKING, messages: [{ role: 'user', content: 'Reply with the word ok.' }] }, { timeout: timeoutMs })
     return { ok: true }
   } catch (e) {
     const status = (e as { status?: number })?.status

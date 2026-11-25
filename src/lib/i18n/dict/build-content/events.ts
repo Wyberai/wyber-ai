@@ -39,7 +39,7 @@ export const EVENTS_BUILD_CONTENT: Record<Locale, Record<string, TranslatedBuild
         { q: 'Can guests RSVP for their whole family at once?', a: 'Yes — model invites as households in your prompt and one submission can confirm every name on the invitation.' },
         { q: 'Can we match the site to our invitation suite?', a: 'Describe your palette and mood ("dusty rose and cream, serif, candlelit") and the design is generated to match — then refine in chat.' },
         { q: 'What about a custom domain like ournames.com?', a: 'Publish the site and connect a custom domain from the editor — guests never see a builder URL.' },
-        { q: 'Is there a per-guest or premium-feature fee?', a: 'No — RSVP, dashboard, and guest list are just parts of your app. Building uses free monthly credits; the site is yours.' },
+        { q: 'Is there a per-guest or premium-feature fee?', a: 'No — RSVP, dashboard, and guest list are just parts of your app. Building uses free signup credits; the site is yours.' },
       ],
     },
     'event-registration-app': {
@@ -62,7 +62,7 @@ export const EVENTS_BUILD_CONTENT: Record<Locale, Record<string, TranslatedBuild
         { q: 'Can it handle paid tickets?', a: 'Start with free registration and add a payment step in chat when you need it — the registration flow and attendee list stay the same underneath.' },
         { q: 'How does the waitlist promotion work?', a: 'When a confirmed attendee cancels, the first waitlisted person is promoted automatically and appears in the confirmed list — no manual shuffling.' },
         { q: 'Can attendees cancel their own spot?', a: 'Yes — ask for a manage-registration link in your prompt and cancellations free the spot (and trigger the waitlist) without emailing you.' },
-        { q: 'Who owns the attendee data?', a: 'You do — it lives in your app\'s own database, secured with row-level security and scanned before publish. No platform is mining your attendee list.' },
+        { q: 'Who owns the attendee data?', a: 'You do — it lives in your app\'s own database, secured with row-level security and scanned as soon as you publish. No platform is mining your attendee list.' },
       ],
     },
     'sports-league-manager': {

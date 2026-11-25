@@ -204,7 +204,7 @@ export function SeoScanPanel({ projectId, projectType: projectTypeProp, onSwitch
 
       {phase === 'idle' && (
         <button onClick={showPreview}
-          style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 8, border: 'none', background: '#0EA5E9', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+          style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 8, border: 'none', background: '#0EA5E9', color: '#03111c', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
           🔎 Run SEO & Marketing Beast scan — 100 credits
         </button>
       )}
@@ -223,7 +223,7 @@ export function SeoScanPanel({ projectId, projectType: projectTypeProp, onSwitch
 
           {phase === 'preview' && (
             <div style={{ display: 'flex', gap: 8, padding: '10px 12px', borderTop: '1px solid var(--ide-border)' }}>
-              <button onClick={goAhead} style={{ flex: 1, padding: '8px 12px', borderRadius: 7, fontSize: 12.5, fontWeight: 700, background: '#0EA5E9', color: '#fff', border: 'none', cursor: 'pointer' }}>
+              <button onClick={goAhead} style={{ flex: 1, padding: '8px 12px', borderRadius: 7, fontSize: 12.5, fontWeight: 700, background: '#0EA5E9', color: '#03111c', border: 'none', cursor: 'pointer' }}>
                 🔎 Go ahead — charge 100 credits
               </button>
               <button onClick={cancelPreview} style={{ padding: '8px 12px', borderRadius: 7, fontSize: 12.5, fontWeight: 600, background: 'transparent', color: 'var(--ide-text2)', border: '1px solid var(--ide-border)', cursor: 'pointer' }}>
@@ -248,21 +248,21 @@ export function SeoScanPanel({ projectId, projectType: projectTypeProp, onSwitch
       {phase === 'done' && report && report.checks.some(c => c.status !== 'pass') && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <button onClick={applyAllFixes}
-            style={{ alignSelf: 'flex-start', fontSize: 12.5, padding: '8px 14px', borderRadius: 8, border: 'none', background: '#0EA5E9', color: '#fff', cursor: 'pointer', fontWeight: 700 }}>
+            style={{ alignSelf: 'flex-start', fontSize: 12.5, padding: '8px 14px', borderRadius: 8, border: 'none', background: '#0EA5E9', color: '#03111c', cursor: 'pointer', fontWeight: 700 }}>
             🔧 Apply all fixes ({report.checks.filter(c => c.status !== 'pass').length})
           </button>
           {applyResult && (
-            <div style={{ fontSize: 11.5, color: 'var(--ide-text2)', lineHeight: 1.6 }}>
+            <div style={{ fontSize: 12.5, color: 'var(--ide-text2)', lineHeight: 1.6 }}>
               {applyResult.filesWritten > 0 && <>✅ Wrote {applyResult.filesWritten} file{applyResult.filesWritten !== 1 ? 's' : ''} directly into the project.<br /></>}
               {applyResult.remainingPromptSent && <>✨ Asked the AI to fix the rest — check the chat.</>}
             </div>
           )}
           <details>
-            <summary style={{ fontSize: 11, color: 'var(--ide-text3)', cursor: 'pointer' }}>Fix individually instead</summary>
+            <summary style={{ fontSize: 12, color: 'var(--ide-text3)', cursor: 'pointer' }}>Fix individually instead</summary>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
               {report.checks.filter(c => c.status !== 'pass').map(c => (
                 <button key={c.id} onClick={() => fixWithAi(c)}
-                  style={{ alignSelf: 'flex-start', fontSize: 11.5, padding: '5px 10px', borderRadius: 6, border: '1px solid var(--ide-border)', background: 'var(--bg-base, #0d0e12)', color: '#0EA5E9', cursor: 'pointer', fontWeight: 600 }}>
+                  style={{ alignSelf: 'flex-start', fontSize: 12.5, padding: '5px 10px', borderRadius: 6, border: '1px solid var(--ide-border)', background: 'var(--bg-base, #0d0e12)', color: '#0EA5E9', cursor: 'pointer', fontWeight: 600 }}>
                   ✨ Fix &quot;{SEO_BEAST_CHECKLIST.find(x => x.id === c.id)?.label ?? c.id}&quot; with AI
                 </button>
               ))}
@@ -277,14 +277,14 @@ export function SeoScanPanel({ projectId, projectType: projectTypeProp, onSwitch
       <div style={{ border: '1px solid rgba(168,85,247,0.25)', borderRadius: 10, padding: '12px 14px', background: 'rgba(168,85,247,0.06)', display: 'flex', flexDirection: 'column', gap: 10 }}>
         <div>
           <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ide-text)' }}>🔥 Make it a Marketing Beast</div>
-          <div style={{ fontSize: 11.5, color: 'var(--ide-text3)', marginTop: 3, lineHeight: 1.5 }}>
-            Adds the 10 launch-readiness pieces every {beastType === 'mobile' ? 'app store submission' : beastType === 'saas' ? 'SaaS product' : beastType === 'website' ? 'site' : 'app'} needs, in one pass — priced like any large edit based on what actually gets built, typically <strong style={{ color: '#a855f7' }}>~20-50 credits</strong>.
+          <div style={{ fontSize: 12.5, color: 'var(--ide-text3)', marginTop: 3, lineHeight: 1.5 }}>
+            Adds the 10 launch-readiness pieces every {beastType === 'mobile' ? 'app store submission' : beastType === 'saas' ? 'SaaS product' : beastType === 'website' ? 'site' : 'app'} needs, in one pass — priced like any large edit based on what actually gets built, typically <strong style={{ color: '#c084fc' }}>~20-50 credits</strong>.
           </div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 10px' }}>
           {beast.items.map(item => (
-            <div key={item.label} title={item.detail} style={{ fontSize: 11, color: 'var(--ide-text2)', display: 'flex', alignItems: 'flex-start', gap: 5 }}>
-              <span style={{ color: '#a855f7', flexShrink: 0 }}>✓</span>
+            <div key={item.label} title={item.detail} style={{ fontSize: 12, color: 'var(--ide-text2)', display: 'flex', alignItems: 'flex-start', gap: 5 }}>
+              <span style={{ color: '#c084fc', flexShrink: 0 }}>✓</span>
               <span>{item.label}</span>
             </div>
           ))}

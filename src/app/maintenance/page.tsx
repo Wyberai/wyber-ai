@@ -10,7 +10,7 @@ export default function MaintenancePage() {
     <div
       style={{
         minHeight: '100vh',
-        background: '#09090b',
+        background: '#05080d',
         color: '#fafafa',
         display: 'flex',
         flexDirection: 'column',
@@ -28,11 +28,11 @@ export default function MaintenancePage() {
         <h1 style={{ fontSize: 28, fontWeight: 600, letterSpacing: '-0.02em', marginBottom: 12 }}>
           We&apos;re leveling up WyberAi
         </h1>
-        <p style={{ fontSize: 15, lineHeight: 1.6, color: '#a1a1aa', marginBottom: 8 }}>
+        <p style={{ fontSize: 15, lineHeight: 1.6, color: '#9aa8bb', marginBottom: 8 }}>
           We&apos;re rebuilding core parts of the platform for more reliable builds and better
           pricing. Back shortly — thanks for your patience.
         </p>
-        <p style={{ fontSize: 13, color: '#71717a' }}>
+        <p style={{ fontSize: 13, color: '#8797ab' }}>
           Already-published apps built with WyberAi keep running normally.
         </p>
       </div>

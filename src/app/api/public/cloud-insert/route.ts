@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
 import { decrypt } from '@/lib/secrets-crypto'
 import { checkRateLimit } from '@/lib/cloud/rate-limit'
+import { notifyOwnerOfLead } from '@/lib/cloud/lead-notify'
 import { Pool } from 'pg'
 
 // Public, unauthenticated insert endpoint for WyberCloud — called from an
@@ -123,6 +124,9 @@ export async function POST(req: NextRequest) {
       const placeholders = fields.map((_, i) => `$${i + 1}`).join(', ')
       const values = fields.map(f => data[f])
       await pool.query(`insert into "${table}" (${columnList}) values (${placeholders})`, values)
+
+      // Tell the owner. Awaited so the serverless function is not frozen mid-send, but it never throws and never changes the response.
+      await notifyOwnerOfLead(admin, projectId, table, data)
 
       return NextResponse.json({ success: true }, { headers: CORS_HEADERS })
     } catch (err) {

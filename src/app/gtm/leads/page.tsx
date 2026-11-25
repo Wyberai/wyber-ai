@@ -3,8 +3,8 @@ import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 
 const s = {
-  bg: '#09090b', card: '#111113', border: 'rgba(255,255,255,0.07)',
-  text: '#fafafa', muted: '#71717a', dim: '#52525b',
+  bg: '#05080d', card: '#0d141e', border: 'rgba(255,255,255,0.07)',
+  text: '#fafafa', muted: '#8797ab', dim: '#8797ab',
   orange: '#f97316', green: '#10b981', yellow: '#f59e0b', sky: '#0EA5E9',
 }
 
@@ -47,7 +47,7 @@ export default async function LeadsPage() {
             <div style={{ fontSize: 40, marginBottom: 16 }}>👥</div>
             <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>No leads yet</div>
             <div style={{ fontSize: 14, color: s.muted, marginBottom: 24 }}>Import from Apollo or upload a CSV to get started</div>
-            <Link href="/gtm/leads/import" style={{ padding: '12px 24px', borderRadius: 10, background: s.orange, color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>Import leads →</Link>
+            <Link href="/gtm/leads/import" style={{ padding: '12px 24px', borderRadius: 10, background: s.orange, color: '#03111c', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>Import leads →</Link>
           </div>
         ) : (
           <div style={{ background: s.card, border: `1px solid ${s.border}`, borderRadius: 12, overflow: 'hidden' }}>

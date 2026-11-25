@@ -25,7 +25,7 @@ export function expoLeadToIncoming(r: ExpoLeadRow): Incoming {
     source: 'expo', source_ref: r.id,
     stage: EXPO_STAGE[r.status] ?? 'new',
     tags: ['expo', 'teg2026', ...(r.preferred_day && r.preferred_day !== 'Any day' ? [`day:${r.preferred_day.toLowerCase().replace(/\s+/g, '')}`] : [])],
-    notes: `Pain point: ${r.pain_point}${r.preferred_day ? ` (prefers ${r.preferred_day})` : ''} [source: ${r.source}]`,
+    notes: `Pain point: ${r.pain_point || '(not given)'}${r.preferred_day ? ` (prefers ${r.preferred_day})` : ''} [source: ${r.source}]`,
     created_at: r.created_at,
     nextAction: 'Reply on WhatsApp and confirm a time',
     nextActionAt: new Date(created + 3600_000).toISOString(),

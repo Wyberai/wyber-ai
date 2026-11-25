@@ -2,12 +2,13 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 import { USE_CASES } from './[slug]/data'
+import { DEFAULT_OG_IMAGES } from '@/lib/og-default'
 
 export const metadata: Metadata = {
-  title: 'Use Cases — Build Web Apps & Mobile Apps | WyberAi',
-  description: 'Explore how WyberAi helps you build web apps and mobile apps from plain English — no code required.',
+  title: 'Use Cases: Build Web Apps & Mobile Apps',
+  description: 'Explore how WyberAi helps you build web apps and mobile apps from plain English, with no code. Browse real use cases for founders and teams.',
   alternates: { canonical: 'https://wyberai.com/use-cases' },
-  openGraph: { title: 'Use Cases — WyberAi', description: 'Build web apps and mobile apps from plain English. No code required.' },
+  openGraph: { images: DEFAULT_OG_IMAGES, title: 'Use Cases — WyberAi', description: 'Build web apps and mobile apps from plain English. No code required.' },
 }
 
 /* Space-journey brand surfaces (see globals.css --brand-*) */
@@ -19,7 +20,7 @@ const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'WebPage',
   name: 'WyberAi Use Cases',
-  description: 'Explore how WyberAi helps you build web apps and mobile apps from plain English.',
+  description: 'Explore how WyberAi helps you build web apps and mobile apps from plain English, with no code. Browse real use cases for founders and teams.',
   url: 'https://wyberai.com/use-cases',
 }
 
@@ -32,7 +33,7 @@ export default function UseCasesIndex() {
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none', color: 'inherit' }}>
           <WyberLogo markSize={22} wordmarkSize={14} />
         </Link>
-        <Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: s.sky, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Try free →</Link>
+        <Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: s.sky, color: '#03111c', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Try free →</Link>
       </nav>
 
       <div style={{ maxWidth: 960, margin: '0 auto', padding: 'clamp(40px,6vw,72px) clamp(16px,4vw,48px)' }}>
@@ -52,7 +53,7 @@ export default function UseCasesIndex() {
               <Link key={uc.slug} href={`/use-cases/${uc.slug}`} style={{ display: 'block', background: s.card, border: `1px solid ${s.border}`, borderRadius: 14, padding: 'clamp(18px,3vw,28px)', textDecoration: 'none', color: 'inherit' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
                   <div style={{ flex: 1, minWidth: 240 }}>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 10px', borderRadius: 20, background: `${color}18`, border: `1px solid ${color}30`, fontSize: 10, fontWeight: 700, color, letterSpacing: '0.08em', textTransform: 'uppercase' as const, marginBottom: 10 }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 10px', borderRadius: 20, background: `${color}18`, border: `1px solid ${color}30`, fontSize: 11, fontWeight: 700, color, letterSpacing: '0.08em', textTransform: 'uppercase' as const, marginBottom: 10 }}>
                       {uc.pillarLabel}
                     </div>
                     <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 800, letterSpacing: '-0.02em', margin: '0 0 8px', color: s.text }}>
@@ -70,9 +71,9 @@ export default function UseCasesIndex() {
         </div>
 
         <div style={{ marginTop: 56, textAlign: 'center', padding: 'clamp(24px,4vw,40px)', background: s.card, borderRadius: 14, border: `1px solid ${s.border}` }}>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, margin: '0 0 8px' }}>Start building free — 30 credits/month</h2>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, margin: '0 0 8px' }}>Start building free — 30 free credits on signup</h2>
           <p style={{ fontSize: 14, color: s.muted, margin: '0 0 20px' }}>No credit card required. First app in minutes.</p>
-          <Link href="/signup" style={{ display: 'inline-block', padding: '12px 28px', borderRadius: 10, background: s.sky, color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
+          <Link href="/signup" style={{ display: 'inline-block', padding: '12px 28px', borderRadius: 10, background: s.sky, color: '#03111c', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
             Start building free →
           </Link>
         </div>

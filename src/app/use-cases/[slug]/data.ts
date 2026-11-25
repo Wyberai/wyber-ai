@@ -1,3 +1,5 @@
+import { PLAN_FACTS } from '@/lib/plans'
+import { buildCosts, editCost, freeCreditsSentence } from '@/lib/pricing-facts'
 ﻿export interface UseCase {
   slug: string
   h1: string
@@ -65,7 +67,7 @@ export const USE_CASES: UseCase[] = [
       { title: '250+ tool integrations', desc: 'Gmail, Slack, HubSpot, Airtable, GitHub, Linear, Stripe, Notion, and hundreds more — all via Composio, no API key management per tool.' },
       { title: 'Visual canvas editor', desc: 'See your agent\'s logic as a node graph. Add conditions, branches, and AI reasoning steps without writing code.' },
       { title: 'Scheduled + manual triggers', desc: 'Run agents on demand or on a cron schedule — daily, hourly, weekly, or any custom expression. Credits are checked before every run.' },
-      { title: 'AI reasoning nodes', desc: 'Add a Claude-powered node to classify, summarize, score, or decide — then route the output to the next action.' },
+      { title: 'AI reasoning nodes', desc: 'Add a WyberCode-powered node to classify, summarize, score, or decide — then route the output to the next action.' },
       { title: 'Live run logs', desc: 'Each node shows its output inline after a run so you can debug and iterate without leaving the canvas.' },
       { title: 'No infrastructure to manage', desc: 'Agents run on Wyber\'s infrastructure. No servers, no deployment, no uptime monitoring.' },
     ],
@@ -76,8 +78,8 @@ export const USE_CASES: UseCase[] = [
       { q: 'Do I need to know how to code to build an agent?', a: 'No. You describe the agent\'s job in plain English and WyberAi generates the node canvas. You connect your tools once in Settings → Integrations.' },
       { q: 'What tools can agents connect to?', a: 'WyberAi uses Composio for integrations — covering Gmail, Outlook, Slack, HubSpot, Salesforce, Airtable, GitHub, Linear, Stripe, Notion, Google Calendar, and 240+ more.' },
       { q: 'How do I trigger an agent?', a: 'Click Run from the dashboard for a one-off run, or set a schedule (daily, hourly, weekly, or custom cron) on the agent\'s configuration page. The scheduler checks your credit balance before every run and emails you if a run is skipped.' },
-      { q: 'Can agents make decisions with AI?', a: 'Yes. You can add an AI reasoning node that uses Claude to classify, score, summarize, or decide — and then route different outputs to different actions.' },
-      { q: 'How much does running an agent cost?', a: 'Agent runs cost credits — typically 1 credit per AI node execution. Check the credit estimate before running.' },
+      { q: 'Can agents make decisions with AI?', a: 'Yes. You can add an AI reasoning node that uses WyberCode to classify, score, summarize, or decide — and then route different outputs to different actions.' },
+      { q: 'How much does running an agent cost?', a: 'Each agent run costs credits (about 5 per run at standard pricing). Check the credit estimate before running.' },
     ],
   },
   {
@@ -109,7 +111,7 @@ export const USE_CASES: UseCase[] = [
       { q: 'Can I add payments (Stripe)?', a: 'You can ask WyberAi to add a Stripe checkout flow in chat. It generates the frontend components. For backend webhook handling, you\'d need to add a few lines of server code or use Supabase Edge Functions.' },
       { q: 'Who owns the code?', a: 'You do. Export the full source code anytime. It\'s standard React + Vite — take it to any developer, any hosting provider, or your own GitHub repo.' },
       { q: 'How do I handle my own domain?', a: 'Connect a custom domain in Settings → Domains. Or use your free wyberai.com/app/yourapp link while you\'re in development.' },
-      { q: 'What does it cost to build a SaaS with WyberAi?', a: 'Plans start at $29/month (Starter: 150 credits/month). Web and mobile builds cost 30 credits; edits cost 2 credits. Done-for-you builds start at $199.' },
+      { q: 'What does it cost to build a SaaS with WyberAi?', a: `Plans start at $29/month (Starter: 450 credits/month). Web and mobile builds start at ${buildCosts().small} credits; small edits start at ${editCost()} credits. Done-for-you builds start at $199.` },
     ],
   },
   {
@@ -128,7 +130,7 @@ export const USE_CASES: UseCase[] = [
     features: [
       { title: 'Plain-English workflow creation', desc: 'Describe your automation in a sentence: WyberAi generates the trigger, action nodes, and data mappings between them.' },
       { title: '250+ app connections', desc: 'Airtable, HubSpot, Gmail, Slack, Notion, GitHub, Stripe, Google Sheets, and hundreds more — connected in one click per app.' },
-      { title: 'AI reasoning steps', desc: 'Drop a Claude node into your workflow to classify leads, score applications, summarize content, or route data based on AI decisions.' },
+      { title: 'AI reasoning steps', desc: 'Drop a WyberCode node into your workflow to classify leads, score applications, summarize content, or route data based on AI decisions.' },
       { title: 'Conditional branching', desc: 'Add condition nodes that route data differently based on field values, API responses, or AI outputs.' },
       { title: 'Live run logs', desc: 'Every workflow execution shows a step-by-step log so you can see exactly what ran, what was returned, and where to improve.' },
       { title: 'Scheduled + manual triggers', desc: 'Activate workflows on demand or on a cron schedule. Set it once and the scheduler runs it automatically — credits are checked before every execution.' },
@@ -139,7 +141,7 @@ export const USE_CASES: UseCase[] = [
     faqs: [
       { q: 'How is WyberAi different from Zapier or Make?', a: 'Zapier and Make require you to build automations step by step using their interfaces. WyberAi lets you describe the workflow in plain English and generates the full automation. It also has native AI reasoning nodes — not just pass-through OpenAI calls.' },
       { q: 'What apps can workflows connect to?', a: 'WyberAi supports 250+ integrations including Gmail, Slack, HubSpot, Salesforce, Airtable, Notion, GitHub, Linear, Stripe, Google Calendar, and many more.' },
-      { q: 'Can workflows use AI to make decisions?', a: 'Yes. You can add a Claude-powered AI node anywhere in the workflow to classify, score, summarize, or route data — then branch based on the AI\'s output.' },
+      { q: 'Can workflows use AI to make decisions?', a: 'Yes. You can add a WyberCode-powered AI node anywhere in the workflow to classify, score, summarize, or route data — then branch based on the AI\'s output.' },
       { q: 'How do I trigger a workflow automatically?', a: 'Select "On a schedule" in the trigger node, pick a preset (daily, hourly, weekly) or enter a custom cron expression, then save. The scheduler fires the workflow automatically and checks your credit balance before each run.' },
       { q: 'Do I need to manage API keys for each integration?', a: 'No. WyberAi uses Composio for integrations. You authenticate each app once in Settings → Integrations and all your workflows can use it.' },
     ],
@@ -172,7 +174,7 @@ export const USE_CASES: UseCase[] = [
       { q: 'What makes WyberAi different from Webflow or Bubble?', a: 'Webflow and Bubble have visual editors you build in manually. WyberAi generates the complete app from plain English in seconds. There\'s nothing to drag and drop — you describe it and it\'s built.' },
       { q: 'Is the output real code I can export?', a: 'Yes. WyberAi outputs clean React + Vite code. Export it anytime and take it to GitHub, a developer, or your own hosting.' },
       { q: 'Can it build apps with a real database?', a: 'Yes. Connect your Supabase project in Settings → Connectors and WyberAi rewrites the app to use real Postgres with auth and Row Level Security.' },
-      { q: 'How many apps can I build on the free plan?', a: 'The free plan gives you 30 credits/month. Each generation costs 1 credit, so you can build and iterate 30 times per month for free.' },
+      { q: 'How many apps can I build on the free plan?', a: `The free plan starts you with ${PLAN_FACTS.free.credits} credits. A small app build costs ${buildCosts().small} credits and small edits start at ${editCost()}. ${freeCreditsSentence()}` },
       { q: 'Can I use WyberAi to build an app for a client?', a: 'Yes. Many Wyber users build apps for clients, then export the code and hand it over. You can also deploy directly to the client\'s Vercel account.' },
     ],
   },
@@ -180,20 +182,20 @@ export const USE_CASES: UseCase[] = [
     slug: 'ai-app-builder',
     h1: 'AI App Builder — From Idea to Live App in Minutes',
     metaTitle: 'AI App Builder — Web & Mobile Apps | WyberAi',
-    metaDesc: 'The AI app builder that builds web apps and mobile apps from plain English. No code. No waiting. Ship today.',
+    metaDesc: 'The AI app builder that builds web apps and mobile apps from plain English. No code, no waiting: describe it, preview it, and ship it today.',
     pillar: 'web',
     pillarLabel: 'Web Apps',
     pillarColor: '#0EA5E9',
-    tagline: 'The AI app builder that ships web + mobile apps from plain English — with fresh code, self-healing builds, and 27 integrations.',
+    tagline: 'The AI app builder that ships web + mobile apps from plain English — with fresh code, self-healing builds, and 68 connectors.',
     body: [
       'Most AI app builders generate web-only UI components. WyberAi builds complete full-stack web apps and mobile apps — from the same workspace, from plain English.',
-      'Every build generates fresh code (no templates), auto-fixes errors with self-healing, and deploys to a live URL. You own the code on GitHub.',
+      'Every build generates fresh code from your description, auto-fixes errors with self-healing, and deploys to a live URL. You own the code on GitHub.',
     ],
     features: [
       { title: 'Web app builder', desc: 'Full-stack React apps with dashboard UI, data tables, charts, modals, and Supabase database — generated in A few minutes.' },
       { title: 'Mobile app builder', desc: 'React Native + Expo apps for iOS and Android. Preview on your phone instantly via QR code.' },
       { title: 'Self-healing builds', desc: 'When a build hits an error, WyberAi auto-detects and fixes it so your app ships clean every time.' },
-      { title: '27 integrations', desc: 'Stripe, Supabase, OpenAI, Slack, and 23 more — connected via real OAuth, no API key management.' },
+      { title: '68 connectors', desc: 'Stripe, Supabase, OpenAI, Slack, and 64 more — connected via real OAuth, no API key management.' },
       { title: 'Fresh code every build', desc: 'No recycled templates. Every app is purpose-built for your prompt — CRM, invoicing, HR, analytics, anything.' },
       { title: 'One-click deploy', desc: 'Vercel deployment in A few minutes. Free subdomain or your own domain.' },
     ],
@@ -202,21 +204,21 @@ export const USE_CASES: UseCase[] = [
     ctaHref: '/dashboard',
     faqs: [
       { q: 'What can WyberAi build?', a: 'WyberAi builds web apps (React, full-stack) and mobile apps (React Native + Expo) — all from plain English. Every build uses fresh code, self-healing error fixes, and deploys to a live URL.' },
-      { q: 'How is WyberAi different from other AI app builders?', a: 'Most tools build web apps only. WyberAi builds both web and mobile apps, generates fresh code (no templates), auto-fixes build errors, includes 27 integrations, and gives you full GitHub ownership.' },
+      { q: 'How is WyberAi different from other AI app builders?', a: 'Most tools build web apps only. WyberAi builds both web and mobile apps, generates fresh code from your description, auto-fixes build errors, includes 68 connectors, and gives you full GitHub ownership.' },
       { q: 'Do I need technical knowledge?', a: 'No. WyberAi is designed for non-technical founders, operators, and makers. You describe what you want; we generate it.' },
       { q: 'How fast does it generate?', a: 'Most apps generate in minutes. You see the code streaming in real time so you\'re never waiting on a blank screen.' },
-      { q: 'What does it cost?', a: 'Plans start at $29/month (Starter: 150 credits). Builder is $79/month (500 credits). Pro is $199/month (1,500 credits). Every plan unlocks all features — credits are the only currency.' },
+      { q: 'What does it cost?', a: 'Plans start at $29/month (Starter: 450 credits). Builder is $79/month (1,500 credits). Pro is $199/month (4,500 credits). Every plan includes web and mobile apps, deploy and GitHub export; Builder and above add Supabase, custom domains and badge-free publishing.' },
     ],
   },
   {
     slug: 'secure-ai-app-builder',
     h1: 'Secure AI App Builder — Live Database Security Scanning',
     metaTitle: 'Secure AI App Builder with RLS Security Scanning | WyberAi',
-    metaDesc: 'WyberAi generates apps with a real Supabase database and runs a live Row Level Security scan — probing your app with the anon key, the way an attacker would, before you publish.',
+    metaDesc: 'WyberAi builds apps on a real Supabase database and runs a live Row Level Security scan, probing it like an attacker would, the moment you publish.',
     pillar: 'web',
     pillarLabel: 'Web Apps',
     pillarColor: '#0EA5E9',
-    tagline: 'AI-generated apps ship with real user data. WyberAi is the only builder that checks your database is actually locked down before you go live.',
+    tagline: 'AI-generated apps ship with real user data. WyberAi checks your database is actually locked down the moment you publish.',
     body: [
       'Most AI app builders generate a database and authentication, then stop. They never check whether the security rules they wrote actually work. If Row Level Security is misconfigured, every user\'s private data is exposed to every other user — and nothing in the build process tells you.',
       'WyberAi runs a live RLS trust scan on every published app: it queries your actual Supabase database using the public anon key, exactly the way an outside attacker would, and reports what it can see. This isn\'t a static code linter checking for keywords — it\'s a real probe against your live data, run automatically from the Security tab.',
@@ -235,7 +237,7 @@ export const USE_CASES: UseCase[] = [
     faqs: [
       { q: 'What is an RLS trust scan?', a: 'Row Level Security (RLS) is the Postgres feature that restricts which rows a user can see in a Supabase database. A trust scan tests those policies for real by querying the database with the same anon key a public visitor would use — confirming the restrictions actually hold, not just that they were written.' },
       { q: 'Why does this matter for AI-generated apps?', a: 'AI builders write RLS policies the same way they write any other code — and they can get it wrong. Without verification, a subtle policy mistake means every signed-up user can read every other user\'s private data, and nobody finds out until it\'s reported or exploited.' },
-      { q: 'Do other AI app builders do this?', a: 'No. Most AI app builders provision a database and auth, then leave verification to you. WyberAi is the only one that runs a live, automated scan against the real database using the public anon key before you publish.' },
+      { q: 'Do other AI app builders do this?', a: 'Few do. Most AI app builders provision a database and auth, then leave verification to you. WyberAi runs a live, automated scan against the real database using the public anon key, automatically as soon as you publish and on demand before.' },
       { q: 'Does the scan modify my data?', a: 'No. The scan only reads — it queries what an anonymous user could see, the same as visiting your app\'s API without logging in. It never writes, updates, or deletes data.' },
       { q: 'Where do I run the scan?', a: 'Open your project, go to the Security tab, and run the scan against your connected Supabase project. Results show immediately with the specific table and policy to fix.' },
     ],

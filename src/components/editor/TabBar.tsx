@@ -33,7 +33,7 @@ export function TabBar() {
             onClick={() => setActiveFile(path)}
             title={path}
           >
-            <span style={{ fontSize: 9, fontWeight: 800, color, fontFamily: 'monospace' }}>
+            <span style={{ fontSize: 12, fontWeight: 800, color, fontFamily: 'monospace' }}>
               {ext.toUpperCase().slice(0, 2)}
             </span>
             <span style={{ maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis' }}>

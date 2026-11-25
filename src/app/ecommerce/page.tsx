@@ -5,6 +5,7 @@ import { StartBuildButton } from '../build/StartBuildButton'
 import { ExampleDashboard } from './ExampleDashboard'
 import { WidgetPicker } from './WidgetPicker'
 import { CsvDashboardPreview } from './CsvDashboardPreview'
+import { buildCosts, editCost } from '@/lib/pricing-facts'
 
 // Standalone ad/outbound landing page — distinct from the /build/ecommerce-seller-dashboard
 // pSEO page. That page targets organic search; this one is built for paid traffic and cold
@@ -12,7 +13,7 @@ import { CsvDashboardPreview } from './CsvDashboardPreview'
 // what they want built.
 export const metadata: Metadata = {
   title: 'Your Margins, Inventory & Orders — One Dashboard',
-  description: 'Tracking margin, inventory, and orders across Amazon, Shopify, and Etsy in three logins and a spreadsheet? Build the dashboard that actually shows you what\'s happening.',
+  description: 'Tracking margin, inventory and orders across Amazon, Shopify and Etsy in a spreadsheet? Build one dashboard that shows what is really happening.',
   alternates: { canonical: 'https://wyberai.com/ecommerce' },
   robots: { index: true, follow: true },
 }
@@ -35,7 +36,7 @@ const FAQS = [
   { q: 'What file formats can I upload?', a: '.csv, .xlsx, and .xls — export your orders from Amazon Seller Central, Shopify, Etsy, or any spreadsheet and drop it in.' },
   { q: 'Is my sales data safe?', a: 'The upload preview is parsed entirely in your browser using client-side JavaScript — the file is never sent to a server or stored anywhere.' },
   { q: 'Does the real dashboard connect live to Amazon or Shopify?', a: 'Not out of the box — it\'s built around your export files or manual entry, which avoids depending on marketplace APIs that can change or get revoked. A bulk-import screen can always be added once you\'re building.' },
-  { q: 'What does it cost to build?', a: 'The 30 free monthly credits cover your first build (30 credits); small edits after that are 2 credits each. No card required to start.' },
+  { q: 'What does it cost to build?', a: `The 30 free signup credits do not cover a whole build (a small one is ${buildCosts().small} credits; larger apps cost more), so a first build needs a credit pack or a plan. Small edits start at ${editCost()} credits. No card required to start.` },
 ]
 
 export default function EcommerceDashboardLanding() {
@@ -54,7 +55,7 @@ export default function EcommerceDashboardLanding() {
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none', color: 'inherit' }}>
           <WyberLogo markSize={22} wordmarkSize={14} />
         </Link>
-        <Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: color, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Try free →</Link>
+        <Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: color, color: '#03111c', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Try free →</Link>
       </nav>
 
       <div style={{ maxWidth: 780, margin: '0 auto', padding: 'clamp(32px,6vw,72px) clamp(16px,4vw,48px) clamp(48px,8vw,96px)' }}>
@@ -71,7 +72,7 @@ export default function EcommerceDashboardLanding() {
             See what one dashboard could look like below — then pick exactly what yours should track.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <a href="#example" style={{ padding: '13px 28px', borderRadius: 10, background: color, color: '#fff', fontSize: 15, fontWeight: 700, textDecoration: 'none' }}>See it built out ↓</a>
+            <a href="#example" style={{ padding: '13px 28px', borderRadius: 10, background: color, color: '#03111c', fontSize: 15, fontWeight: 700, textDecoration: 'none' }}>See it built out ↓</a>
             <a href="#build" style={{ padding: '13px 28px', borderRadius: 10, background: 'transparent', border: `1px solid ${s.border}`, color: s.muted, fontSize: 15, fontWeight: 600, textDecoration: 'none' }}>Skip to building →</a>
           </div>
         </header>
@@ -100,7 +101,7 @@ export default function EcommerceDashboardLanding() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 16 }}>
             {FEATURES.map((f, i) => (
               <div key={i} style={{ background: s.card, border: `1px solid ${s.border}`, borderRadius: 12, padding: '20px 22px' }}>
-                <div style={{ width: 28, height: 28, borderRadius: 8, background: `${color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12, fontSize: 14 }}>✓</div>
+                <div style={{ width: 28, height: 28, borderRadius: 8, background: `${color}18`, color, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12, fontSize: 14 }}>✓</div>
                 <div style={{ fontSize: 14, fontWeight: 700, color: s.text, marginBottom: 6 }}>{f.title}</div>
                 <div style={{ fontSize: 13, color: s.muted, lineHeight: 1.6 }}>{f.desc}</div>
               </div>
@@ -133,7 +134,7 @@ export default function EcommerceDashboardLanding() {
 
         {/* Footer CTA */}
         <div style={{ textAlign: 'center', padding: 'clamp(24px,4vw,40px)', background: s.card, borderRadius: 14, border: `1px solid ${s.border}` }}>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, margin: '0 0 8px' }}>Start building for free — 30 credits/month</h2>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, margin: '0 0 8px' }}>Start building for free — 30 free credits on signup</h2>
           <p style={{ fontSize: 14, color: s.muted, margin: '0 0 20px' }}>No credit card required. Live in minutes.</p>
           <StartBuildButton prompt={DEFAULT_PROMPT} target="web" slug="ecommerce-footer" label="Build my dashboard →" color={color} variant="compact" projectLabel="Ecommerce Dashboard" />
         </div>

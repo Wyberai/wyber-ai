@@ -1,0 +1,54 @@
+/*
+ * Blog reading layout for the Signal design. Built only from the --sg-* tokens, so dark and light both work.
+ * Scoped under .sg like signal.css. Imported next to it in src/app/layout.tsx.
+ */
+.sg .sg-post { max-width: 700px; margin: 0 auto; padding: clamp(40px, 6vw, 72px) 16px clamp(56px, 8vw, 96px); }
+.sg .sg-post-back { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--sg-ink3); text-decoration: none; margin-bottom: 28px; min-height: 44px; }
+.sg .sg-post-back:hover { color: var(--sg-hot); }
+.sg .sg-post-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-bottom: 18px; }
+.sg .sg-post-tag { font: 600 12px var(--font-mono, ui-monospace, monospace); letter-spacing: .08em; text-transform: uppercase; color: var(--sg-hot); background: var(--sg-soft); padding: 5px 10px; border-radius: 999px; }
+.sg .sg-post h1 { font-size: clamp(30px, 5vw, 48px); line-height: 1.08; margin-bottom: 18px; }
+.sg .sg-post-dek { font-size: clamp(18px, 2.2vw, 21px); line-height: 1.5; color: var(--sg-ink2); margin: 0 0 36px; text-wrap: pretty; }
+.sg .sg-prose { font-size: 17px; line-height: 1.75; color: var(--sg-ink2); }
+.sg .sg-prose > * + * { margin-top: 18px; }
+.sg .sg-prose h2 { font-size: clamp(23px, 3vw, 29px); margin-top: 48px; color: var(--sg-ink); }
+.sg .sg-prose h3 { font-size: 19px; margin-top: 32px; color: var(--sg-ink); }
+.sg .sg-prose strong { color: var(--sg-ink); font-weight: 650; }
+.sg .sg-prose a { color: var(--sg-hot); text-underline-offset: 3px; }
+.sg .sg-prose ul, .sg .sg-prose ol { padding-left: 22px; }
+.sg .sg-prose li + li { margin-top: 8px; }
+.sg .sg-prose code { font: 14px var(--font-mono, ui-monospace, monospace); background: var(--sg-card2); border: 1px solid var(--sg-line); border-radius: 6px; padding: 2px 6px; color: var(--sg-ink); }
+.sg .sg-prose pre { background: var(--sg-card); border: 1px solid var(--sg-line); border-radius: 12px; padding: 16px 18px; overflow-x: auto; font: 14px/1.7 var(--font-mono, ui-monospace, monospace); color: var(--sg-ink); }
+.sg .sg-prose pre code { background: none; border: 0; padding: 0; }
+.sg .sg-callout { background: var(--sg-card); border: 1px solid var(--sg-line); border-left: 3px solid var(--sg-brand); border-radius: 12px; padding: 18px 20px; color: var(--sg-ink2); }
+.sg .sg-callout strong { display: block; margin-bottom: 4px; }
+.sg .sg-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin: 28px 0; padding: 0; list-style: none; }
+.sg .sg-facts li { margin: 0; background: var(--sg-card); border: 1px solid var(--sg-line); border-radius: 12px; padding: 16px 18px; line-height: 1.4; }
+.sg .sg-facts b { display: block; font: 700 26px var(--font-display, system-ui, sans-serif); color: var(--sg-ink); letter-spacing: -.02em; }
+.sg .sg-facts span { font-size: 14px; color: var(--sg-ink3); }
+.sg .sg-table-wrap { overflow-x: auto; border: 1px solid var(--sg-line); border-radius: 12px; }
+.sg .sg-table { width: 100%; border-collapse: collapse; font-size: 15px; line-height: 1.5; }
+.sg .sg-table th, .sg .sg-table td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--sg-line); vertical-align: top; }
+.sg .sg-table th { font: 600 12px var(--font-mono, ui-monospace, monospace); letter-spacing: .08em; text-transform: uppercase; color: var(--sg-ink3); background: var(--sg-card); }
+.sg .sg-table tr:last-child td { border-bottom: 0; }
+.sg .sg-post-cta { margin-top: 56px; background: var(--sg-card); border: 1px solid var(--sg-line); border-radius: 18px; padding: clamp(22px, 4vw, 34px); }
+.sg .sg-post-cta h2 { font-size: clamp(22px, 3vw, 28px); margin-bottom: 8px; }
+.sg .sg-post-cta p { margin: 0 0 20px; color: var(--sg-ink2); }
+.sg .sg-post-cta .sg-btn + .sg-btn { margin-left: 10px; }
+.sg .sg-post-note { font-size: 14px; color: var(--sg-ink3); margin-top: 28px; }
+
+/* Blog index */
+.sg .sg-blog { padding: clamp(40px, 6vw, 72px) 0 clamp(56px, 8vw, 96px); }
+.sg .sg-blog-head { max-width: 720px; margin-bottom: 40px; }
+.sg .sg-blog-head h1 { font-size: clamp(32px, 5vw, 52px); margin-bottom: 14px; }
+.sg .sg-blog-head p { color: var(--sg-ink2); font-size: 18px; margin: 0; }
+.sg .sg-blog-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.sg .sg-blog-card { display: flex; flex-direction: column; gap: 10px; background: var(--sg-card); border: 1px solid var(--sg-line); border-radius: 16px; padding: 22px; text-decoration: none; color: inherit; transition: border-color .2s var(--sg-ease), transform .2s var(--sg-ease); }
+.sg .sg-blog-card:hover { border-color: var(--sg-brand); transform: translateY(-2px); }
+.sg .sg-blog-card h2 { font-size: 21px; line-height: 1.2; }
+.sg .sg-blog-card p { margin: 0; color: var(--sg-ink2); font-size: 15px; line-height: 1.55; }
+.sg .sg-blog-card .sg-post-meta { margin: 0; }
+@media (max-width: 720px) {
+  .sg .sg-blog-grid { grid-template-columns: 1fr; }
+  .sg .sg-post-cta .sg-btn + .sg-btn { margin: 10px 0 0; }
+}

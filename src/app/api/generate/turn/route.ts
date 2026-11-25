@@ -21,7 +21,8 @@ export async function GET(req: NextRequest) {
     .eq('user_id', user.id)
     .maybeSingle();
 
-  if (!data) return NextResponse.json({ status: 'pending' }, { status: 404 });
+  // 'turn-start' is the duplicate-build marker written when a first build begins, not a finished turn.
+  if (!data || data.status === 'turn-start') return NextResponse.json({ status: 'pending' }, { status: 404 });
   return NextResponse.json({ status: data.status, text: data.response_text ?? '' }, {
     headers: { 'Cache-Control': 'no-store' },
   });

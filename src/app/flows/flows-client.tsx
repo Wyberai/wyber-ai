@@ -9,7 +9,7 @@ interface Flow { id: string; name: string; description: string; is_active: boole
 
 const SKY = '#0EA5E9'
 const BORDER = 'rgba(255,255,255,0.06)'
-const MUTED = '#52525b'
+const MUTED = '#8797ab'
 const SURFACE = '#111118'
 
 // ── Starter templates ──────────────────────────────────────────────────────────
@@ -350,7 +350,7 @@ export default function FlowsPage() {
           <button
             onClick={createFlow}
             disabled={!!creating}
-            style={{ marginLeft: 'auto', padding: '7px 18px', borderRadius: 8, border: 'none', background: SKY, color: 'white', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+            style={{ marginLeft: 'auto', padding: '7px 18px', borderRadius: 8, border: 'none', background: SKY, color: '#03111c', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
           >
             {creating === 'blank' ? 'Creating…' : '+ Blank flow'}
           </button>
@@ -374,8 +374,8 @@ export default function FlowsPage() {
               <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Build your first automation</div>
               <div style={{ fontSize: 14, color: MUTED, marginBottom: 24, maxWidth: 400, margin: '0 auto 24px' }}>Pick a template to get started in seconds, or build from scratch if you know what you need.</div>
               <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-                <button onClick={() => setTab('templates')} style={{ padding: '11px 24px', borderRadius: 8, border: 'none', background: SKY, color: 'white', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>Browse templates →</button>
-                <button onClick={createFlow} style={{ padding: '11px 24px', borderRadius: 8, border: `1px solid ${BORDER}`, background: 'transparent', color: '#71717a', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}>Blank flow</button>
+                <button onClick={() => setTab('templates')} style={{ padding: '11px 24px', borderRadius: 8, border: 'none', background: SKY, color: '#03111c', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>Browse templates →</button>
+                <button onClick={createFlow} style={{ padding: '11px 24px', borderRadius: 8, border: `1px solid ${BORDER}`, background: 'transparent', color: '#8797ab', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}>Blank flow</button>
               </div>
             </div>
           ) : (
@@ -388,10 +388,10 @@ export default function FlowsPage() {
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                       <span style={{ fontSize: 14, fontWeight: 700, color: '#f0f0f5', flex: 1 }}>{flow.name}</span>
-                      <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 8, background: flow.is_active ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.04)', color: flow.is_active ? '#22c55e' : MUTED, fontWeight: 700 }}>{flow.is_active ? 'ACTIVE' : 'DRAFT'}</span>
+                      <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 8, background: flow.is_active ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.04)', color: flow.is_active ? '#22c55e' : MUTED, fontWeight: 700 }}>{flow.is_active ? 'ACTIVE' : 'DRAFT'}</span>
                     </div>
                     <div style={{ fontSize: 12, color: MUTED, marginBottom: 12 }}>{typeof flow.description === 'string' ? flow.description : 'No description'}</div>
-                    <div style={{ fontSize: 11, color: '#3f3f46' }}>{(flow.nodes || []).length} steps · {flow.run_count} runs</div>
+                    <div style={{ fontSize: 11, color: '#8797ab' }}>{(flow.nodes || []).length} steps · {flow.run_count} runs</div>
                   </div>
                 </Link>
               ))}
@@ -404,16 +404,16 @@ export default function FlowsPage() {
           <div style={{ display: 'flex', gap: 24 }}>
             {/* Sidebar */}
             <div style={{ width: 180, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Category</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#8797ab', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Category</div>
               {CATEGORIES.map(cat => {
                 const count = cat === 'All' ? TEMPLATES.length : TEMPLATES.filter(t => t.category === cat).length
                 const catColors: Record<string, string> = { Sales: '#10b981', Support: '#f59e0b', Marketing: '#e879f9', Ops: '#0EA5E9', Engineering: '#8b5cf6', Product: '#06b6d4', Finance: '#22c55e', Productivity: '#f97316' }
                 const color = catColors[cat] || SKY
                 return (
                   <button key={cat} onClick={() => setCatFilter(cat)}
-                    style={{ padding: '7px 12px', borderRadius: 7, border: 'none', textAlign: 'left', background: catFilter === cat ? color + '12' : 'transparent', color: catFilter === cat ? color : '#71717a', fontSize: 12, fontWeight: catFilter === cat ? 600 : 400, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', justifyContent: 'space-between', alignItems: 'center', transition: 'all 0.1s' }}>
+                    style={{ padding: '7px 12px', borderRadius: 7, border: 'none', textAlign: 'left', background: catFilter === cat ? color + '12' : 'transparent', color: catFilter === cat ? color : '#8797ab', fontSize: 12, fontWeight: catFilter === cat ? 600 : 400, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', justifyContent: 'space-between', alignItems: 'center', transition: 'all 0.1s' }}>
                     <span>{cat}</span>
-                    <span style={{ fontSize: 10, color: '#3f3f46' }}>{count}</span>
+                    <span style={{ fontSize: 11, color: '#8797ab' }}>{count}</span>
                   </button>
                 )
               })}
@@ -437,10 +437,10 @@ export default function FlowsPage() {
                     >
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <div style={{ width: 32, height: 32, borderRadius: 8, background: color + '18', border: `1px solid ${color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>{tpl.icon}</div>
-                        <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: color + '15', color, border: `1px solid ${color}25`, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{tpl.category}</span>
+                        <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: color + '15', color, border: `1px solid ${color}25`, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{tpl.category}</span>
                       </div>
                       <div style={{ fontSize: 14, fontWeight: 700, color: '#f0f0f5', lineHeight: 1.3 }}>{tpl.name}</div>
-                      <div style={{ fontSize: 11, color: '#71717a', lineHeight: 1.5, flex: 1 }}>{tpl.description}</div>
+                      <div style={{ fontSize: 11, color: '#8797ab', lineHeight: 1.5, flex: 1 }}>{tpl.description}</div>
                       {/* Tool logos */}
                       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4, marginBottom: 8 }}>
                         {Array.from(new Set((tpl.nodes as any[]).map(n => n.data?.config?.toolkit).filter(Boolean))).map(toolkit => {
@@ -450,7 +450,7 @@ export default function FlowsPage() {
                       </div>
 
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
-                        <span style={{ fontSize: 11, color: '#3f3f46' }}>{tpl.nodes.length} steps</span>
+                        <span style={{ fontSize: 11, color: '#8797ab' }}>{tpl.nodes.length} steps</span>
                         <button
                           onClick={() => createFromTemplate(tpl)}
                           disabled={creating === tpl.name}

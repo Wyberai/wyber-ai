@@ -1,4 +1,5 @@
 'use client'
+import { readableOn } from '@/lib/color-contrast'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
@@ -35,7 +36,7 @@ const PROGRAMS = [
     emoji: '♿',
     title: 'Accessibility Program',
     tagline: '50% off any plan for people with disabilities. Reviewed manually — we never ask for medical records.',
-    color: '#a855f7',
+    color: '#c084fc',
     how: 'Enter your email and we\'ll follow up to confirm eligibility (a one-line note is enough — no medical documentation needed). Once confirmed, the discount applies to your next billing cycle.',
     reward: '50% discount on any plan',
     proofLabel: 'Your email (we\'ll send the ID.me verification link)',
@@ -59,7 +60,7 @@ const PROGRAMS = [
     emoji: '💼',
     title: 'Follow us on LinkedIn',
     tagline: 'Follow WyberAI on LinkedIn and get 25 bonus credits.',
-    color: '#0a66c2',
+    color: '#70b5f9',
     how: 'Follow our LinkedIn page, then paste a link to your LinkedIn profile below. We review within 24 hours and add the credits.',
     reward: '25 bonus credits',
     proofLabel: 'Your LinkedIn profile URL',
@@ -135,7 +136,7 @@ export default function CommunityProgramsPage() {
   const getStatus = (programId: string) => submissions.find(s => s.program === programId)?.status
 
   return (
-    <div style={{ minHeight: '100vh', background: '#09090b', fontFamily: 'var(--font-display)', color: '#fafafa' }}>
+    <div style={{ minHeight: '100vh', background: '#05080d', fontFamily: 'var(--font-display)', color: '#fafafa' }}>
       {toast && (
         <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', background: toast.ok ? '#0f2a1a' : '#2a0f0f', border: `1px solid ${toast.ok ? '#22c55e33' : '#ef444433'}`, color: toast.ok ? '#22c55e' : '#ef4444', padding: '12px 20px', borderRadius: 10, fontSize: 13, fontWeight: 600, zIndex: 9999 }}>
           {toast.msg}
@@ -146,7 +147,7 @@ export default function CommunityProgramsPage() {
         <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}>
           <WyberLogo markSize={26} wordmarkSize={15} />
         </Link>
-        <Link href="/dashboard" style={{ fontSize: 12, color: '#52525b', textDecoration: 'none', padding: '5px 12px', borderRadius: 7, border: '1px solid rgba(255,255,255,0.08)' }}>Dashboard</Link>
+        <Link href="/dashboard" style={{ fontSize: 12, color: '#8797ab', textDecoration: 'none', padding: '5px 12px', borderRadius: 7, border: '1px solid rgba(255,255,255,0.08)' }}>Dashboard</Link>
       </nav>
 
       <div style={{ maxWidth: 800, margin: '0 auto', padding: 'clamp(40px,6vw,72px) clamp(16px,4vw,48px)' }}>
@@ -157,7 +158,7 @@ export default function CommunityProgramsPage() {
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px,4vw,42px)', fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 12 }}>
             Good people get rewarded
           </h1>
-          <p style={{ fontSize: 15, color: '#71717a', maxWidth: 520, margin: '0 auto', lineHeight: 1.65 }}>
+          <p style={{ fontSize: 15, color: '#8797ab', maxWidth: 520, margin: '0 auto', lineHeight: 1.65 }}>
             We believe in giving back. These programs reward our community for doing good — whether it's saving lives, building in the open, or contributing to open source. Apply below and <strong style={{ color: '#fafafa' }}>we&apos;ll do what&apos;s right within 24 hours</strong>.
           </p>
         </div>
@@ -166,14 +167,14 @@ export default function CommunityProgramsPage() {
           {PROGRAMS.map(p => {
             const status = getStatus(p.id)
             return (
-              <div key={p.id} style={{ background: '#111113', border: `1px solid ${status === 'approved' ? p.color + '40' : 'rgba(255,255,255,0.07)'}`, borderRadius: 16, padding: 'clamp(24px,3vw,32px)', position: 'relative', overflow: 'hidden' }}>
+              <div key={p.id} style={{ background: '#0d141e', border: `1px solid ${status === 'approved' ? p.color + '40' : 'rgba(255,255,255,0.07)'}`, borderRadius: 16, padding: 'clamp(24px,3vw,32px)', position: 'relative', overflow: 'hidden' }}>
                 {status === 'approved' && (
-                  <div style={{ position: 'absolute', top: 12, right: 16, fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 20, background: 'rgba(34,197,94,0.1)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.2)' }}>
+                  <div style={{ position: 'absolute', top: 12, right: 16, fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, background: 'rgba(34,197,94,0.1)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.2)' }}>
                     Applied
                   </div>
                 )}
                 {status === 'pending' && (
-                  <div style={{ position: 'absolute', top: 12, right: 16, fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 20, background: 'rgba(245,158,11,0.1)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.2)' }}>
+                  <div style={{ position: 'absolute', top: 12, right: 16, fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, background: 'rgba(245,158,11,0.1)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.2)' }}>
                     Under review
                   </div>
                 )}
@@ -184,13 +185,13 @@ export default function CommunityProgramsPage() {
                   </div>
                   <div>
                     <h2 style={{ fontSize: 18, fontWeight: 800, letterSpacing: '-0.02em', margin: '0 0 4px', color: '#fafafa' }}>{p.title}</h2>
-                    <p style={{ fontSize: 13, color: '#71717a', margin: 0, lineHeight: 1.5 }}>{p.tagline}</p>
+                    <p style={{ fontSize: 13, color: '#8797ab', margin: 0, lineHeight: 1.5 }}>{p.tagline}</p>
                   </div>
                 </div>
 
                 <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: '14px 16px', marginBottom: 16 }}>
                   <div style={{ fontSize: 11, fontWeight: 700, color: p.color, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>How it works</div>
-                  <p style={{ fontSize: 13, color: '#a1a1aa', margin: 0, lineHeight: 1.6 }}>{p.how}</p>
+                  <p style={{ fontSize: 13, color: '#9aa8bb', margin: 0, lineHeight: 1.6 }}>{p.how}</p>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
@@ -203,7 +204,7 @@ export default function CommunityProgramsPage() {
                   <div>
                     <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', marginBottom: p.id === 'blood_donor' ? 10 : 0 }}>
                       <div style={{ flex: 1 }}>
-                        <label style={{ fontSize: 11, fontWeight: 600, color: '#52525b', marginBottom: 6, display: 'block' }}>{p.proofLabel}</label>
+                        <label style={{ fontSize: 11, fontWeight: 600, color: '#8797ab', marginBottom: 6, display: 'block' }}>{p.proofLabel}</label>
                         <input
                           value={proofValues[p.id] || ''}
                           onChange={e => setProofValues(prev => ({ ...prev, [p.id]: e.target.value }))}
@@ -216,8 +217,8 @@ export default function CommunityProgramsPage() {
                         disabled={submitting === p.id || !proofValues[p.id]?.trim()}
                         style={{
                           padding: '10px 20px', borderRadius: 8, border: 'none',
-                          background: submitting === p.id ? '#1a1a22' : p.color,
-                          color: '#fff', fontSize: 13, fontWeight: 700, cursor: submitting === p.id ? 'wait' : 'pointer',
+                          background: submitting === p.id ? '#14202e' : p.color,
+                          color: submitting === p.id ? '#8797ab' : readableOn(p.color), fontSize: 13, fontWeight: 700, cursor: submitting === p.id ? 'wait' : 'pointer',
                           fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0,
                         }}
                       >
@@ -227,7 +228,7 @@ export default function CommunityProgramsPage() {
                     {p.id === 'blood_donor' && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                         <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
-                        <span style={{ fontSize: 11, color: '#3f3f46' }}>or upload a photo directly</span>
+                        <span style={{ fontSize: 11, color: '#8797ab' }}>or upload a photo directly</span>
                         <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
                       </div>
                     )}
@@ -282,8 +283,8 @@ export default function CommunityProgramsPage() {
           })}
         </div>
 
-        <div style={{ textAlign: 'center', marginTop: 40, padding: '24px', background: '#111113', borderRadius: 14, border: '1px solid rgba(255,255,255,0.06)' }}>
-          <p style={{ fontSize: 13, color: '#52525b', margin: 0 }}>
+        <div style={{ textAlign: 'center', marginTop: 40, padding: '24px', background: '#0d141e', borderRadius: 14, border: '1px solid rgba(255,255,255,0.06)' }}>
+          <p style={{ fontSize: 13, color: '#8797ab', margin: 0 }}>
             Every application is reviewed by a human — we&apos;ll do what&apos;s right within 24 hours. Questions? Email <a href="mailto:hello@wyberai.com" style={{ color: SKY, textDecoration: 'none' }}>hello@wyberai.com</a>.
           </p>
         </div>

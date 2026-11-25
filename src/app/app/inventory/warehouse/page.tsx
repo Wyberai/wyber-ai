@@ -76,11 +76,11 @@ export default function WarehousePage() {
                   </div>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                     <div style={{ background: "#f8fafc", borderRadius: 8, padding: "10px 12px" }}>
-                      <div style={{ fontSize: 10, color: "#94a3b8" }}>Materials</div>
+                      <div style={{ fontSize: 11, color: "#94a3b8" }}>Materials</div>
                       <div style={{ fontWeight: 700, fontSize: 18, color: "#0f172a" }}>{wh.totalMaterials}</div>
                     </div>
                     <div style={{ background: "#f8fafc", borderRadius: 8, padding: "10px 12px" }}>
-                      <div style={{ fontSize: 10, color: "#94a3b8" }}>Stock Value</div>
+                      <div style={{ fontSize: 11, color: "#94a3b8" }}>Stock Value</div>
                       <div style={{ fontWeight: 700, fontSize: 14, color: "#0f172a" }}>{fmt(wh.totalValue)}</div>
                     </div>
                   </div>

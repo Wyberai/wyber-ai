@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models';
+import { loggedFetch } from '@/lib/ai-usage'
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
@@ -27,7 +28,7 @@ export async function POST(req: NextRequest) {
     const fileName = figmaData.name || 'Figma Import';
     const pages = figmaData.document?.children || [];
 
-    const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
+    const claudeRes = await loggedFetch('app/api/figma-import', 'https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY!, 'anthropic-version': '2023-06-01' },
       body: JSON.stringify({

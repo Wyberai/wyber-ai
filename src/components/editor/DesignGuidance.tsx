@@ -58,7 +58,7 @@ export function DesignGuidance({ prompt, onSelect, onSkip }: Props) {
           </div>
           <button onClick={onSkip} style={{ fontSize: 11, color: 'var(--text3)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>{t('skipButton')}</button>
         </div>
-        <button onClick={fetchDirections} disabled={loading} style={{ width: '100%', padding: '8px', borderRadius: 8, background: 'var(--sky)', color: '#fff', fontWeight: 700, fontSize: 12, border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
+        <button onClick={fetchDirections} disabled={loading} style={{ width: '100%', padding: '8px', borderRadius: 8, background: 'var(--sky)', color: '#03111c', fontWeight: 700, fontSize: 12, border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
           {loading ? t('generating3Directions') : t('showDesignDirectionsButton')}
         </button>
       </div>

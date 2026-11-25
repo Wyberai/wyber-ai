@@ -77,20 +77,26 @@ jobs:
           project_name = data.get('projectName', 'WyberAi App')
           files = data.get('files', {})
 
-          for path, value in files.items():
+          # Same as the APK workflow: skip the web starter's files and let a root file win over its src/ twin (a stray
+          # src/App.tsx used to overwrite the real App.tsx once the leading src/ was stripped).
+          WEB_ONLY = {'index.html', 'vite.config.ts', 'vite.config.js', 'src/main.tsx', 'src/main.jsx',
+                      'src/App.tsx', 'src/App.jsx', 'src/index.css', 'src/app.css'}
+          def content_of(value):
               # value may be a string or a dict {content: "...", ...}
-              if isinstance(value, dict):
-                  content = value.get('content', '')
-              else:
-                  content = value or ''
+              return value.get('content', '') if isinstance(value, dict) else (value or '')
+          wrote = set()
+          items = [(p, v) for p, v in files.items() if p not in WEB_ONLY]
+          for path, value in sorted(items, key=lambda kv: kv[0].startswith('src/')):
               # Strip leading src/ (RN apps don't use src/ layout)
-              if path.startswith('src/'):
-                  path = path[4:]
-              # Write file
-              full_path = pathlib.Path(path)
+              target = path[4:] if path.startswith('src/') else path
+              if target in wrote:
+                  print(f'  skipped {path} (root copy wins)')
+                  continue
+              full_path = pathlib.Path(target)
               full_path.parent.mkdir(parents=True, exist_ok=True)
-              full_path.write_text(content)
-              print(f'  wrote {path}')
+              full_path.write_text(content_of(value))
+              wrote.add(target)
+              print(f'  wrote {target}')
           PYEOF
 
           # Write package.json with pinned Expo SDK 54 deps
@@ -138,6 +144,10 @@ jobs:
           # without it (confirmed by an actual failed build during setup).
           PROJECT_ID="${{ github.event.inputs.project_id }}"
           BUNDLE_SUFFIX=$(echo "$PROJECT_ID" | tr -dc 'a-z0-9' | head -c 16)
+          # An Android package segment must start with a letter. Project ids are UUIDs, so about 10 in 16 start with a digit,
+          # and Expo then treats the package as unset ('android.package is required', 18 Nov 2026). Prefix only those, so ids that
+          # already built keep their package name and installed apps still update.
+          case "$BUNDLE_SUFFIX" in [0-9]*) PKG_SUFFIX="p$BUNDLE_SUFFIX" ;; *) PKG_SUFFIX="$BUNDLE_SUFFIX" ;; esac
           cat > app.json << JSON_EOF
           {
             "expo": {
@@ -146,7 +156,7 @@ jobs:
               "version": "1.0.0",
               "orientation": "portrait",
               "android": {
-                "package": "com.wyberai.preview.${BUNDLE_SUFFIX}",
+                "package": "com.wyberai.preview.${PKG_SUFFIX}",
                 "adaptiveIcon": { "backgroundColor": "#09090b" }
               },
               "sdkVersion": "54.0.0",
@@ -215,16 +225,33 @@ jobs:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           EAS_BUILD_SKIP_LOCKFILE_CHECK: '1'
         run: |
+          # stdout (the JSON reply) and stderr (progress and warnings) go to SEPARATE files. They used to share one file (2>&1),
+          # so the parse failed on the progress text and the build id came out empty (see build-artifact.yml, 17 Nov).
           eas build --platform android --profile preview --non-interactive --no-wait \
-            --json > ../build_start.json 2>&1 || true
-          cat ../build_start.json
-          BUILD_ID=$(cat ../build_start.json | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d[0]["id"])' 2>/dev/null || echo "")
+            --json > ../build_start.json 2> ../build_start.err || true
+          echo "--- eas stdout ---"; cat ../build_start.json
+          echo "--- eas stderr ---"; cat ../build_start.err
+          # Read the id from the outermost JSON array or object in stdout, whatever else was printed around it.
+          BUILD_ID=$(node -e "
+          const raw = require('fs').readFileSync('../build_start.json', 'utf8');
+          for (const [o, c] of [['[', ']'], ['{', '}']]) {
+            const s = raw.indexOf(o), e = raw.lastIndexOf(c);
+            if (s !== -1 && e > s) {
+              try { let d = JSON.parse(raw.slice(s, e + 1)); d = Array.isArray(d) ? d[0] : d; console.log(d.id || ''); process.exit(0); } catch (_) {}
+            }
+          }
+          console.log('');
+          " 2>/dev/null || echo "")
           echo "EAS_BUILD_ID=$BUILD_ID" >> $GITHUB_ENV
 
       - name: Wait for EAS build to complete
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
+          if [ -z "$EAS_BUILD_ID" ]; then
+            echo "Could not read the EAS build id. See the eas stderr above."
+            exit 0
+          fi
           echo "Polling EAS build $EAS_BUILD_ID"
           for i in $(seq 1 40); do
             sleep 30

@@ -1,7 +1,7 @@
 import { DocsPage, DocSection, Steps, Step, ScreenshotPlaceholder, Note } from '@/components/docs/DocsPage'
 import Link from 'next/link'
 
-export const metadata = { title: 'Running & Monitoring — Docs' }
+export const metadata = { title: 'Running & Monitoring — Docs', description: "Enable your workflow to let it run automatically, or trigger a manual test run at any time. The run log shows every execution with inputs, outputs, and…" }
 
 export default function Page() {
   return (

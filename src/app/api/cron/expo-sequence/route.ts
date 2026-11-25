@@ -10,7 +10,7 @@ export const maxDuration = 120
 // instant one failed). One email per lead per run. See lib/expo-sequence.ts
 // for the timing rules. ?dry=1 lists what WOULD be sent and sends nothing.
 export async function GET(req: NextRequest) {
-  if (req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!process.env.CRON_SECRET || req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
   if (expoSequenceDisabled()) return NextResponse.json({ skipped: true, reason: 'EXPO_SEQUENCE_DISABLED' })

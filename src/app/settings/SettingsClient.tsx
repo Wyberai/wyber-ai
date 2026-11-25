@@ -28,7 +28,7 @@ export function SettingsClient({ profile }: { profile: any }) {
     sectionTitle: { fontSize: 15, fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--text)', marginBottom: 20 },
     label: { fontSize: 13, fontWeight: 600, color: 'var(--text2)', marginBottom: 6, display: 'block' },
     input: { width: '100%', padding: '11px 14px', borderRadius: 9, border: '1.5px solid var(--border)', background: 'var(--bg2)', color: 'var(--text)', fontSize: 14, outline: 'none', fontFamily: 'var(--font-sans)', marginBottom: 16, transition: 'border-color 0.15s' },
-    btn: { padding: '10px 22px', borderRadius: 9, background: 'var(--sky)', color: '#fff', fontWeight: 700, fontSize: 14, border: 'none', cursor: 'pointer', fontFamily: 'var(--font-sans)', transition: 'all 0.15s' },
+    btn: { padding: '10px 22px', borderRadius: 9, background: 'var(--sky)', color: '#03111c', fontWeight: 700, fontSize: 14, border: 'none', cursor: 'pointer', fontFamily: 'var(--font-sans)', transition: 'all 0.15s' },
     planBadge: { fontSize: 12, padding: '4px 12px', borderRadius: 20, background: 'rgba(14,165,233,0.1)', color: 'var(--sky)', fontWeight: 700, border: '1px solid rgba(14,165,233,0.2)', display: 'inline-block' },
   };
 
@@ -67,7 +67,7 @@ export function SettingsClient({ profile }: { profile: any }) {
               <div style={{ fontSize: 12, color: 'var(--text3)' }}>credits remaining</div>
             </div>
           </div>
-          <Link href="/pricing" style={{ display: 'inline-block', padding: '10px 22px', borderRadius: 9, background: 'var(--sky)', color: '#fff', fontWeight: 700, fontSize: 14 }}>
+          <Link href="/pricing" style={{ display: 'inline-block', padding: '10px 22px', borderRadius: 9, background: 'var(--sky)', color: '#03111c', fontWeight: 700, fontSize: 14 }}>
             Upgrade plan →
           </Link>
         </div>

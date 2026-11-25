@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { createAnthropic } from '@/lib/ai-usage'
 import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+const anthropic = createAnthropic('app/api/gtm/enrich', { apiKey: process.env.ANTHROPIC_API_KEY! })
 
 // Waterfall enrichment: try each source in order, stop at first success
 async function enrichWithAI(lead: Record<string, unknown>): Promise<Record<string, unknown>> {

@@ -3,8 +3,8 @@ import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 
 const s = {
-  bg: '#09090b', card: '#111113', border: 'rgba(255,255,255,0.07)',
-  text: '#fafafa', muted: '#71717a', orange: '#f97316', green: '#10b981', yellow: '#f59e0b',
+  bg: '#05080d', card: '#0d141e', border: 'rgba(255,255,255,0.07)',
+  text: '#fafafa', muted: '#8797ab', orange: '#f97316', green: '#10b981', yellow: '#f59e0b',
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -25,7 +25,7 @@ export default async function CampaignsPage() {
     <div style={{ minHeight: '100vh', background: s.bg, color: s.text, fontFamily: 'var(--font-display)' }}>
       <nav style={{ padding: '0 clamp(16px,4vw,48px)', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${s.border}`, background: 'rgba(9,9,11,0.92)', backdropFilter: 'blur(16px)', position: 'sticky', top: 0, zIndex: 100 }}>
         <Link href="/gtm" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none', color: 'inherit' }}><WyberLogo markSize={24} wordmarkSize={14} /></Link>
-        <Link href="/gtm/campaigns/new" style={{ padding: '8px 16px', borderRadius: 8, background: s.orange, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>+ New campaign</Link>
+        <Link href="/gtm/campaigns/new" style={{ padding: '8px 16px', borderRadius: 8, background: s.orange, color: '#03111c', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>+ New campaign</Link>
       </nav>
 
       <div style={{ maxWidth: 900, margin: '0 auto', padding: 'clamp(40px,6vw,72px) clamp(16px,4vw,48px)' }}>
@@ -36,7 +36,7 @@ export default async function CampaignsPage() {
             <div style={{ fontSize: 40, marginBottom: 16 }}>🗺️</div>
             <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>No campaigns yet</div>
             <div style={{ fontSize: 14, color: s.muted, marginBottom: 24 }}>Build your first campaign on the visual canvas</div>
-            <Link href="/gtm/campaigns/new" style={{ padding: '12px 24px', borderRadius: 10, background: s.orange, color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>Create campaign →</Link>
+            <Link href="/gtm/campaigns/new" style={{ padding: '12px 24px', borderRadius: 10, background: s.orange, color: '#03111c', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>Create campaign →</Link>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

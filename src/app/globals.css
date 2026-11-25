@@ -290,7 +290,7 @@ input, textarea, select { font-family: var(--font-sans); }
   padding: 11px 24px;
   border-radius: var(--r);
   background: var(--sky);
-  color: #fff;
+  color: #03111c;
   font-size: 14px;
   font-weight: 700;
   font-family: var(--font-sans);
@@ -655,7 +655,7 @@ input, textarea, select { font-family: var(--font-sans); }
   padding: 13px 28px;
   border-radius: 980px;
   background: var(--brand-accent);
-  color: #fff;
+  color: #03111c;
   font-size: 15px;
   font-weight: 600;
   font-family: var(--font-display);

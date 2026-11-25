@@ -38,30 +38,30 @@ export function HumanSupportForm({ transcript }: { transcript: Message[] }) {
       <div style={{ flex: 1, overflow: 'auto', padding: '16px 14px', textAlign: 'center' }}>
         <div style={{ fontSize: 28, marginTop: 40 }}>✅</div>
         <div style={{ fontSize: 13, fontWeight: 700, color: '#fafafa', marginTop: 8 }}>Sent to the team</div>
-        <div style={{ fontSize: 12, color: '#a1a1aa', marginTop: 6, lineHeight: 1.6 }}>We got your message and will reply to <strong style={{ color: '#d4d4d8' }}>{email}</strong> — usually within a few hours.</div>
+        <div style={{ fontSize: 12, color: '#9aa8bb', marginTop: 6, lineHeight: 1.6 }}>We got your message and will reply to <strong style={{ color: '#d4d4d8' }}>{email}</strong> — usually within a few hours.</div>
       </div>
     )
   }
   return (
     <div style={{ flex: 1, overflow: 'auto', padding: '16px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <div style={{ fontSize: 12, color: '#a1a1aa', lineHeight: 1.6 }}>Leave your email and what you need — it lands directly in the team&apos;s Slack and we reply by email.</div>
+      <div style={{ fontSize: 12, color: '#9aa8bb', lineHeight: 1.6 }}>Leave your email and what you need — it lands directly in the team&apos;s Slack and we reply by email.</div>
       <input
         type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@company.com"
-        style={{ padding: '9px 11px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', background: '#18181b', color: '#fafafa', fontSize: 13, outline: 'none', fontFamily: 'inherit' }}
+        style={{ padding: '9px 11px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', background: '#111b28', color: '#fafafa', fontSize: 13, outline: 'none', fontFamily: 'inherit' }}
       />
       <textarea
         value={msg} onChange={e => setMsg(e.target.value)} placeholder="What do you need help with?" rows={4}
-        style={{ padding: '9px 11px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', background: '#18181b', color: '#fafafa', fontSize: 13, resize: 'none', outline: 'none', fontFamily: 'inherit' }}
+        style={{ padding: '9px 11px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', background: '#111b28', color: '#fafafa', fontSize: 13, resize: 'none', outline: 'none', fontFamily: 'inherit' }}
       />
       {error && <div style={{ fontSize: 11.5, color: '#f87171' }}>{error}</div>}
       <button
         onClick={submit}
         disabled={state === 'sending' || !email.trim() || !msg.trim()}
-        style={{ padding: '10px 0', borderRadius: 10, border: 'none', background: email.trim() && msg.trim() && state !== 'sending' ? '#0EA5E9' : '#27272a', color: '#fff', fontSize: 13, fontWeight: 700, cursor: email.trim() && msg.trim() && state !== 'sending' ? 'pointer' : 'not-allowed' }}
+        style={{ padding: '10px 0', borderRadius: 10, border: 'none', background: email.trim() && msg.trim() && state !== 'sending' ? '#0EA5E9' : '#162231', color: '#fff', fontSize: 13, fontWeight: 700, cursor: email.trim() && msg.trim() && state !== 'sending' ? 'pointer' : 'not-allowed' }}
       >
         {state === 'sending' ? 'Sending…' : 'Send to the team'}
       </button>
-      <div style={{ fontSize: 11, color: '#52525b' }}>Your AI chat is attached for context.</div>
+      <div style={{ fontSize: 11, color: '#8797ab' }}>Your AI chat is attached for context.</div>
     </div>
   )
 }
@@ -145,7 +145,7 @@ export function SupportChat() {
         style={{
           position: 'fixed', bottom: 24, right: 24, zIndex: 9999,
           width: 52, height: 52, borderRadius: '50%',
-          background: '#09090b', border: 'none', cursor: 'pointer',
+          background: '#05080d', border: 'none', cursor: 'pointer',
           boxShadow: '0 4px 20px rgba(14,165,233,0.4)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           transition: 'all 0.2s',
@@ -164,7 +164,7 @@ export function SupportChat() {
         <div style={{
           position: 'fixed', bottom: 88, right: 24, zIndex: 9998,
           width: 340, height: 480,
-          background: '#111113', border: '1px solid rgba(255,255,255,0.1)',
+          background: '#0d141e', border: '1px solid rgba(255,255,255,0.1)',
           borderRadius: 16, display: 'flex', flexDirection: 'column',
           boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
           fontFamily: 'var(--font-display)',
@@ -182,7 +182,7 @@ export function SupportChat() {
             </div>
             <button
               onClick={() => setHumanMode(m => !m)}
-              style={{ fontSize: 11, fontWeight: 600, padding: '5px 10px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.12)', background: humanMode ? 'rgba(14,165,233,0.12)' : 'transparent', color: humanMode ? '#0EA5E9' : '#a1a1aa', cursor: 'pointer', whiteSpace: 'nowrap' }}
+              style={{ fontSize: 11, fontWeight: 600, padding: '5px 10px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.12)', background: humanMode ? 'rgba(14,165,233,0.12)' : 'transparent', color: humanMode ? '#0EA5E9' : '#9aa8bb', cursor: 'pointer', whiteSpace: 'nowrap' }}
             >
               {humanMode ? '← Back to AI' : '👋 Talk to a human'}
             </button>
@@ -198,7 +198,7 @@ export function SupportChat() {
               <div key={i} style={{ display: 'flex', justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
                 <div style={{
                   maxWidth: '82%', padding: '9px 12px', borderRadius: m.role === 'user' ? '12px 12px 4px 12px' : '12px 12px 12px 4px',
-                  background: m.role === 'user' ? '#0EA5E9' : '#18181b',
+                  background: m.role === 'user' ? '#0EA5E9' : '#111b28',
                   color: m.role === 'user' ? '#fff' : '#d4d4d8',
                   fontSize: 13, lineHeight: 1.55,
                   border: m.role === 'assistant' ? '1px solid rgba(255,255,255,0.07)' : 'none',
@@ -219,12 +219,12 @@ export function SupportChat() {
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }}
               placeholder="Ask anything..."
               rows={1}
-              style={{ flex: 1, padding: '8px 10px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', background: '#18181b', color: '#fafafa', fontSize: 13, resize: 'none', outline: 'none', fontFamily: 'inherit', maxHeight: 80, overflowY: 'auto' }}
+              style={{ flex: 1, padding: '8px 10px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', background: '#111b28', color: '#fafafa', fontSize: 13, resize: 'none', outline: 'none', fontFamily: 'inherit', maxHeight: 80, overflowY: 'auto' }}
             />
             <button
               onClick={send}
               disabled={!input.trim() || loading}
-              style={{ width: 34, height: 34, borderRadius: '50%', border: 'none', background: input.trim() && !loading ? '#0EA5E9' : '#27272a', color: '#fff', cursor: input.trim() && !loading ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, transition: 'all 0.15s' }}
+              style={{ width: 34, height: 34, borderRadius: '50%', border: 'none', background: input.trim() && !loading ? '#0EA5E9' : '#162231', color: '#fff', cursor: input.trim() && !loading ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14, transition: 'all 0.15s' }}
             >
               {loading ? '●' : '↑'}
             </button>

@@ -2,8 +2,8 @@
 import { useState } from 'react'
 
 const s = {
-  bg: '#09090b', card: '#111113', border: 'rgba(255,255,255,0.07)',
-  text: '#fafafa', muted: '#71717a', dim: '#52525b',
+  bg: '#05080d', card: '#0d141e', border: 'rgba(255,255,255,0.07)',
+  text: '#fafafa', muted: '#8797ab', dim: '#8797ab',
   orange: '#f97316', green: '#10b981', yellow: '#f59e0b', sky: '#0EA5E9', violet: '#8b5cf6',
 }
 
@@ -86,7 +86,7 @@ export default function GTMInboxClient({ initialEvents }: { initialEvents: any[]
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                   <span style={{ fontSize: 16 }}>{cfg.icon}</span>
                   <span style={{ fontSize: 13, fontWeight: 700, color: s.text, flex: 1 }}>{lead?.first_name} {lead?.last_name}</span>
-                  <span style={{ fontSize: 10, color: s.dim }}>{timeAgo(event.created_at)}</span>
+                  <span style={{ fontSize: 11, color: s.dim }}>{timeAgo(event.created_at)}</span>
                 </div>
                 <div style={{ fontSize: 12, color: s.muted, paddingLeft: 24 }}>{lead?.company_name || lead?.email}</div>
                 <div style={{ fontSize: 11, paddingLeft: 24, marginTop: 3 }}>
@@ -122,7 +122,7 @@ export default function GTMInboxClient({ initialEvents }: { initialEvents: any[]
                 {selected.metadata?.content && (
                   <div style={{ background: s.card, border: `1px solid ${s.border}`, borderRadius: 10, padding: '14px 16px', marginBottom: 24 }}>
                     <div style={{ fontSize: 11, fontWeight: 700, color: s.muted, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Their message</div>
-                    <p style={{ fontSize: 13, color: '#e4e4e7', lineHeight: 1.7, margin: 0 }}>{selected.metadata.content}</p>
+                    <p style={{ fontSize: 13, color: '#e8eef7', lineHeight: 1.7, margin: 0 }}>{selected.metadata.content}</p>
                   </div>
                 )}
 
@@ -149,7 +149,7 @@ export default function GTMInboxClient({ initialEvents }: { initialEvents: any[]
                         <button
                           onClick={() => { navigator.clipboard.writeText(reply); setSent(true) }}
                           disabled={!reply}
-                          style={{ padding: '10px 20px', borderRadius: 8, background: s.green, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', border: 'none', opacity: reply ? 1 : 0.4 }}
+                          style={{ padding: '10px 20px', borderRadius: 8, background: s.green, color: '#03111c', fontSize: 13, fontWeight: 700, cursor: 'pointer', border: 'none', opacity: reply ? 1 : 0.4 }}
                         >
                           Copy reply
                         </button>

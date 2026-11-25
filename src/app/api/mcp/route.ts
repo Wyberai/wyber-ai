@@ -3,10 +3,14 @@ import { z } from 'zod'
 import { headers } from 'next/headers'
 import { createServiceClient } from '@/lib/supabase/server'
 import { verifyToken, userIdFromAuth } from '@/lib/mcp/auth'
+import { guardTools } from '@/lib/mcp/guard'
 import { getProjectSupabase } from '@/lib/mcp/project-db'
 import { runSql } from '@/lib/supabase-management'
 import { runProjectRlsScan } from '@/lib/rls-scan-project'
 import { creditCost, resolveBuildTier, type ActionType, type ModelTier, type BuildSizeTier } from '@/lib/credits'
+import { floorTierForProjectType } from '@/lib/mcp/pricing'
+import { pickerOptions } from '@/lib/direction-picker'
+import { directionsEnabled } from '@/lib/direction-flag'
 import { PLAN_FACTS } from '@/lib/plans'
 import { currencyForCountry } from '@/lib/currency'
 import { Composio } from '@composio/core'
@@ -52,16 +56,16 @@ async function getUserCurrency(userId: string): Promise<'USD' | 'INR'> {
 /** Build upsell message for insufficient credits */
 function insufficientCreditsMessage(needed: number, have: number, currency: 'USD' | 'INR' = 'USD'): string {
   const shortage = needed - have
-  const starterCredits = 150
-  const builderCredits = 500
+  const starterCredits = PLAN_FACTS.starter.credits
+  const builderCredits = PLAN_FACTS.builder.credits
 
   if (currency === 'INR') {
     return `You need ${needed} credits but have only ${have} (${shortage} short).
 
 **Upgrade to get more credits:**
-• **Spark** (₹499/mo): 50cr/mo — limited to small builds
-• **Starter** (₹1,499/mo): 150cr/mo — ~5 builds/month
-• **Builder** (₹3,999/mo): 500cr/mo — ~16 builds/month ← Recommended
+• **Spark** (₹499/mo): ${PLAN_FACTS.spark.credits}cr/mo — ~5 builds/month
+• **Starter** (₹1,499/mo): ${starterCredits}cr/mo — ~15 builds/month
+• **Builder** (₹3,999/mo): ${builderCredits.toLocaleString('en-US')}cr/mo — ~50 builds/month ← Recommended
 
 **Save 20% with annual billing!**
 Starter: ₹1,199/mo annual | Builder: ₹3,199/mo annual
@@ -74,8 +78,8 @@ Or top-up credits: https://wyberai.com/credits`
   return `You need ${needed} credits but have only ${have} (${shortage} short).
 
 **Upgrade to get more credits:**
-• **Starter** ($29/mo): 150cr/mo — ~5 builds/month
-• **Builder** ($79/mo): 500cr/mo — ~16 builds/month ← Recommended
+• **Starter** ($29/mo): ${starterCredits}cr/mo — ~15 builds/month
+• **Builder** ($79/mo): ${builderCredits.toLocaleString('en-US')}cr/mo — ~50 builds/month ← Recommended
 
 **Save 20% with annual billing!**
 Starter: $23/mo annual | Builder: $63/mo annual
@@ -87,6 +91,8 @@ Or top-up credits: https://wyberai.com/credits`
 
 const handler = createMcpHandler(
   (server) => {
+    // A read-only key may only call tools that only read. One rule in front of every tool below.
+    guardTools(server)
     server.tool(
       'list_projects',
       'List the projects in your WyberAi workspace (most recently updated first).',
@@ -224,7 +230,7 @@ const handler = createMcpHandler(
 
     server.tool(
       'get_palette_options',
-      'Get 3 design palette options for the build. User picks one or "Surprise me".',
+      'Get 3 design options for the build: our own researched design directions for websites, SaaS and web apps (palettes for mobile). Pass the chosen id as palette_id to start_build, or skip it and the builder chooses.',
       {
         prompt: z.string().describe('User description/prompt for the build'),
         project_type: z.enum(['web-app', 'mobile', 'website', 'saas']).describe('Type of project'),
@@ -237,7 +243,8 @@ const handler = createMcpHandler(
         try {
           // Import pickPaletteOptions from lib/design-palettes at runtime
           const { pickPaletteOptions } = await import('@/lib/design-palettes')
-          const palettes = pickPaletteOptions(args.prompt, 3)
+          const picked = pickerOptions(args.prompt, 3, { enabled: directionsEnabled(), projectType: args.project_type })
+          const palettes = picked.directions && args.project_type !== 'mobile' ? picked.options : pickPaletteOptions(args.prompt, 3)
 
           return jsonResult({
             palettes: palettes.map(p => ({
@@ -246,7 +253,7 @@ const handler = createMcpHandler(
               vibe: p.vibe,
               mode: p.mode,
             })),
-            message: 'Pick a design direction or click "Surprise me" for a random palette.',
+            message: 'Pick one and pass its id as palette_id to start_build, or skip it and the builder chooses the direction that fits the brief.',
           })
         } catch (err) {
           // Fallback if pickPaletteOptions unavailable
@@ -315,7 +322,7 @@ const handler = createMcpHandler(
         let actionType: ActionType
         if (isFirstBuild) {
           const estimatedFiles = args.estimated_files ?? 15
-          buildTier = resolveBuildTier({ totalPlannedFiles: estimatedFiles })
+          buildTier = floorTierForProjectType(args.project_type, resolveBuildTier({ totalPlannedFiles: estimatedFiles }))
           actionType = actionTypeMap[args.project_type]
         } else {
           actionType = 'small-edit'
@@ -352,7 +359,7 @@ const handler = createMcpHandler(
 
     server.tool(
       'start_build',
-      'Queue a build with type and palette selected. 8-10 minute build time. Returns message_id and live progress URL.',
+      'Queue a build. palette_id may be a design direction id from get_palette_options. Usually takes 2 to 5 minutes, longer for large builds. Returns message_id and a live progress URL; poll get_message_status.',
       {
         project_id: z.string().describe('Project ID'),
         message: z.string().describe('What to build (user description)'),
@@ -403,7 +410,7 @@ const handler = createMcpHandler(
         let estimatedFiles: number | undefined
         if (isFirstBuild) {
           estimatedFiles = args.estimated_files ?? 15
-          buildTier = resolveBuildTier({ totalPlannedFiles: estimatedFiles })
+          buildTier = floorTierForProjectType(args.project_type, resolveBuildTier({ totalPlannedFiles: estimatedFiles }))
           actionType = actionTypeMap[args.project_type]
         } else {
           actionType = 'small-edit'
@@ -442,7 +449,7 @@ const handler = createMcpHandler(
           build_tier: buildTier,
           model_tier: modelTier,
           status_url: statusUrl,
-          message: `🏗️ Building your ${args.project_type}...\n⏱️ Estimated time: 8-10 minutes\n\n📊 Live Progress: ${statusUrl}\n\nI'll let you know when it's done!`,
+          message: `🏗️ Building your ${args.project_type}...\n⏱️ Usually 2 to 5 minutes (large builds take longer)\n\n📊 Live Progress: ${statusUrl}\n\nI'll let you know when it's done!`,
         })
       },
     )
@@ -473,7 +480,7 @@ const handler = createMcpHandler(
         let emoji = '⏳'
         let progressMsg = ''
         if (data.status === 'queued') {
-          progressMsg = `⏳ Queued for ${elapsedMin}m ${elapsedSec}s. Builds typically take 8-10 minutes total.`
+          progressMsg = `⏳ Queued for ${elapsedMin}m ${elapsedSec}s. Builds usually take 2 to 5 minutes; large ones take longer.`
         } else if (data.status === 'processing') {
           emoji = '🔨'
           progressMsg = `🔨 Building for ${elapsedMin}m ${elapsedSec}s. This is normal — generation takes time.`
@@ -516,7 +523,7 @@ const handler = createMcpHandler(
 
     server.tool(
       'publish_to_web',
-      'Publish project to live URL. Includes RLS security check. Shows share options after.',
+      'Publish the project to a live URL. An exposed secret key blocks the publish. The database (RLS) scan runs right after publishing and warns at once if it finds a leak. Returns the live URL.',
       { project_id: z.string().describe('Project ID') },
       { title: 'Publish to web', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: true },
       async (args, extra) => {
@@ -545,33 +552,25 @@ const handler = createMcpHandler(
 
     server.tool(
       'search_domains',
-      'Search domain availability and price. Upsells premium domains.',
+      'Search a name across .com, .in, .co.in, .app and .io with our real prices (registry price plus a flat $1).',
       {
-        domain_name: z.string().describe('Domain to search (e.g., "myapp.com")'),
+        domain_name: z.string().describe('Name to search (e.g., "myapp" or "myapp.com")'),
       },
       { title: 'Search domains', readOnlyHint: true, openWorldHint: true },
       async (args, extra) => {
         const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
         if (!userId) return errorResult('Unauthorized')
-
         try {
-          const res = await fetch(`${APP_URL}/api/domain/search?name=${encodeURIComponent(args.domain_name)}`, {
-            headers: {
-              'X-Scheduler-User-Id': userId,
-              'X-Scheduler-Secret': internalSecret(),
-            },
-          })
-          const data = await res.json()
-          if (!res.ok) return errorResult(data.error || 'Domain search failed')
-
-          const priceCents = data.priceCents as number | null
+          const { getProvider, inrPerUsd } = await import('@/lib/domains')
+          const { searchDomains } = await import('@/lib/domains/search')
+          const provider = getProvider()
+          if (!provider) return errorResult('Domain search is not available yet.')
+          const { label, results } = await searchDomains(provider, args.domain_name, { inrPerUsd: inrPerUsd() })
+          if (!label) return errorResult('Type a name to search, for example "myapp".')
           return jsonResult({
-            domain: args.domain_name,
-            available: data.available,
-            price_usd: priceCents ? priceCents / 100 : null,
-            message: data.available
-              ? `✅ ${args.domain_name} is available!\n\nPrice: $${priceCents ? (priceCents / 100).toFixed(2) : '9-15'}/year\n\nReady to buy? I'll collect your contact info.`
-              : `❌ ${args.domain_name} is taken.\n\nTry another or use your free subdomain.`,
+            name: label,
+            results: results.map(r => ({ domain: r.domain, status: r.status, price_usd_per_year: r.quote ? r.quote.totalCents / 100 : null })),
+            message: `Prices are the registry price plus a flat $1 a year. To buy, open ${APP_URL}/dashboard/domains?q=${encodeURIComponent(label)}`,
           })
         } catch (err) {
           return errorResult(`Could not search domains: ${String(err).slice(0, 100)}`)
@@ -581,74 +580,20 @@ const handler = createMcpHandler(
 
     server.tool(
       'buy_domain',
-      'Purchase a domain. Requires contact information. Costs $9–15/year.',
+      'Open the domain purchase screen for a name. The person confirms the price and pays in WyberAi; nothing is bought from this tool.',
       {
         domain_name: z.string().describe('Domain name to buy'),
-        project_id: z.string().describe('Project ID to attach domain to'),
-        first_name: z.string().describe('First name'),
-        last_name: z.string().describe('Last name'),
-        email: z.string().describe('Email'),
-        phone: z.string().describe('Phone number'),
-        address: z.string().describe('Street address'),
-        city: z.string().describe('City'),
-        state: z.string().describe('State/province'),
-        zip: z.string().describe('Postal code'),
-        country: z.string().describe('Country'),
       },
-      { title: 'Buy domain', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+      { title: 'Buy domain', readOnlyHint: true, openWorldHint: true },
       async (args, extra) => {
         const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
         if (!userId) return errorResult('Unauthorized')
-
-        const schedulerHeaders = {
-          'Content-Type': 'application/json',
-          'X-Scheduler-User-Id': userId,
-          'X-Scheduler-Secret': internalSecret(),
-        }
-
-        try {
-          // The purchase endpoint needs the real Vercel-quoted price on the
-          // request — look it up fresh rather than trust a stale value.
-          const priceRes = await fetch(`${APP_URL}/api/domain/search?name=${encodeURIComponent(args.domain_name)}`, { headers: schedulerHeaders })
-          const priceData = await priceRes.json()
-          if (!priceRes.ok) return errorResult(priceData.error || 'Could not price this domain')
-          if (!priceData.available || !priceData.priceCents) return errorResult(`${args.domain_name} is no longer available.`)
-
-          const res = await fetch(`${APP_URL}/api/domain/purchase`, {
-            method: 'POST',
-            headers: schedulerHeaders,
-            body: JSON.stringify({
-              projectId: args.project_id,
-              domain: args.domain_name,
-              priceCents: priceData.priceCents,
-              contactInfo: {
-                firstName: args.first_name,
-                lastName: args.last_name,
-                email: args.email,
-                phone: args.phone,
-                address1: args.address,
-                city: args.city,
-                state: args.state,
-                zip: args.zip,
-                country: args.country,
-              },
-            }),
-          })
-          const data = await res.json()
-
-          if (!res.ok) return errorResult(data.error || 'Purchase failed')
-          if (!data.url) return errorResult('Checkout could not be created')
-
-          return jsonResult({
-            success: true,
-            domain: args.domain_name,
-            checkout_url: data.url,
-            price_usd: priceData.priceCents / 100,
-            message: `Almost there — complete payment to register ${args.domain_name} ($${(priceData.priceCents / 100).toFixed(2)}/year):\n\n${data.url}\n\nThe domain registers automatically once payment confirms.`,
-          })
-        } catch (err) {
-          return errorResult(`Could not purchase domain: ${String(err).slice(0, 100)}`)
-        }
+        const url = `${APP_URL}/dashboard/domains?q=${encodeURIComponent(args.domain_name)}`
+        return jsonResult({
+          success: true,
+          url,
+          message: `To buy ${args.domain_name}, open this link, check the price and press Buy. The domain is connected to your site automatically after payment:\n\n${url}`,
+        })
       },
     )
 
@@ -1368,7 +1313,7 @@ const handler = createMcpHandler(
       },
     )
   },
-  { serverInfo: { name: 'wyber-ai', version: '2.4.0' } },
+  { serverInfo: { name: 'wyber-ai', version: '2.5.0' } },
   {
     // The handler matches the request path against this endpoint. Our route
     // lives at /api/mcp, so the full path must be configured here (basePath

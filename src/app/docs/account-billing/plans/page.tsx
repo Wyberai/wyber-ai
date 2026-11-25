@@ -1,7 +1,7 @@
 import { DocsPage, DocSection, Note } from '@/components/docs/DocsPage'
 import Link from 'next/link'
 
-export const metadata = { title: 'Plans & Pricing — Docs' }
+export const metadata = { title: 'Plans & Pricing — Docs', description: "WyberAi offers a free tier and paid plans. All plans include the web and mobile app builders, with AI agents, workflows, AI employees, and the GTM…" }
 
 export default function Page() {
   return (
@@ -18,24 +18,24 @@ export default function Page() {
               price: '$29',
               sub: '/month',
               color: '#22c55e',
-              credits: '150 credits/month',
-              items: ['150 monthly credits', 'All 6 products', 'Unlimited projects', 'Email support'],
+              credits: '450 credits/month',
+              items: ['450 monthly credits', 'All 6 products', 'Unlimited projects', 'Email support'],
             },
             {
               name: 'Builder',
               price: '$79',
               sub: '/month',
               color: '#0EA5E9',
-              credits: '500 credits/month',
-              items: ['500 monthly credits', 'All 6 products', 'Unlimited projects', 'Email support'],
+              credits: '1,500 credits/month',
+              items: ['1,500 monthly credits', 'All 6 products', 'Unlimited projects', 'Email support'],
             },
             {
               name: 'Pro',
               price: '$199',
               sub: '/month',
-              color: '#8b5cf6',
-              credits: '1,500 credits/month',
-              items: ['1,500 monthly credits', 'All 6 products', 'Priority support'],
+              color: '#a78bfa',
+              credits: '4,500 credits/month',
+              items: ['4,500 monthly credits', 'All 6 products', 'Priority support'],
             },
           ].map(plan => (
             <div key={plan.name} style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${plan.color}40`, borderRadius: 14, padding: '20px 18px' }}>

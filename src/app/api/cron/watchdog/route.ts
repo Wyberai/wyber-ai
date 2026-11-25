@@ -9,7 +9,7 @@ export const maxDuration = 60
 // Daily (vercel.json): checks the automation is still running and emails ONLY when something is wrong.
 // Silence means healthy. Off with WATCHDOG_DISABLED=true. ?dry=1 returns the findings and sends nothing.
 export async function GET(req: NextRequest) {
-  if (req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!process.env.CRON_SECRET || req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (process.env.WATCHDOG_DISABLED === 'true') return NextResponse.json({ skipped: true, reason: 'WATCHDOG_DISABLED' })
 
   const dry = req.nextUrl.searchParams.get('dry') === '1'

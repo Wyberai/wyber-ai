@@ -27,7 +27,7 @@ export function AgentAvatar({ id, working }: { id: string; working: boolean }) {
       style={{
         width: 16, height: 16, borderRadius: 5, flexShrink: 0,
         background: `${meta.color}22`, border: `1px solid ${meta.color}55`,
-        color: meta.color, fontSize: 9, fontWeight: 800,
+        color: meta.color, fontSize: 12, fontWeight: 800,
         display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
         animation: working ? 'pulse 1.6s ease-in-out infinite' : undefined,
       }}
@@ -44,7 +44,7 @@ export function AgentFindingChip({ finding }: { finding: AgentLaneFinding }) {
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 4,
-      fontSize: 10, lineHeight: 1.4, padding: '2px 7px', borderRadius: 5,
+      fontSize: 12, lineHeight: 1.4, padding: '2px 7px', borderRadius: 5,
       border: `1px solid ${fixed ? 'rgba(34,197,94,0.35)' : `${color}55`}`,
       background: fixed ? 'rgba(34,197,94,0.08)' : `${color}14`,
       color: fixed ? 'var(--ide-green, #22C55E)' : color,
@@ -64,15 +64,15 @@ function LaneRow({ lane, statusOverride }: { lane: AgentLane; statusOverride?: s
   const status = statusOverride || lane.lastStatus
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
         <AgentAvatar id={lane.agent} working={working} />
         <span style={{ fontWeight: 700, color: 'var(--ide-text2)', flexShrink: 0 }}>{meta.name}</span>
-        <span style={{ color: 'var(--ide-text3)', fontSize: 10, flexShrink: 0 }}>{meta.role}</span>
+        <span style={{ color: 'var(--ide-text3)', fontSize: 12, flexShrink: 0 }}>{meta.role}</span>
         {working && (
           <span style={{ width: 8, height: 8, borderRadius: '50%', border: `1.5px solid ${meta.color}`, borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite', display: 'inline-block', flexShrink: 0 }} />
         )}
-        {lane.state === 'done' && <span style={{ color: 'var(--ide-green, #22C55E)', fontSize: 10, flexShrink: 0 }}>✓</span>}
-        {lane.state === 'blocked' && <span style={{ fontSize: 10, flexShrink: 0 }}>⚠</span>}
+        {lane.state === 'done' && <span style={{ color: 'var(--ide-green, #22C55E)', fontSize: 12, flexShrink: 0 }}>✓</span>}
+        {lane.state === 'blocked' && <span style={{ fontSize: 12, flexShrink: 0 }}>⚠</span>}
         {status && (
           <span style={{ color: working ? 'var(--ide-text2)' : 'var(--ide-text3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
             {status}
@@ -109,7 +109,7 @@ export function AgentTeamFeed({ elapsed, progressSteps }: { elapsed: number; pro
           statusOverride={lane.agent === 'coder' && lane.state === 'working' && lastProgress ? lastProgress : undefined}
         />
       ))}
-      <span style={{ fontSize: 10, color: 'var(--ide-text3)', marginTop: 1, display: 'flex', alignItems: 'center', gap: 4 }}>
+      <span style={{ fontSize: 12, color: 'var(--ide-text3)', marginTop: 1, display: 'flex', alignItems: 'center', gap: 4 }}>
         <span>
           {passesMax > 0 && `${t('passLabel')} ${Math.max(passesUsed, 1)}/${passesMax} · `}{elapsed > 0 && `${elapsed}s`}
         </span>
@@ -121,7 +121,7 @@ export function AgentTeamFeed({ elapsed, progressSteps }: { elapsed: number; pro
             ? t('autopilotTooltip')
             : t('askFirstTooltip')}
           style={{
-            fontSize: 9.5, fontWeight: 700, padding: '1px 7px', borderRadius: 8,
+            fontSize: 12.5, fontWeight: 700, padding: '1px 7px', borderRadius: 8,
             border: '1px solid var(--ide-border)', background: 'transparent',
             color: autonomy === 'auto' ? 'var(--ide-green, #22C55E)' : 'var(--ide-text3)',
             cursor: 'pointer', flexShrink: 0,
@@ -138,7 +138,7 @@ export function AgentTeamFeed({ elapsed, progressSteps }: { elapsed: number; pro
 // the useT hook for its fallback label.
 function AgentFeedErrorFallback() {
   const t = useT(EDITOR_AGENTTEAM_STRINGS)
-  return <span style={{ fontSize: 11, color: 'var(--ide-text3)' }}>{t('feedErrorFallback')}</span>
+  return <span style={{ fontSize: 12, color: 'var(--ide-text3)' }}>{t('feedErrorFallback')}</span>
 }
 
 /** Local error boundary: a feed crash degrades to a plain label; the build,

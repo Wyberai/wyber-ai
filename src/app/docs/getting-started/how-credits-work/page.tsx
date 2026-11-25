@@ -1,7 +1,8 @@
 import { DocsPage, DocSection, Note } from '@/components/docs/DocsPage'
 import Link from 'next/link'
+import { buildCosts, editCost } from '@/lib/pricing-facts'
 
-export const metadata = { title: 'How Credits Work — Docs' }
+export const metadata = { title: 'How Credits Work — Docs', description: "Credits are the unit of usage on WyberAi. Each generation spends credits; everything else — editing, previewing, navigating — is free." }
 
 export default function Page() {
   return (
@@ -20,8 +21,8 @@ export default function Page() {
           </thead>
           <tbody>
             {[
-              ['Web/mobile app build', '15–130 (by project size)'],
-              ['App edit', '2'],
+              ['Web/mobile app build', `${buildCosts().small}–${buildCosts().xl} (by project size)`],
+              ['App edit', `from ${editCost()}`],
               ['AI Agent run', '5'],
               ['AI Employee run', '5'],
               ['Workflow run', '2'],
@@ -42,7 +43,7 @@ export default function Page() {
 
       <DocSection title="Free credits & plans">
         <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
-          Free accounts get <strong>30 credits on signup</strong>. No credit card required. Paid plans start at $29/month (Starter: 150 credits/month).
+          Free accounts get <strong>30 credits on signup</strong>. No credit card required. Paid plans start at $29/month (Starter: 450 credits/month).
         </p>
         <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7, marginTop: 8 }}>
           Paid plans give you more monthly credits and a larger daily bonus. See the <Link href="/docs/account-billing/plans" style={{ color: '#0EA5E9', textDecoration: 'none', fontWeight: 600 }}>Plans & pricing</Link> page for a full comparison.

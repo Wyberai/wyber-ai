@@ -92,16 +92,16 @@ export default function OnboardingPage({ params }: { params: Promise<{ id: strin
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0b0d12', fontFamily: 'var(--font-display)', color: '#e4e4e7' }}>
-      <nav style={{ borderBottom: '1px solid #1a1a22', background: '#0d0d11', padding: '0 32px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 50 }}>
+    <div style={{ minHeight: '100vh', background: '#05080d', fontFamily: 'var(--font-display)', color: '#e8eef7' }}>
+      <nav style={{ borderBottom: '1px solid #14202e', background: '#0a1018', padding: '0 32px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 50 }}>
         <Link href="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none' }}>
           <WyberLogo markSize={24} wordmarkSize={14} />
         </Link>
-        <span style={{ fontSize: 12, color: '#52525b' }}>Onboarding · Step {step + 1} of {STEPS.length}</span>
+        <span style={{ fontSize: 12, color: '#8797ab' }}>Onboarding · Step {step + 1} of {STEPS.length}</span>
       </nav>
 
       {/* Progress */}
-      <div style={{ height: 3, background: '#1a1a22' }}>
+      <div style={{ height: 3, background: '#14202e' }}>
         <div style={{ height: 3, background: SKY, width: `${((step + 1) / STEPS.length) * 100}%`, transition: 'width 0.4s ease' }} />
       </div>
 
@@ -110,11 +110,11 @@ export default function OnboardingPage({ params }: { params: Promise<{ id: strin
         <div style={{ display: 'flex', gap: 8, marginBottom: 36, flexWrap: 'wrap' }}>
           {STEPS.map((s, i) => (
             <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ width: 22, height: 22, borderRadius: '50%', background: i < step ? SKY : i === step ? SKY : '#1a1a22', border: `2px solid ${i <= step ? SKY : '#2a2a35'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: '#fff', flexShrink: 0 }}>
+              <div style={{ width: 22, height: 22, borderRadius: '50%', background: i < step ? SKY : i === step ? SKY : '#14202e', border: `2px solid ${i <= step ? SKY : '#2a2a35'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#fff', flexShrink: 0 }}>
                 {i < step ? '✓' : i + 1}
               </div>
-              <span style={{ fontSize: 12, color: i === step ? '#e4e4e7' : i < step ? '#52525b' : '#3f3f46', fontWeight: i === step ? 600 : 400 }}>{s}</span>
-              {i < STEPS.length - 1 && <div style={{ width: 20, height: 1, background: '#1e1e26' }} />}
+              <span style={{ fontSize: 12, color: i === step ? '#e8eef7' : i < step ? '#8797ab' : '#8797ab', fontWeight: i === step ? 600 : 400 }}>{s}</span>
+              {i < STEPS.length - 1 && <div style={{ width: 20, height: 1, background: '#1b2a3b' }} />}
             </div>
           ))}
         </div>
@@ -123,7 +123,7 @@ export default function OnboardingPage({ params }: { params: Promise<{ id: strin
         {step === 0 && (
           <div>
             <h2 style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.04em', color: '#fff', margin: '0 0 8px' }}>Tell your AI employee about your company</h2>
-            <p style={{ fontSize: 14, color: '#52525b', margin: '0 0 28px' }}>The more context you provide, the more personalized and accurate the AI employee's work will be.</p>
+            <p style={{ fontSize: 14, color: '#8797ab', margin: '0 0 28px' }}>The more context you provide, the more personalized and accurate the AI employee's work will be.</p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -147,7 +147,7 @@ export default function OnboardingPage({ params }: { params: Promise<{ id: strin
 
               <div>
                 <label style={labelStyle}>Company context</label>
-                <p style={{ fontSize: 12, color: '#3f3f46', margin: '0 0 8px' }}>Describe what your company does, who your customers are, your tone/brand, and anything the AI employee should know to do their job well.</p>
+                <p style={{ fontSize: 12, color: '#8797ab', margin: '0 0 8px' }}>Describe what your company does, who your customers are, your tone/brand, and anything the AI employee should know to do their job well.</p>
                 <textarea
                   value={companyContext}
                   onChange={e => setCompanyContext(e.target.value)}
@@ -159,17 +159,17 @@ export default function OnboardingPage({ params }: { params: Promise<{ id: strin
 
               <div>
                 <label style={labelStyle}>Upload company documents (optional)</label>
-                <p style={{ fontSize: 12, color: '#3f3f46', margin: '0 0 8px' }}>Upload pitch decks, product docs, brand guidelines, or FAQs. The AI employee will use these as context.</p>
-                <label style={{ display: 'block', background: '#111115', border: '2px dashed #2a2a35', borderRadius: 10, padding: '20px', textAlign: 'center', cursor: 'pointer' }}>
+                <p style={{ fontSize: 12, color: '#8797ab', margin: '0 0 8px' }}>Upload pitch decks, product docs, brand guidelines, or FAQs. The AI employee will use these as context.</p>
+                <label style={{ display: 'block', background: '#0d141e', border: '2px dashed #2a2a35', borderRadius: 10, padding: '20px', textAlign: 'center', cursor: 'pointer' }}>
                   <input type="file" multiple accept=".txt,.md,.pdf,.csv,.json" onChange={handleFileUpload} style={{ display: 'none' }} />
                   <div style={{ fontSize: 24, marginBottom: 8 }}>📎</div>
-                  <div style={{ fontSize: 13, color: '#52525b' }}>Drop files here or click to upload</div>
-                  <div style={{ fontSize: 11, color: '#3f3f46', marginTop: 4 }}>TXT, MD, CSV, JSON supported</div>
+                  <div style={{ fontSize: 13, color: '#8797ab' }}>Drop files here or click to upload</div>
+                  <div style={{ fontSize: 11, color: '#8797ab', marginTop: 4 }}>TXT, MD, CSV, JSON supported</div>
                 </label>
                 {uploadedFiles.length > 0 && (
                   <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {uploadedFiles.map(f => (
-                      <div key={f.name} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#a1a1aa', background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.15)', borderRadius: 6, padding: '6px 10px' }}>
+                      <div key={f.name} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#9aa8bb', background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.15)', borderRadius: 6, padding: '6px 10px' }}>
                         <span style={{ color: '#22c55e' }}>✓</span>{f.name}
                       </div>
                     ))}
@@ -184,13 +184,13 @@ export default function OnboardingPage({ params }: { params: Promise<{ id: strin
         {step === 1 && (
           <div>
             <h2 style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.04em', color: '#fff', margin: '0 0 8px' }}>Set KPIs for your AI employee</h2>
-            <p style={{ fontSize: 14, color: '#52525b', margin: '0 0 28px' }}>Define what success looks like. The employee will track these metrics and report against them every run.</p>
+            <p style={{ fontSize: 14, color: '#8797ab', margin: '0 0 28px' }}>Define what success looks like. The employee will track these metrics and report against them every run.</p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               {kpis.map((k, i) => (
-                <div key={i} style={{ background: '#111115', border: '1px solid #1e1e26', borderRadius: 12, padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div key={i} style={{ background: '#0d141e', border: '1px solid #1b2a3b', borderRadius: 12, padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.05em' }}>KPI {i + 1}</span>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: '#8797ab', textTransform: 'uppercase', letterSpacing: '0.05em' }}>KPI {i + 1}</span>
                     {kpis.length > 1 && <button onClick={() => removeKpi(i)} style={{ fontSize: 11, color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>Remove</button>}
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 10 }}>
@@ -202,7 +202,7 @@ export default function OnboardingPage({ params }: { params: Promise<{ id: strin
                 </div>
               ))}
 
-              <button onClick={addKpi} style={{ padding: '10px', borderRadius: 10, border: '1px dashed #2a2a35', background: 'transparent', color: '#52525b', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>
+              <button onClick={addKpi} style={{ padding: '10px', borderRadius: 10, border: '1px dashed #2a2a35', background: 'transparent', color: '#8797ab', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>
                 + Add another KPI
               </button>
             </div>
@@ -213,15 +213,15 @@ export default function OnboardingPage({ params }: { params: Promise<{ id: strin
         {step === 2 && (
           <div>
             <h2 style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.04em', color: '#fff', margin: '0 0 8px' }}>Connect your tools</h2>
-            <p style={{ fontSize: 14, color: '#52525b', margin: '0 0 28px' }}>Your AI employee needs access to the right tools to do their job. Connect them in Settings → Integrations.</p>
+            <p style={{ fontSize: 14, color: '#8797ab', margin: '0 0 28px' }}>Your AI employee needs access to the right tools to do their job. Connect them in Settings → Integrations.</p>
 
-            <div style={{ background: '#111115', border: '1px solid #1e1e26', borderRadius: 14, padding: 24, marginBottom: 20 }}>
-              <p style={{ fontSize: 14, color: '#a1a1aa', margin: '0 0 16px', lineHeight: 1.6 }}>
+            <div style={{ background: '#0d141e', border: '1px solid #1b2a3b', borderRadius: 14, padding: 24, marginBottom: 20 }}>
+              <p style={{ fontSize: 14, color: '#9aa8bb', margin: '0 0 16px', lineHeight: 1.6 }}>
                 Go to <Link href="/settings" style={{ color: SKY }}>Settings → Integrations</Link> and connect the tools your employee uses. Once connected, come back here to complete setup.
               </p>
               <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                <Link href="/settings" target="_blank" style={{ fontSize: 13, fontWeight: 600, color: '#fff', textDecoration: 'none', padding: '9px 18px', borderRadius: 8, background: SKY }}>Open Integrations →</Link>
-                <button onClick={() => setToolsConfirmed(true)} style={{ fontSize: 13, padding: '9px 18px', borderRadius: 8, border: '1px solid #2a2a35', background: '#111115', color: toolsConfirmed ? '#22c55e' : '#a1a1aa', cursor: 'pointer', fontFamily: 'inherit' }}>
+                <Link href="/settings" target="_blank" style={{ fontSize: 13, fontWeight: 600, color: '#03111c', textDecoration: 'none', padding: '9px 18px', borderRadius: 8, background: SKY }}>Open Integrations →</Link>
+                <button onClick={() => setToolsConfirmed(true)} style={{ fontSize: 13, padding: '9px 18px', borderRadius: 8, border: '1px solid #2a2a35', background: '#0d141e', color: toolsConfirmed ? '#22c55e' : '#9aa8bb', cursor: 'pointer', fontFamily: 'inherit' }}>
                   {toolsConfirmed ? '✓ Tools connected' : 'Mark as connected'}
                 </button>
               </div>
@@ -240,18 +240,18 @@ export default function OnboardingPage({ params }: { params: Promise<{ id: strin
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: 64, marginBottom: 20 }}>🚀</div>
             <h2 style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.04em', color: '#fff', margin: '0 0 12px' }}>Your AI employee is ready to start</h2>
-            <p style={{ fontSize: 15, color: '#52525b', margin: '0 0 32px', lineHeight: 1.65, maxWidth: 440, marginLeft: 'auto', marginRight: 'auto' }}>
+            <p style={{ fontSize: 15, color: '#8797ab', margin: '0 0 32px', lineHeight: 1.65, maxWidth: 440, marginLeft: 'auto', marginRight: 'auto' }}>
               Click "Start working" to activate your AI employee. They'll run on the schedule you set and email you what they did.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'center' }}>
-              <div style={{ background: '#111115', border: '1px solid #1e1e26', borderRadius: 14, padding: '16px 24px', textAlign: 'left', width: '100%', maxWidth: 400 }}>
+              <div style={{ background: '#0d141e', border: '1px solid #1b2a3b', borderRadius: 14, padding: '16px 24px', textAlign: 'left', width: '100%', maxWidth: 400 }}>
                 {[
                   companyName && `🏢 Company: ${companyName}`,
                   kpis.filter(k => k.name).length > 0 && `📊 ${kpis.filter(k => k.name).length} KPIs set`,
                   uploadedFiles.length > 0 && `📎 ${uploadedFiles.length} files uploaded`,
                   toolsConfirmed && '🔌 Tools connected',
                 ].filter(Boolean).map((item, i) => (
-                  <div key={i} style={{ fontSize: 13, color: '#a1a1aa', marginBottom: 6 }}>✓ {item}</div>
+                  <div key={i} style={{ fontSize: 13, color: '#9aa8bb', marginBottom: 6 }}>✓ {item}</div>
                 ))}
               </div>
             </div>
@@ -263,19 +263,19 @@ export default function OnboardingPage({ params }: { params: Promise<{ id: strin
           <button
             onClick={() => setStep(s => Math.max(0, s - 1))}
             disabled={step === 0}
-            style={{ padding: '11px 20px', borderRadius: 10, border: '1px solid #2a2a35', background: '#111115', color: step === 0 ? '#3f3f46' : '#a1a1aa', fontSize: 14, cursor: step === 0 ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}
+            style={{ padding: '11px 20px', borderRadius: 10, border: '1px solid #2a2a35', background: '#0d141e', color: step === 0 ? '#8797ab' : '#9aa8bb', fontSize: 14, cursor: step === 0 ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}
           >← Back</button>
 
           {step < STEPS.length - 1 ? (
             <button
               onClick={() => setStep(s => s + 1)}
-              style={{ padding: '11px 28px', borderRadius: 10, background: SKY, border: 'none', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
+              style={{ padding: '11px 28px', borderRadius: 10, background: SKY, border: 'none', color: '#03111c', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
             >Continue →</button>
           ) : (
             <button
               onClick={handleFinish}
               disabled={saving}
-              style={{ padding: '11px 28px', borderRadius: 10, background: saving ? '#1a1a22' : '#22c55e', border: 'none', color: saving ? '#52525b' : '#fff', fontSize: 14, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}
+              style={{ padding: '11px 28px', borderRadius: 10, background: saving ? '#14202e' : '#22c55e', border: 'none', color: saving ? '#8797ab' : '#fff', fontSize: 14, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}
             >{saving ? 'Saving…' : '🚀 Start working'}</button>
           )}
         </div>
@@ -284,5 +284,5 @@ export default function OnboardingPage({ params }: { params: Promise<{ id: strin
   )
 }
 
-const labelStyle: React.CSSProperties = { display: 'block', fontSize: 12, fontWeight: 600, color: '#71717a', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }
-const inputStyle: React.CSSProperties = { width: '100%', boxSizing: 'border-box', background: '#0d0d11', border: '1px solid #2a2a35', borderRadius: 9, padding: '10px 12px', fontSize: 13, color: '#e4e4e7', outline: 'none', fontFamily: 'inherit' }
+const labelStyle: React.CSSProperties = { display: 'block', fontSize: 12, fontWeight: 600, color: '#8797ab', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }
+const inputStyle: React.CSSProperties = { width: '100%', boxSizing: 'border-box', background: '#0a1018', border: '1px solid #2a2a35', borderRadius: 9, padding: '10px 12px', fontSize: 13, color: '#e8eef7', outline: 'none', fontFamily: 'inherit' }

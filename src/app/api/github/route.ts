@@ -22,7 +22,8 @@ export async function GET() {
 
   const supabase = await createAdminClient();
   const { data: conn } = await supabase.from('github_connections').select('access_token').eq('user_id', user.id).maybeSingle();
-  if (!conn?.access_token) return NextResponse.json({ error: 'GitHub not connected' }, { status: 401 });
+  // Not connected yet is the normal first state of the panel, not an auth failure: answer 200 so it is not logged as an error.
+  if (!conn?.access_token) return NextResponse.json({ connected: false, repos: null });
 
   const repos = await listUserRepos(conn.access_token);
   return NextResponse.json({ repos });

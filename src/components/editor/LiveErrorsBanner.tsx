@@ -92,7 +92,7 @@ export function LiveErrorsBanner({ projectId }: { projectId: string }) {
         {message}
       </code>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <button onClick={fix} style={{ background: '#ef4444', color: '#fff', border: 'none', borderRadius: 7, padding: '6px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+        <button onClick={fix} style={{ background: '#ef4444', color: '#03111c', border: 'none', borderRadius: 7, padding: '6px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
           Fix it
         </button>
         {alerts.length > 1 && (

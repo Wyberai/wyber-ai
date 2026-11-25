@@ -72,7 +72,7 @@ export function VersionPreviewModal({ label, createdAt, files, projectId, onClos
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button onClick={onRestore} disabled={restoring}
-            style={{ padding: '7px 14px', borderRadius: 7, border: 'none', background: '#0EA5E9', color: '#fff', fontSize: 12, fontWeight: 600, cursor: restoring ? 'wait' : 'pointer' }}>
+            style={{ padding: '7px 14px', borderRadius: 7, border: 'none', background: '#0EA5E9', color: '#03111c', fontSize: 12, fontWeight: 600, cursor: restoring ? 'wait' : 'pointer' }}>
             {restoring ? 'Restoring…' : 'Restore this version'}
           </button>
           <button onClick={onClose}
@@ -83,7 +83,7 @@ export function VersionPreviewModal({ label, createdAt, files, projectId, onClos
       </div>
       <div style={{ flex: 1, borderRadius: 10, overflow: 'hidden', background: '#fff' }}>
         {error ? (
-          <div style={{ padding: 20, fontSize: 13, color: '#dc2626' }}>{error}</div>
+          <div style={{ padding: 20, fontSize: 13, color: '#f87171' }}>{error}</div>
         ) : html ? (
           <iframe src={html} title="Version preview" sandbox={EDITOR_PREVIEW_SANDBOX} style={{ width: '100%', height: '100%', border: 'none' }} />
         ) : (

@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { createAnthropic } from '@/lib/ai-usage'
 import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 import { COMPANY_FACTS, EXPO, expoStatus } from '@/lib/ops/facts'
 import { TOOLS, packResult, runTool, type Admin } from './tools'
@@ -39,7 +40,7 @@ How to work:
 export function anthropicStep(apiKey: string | undefined = process.env.ANTHROPIC_API_KEY): CallStep {
   return async ({ system, messages }) => {
     if (!apiKey) throw new Error('ANTHROPIC_API_KEY is not set')
-    const client = new Anthropic({ apiKey })
+    const client = createAnthropic('lib/ops/ask/run', { apiKey })
     const res = await client.messages.create({
       model: CHEAP_MODEL, max_tokens: 1500, system, thinking: CHEAP_THINKING,
       tools: TOOLS as unknown as Anthropic.Tool[], messages: messages as Anthropic.MessageParam[],

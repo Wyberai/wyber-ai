@@ -52,7 +52,7 @@ export function PaymentsPanel({ projectId, onSwitchToChat }: { projectId: string
       </div>
 
       {anyConnected && (
-        <div style={{ fontSize: 11, color: '#22c55e', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: 8, padding: '8px 10px' }}>
+        <div style={{ fontSize: 12, color: '#22c55e', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: 8, padding: '8px 10px' }}>
           ✓ A payment provider is already connected on this project.
         </div>
       )}
@@ -66,9 +66,9 @@ export function PaymentsPanel({ projectId, onSwitchToChat }: { projectId: string
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ide-text)' }}>{p.name}</span>
-                  {p.recommended && <span style={{ fontSize: 9, fontWeight: 700, color: '#635BFF', background: 'rgba(99,91,255,0.12)', borderRadius: 4, padding: '1px 6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Recommended</span>}
+                  {p.recommended && <span style={{ fontSize: 12, fontWeight: 700, color: '#635BFF', background: 'rgba(99,91,255,0.12)', borderRadius: 4, padding: '1px 6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Recommended</span>}
                 </div>
-                <div style={{ fontSize: 11, color: 'var(--ide-text3)', marginTop: 1 }}>{p.desc}</div>
+                <div style={{ fontSize: 12, color: 'var(--ide-text3)', marginTop: 1 }}>{p.desc}</div>
               </div>
               <button
                 onClick={() => connect(p)}
@@ -76,7 +76,7 @@ export function PaymentsPanel({ projectId, onSwitchToChat }: { projectId: string
                   padding: '6px 12px', borderRadius: 7, border: 'none', flexShrink: 0, fontFamily: 'inherit',
                   background: connected ? 'rgba(34,197,94,0.12)' : p.color,
                   color: connected ? '#22c55e' : '#fff',
-                  fontSize: 11.5, fontWeight: 600, cursor: 'pointer',
+                  fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
                 }}
               >
                 {connected ? '✓ Connected' : 'Set up'}
@@ -86,7 +86,7 @@ export function PaymentsPanel({ projectId, onSwitchToChat }: { projectId: string
         })}
       </div>
 
-      <div style={{ fontSize: 10.5, color: 'var(--ide-text3)', opacity: 0.75, lineHeight: 1.5 }}>
+      <div style={{ fontSize: 12.5, color: 'var(--ide-text3)', opacity: 0.75, lineHeight: 1.5 }}>
         Your API key is stored encrypted in your secrets vault and injected into every deploy — never exposed to the browser or committed to your repo.
       </div>
     </div>

@@ -151,12 +151,12 @@ export function CloudTab({ projectId }: { projectId: string }) {
   }
 
   return (
-    <div className="w-full h-full flex flex-col bg-slate-900 text-white overflow-hidden">
+    <div className="wy-journey w-full h-full flex flex-col bg-slate-900 text-white overflow-hidden">
       {/* Header */}
       <div className="border-b border-slate-700 bg-slate-950 px-6 py-4 flex-shrink-0">
         <div className="flex items-center gap-2 mb-2">
           <WyberCloudMark className="w-5 h-5" />
-          <h1 className="text-xl font-bold tracking-tight">WyberCloud</h1>
+          <h2 className="text-xl font-bold tracking-tight">WyberCloud</h2>
           <span className="ml-1 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide rounded-full bg-blue-500/15 text-blue-300 border border-blue-500/30">Free · 2 years</span>
         </div>
         <p className="text-xs text-slate-400">Managed Postgres, on us — provision, query & monitor</p>
@@ -172,15 +172,15 @@ export function CloudTab({ projectId }: { projectId: string }) {
       {/* Tabs */}
       <div className="flex flex-wrap gap-1.5 border-b border-slate-700 bg-slate-950 px-4 py-2.5 flex-shrink-0">
         {[
-          { id: 'overview', label: 'Overview', icon: '📊' },
-          { id: 'databases', label: 'Databases', icon: '🗄️' },
-          { id: 'query', label: 'Query', icon: '⚙️' },
-          { id: 'secrets', label: 'Secrets', icon: '🔐' },
-          { id: 'logs', label: 'Logs', icon: '📝' },
-          { id: 'usage', label: 'Usage', icon: '💰' },
+          { id: 'overview', label: 'Overview' },
+          { id: 'databases', label: 'Databases' },
+          { id: 'query', label: 'Query' },
+          { id: 'secrets', label: 'Secrets' },
+          { id: 'logs', label: 'Logs' },
+          { id: 'usage', label: 'Usage' },
         ].map(tab => (
           <button
-            key={tab.id}
+            key={tab.id} type="button" aria-pressed={activeTab === tab.id}
             onClick={() => setActiveTab(tab.id as TabType)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold whitespace-nowrap transition border ${
               activeTab === tab.id
@@ -188,7 +188,6 @@ export function CloudTab({ projectId }: { projectId: string }) {
                 : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-200 hover:bg-slate-800'
             }`}
           >
-            <span aria-hidden>{tab.icon}</span>
             {tab.label}
           </button>
         ))}

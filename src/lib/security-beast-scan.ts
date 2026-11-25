@@ -200,7 +200,11 @@ export function runSecurityBeastScan(files: Record<string, FileVal>): BeastScanR
       : mk('rate-limit', 'warn', 'medium', `${apiRoutes.length} API route(s) found with no rate-limiting logic anywhere in the project — a single endpoint can be hammered at no cost to the caller.`))
 
   // 6. XSS via dangerouslySetInnerHTML.
-  const dsihFiles = entries.filter(([, v]) => /dangerouslySetInnerHTML/.test(fileContent(v)))
+  // JSON-LD is the safe, standard use: a ld+json script whose body is JSON.stringify(...) output. Browsers never execute it.
+  const withoutJsonLd = (t: string) =>
+    t.replace(/dangerouslySetInnerHTML=\{\{\s*__html\s*:\s*JSON\.stringify\([\s\S]*?\)\s*\}\}/g, (m, off: number, whole: string) =>
+      /ld\+json/i.test(whole.slice(Math.max(0, off - 250), off)) ? '' : m)
+  const dsihFiles = entries.filter(([, v]) => /dangerouslySetInnerHTML/.test(withoutJsonLd(fileContent(v))))
   const hasSanitizer = /(DOMPurify|sanitize-html|sanitizeHtml)/i.test(allText)
   checks.push(dsihFiles.length === 0
     ? mk('xss', 'pass', 'high', 'No dangerouslySetInnerHTML usage found.')
@@ -238,7 +242,11 @@ export function runSecurityBeastScan(files: Record<string, FileVal>): BeastScanR
   const configText = nextConfigEntry ? fileContent(nextConfigEntry[1]) : ''
   const hasHeadersFn = /async\s+headers\s*\(\s*\)/.test(configText)
   const hasKeyHeader = /(X-Frame-Options|Content-Security-Policy|Strict-Transport-Security|X-Content-Type-Options)/i.test(configText)
-  checks.push(hasHeadersFn && hasKeyHeader
+  const pkgEntry = entries.find(([p]) => /(^|\/)package\.json$/.test(p))
+  const isNextProject = !!nextConfigEntry || /"next"\s*:/.test(pkgEntry ? fileContent(pkgEntry[1]) : '') || entries.some(([p]) => /(^|\/)app\/(layout|page)\.(t|j)sx?$/.test(p))
+  if (!isNextProject) {
+    checks.push(mk('security-headers', 'pass', 'medium', 'Not a Next.js project: response headers are set by the host (Vercel, Netlify, Cloudflare), so there is no next.config to check.'))
+  } else checks.push(hasHeadersFn && hasKeyHeader
     ? mk('security-headers', 'pass', 'medium', 'next.config sets security headers (X-Frame-Options/CSP/HSTS or similar).')
     : mk('security-headers', 'warn', 'medium', nextConfigEntry ? 'next.config has no headers() function setting security headers (X-Frame-Options, CSP, etc).' : 'No next.config file found to check for security headers.'))
 

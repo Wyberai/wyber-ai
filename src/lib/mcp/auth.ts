@@ -1,6 +1,7 @@
 import { createHash } from 'crypto'
 import { createServiceClient } from '@/lib/supabase/server'
 import { verifyAccessToken } from '@/lib/oauth/tokens'
+import { keyUsable, scopesFor } from '@/lib/mcp/guard'
 import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js'
 
 /**
@@ -44,11 +45,13 @@ export async function verifyToken(
   const db = createServiceClient()
   const { data: keyRow } = await db
     .from('api_keys')
-    .select('id, user_id, active')
+    // All columns, so this works before and after the access-level and expiry columns exist.
+    .select('*')
     .eq('key', keyHash)
     .single()
 
-  if (!keyRow || !keyRow.active) return undefined
+  // Revoked and expired keys stop working at once.
+  if (!keyRow || !keyUsable(keyRow)) return undefined
 
   // Best-effort last-used tracking — never block auth on this write.
   db.from('api_keys')
@@ -59,7 +62,7 @@ export async function verifyToken(
   return {
     token: raw,
     clientId: 'wyber-mcp',
-    scopes: [],
+    scopes: scopesFor(keyRow),
     extra: { userId: keyRow.user_id as string },
   }
 }

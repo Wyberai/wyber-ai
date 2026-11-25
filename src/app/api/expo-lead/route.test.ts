@@ -81,11 +81,17 @@ describe('POST /api/expo-lead', () => {
 
   it('rejects bad input and treats the honeypot as a silent success', async () => {
     expect((await post({ ...lead, whatsapp: '123' })).status).toBe(400)
-    expect((await post({ ...lead, painPoint: '' })).status).toBe(400)
+    expect((await post({ ...lead, name: '' })).status).toBe(400)
     expect((await post({ ...lead, email: 'nope' })).status).toBe(400)
     const bot = await post({ ...lead, website: 'http://spam' })
     expect(bot.status).toBe(200)
     expect(insert).not.toHaveBeenCalled()
+  })
+
+  it('accepts a booking with no pain point (the field is optional)', async () => {
+    const res = await post({ ...lead, painPoint: '' })
+    expect(res.status).toBe(200)
+    expect(insert).toHaveBeenCalledWith(expect.objectContaining({ pain_point: '' }))
   })
 
   it('sends the confirmation email for a saved lead that gave an email', async () => {

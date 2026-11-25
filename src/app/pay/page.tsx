@@ -32,7 +32,7 @@ const BUILDS = [
     name: 'Complex Build',
     price: '$799',
     delivery: '1 week',
-    color: '#8b5cf6',
+    color: '#a78bfa',
     icon: '🏗️',
     link: 'https://checkout.dodopayments.com/buy/pdt_0Ng4oEF3oofJnrbHmuuDO',
     includes: ['Full SaaS with payments + multi-roles','6+ screens, third-party integrations','GitHub repo + Vercel deploy','30-day support window'],
@@ -40,7 +40,7 @@ const BUILDS = [
 ]
 
 export default function PayPage() {
-  const s = { bg:'#09090b', card:'#111113', border:'rgba(255,255,255,0.08)', text:'#fafafa', muted:'#71717a', sky:'#0EA5E9' }
+  const s = { bg:'#05080d', card:'#0d141e', border:'rgba(255,255,255,0.08)', text:'#fafafa', muted:'#8797ab', sky:'#0EA5E9' }
 
   return (
     <div style={{ minHeight:'100vh', background:s.bg, color:s.text, fontFamily: 'var(--font-display)' }}>
@@ -60,7 +60,7 @@ export default function PayPage() {
           {BUILDS.map(b => (
             <div key={b.name} style={{ background:s.card, border:`1px solid ${b.badge ? b.color+'50' : s.border}`, borderRadius:16, padding:24, display:'flex', flexDirection:'column', position:'relative', borderTop:`3px solid ${b.color}` }}>
               {b.badge && (
-                <div style={{ position:'absolute', top:-11, right:16, padding:'2px 10px', borderRadius:20, background:b.color, color:'#fff', fontSize:10, fontWeight:700 }}>{b.badge}</div>
+                <div style={{ position:'absolute', top:-11, right:16, padding:'2px 10px', borderRadius:20, background:b.color, color:'#03111c', fontSize: 11, fontWeight:700 }}>{b.badge}</div>
               )}
               <div style={{ marginBottom:16 }}>
                 <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>

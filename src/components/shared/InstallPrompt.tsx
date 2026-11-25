@@ -93,7 +93,7 @@ export function InstallPrompt() {
           onClick={() => setShowIosSheet(false)}
           style={{ position: 'fixed', inset: 0, zIndex: 10000, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
         >
-          <div style={{ background: '#18181b', color: '#fff', borderRadius: '16px 16px 0 0', padding: '22px 20px 30px', maxWidth: 420, width: '100%', font: '400 14px system-ui, sans-serif', lineHeight: 1.55 }}>
+          <div style={{ background: '#111b28', color: '#fff', borderRadius: '16px 16px 0 0', padding: '22px 20px 30px', maxWidth: 420, width: '100%', font: '400 14px system-ui, sans-serif', lineHeight: 1.55 }}>
             <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 10 }}>Install WyberAi</div>
             <div style={{ marginBottom: 6 }}>1. Tap the <b>Share</b> button <span style={{ opacity: 0.7 }}>(the square with an arrow)</span></div>
             <div>2. Choose <b>Add to Home Screen</b></div>

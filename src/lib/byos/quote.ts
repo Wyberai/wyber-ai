@@ -33,8 +33,23 @@ export function quoteBuild(featureCount: number, integrationCount: number): { ti
   return { tier, credits: creditCost('saas-build', 'fast', tier), maxCredits: creditCost('saas-build', 'default', tier), typical, plannedFiles }
 }
 
-/** The set DashboardClient's pending-prompt contract accepts is capped at 2000 chars. */
+/** The old cap on the hand-off prompt (what the pending-prompt convention assumed). Still the default. */
 export const PROMPT_LIMIT = 2000
+/**
+ * With NEXT_PUBLIC_REPLACE_READY=true the limit is 6000: the dashboard never capped the pending prompt (the /websites flow already sends
+ * 6000), so a 14-feature pick keeps its descriptions, and every replacement build also carries REPLACEMENT_REQUIREMENTS.
+ */
+export const PROMPT_LIMIT_READY = 6000
+export function replaceReadyEnabled(): boolean { return process.env.NEXT_PUBLIC_REPLACE_READY === 'true' }
+
+/**
+ * What every replacement build must contain so the owner can check it and switch over. The checklist file is parsed after the build
+ * (src/lib/byos/acceptance.ts): each listed feature must also appear on a screen.
+ */
+export const REPLACEMENT_REQUIREMENTS =
+  'Replacement checklist: add src/replacement-checklist.ts exporting FEATURES, an array of { name, status: "built" | "simplified", note } with ONE entry per feature above using its exact name, and a Replacement page in the app that lists them with a plain "Built" or "Simplified: <what is cut>" label. Every listed feature must have a visible screen, button or menu entry labelled with its name. ' +
+  'Cut-over page: a field for what the owner pays now, what this app costs to run (list each outside service above with its billing note), a parallel-run checklist (export from the old tool, import here, run both for two weeks, compare totals weekly, switch the team, cancel the old plan last) and a rollback step. ' +
+  'Import: a column-mapping screen, a preview with a list of row errors and a dry-run count before anything is saved. Never claim a perfect migration.'
 
 export function composeBuildPrompt(opts: {
   product: string
@@ -45,6 +60,7 @@ export function composeBuildPrompt(opts: {
   importCsv: boolean
 }): string {
   const { product, category, features, connectLive, connectPlaceholder, importCsv } = opts
+  const limit = replaceReadyEnabled() ? PROMPT_LIMIT_READY : PROMPT_LIMIT
   const head =
     `Build our own internal ${category || 'business'} tool to replace ${product}. ` +
     `It must do ONLY the features listed below — nothing else, no extra modules. ` +
@@ -59,6 +75,7 @@ export function composeBuildPrompt(opts: {
     connectLive.length ? `Connect for real: ${connectLive.join(', ')}.` : '',
     connectPlaceholder.length ? `Add clearly-labelled placeholder settings (no fake data) for: ${connectPlaceholder.join(', ')}.` : '',
     importCsv ? 'Include a CSV import so we can bring our existing data in.' : '',
+    replaceReadyEnabled() ? REPLACEMENT_REQUIREMENTS : '',
   ].filter(Boolean).join('\n')
 
   const lineFor = (f: PickedFeature, withDesc: boolean) => {
@@ -70,7 +87,7 @@ export function composeBuildPrompt(opts: {
   for (const withDesc of [true, false]) {
     const body = features.map(f => lineFor(f, withDesc)).join('\n')
     const prompt = `${head}\n\nFeatures to build:\n${body}${tail ? `\n\n${tail}` : ''}`
-    if (prompt.length <= PROMPT_LIMIT) return prompt
+    if (prompt.length <= limit) return prompt
   }
   // Still too long (very many picks): keep the head, the tail, and as many feature lines as fit.
   const reserve = head.length + tail.length + 60
@@ -78,9 +95,9 @@ export function composeBuildPrompt(opts: {
   let used = 0
   for (const f of features) {
     const line = lineFor(f, false)
-    if (reserve + used + line.length + 1 > PROMPT_LIMIT) break
+    if (reserve + used + line.length + 1 > limit) break
     kept.push(line)
     used += line.length + 1
   }
-  return `${head}\n\nFeatures to build:\n${kept.join('\n')}${tail ? `\n\n${tail}` : ''}`.slice(0, PROMPT_LIMIT)
+  return `${head}\n\nFeatures to build:\n${kept.join('\n')}${tail ? `\n\n${tail}` : ''}`.slice(0, limit)
 }

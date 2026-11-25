@@ -26,6 +26,7 @@ All times India time. The full list with plain descriptions is on `/admin/today`
 |---|---|---|
 | `/api/cron/ops-agents` | every 3 hours | The agents write new drafts for your approval. Nothing is sent. |
 | `/api/cron/crm-brief` | daily 8:30 | Refreshes the CRM from every source, emails the daily brief. |
+| `/api/cron/uptime` | every 5 minutes | Checks that the email service (Continuum) answers. Emails you through the Resend fallback if it goes down, hourly while it stays down, and when it recovers. See `docs/RUNBOOK-continuum.md`. |
 | `/api/cron/watchdog` | daily 8:15 | Checks the automation is healthy, including a tiny live test of the AI key. Emails only when something is wrong. |
 | `/api/cron/weekly-report` | Mondays 9:00 | The weekly report email. |
 | `/api/cron/expo-sequence` | daily 10:00 | The expo email sequence (reminder, thanks, follow-up) to booth leads who are due one. |
@@ -38,6 +39,8 @@ All times India time. The full list with plain descriptions is on `/admin/today`
 | `/api/cron/agent-scheduler` | every minute | Runs customers' scheduled automations. |
 | `/api/cron/mcp-consumer` | every minute | Processes requests from the Claude connector. |
 | `/api/cron/wpl-monthly-reminder` | last days of the month | Month-end contest reminder. |
+| `/api/cron/domain-sweep` | every 15 minutes | Carries on any paid domain order that did not finish (a cut-off payment handler, or an empty reseller balance that has since been topped up), finishes bought domains whose DNS was not ready, and emails you when an order stays stuck (30 minutes, 6 hours, 24 hours) and once a day with any checkout opened but never confirmed. |
+| `/api/cron/domain-reminders` | daily | Emails people 30, 14, 7 and 1 days before a domain or Workspace order expires, and once after it has expired. |
 
 ## The company agents
 

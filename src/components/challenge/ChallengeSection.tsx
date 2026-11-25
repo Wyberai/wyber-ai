@@ -44,20 +44,20 @@ export function EntrySubmit({ enabled }: { enabled: boolean }) {
         <div style={{ textAlign: 'center', padding: '32px 28px', borderRadius: 16, border: '1px solid rgba(14,165,233,0.25)', background: 'rgba(14,165,233,0.06)' }}>
           <div style={{ fontSize: 32, marginBottom: 10 }}>🎉</div>
           <p style={{ fontSize: 16, fontWeight: 700, margin: '0 0 6px' }}>&quot;{submitted.title}&quot; is entered</p>
-          <p style={{ fontSize: 13, color: '#a1a1aa', margin: '0 0 20px', lineHeight: 1.5 }}>This link is yours alone — share it wherever you want to collect Fan Favorite votes. It&apos;s never listed anywhere else.</p>
+          <p style={{ fontSize: 13, color: '#9aa8bb', margin: '0 0 20px', lineHeight: 1.5 }}>This link is yours alone — share it wherever you want to collect Fan Favorite votes. It&apos;s never listed anywhere else.</p>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '10px 12px' }}>
-            <span style={{ flex: 1, fontSize: 13, color: '#e4e4e7', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'left' }}>{voteUrl}</span>
-            <button onClick={copyLink} style={{ padding: '6px 14px', borderRadius: 7, border: 'none', background: BRAND, color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
+            <span style={{ flex: 1, fontSize: 13, color: '#e8eef7', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'left' }}>{voteUrl}</span>
+            <button onClick={copyLink} style={{ padding: '6px 14px', borderRadius: 7, border: 'none', background: BRAND, color: '#03111c', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
               {copied ? 'Copied ✓' : 'Copy link'}
             </button>
           </div>
         </div>
       ) : (
         <div style={{ textAlign: 'center' }}>
-          <button onClick={() => setOpen(true)} style={{ padding: '14px 32px', borderRadius: 10, background: BRAND, color: '#fff', fontSize: 15, fontWeight: 700, border: 'none', cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 0 24px rgba(14,165,233,0.25)' }}>
+          <button onClick={() => setOpen(true)} style={{ padding: '14px 32px', borderRadius: 10, background: BRAND, color: '#03111c', fontSize: 15, fontWeight: 700, border: 'none', cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 0 24px rgba(14,165,233,0.25)' }}>
             Submit your build →
           </button>
-          <p style={{ fontSize: 12, color: '#52525b', margin: '12px 0 0' }}>Private by default — only you get the link to share.</p>
+          <p style={{ fontSize: 12, color: '#8797ab', margin: '12px 0 0' }}>Private by default — only you get the link to share.</p>
         </div>
       )}
 
@@ -90,13 +90,13 @@ function SubmitModal({ onClose, onSubmitted }: { onClose: () => void; onSubmitte
   }
 
   const field: React.CSSProperties = { width: '100%', padding: '10px 12px', borderRadius: 9, border: '1px solid rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.03)', color: '#fafafa', fontSize: 14, fontFamily: 'inherit', boxSizing: 'border-box' }
-  const label: React.CSSProperties = { fontSize: 12.5, fontWeight: 700, color: '#a1a1aa', margin: '0 0 6px', display: 'block' }
+  const label: React.CSSProperties = { fontSize: 12.5, fontWeight: 700, color: '#9aa8bb', margin: '0 0 6px', display: 'block' }
 
   return (
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, zIndex: 1000 }}>
-      <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 460, background: '#111113', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 18, padding: 28, maxHeight: '90vh', overflowY: 'auto' }}>
+      <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 460, background: '#0d141e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 18, padding: 28, maxHeight: '90vh', overflowY: 'auto' }}>
         <h3 style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-0.02em', margin: '0 0 4px' }}>Submit your build</h3>
-        <p style={{ fontSize: 13, color: '#71717a', margin: '0 0 20px', lineHeight: 1.5 }}>Web apps and websites only, no mobile apps this round. Private by default — never listed publicly. Enter as many builds as you want.</p>
+        <p style={{ fontSize: 13, color: '#8797ab', margin: '0 0 20px', lineHeight: 1.5 }}>Web apps and websites only, no mobile apps this round. Private by default — never listed publicly. Enter as many builds as you want.</p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
@@ -121,7 +121,7 @@ function SubmitModal({ onClose, onSubmitted }: { onClose: () => void; onSubmitte
           </div>
           {error && <p style={{ fontSize: 13, color: '#ef4444', margin: 0 }}>{error}</p>}
           <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
-            <button onClick={onClose} style={{ flex: 1, padding: '11px', borderRadius: 9, border: '1px solid rgba(255,255,255,0.14)', background: 'transparent', color: '#a1a1aa', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
+            <button onClick={onClose} style={{ flex: 1, padding: '11px', borderRadius: 9, border: '1px solid rgba(255,255,255,0.14)', background: 'transparent', color: '#9aa8bb', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
             <button onClick={submit} disabled={busy || !title.trim() || !description.trim() || !liveUrl.trim()} style={{ flex: 2, padding: '11px', borderRadius: 9, border: 'none', background: busy || !title.trim() || !description.trim() || !liveUrl.trim() ? '#1f2937' : BRAND, color: '#fff', fontSize: 14, fontWeight: 700, cursor: busy ? 'default' : 'pointer', fontFamily: 'inherit', opacity: busy ? 0.7 : 1 }}>
               {busy ? 'Submitting…' : 'Submit entry'}
             </button>

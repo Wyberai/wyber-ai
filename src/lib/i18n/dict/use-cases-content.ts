@@ -1,3 +1,5 @@
+import { PLAN_FACTS } from '@/lib/plans'
+import { buildCosts, editCost, freeCreditsSentence } from '@/lib/pricing-facts'
 import type { Locale } from '../locales'
 
 // AI-drafted, not yet native-reviewed (see AutoTranslateNotice). Content for
@@ -66,7 +68,7 @@ export const USE_CASES_CONTENT: Record<Locale, Record<string, TranslatedUseCase>
         { title: '250+ tool integrations', desc: 'Gmail, Slack, HubSpot, Airtable, GitHub, Linear, Stripe, Notion, and hundreds more — all via Composio, no API key management per tool.' },
         { title: 'Visual canvas editor', desc: 'See your agent\'s logic as a node graph. Add conditions, branches, and AI reasoning steps without writing code.' },
         { title: 'Scheduled + manual triggers', desc: 'Run agents on demand or on a cron schedule — daily, hourly, weekly, or any custom expression. Credits are checked before every run.' },
-        { title: 'AI reasoning nodes', desc: 'Add a Claude-powered node to classify, summarize, score, or decide — then route the output to the next action.' },
+        { title: 'AI reasoning nodes', desc: 'Add a WyberCode-powered node to classify, summarize, score, or decide — then route the output to the next action.' },
         { title: 'Live run logs', desc: 'Each node shows its output inline after a run so you can debug and iterate without leaving the canvas.' },
         { title: 'No infrastructure to manage', desc: 'Agents run on Wyber\'s infrastructure. No servers, no deployment, no uptime monitoring.' },
       ],
@@ -76,8 +78,8 @@ export const USE_CASES_CONTENT: Record<Locale, Record<string, TranslatedUseCase>
         { q: 'Do I need to know how to code to build an agent?', a: 'No. You describe the agent\'s job in plain English and WyberAi generates the node canvas. You connect your tools once in Settings → Integrations.' },
         { q: 'What tools can agents connect to?', a: 'WyberAi uses Composio for integrations — covering Gmail, Outlook, Slack, HubSpot, Salesforce, Airtable, GitHub, Linear, Stripe, Notion, Google Calendar, and 240+ more.' },
         { q: 'How do I trigger an agent?', a: 'Click Run from the dashboard for a one-off run, or set a schedule (daily, hourly, weekly, or custom cron) on the agent\'s configuration page. The scheduler checks your credit balance before every run and emails you if a run is skipped.' },
-        { q: 'Can agents make decisions with AI?', a: 'Yes. You can add an AI reasoning node that uses Claude to classify, score, summarize, or decide — and then route different outputs to different actions.' },
-        { q: 'How much does running an agent cost?', a: 'Agent runs cost credits — typically 1 credit per AI node execution. Check the credit estimate before running.' },
+        { q: 'Can agents make decisions with AI?', a: 'Yes. You can add an AI reasoning node that uses WyberCode to classify, score, summarize, or decide — and then route different outputs to different actions.' },
+        { q: 'How much does running an agent cost?', a: 'Each agent run costs credits (about 5 per run at standard pricing). Check the credit estimate before running.' },
       ],
     },
     'build-saas-without-code': {
@@ -105,7 +107,7 @@ export const USE_CASES_CONTENT: Record<Locale, Record<string, TranslatedUseCase>
         { q: 'Can I add payments (Stripe)?', a: 'You can ask WyberAi to add a Stripe checkout flow in chat. It generates the frontend components. For backend webhook handling, you\'d need to add a few lines of server code or use Supabase Edge Functions.' },
         { q: 'Who owns the code?', a: 'You do. Export the full source code anytime. It\'s standard React + Vite — take it to any developer, any hosting provider, or your own GitHub repo.' },
         { q: 'How do I handle my own domain?', a: 'Connect a custom domain in Settings → Domains. Or use your free wyberai.com/app/yourapp link while you\'re in development.' },
-        { q: 'What does it cost to build a SaaS with WyberAi?', a: 'Plans start at $29/month (Starter: 150 credits/month). Web and mobile builds cost 30 credits; edits cost 2 credits. Done-for-you builds start at $199.' },
+        { q: 'What does it cost to build a SaaS with WyberAi?', a: 'Plans start at $29/month (Starter: 450 credits/month). Web and mobile builds cost 30 credits; small edits start at 4 credits. Done-for-you builds start at $199.' },
       ],
     },
     'ai-workflow-automation': {
@@ -121,7 +123,7 @@ export const USE_CASES_CONTENT: Record<Locale, Record<string, TranslatedUseCase>
       features: [
         { title: 'Plain-English workflow creation', desc: 'Describe your automation in a sentence: WyberAi generates the trigger, action nodes, and data mappings between them.' },
         { title: '250+ app connections', desc: 'Airtable, HubSpot, Gmail, Slack, Notion, GitHub, Stripe, Google Sheets, and hundreds more — connected in one click per app.' },
-        { title: 'AI reasoning steps', desc: 'Drop a Claude node into your workflow to classify leads, score applications, summarize content, or route data based on AI decisions.' },
+        { title: 'AI reasoning steps', desc: 'Drop a WyberCode node into your workflow to classify leads, score applications, summarize content, or route data based on AI decisions.' },
         { title: 'Conditional branching', desc: 'Add condition nodes that route data differently based on field values, API responses, or AI outputs.' },
         { title: 'Live run logs', desc: 'Every workflow execution shows a step-by-step log so you can see exactly what ran, what was returned, and where to improve.' },
         { title: 'Scheduled + manual triggers', desc: 'Activate workflows on demand or on a cron schedule. Set it once and the scheduler runs it automatically — credits are checked before every execution.' },
@@ -131,7 +133,7 @@ export const USE_CASES_CONTENT: Record<Locale, Record<string, TranslatedUseCase>
       faqs: [
         { q: 'How is WyberAi different from Zapier or Make?', a: 'Zapier and Make require you to build automations step by step using their interfaces. WyberAi lets you describe the workflow in plain English and generates the full automation. It also has native AI reasoning nodes — not just pass-through OpenAI calls.' },
         { q: 'What apps can workflows connect to?', a: 'WyberAi supports 250+ integrations including Gmail, Slack, HubSpot, Salesforce, Airtable, Notion, GitHub, Linear, Stripe, Google Calendar, and many more.' },
-        { q: 'Can workflows use AI to make decisions?', a: 'Yes. You can add a Claude-powered AI node anywhere in the workflow to classify, score, summarize, or route data — then branch based on the AI\'s output.' },
+        { q: 'Can workflows use AI to make decisions?', a: 'Yes. You can add a WyberCode-powered AI node anywhere in the workflow to classify, score, summarize, or route data — then branch based on the AI\'s output.' },
         { q: 'How do I trigger a workflow automatically?', a: 'Select "On a schedule" in the trigger node, pick a preset (daily, hourly, weekly) or enter a custom cron expression, then save. The scheduler fires the workflow automatically and checks your credit balance before each run.' },
         { q: 'Do I need to manage API keys for each integration?', a: 'No. WyberAi uses Composio for integrations. You authenticate each app once in Settings → Integrations and all your workflows can use it.' },
       ],
@@ -160,7 +162,7 @@ export const USE_CASES_CONTENT: Record<Locale, Record<string, TranslatedUseCase>
         { q: 'What makes WyberAi different from Webflow or Bubble?', a: 'Webflow and Bubble have visual editors you build in manually. WyberAi generates the complete app from plain English in seconds. There\'s nothing to drag and drop — you describe it and it\'s built.' },
         { q: 'Is the output real code I can export?', a: 'Yes. WyberAi outputs clean React + Vite code. Export it anytime and take it to GitHub, a developer, or your own hosting.' },
         { q: 'Can it build apps with a real database?', a: 'Yes. Connect your Supabase project in Settings → Connectors and WyberAi rewrites the app to use real Postgres with auth and Row Level Security.' },
-        { q: 'How many apps can I build on the free plan?', a: 'The free plan gives you 30 credits/month. Each generation costs 1 credit, so you can build and iterate 30 times per month for free.' },
+        { q: 'How many apps can I build on the free plan?', a: `The free plan starts you with ${PLAN_FACTS.free.credits} credits. A small app build costs ${buildCosts().small} credits and small edits start at ${editCost()}. ${freeCreditsSentence()}` },
         { q: 'Can I use WyberAi to build an app for a client?', a: 'Yes. Many Wyber users build apps for clients, then export the code and hand it over. You can also deploy directly to the client\'s Vercel account.' },
       ],
     },
@@ -169,16 +171,16 @@ export const USE_CASES_CONTENT: Record<Locale, Record<string, TranslatedUseCase>
       metaTitle: 'AI App Builder — Web & Mobile Apps | WyberAi',
       metaDesc: 'The AI app builder that builds web apps and mobile apps from plain English. No code. No waiting. Ship today.',
       pillarLabel: 'Web Apps',
-      tagline: 'The AI app builder that ships web + mobile apps from plain English — with fresh code, self-healing builds, and 27 integrations.',
+      tagline: 'The AI app builder that ships web + mobile apps from plain English — with fresh code, self-healing builds, and 68 connectors.',
       body: [
         'Most AI app builders generate web-only UI components. WyberAi builds complete full-stack web apps and mobile apps — from the same workspace, from plain English.',
-        'Every build generates fresh code (no templates), auto-fixes errors with self-healing, and deploys to a live URL. You own the code on GitHub.',
+        'Every build generates fresh code from your description, auto-fixes errors with self-healing, and deploys to a live URL. You own the code on GitHub.',
       ],
       features: [
         { title: 'Web app builder', desc: 'Full-stack React apps with dashboard UI, data tables, charts, modals, and Supabase database — generated in A few minutes.' },
         { title: 'Mobile app builder', desc: 'React Native + Expo apps for iOS and Android. Preview on your phone instantly via QR code.' },
         { title: 'Self-healing builds', desc: 'When a build hits an error, WyberAi auto-detects and fixes it so your app ships clean every time.' },
-        { title: '27 integrations', desc: 'Stripe, Supabase, OpenAI, Slack, and 23 more — connected via real OAuth, no API key management.' },
+        { title: '68 connectors', desc: 'Stripe, Supabase, OpenAI, Slack, and 64 more — connected via real OAuth, no API key management.' },
         { title: 'Fresh code every build', desc: 'No recycled templates. Every app is purpose-built for your prompt — CRM, invoicing, HR, analytics, anything.' },
         { title: 'One-click deploy', desc: 'Vercel deployment in A few minutes. Free subdomain or your own domain.' },
       ],
@@ -186,18 +188,18 @@ export const USE_CASES_CONTENT: Record<Locale, Record<string, TranslatedUseCase>
       ctaLabel: 'Start building free',
       faqs: [
         { q: 'What can WyberAi build?', a: 'WyberAi builds web apps (React, full-stack) and mobile apps (React Native + Expo) — all from plain English. Every build uses fresh code, self-healing error fixes, and deploys to a live URL.' },
-        { q: 'How is WyberAi different from other AI app builders?', a: 'Most tools build web apps only. WyberAi builds both web and mobile apps, generates fresh code (no templates), auto-fixes build errors, includes 27 integrations, and gives you full GitHub ownership.' },
+        { q: 'How is WyberAi different from other AI app builders?', a: 'Most tools build web apps only. WyberAi builds both web and mobile apps, generates fresh code from your description, auto-fixes build errors, includes 68 connectors, and gives you full GitHub ownership.' },
         { q: 'Do I need technical knowledge?', a: 'No. WyberAi is designed for non-technical founders, operators, and makers. You describe what you want; we generate it.' },
         { q: 'How fast does it generate?', a: 'Most apps generate in minutes. You see the code streaming in real time so you\'re never waiting on a blank screen.' },
-        { q: 'What does it cost?', a: 'Plans start at $29/month (Starter: 150 credits). Builder is $79/month (500 credits). Pro is $199/month (1,500 credits). Every plan unlocks all features — credits are the only currency.' },
+        { q: 'What does it cost?', a: 'Plans start at $29/month (Starter: 450 credits). Builder is $79/month (1,500 credits). Pro is $199/month (4,500 credits). Every plan includes web and mobile apps, deploy and GitHub export; Builder and above add Supabase, custom domains and badge-free publishing.' },
       ],
     },
     'secure-ai-app-builder': {
       h1: 'Secure AI App Builder — Live Database Security Scanning',
       metaTitle: 'Secure AI App Builder with RLS Security Scanning | WyberAi',
-      metaDesc: 'WyberAi generates apps with a real Supabase database and runs a live Row Level Security scan — probing your app with the anon key, the way an attacker would, before you publish.',
+      metaDesc: 'WyberAi generates apps with a real Supabase database and runs a live Row Level Security scan — probing your app with the anon key, the way an attacker would, the moment you publish.',
       pillarLabel: 'Web Apps',
-      tagline: 'AI-generated apps ship with real user data. WyberAi is the only builder that checks your database is actually locked down before you go live.',
+      tagline: 'AI-generated apps ship with real user data. WyberAi checks your database is actually locked down the moment you publish.',
       body: [
         'Most AI app builders generate a database and authentication, then stop. They never check whether the security rules they wrote actually work. If Row Level Security is misconfigured, every user\'s private data is exposed to every other user — and nothing in the build process tells you.',
         'WyberAi runs a live RLS trust scan on every published app: it queries your actual Supabase database using the public anon key, exactly the way an outside attacker would, and reports what it can see. This isn\'t a static code linter checking for keywords — it\'s a real probe against your live data, run automatically from the Security tab.',
@@ -215,7 +217,7 @@ export const USE_CASES_CONTENT: Record<Locale, Record<string, TranslatedUseCase>
       faqs: [
         { q: 'What is an RLS trust scan?', a: 'Row Level Security (RLS) is the Postgres feature that restricts which rows a user can see in a Supabase database. A trust scan tests those policies for real by querying the database with the same anon key a public visitor would use — confirming the restrictions actually hold, not just that they were written.' },
         { q: 'Why does this matter for AI-generated apps?', a: 'AI builders write RLS policies the same way they write any other code — and they can get it wrong. Without verification, a subtle policy mistake means every signed-up user can read every other user\'s private data, and nobody finds out until it\'s reported or exploited.' },
-        { q: 'Do other AI app builders do this?', a: 'No. Most AI app builders provision a database and auth, then leave verification to you. WyberAi is the only one that runs a live, automated scan against the real database using the public anon key before you publish.' },
+        { q: 'Do other AI app builders do this?', a: 'Few do. Most AI app builders provision a database and auth, then leave verification to you. WyberAi runs a live, automated scan against the real database using the public anon key, automatically as soon as you publish and on demand before.' },
         { q: 'Does the scan modify my data?', a: 'No. The scan only reads — it queries what an anonymous user could see, the same as visiting your app\'s API without logging in. It never writes, updates, or deletes data.' },
         { q: 'Where do I run the scan?', a: 'Open your project, go to the Security tab, and run the scan against your connected Supabase project. Results show immediately with the specific table and policy to fix.' },
       ],
@@ -303,7 +305,7 @@ export const USE_CASES_CONTENT: Record<Locale, Record<string, TranslatedUseCase>
         { q: 'क्या मैं पेमेंट्स (Stripe) जोड़ सकता हूं?', a: 'आप चैट में WyberAi से Stripe चेकआउट फ़्लो जोड़ने को कह सकते हैं। यह फ़्रंटएंड कंपोनेंट्स बना देता है। बैकएंड वेबहुक हैंडलिंग के लिए, आपको कुछ लाइनों का सर्वर कोड जोड़ना होगा या Supabase Edge Functions इस्तेमाल करने होंगे।' },
         { q: 'कोड का मालिक कौन है?', a: 'आप। कभी भी पूरा सोर्स कोड एक्सपोर्ट करें। यह स्टैंडर्ड React + Vite है — इसे किसी भी डेवलपर, किसी भी होस्टिंग प्रोवाइडर, या अपने खुद के GitHub रिपॉज़िटरी में ले जाएं।' },
         { q: 'मैं अपना खुद का डोमेन कैसे इस्तेमाल करूं?', a: 'Settings → Domains में कस्टम डोमेन कनेक्ट करें। या डेवलपमेंट के दौरान अपना मुफ़्त wyberai.com/app/yourapp सबडोमेन इस्तेमाल करें।' },
-        { q: 'WyberAi से SaaS बनाने में कितना खर्च आता है?', a: 'प्लान $29/माह से शुरू (Starter: 150 क्रेडिट्स/माह)। वेब और मोबाइल बिल्ड्स में 30 क्रेडिट्स लगते हैं; एडिट्स में 2 क्रेडिट्स। Done-for-you बिल्ड्स $199 से शुरू।' },
+        { q: 'WyberAi से SaaS बनाने में कितना खर्च आता है?', a: 'प्लान $29/माह से शुरू (Starter: 450 क्रेडिट्स/माह)। वेब और मोबाइल बिल्ड्स में 30 क्रेडिट्स लगते हैं; एडिट्स में 2 क्रेडिट्स। Done-for-you बिल्ड्स $199 से शुरू।' },
       ],
     },
     'ai-workflow-automation': {
@@ -387,7 +389,7 @@ export const USE_CASES_CONTENT: Record<Locale, Record<string, TranslatedUseCase>
         { q: 'WyberAi दूसरे AI ऐप बिल्डर्स से कैसे अलग है?', a: 'ज़्यादातर टूल्स सिर्फ़ वेब ऐप्स बनाते हैं। WyberAi वेब और मोबाइल दोनों ऐप्स बनाता है, नया कोड जनरेट करता है (कोई टेम्पलेट नहीं), बिल्ड एरर्स अपने-आप ठीक करता है, 27 इंटीग्रेशन शामिल करता है, और पूरा GitHub मालिकाना हक देता है।' },
         { q: 'क्या मुझे तकनीकी ज्ञान चाहिए?', a: 'नहीं। WyberAi गैर-तकनीकी फ़ाउंडर्स, ऑपरेटर्स, और मेकर्स के लिए बनाया गया है। आप बताएं कि क्या चाहिए; हम इसे जनरेट करते हैं।' },
         { q: 'यह कितनी तेज़ी से जनरेट होता है?', a: 'ज़्यादातर ऐप्स मिनटों में जनरेट हो जाते हैं। आप कोड को रीयल टाइम में बनते हुए देखते हैं, तो आपको कभी खाली स्क्रीन पर इंतज़ार नहीं करना पड़ता।' },
-        { q: 'इसकी कीमत क्या है?', a: 'प्लान $29/माह से शुरू (Starter: 150 क्रेडिट्स)। Builder $79/माह है (500 क्रेडिट्स)। Pro $199/माह है (1,500 क्रेडिट्स)। हर प्लान सारे फ़ीचर्स अनलॉक करता है — क्रेडिट्स ही एकमात्र करेंसी हैं।' },
+        { q: 'इसकी कीमत क्या है?', a: 'प्लान $29/माह से शुरू (Starter: 450 क्रेडिट्स)। Builder $79/माह है (1,500 क्रेडिट्स)। Pro $199/माह है (4,500 क्रेडिट्स)। हर प्लान सारे फ़ीचर्स अनलॉक करता है — क्रेडिट्स ही एकमात्र करेंसी हैं।' },
       ],
     },
     'secure-ai-app-builder': {
@@ -501,7 +503,7 @@ export const USE_CASES_CONTENT: Record<Locale, Record<string, TranslatedUseCase>
         { q: 'ನಾನು ಪೇಮೆಂಟ್‌ಗಳನ್ನು (Stripe) ಸೇರಿಸಬಹುದೇ?', a: 'ನೀವು ಚಾಟ್‌ನಲ್ಲಿ WyberAi ಗೆ Stripe ಚೆಕ್‌ಔಟ್ ಫ್ಲೋ ಸೇರಿಸಲು ಕೇಳಬಹುದು. ಇದು ಫ್ರಂಟ್‌ಎಂಡ್ ಕಾಂಪೊನೆಂಟ್‌ಗಳನ್ನು ರಚಿಸುತ್ತದೆ. ಬ್ಯಾಕ್‌ಎಂಡ್ ವೆಬ್‌ಹುಕ್ ನಿರ್ವಹಣೆಗಾಗಿ, ನೀವು ಕೆಲವು ಸಾಲುಗಳ ಸರ್ವರ್ ಕೋಡ್ ಸೇರಿಸಬೇಕು ಅಥವಾ Supabase Edge Functions ಬಳಸಬೇಕು.' },
         { q: 'ಕೋಡ್‌ನ ಮಾಲೀಕರು ಯಾರು?', a: 'ನೀವು. ಯಾವುದೇ ಸಮಯದಲ್ಲಿ ಪೂರ್ಣ ಸೋರ್ಸ್ ಕೋಡ್ ಎಕ್ಸ್‌ಪೋರ್ಟ್ ಮಾಡಿ. ಇದು ಸ್ಟ್ಯಾಂಡರ್ಡ್ React + Vite — ಇದನ್ನು ಯಾವುದೇ ಡೆವಲಪರ್, ಯಾವುದೇ ಹೋಸ್ಟಿಂಗ್ ಪ್ರೊವೈಡರ್, ಅಥವಾ ನಿಮ್ಮ ಸ್ವಂತ GitHub ರೆಪೊಗೆ ತೆಗೆದುಕೊಂಡು ಹೋಗಿ.' },
         { q: 'ನಾನು ನನ್ನ ಸ್ವಂತ ಡೊಮೈನ್ ಅನ್ನು ಹೇಗೆ ಬಳಸುವುದು?', a: 'Settings → Domains ನಲ್ಲಿ ಕಸ್ಟಮ್ ಡೊಮೈನ್ ಸಂಪರ್ಕಿಸಿ. ಅಥವಾ ಡೆವಲಪ್‌ಮೆಂಟ್‌ನಲ್ಲಿರುವಾಗ ನಿಮ್ಮ ಉಚಿತ wyberai.com/app/yourapp ಸಬ್‌ಡೊಮೈನ್ ಬಳಸಿ.' },
-        { q: 'WyberAi ಯೊಂದಿಗೆ SaaS ನಿರ್ಮಿಸಲು ಎಷ್ಟು ವೆಚ್ಚವಾಗುತ್ತದೆ?', a: 'ಪ್ಲಾನ್‌ಗಳು $29/ತಿಂಗಳಿನಿಂದ ಪ್ರಾರಂಭ (Starter: 150 ಕ್ರೆಡಿಟ್‌ಗಳು/ತಿಂಗಳು). ವೆಬ್ ಮತ್ತು ಮೊಬೈಲ್ ಬಿಲ್ಡ್‌ಗಳಿಗೆ 30 ಕ್ರೆಡಿಟ್‌ಗಳು ಬೇಕು; ಎಡಿಟ್‌ಗಳಿಗೆ 2 ಕ್ರೆಡಿಟ್‌ಗಳು. Done-for-you ಬಿಲ್ಡ್‌ಗಳು $199 ನಿಂದ ಪ್ರಾರಂಭ.' },
+        { q: 'WyberAi ಯೊಂದಿಗೆ SaaS ನಿರ್ಮಿಸಲು ಎಷ್ಟು ವೆಚ್ಚವಾಗುತ್ತದೆ?', a: 'ಪ್ಲಾನ್‌ಗಳು $29/ತಿಂಗಳಿನಿಂದ ಪ್ರಾರಂಭ (Starter: 450 ಕ್ರೆಡಿಟ್‌ಗಳು/ತಿಂಗಳು). ವೆಬ್ ಮತ್ತು ಮೊಬೈಲ್ ಬಿಲ್ಡ್‌ಗಳಿಗೆ 30 ಕ್ರೆಡಿಟ್‌ಗಳು ಬೇಕು; ಎಡಿಟ್‌ಗಳಿಗೆ 2 ಕ್ರೆಡಿಟ್‌ಗಳು. Done-for-you ಬಿಲ್ಡ್‌ಗಳು $199 ನಿಂದ ಪ್ರಾರಂಭ.' },
       ],
     },
     'ai-workflow-automation': {
@@ -585,7 +587,7 @@ export const USE_CASES_CONTENT: Record<Locale, Record<string, TranslatedUseCase>
         { q: 'WyberAi ಇತರ AI ಆ್ಯಪ್ ಬಿಲ್ಡರ್‌ಗಳಿಂದ ಹೇಗೆ ಭಿನ್ನವಾಗಿದೆ?', a: 'ಹೆಚ್ಚಿನ ಟೂಲ್‌ಗಳು ಕೇವಲ ವೆಬ್ ಆ್ಯಪ್‌ಗಳನ್ನು ಮಾತ್ರ ನಿರ್ಮಿಸುತ್ತವೆ. WyberAi ವೆಬ್ ಮತ್ತು ಮೊಬೈಲ್ ಎರಡೂ ಆ್ಯಪ್‌ಗಳನ್ನು ನಿರ್ಮಿಸುತ್ತದೆ, ಹೊಸ ಕೋಡ್ ರಚಿಸುತ್ತದೆ (ಯಾವುದೇ ಟೆಂಪ್ಲೇಟ್‌ಗಳಿಲ್ಲ), ಬಿಲ್ಡ್ ದೋಷಗಳನ್ನು ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಸರಿಪಡಿಸುತ್ತದೆ, 27 ಇಂಟಿಗ್ರೇಶನ್‌ಗಳನ್ನು ಒಳಗೊಂಡಿದೆ, ಮತ್ತು ಪೂರ್ಣ GitHub ಮಾಲೀಕತ್ವ ನೀಡುತ್ತದೆ.' },
         { q: 'ನನಗೆ ತಾಂತ್ರಿಕ ಜ್ಞಾನ ಬೇಕೇ?', a: 'ಇಲ್ಲ. WyberAi ಟೆಕ್ನಿಕಲ್ ಅಲ್ಲದ ಫೌಂಡರ್‌ಗಳು, ಆಪರೇಟರ್‌ಗಳು, ಮತ್ತು ಮೇಕರ್‌ಗಳಿಗಾಗಿ ವಿನ್ಯಾಸಗೊಳಿಸಲಾಗಿದೆ. ನೀವು ಬೇಕಾದುದನ್ನು ವಿವರಿಸಿ; ನಾವು ಅದನ್ನು ರಚಿಸುತ್ತೇವೆ.' },
         { q: 'ಇದು ಎಷ್ಟು ವೇಗವಾಗಿ ರಚನೆಯಾಗುತ್ತದೆ?', a: 'ಹೆಚ್ಚಿನ ಆ್ಯಪ್‌ಗಳು ನಿಮಿಷಗಳಲ್ಲಿ ರಚನೆಯಾಗುತ್ತವೆ. ಕೋಡ್ ರಿಯಲ್ ಟೈಮ್‌ನಲ್ಲಿ ಸ್ಟ್ರೀಮ್ ಆಗುವುದನ್ನು ನೀವು ನೋಡುತ್ತೀರಿ, ಆದ್ದರಿಂದ ನೀವು ಎಂದಿಗೂ ಖಾಲಿ ಸ್ಕ್ರೀನ್‌ನಲ್ಲಿ ಕಾಯಬೇಕಾಗಿಲ್ಲ.' },
-        { q: 'ಇದರ ವೆಚ್ಚ ಎಷ್ಟು?', a: 'ಪ್ಲಾನ್‌ಗಳು $29/ತಿಂಗಳಿನಿಂದ ಪ್ರಾರಂಭ (Starter: 150 ಕ್ರೆಡಿಟ್‌ಗಳು). Builder $79/ತಿಂಗಳು (500 ಕ್ರೆಡಿಟ್‌ಗಳು). Pro $199/ತಿಂಗಳು (1,500 ಕ್ರೆಡಿಟ್‌ಗಳು). ಪ್ರತಿ ಪ್ಲಾನ್ ಎಲ್ಲಾ ವೈಶಿಷ್ಟ್ಯಗಳನ್ನು ಅನ್‌ಲಾಕ್ ಮಾಡುತ್ತದೆ — ಕ್ರೆಡಿಟ್‌ಗಳೇ ಏಕೈಕ ಕರೆನ್ಸಿ.' },
+        { q: 'ಇದರ ವೆಚ್ಚ ಎಷ್ಟು?', a: 'ಪ್ಲಾನ್‌ಗಳು $29/ತಿಂಗಳಿನಿಂದ ಪ್ರಾರಂಭ (Starter: 450 ಕ್ರೆಡಿಟ್‌ಗಳು). Builder $79/ತಿಂಗಳು (1,500 ಕ್ರೆಡಿಟ್‌ಗಳು). Pro $199/ತಿಂಗಳು (4,500 ಕ್ರೆಡಿಟ್‌ಗಳು). ಪ್ರತಿ ಪ್ಲಾನ್ ಎಲ್ಲಾ ವೈಶಿಷ್ಟ್ಯಗಳನ್ನು ಅನ್‌ಲಾಕ್ ಮಾಡುತ್ತದೆ — ಕ್ರೆಡಿಟ್‌ಗಳೇ ಏಕೈಕ ಕರೆನ್ಸಿ.' },
       ],
     },
     'secure-ai-app-builder': {
@@ -699,7 +701,7 @@ export const USE_CASES_CONTENT: Record<Locale, Record<string, TranslatedUseCase>
         { q: 'నేను చెల్లింపులను (Stripe) జోడించవచ్చా?', a: 'చాట్‌లో Stripe చెక్అవుట్ ఫ్లోను జోడించమని మీరు WyberAiని అడగవచ్చు. ఇది ఫ్రంటెండ్ కాంపోనెంట్‌లను జనరేట్ చేస్తుంది. బ్యాకెండ్ వెబ్‌హుక్ నిర్వహణ కోసం, మీకు కొన్ని లైన్ల సర్వర్ కోడ్‌ను జోడించడం లేదా Supabase Edge Functionsని ఉపయోగించడం అవసరం.' },
         { q: 'కోడ్ యజమాని ఎవరు?', a: 'మీరు. ఎప్పుడైనా పూర్తి సోర్స్ కోడ్‌ను ఎగుమతి చేయండి. ఇది ప్రామాణిక React + Vite — దీన్ని ఏ డెవలపర్‌కైనా, ఏ హోస్టింగ్ ప్రొవైడర్‌కైనా, లేదా మీ స్వంత GitHub రిపోకి తీసుకెళ్లండి.' },
         { q: 'నా స్వంత డొమైన్‌ను నేను ఎలా నిర్వహించాలి?', a: 'Settings → Domainsలో కస్టమ్ డొమైన్‌ను కనెక్ట్ చేయండి. లేదా మీరు డెవలప్‌మెంట్‌లో ఉన్నప్పుడు మీ ఉచిత wyberai.com/app/yourapp సబ్‌డొమైన్‌ను ఉపయోగించండి.' },
-        { q: 'WyberAiతో SaaSని నిర్మించడానికి ఎంత ఖర్చు అవుతుంది?', a: 'ప్లాన్‌లు నెలకు $29 నుండి ప్రారంభమవుతాయి (Starter: నెలకు 150 క్రెడిట్‌లు). వెబ్ మరియు మొబైల్ బిల్డ్‌లకు 30 క్రెడిట్‌లు ఖర్చవుతాయి; ఎడిట్‌లకు 2 క్రెడిట్‌లు ఖర్చవుతాయి. మీ కోసం-పూర్తయిన బిల్డ్‌లు $199 నుండి ప్రారంభమవుతాయి.' },
+        { q: 'WyberAiతో SaaSని నిర్మించడానికి ఎంత ఖర్చు అవుతుంది?', a: 'ప్లాన్‌లు నెలకు $29 నుండి ప్రారంభమవుతాయి (Starter: నెలకు 450 క్రెడిట్‌లు). వెబ్ మరియు మొబైల్ బిల్డ్‌లకు 30 క్రెడిట్‌లు ఖర్చవుతాయి; ఎడిట్‌లకు 2 క్రెడిట్‌లు ఖర్చవుతాయి. మీ కోసం-పూర్తయిన బిల్డ్‌లు $199 నుండి ప్రారంభమవుతాయి.' },
       ],
     },
     'ai-workflow-automation': {
@@ -783,7 +785,7 @@ export const USE_CASES_CONTENT: Record<Locale, Record<string, TranslatedUseCase>
         { q: 'WyberAi ఇతర AI యాప్ బిల్డర్‌ల నుండి ఎలా భిన్నం?', a: 'చాలా సాధనాలు వెబ్ యాప్‌లను మాత్రమే నిర్మిస్తాయి. WyberAi వెబ్ మరియు మొబైల్ యాప్‌లు రెండింటినీ నిర్మిస్తుంది, తాజా కోడ్‌ను జనరేట్ చేస్తుంది (టెంప్లేట్‌లు లేవు), బిల్డ్ లోపాలను ఆటో-ఫిక్స్ చేస్తుంది, 27 ఇంటిగ్రేషన్‌లను కలిగి ఉంటుంది, మరియు మీకు పూర్తి GitHub యాజమాన్యాన్ని ఇస్తుంది.' },
         { q: 'నాకు సాంకేతిక పరిజ్ఞానం అవసరమా?', a: 'లేదు. WyberAi సాంకేతికత లేని వ్యవస్థాపకులు, ఆపరేటర్లు, మరియు మేకర్ల కోసం రూపొందించబడింది. మీకు కావలసినది మీరు వివరిస్తారు; మేము దాన్ని జనరేట్ చేస్తాము.' },
         { q: 'ఇది ఎంత వేగంగా జనరేట్ అవుతుంది?', a: 'చాలా యాప్‌లు నిమిషాల్లో జనరేట్ అవుతాయి. మీరు కోడ్ రియల్ టైమ్‌లో స్ట్రీమింగ్ అవుతుండటాన్ని చూస్తారు కాబట్టి మీరు ఎప్పుడూ ఖాళీ స్క్రీన్‌పై వేచి ఉండరు.' },
-        { q: 'దీని ఖర్చు ఎంత?', a: 'ప్లాన్‌లు నెలకు $29 నుండి ప్రారంభమవుతాయి (Starter: 150 క్రెడిట్‌లు). Builder నెలకు $79 (500 క్రెడిట్‌లు). Pro నెలకు $199 (1,500 క్రెడిట్‌లు). ప్రతి ప్లాన్ అన్ని ఫీచర్లను అన్‌లాక్ చేస్తుంది — క్రెడిట్‌లు మాత్రమే కరెన్సీ.' },
+        { q: 'దీని ఖర్చు ఎంత?', a: 'ప్లాన్‌లు నెలకు $29 నుండి ప్రారంభమవుతాయి (Starter: 450 క్రెడిట్‌లు). Builder నెలకు $79 (1,500 క్రెడిట్‌లు). Pro నెలకు $199 (4,500 క్రెడిట్‌లు). ప్రతి ప్లాన్ అన్ని ఫీచర్లను అన్‌లాక్ చేస్తుంది — క్రెడిట్‌లు మాత్రమే కరెన్సీ.' },
       ],
     },
     'secure-ai-app-builder': {
@@ -897,7 +899,7 @@ export const USE_CASES_CONTENT: Record<Locale, Record<string, TranslatedUseCase>
         { q: 'நான் கட்டணங்களை (Stripe) சேர்க்கலாமா?', a: 'சாட்டில் Stripe செக்அவுட் ஓட்டத்தைச் சேர்க்குமாறு நீங்கள் WyberAiஐக் கேட்கலாம். இது முன்பக்க கூறுகளை உருவாக்குகிறது. பின்தள வெப்ஹூக் கையாளுதலுக்கு, நீங்கள் சில வரிகள் சேவையக குறியீட்டைச் சேர்க்க வேண்டும் அல்லது Supabase Edge Functionsஐப் பயன்படுத்த வேண்டும்.' },
         { q: 'குறியீட்டின் உரிமையாளர் யார்?', a: 'நீங்கள்தான். எப்போது வேண்டுமானாலும் முழு மூல குறியீட்டையும் ஏற்றுமதி செய்யுங்கள். இது நிலையான React + Vite — இதை எந்த டெவலப்பரிடமும், எந்த ஹோஸ்டிங் வழங்குநரிடமும், அல்லது உங்கள் சொந்த GitHub ரெப்போவிற்கும் எடுத்துச் செல்லுங்கள்.' },
         { q: 'எனது சொந்த டொமைனை நான் எப்படி கையாள்வது?', a: 'Settings → Domainsல் ஒரு கஸ்டம் டொமைனை இணைக்கவும். அல்லது நீங்கள் மேம்பாட்டில் இருக்கும்போது உங்கள் இலவச wyberai.com/app/yourapp சப்டொமைனைப் பயன்படுத்துங்கள்.' },
-        { q: 'WyberAi உடன் SaaSஐ உருவாக்க என்ன செலவாகும்?', a: 'திட்டங்கள் மாதம் $29 முதல் தொடங்குகின்றன (Starter: மாதம் 150 கிரெடிட்கள்). வெப் மற்றும் மொபைல் பில்டுகளுக்கு 30 கிரெடிட்கள் செலவாகும்; எடிட்களுக்கு 2 கிரெடிட்கள். உங்களுக்காக-முடிக்கப்பட்ட பில்டுகள் $199 முதல் தொடங்குகின்றன.' },
+        { q: 'WyberAi உடன் SaaSஐ உருவாக்க என்ன செலவாகும்?', a: 'திட்டங்கள் மாதம் $29 முதல் தொடங்குகின்றன (Starter: மாதம் 450 கிரெடிட்கள்). வெப் மற்றும் மொபைல் பில்டுகளுக்கு 30 கிரெடிட்கள் செலவாகும்; எடிட்களுக்கு 2 கிரெடிட்கள். உங்களுக்காக-முடிக்கப்பட்ட பில்டுகள் $199 முதல் தொடங்குகின்றன.' },
       ],
     },
     'ai-workflow-automation': {
@@ -981,7 +983,7 @@ export const USE_CASES_CONTENT: Record<Locale, Record<string, TranslatedUseCase>
         { q: 'மற்ற AI ஆப் பில்டர்களிலிருந்து WyberAi எப்படி வேறுபடுகிறது?', a: 'பெரும்பாலான கருவிகள் வெப் ஆப்களை மட்டுமே உருவாக்குகின்றன. WyberAi வெப் மற்றும் மொபைல் ஆப்கள் இரண்டையும் உருவாக்குகிறது, புதிய குறியீட்டை உருவாக்குகிறது (டெம்ப்ளேட்கள் இல்லை), பில்ட் பிழைகளை தானாக சரிசெய்கிறது, 27 ஒருங்கிணைப்புகளை உள்ளடக்கியது, மற்றும் உங்களுக்கு முழு GitHub உரிமையை வழங்குகிறது.' },
         { q: 'எனக்கு தொழில்நுட்ப அறிவு தேவையா?', a: 'இல்லை. WyberAi தொழில்நுட்பம் இல்லாத நிறுவனர்கள், ஆபரேட்டர்கள், மற்றும் தயாரிப்பாளர்களுக்காக வடிவமைக்கப்பட்டுள்ளது. நீங்கள் விரும்புவதை விவரிக்கிறீர்கள்; நாங்கள் அதை உருவாக்குகிறோம்.' },
         { q: 'இது எவ்வளவு வேகமாக உருவாகிறது?', a: 'பெரும்பாலான ஆப்கள் நிமிடங்களில் உருவாகின்றன. நீங்கள் கோட் நிகழ் நேரத்தில் ஸ்ட்ரீம் ஆவதைப் பார்க்கிறீர்கள், எனவே நீங்கள் ஒருபோதும் காலி திரையில் காத்திருக்க மாட்டீர்கள்.' },
-        { q: 'இதன் விலை என்ன?', a: 'திட்டங்கள் மாதம் $29 முதல் தொடங்குகின்றன (Starter: 150 கிரெடிட்கள்). Builder மாதம் $79 (500 கிரெடிட்கள்). Pro மாதம் $199 (1,500 கிரெடிட்கள்). ஒவ்வொரு திட்டமும் அனைத்து அம்சங்களையும் திறக்கிறது — கிரெடிட்கள் மட்டுமே நாணயம்.' },
+        { q: 'இதன் விலை என்ன?', a: 'திட்டங்கள் மாதம் $29 முதல் தொடங்குகின்றன (Starter: 450 கிரெடிட்கள்). Builder மாதம் $79 (1,500 கிரெடிட்கள்). Pro மாதம் $199 (4,500 கிரெடிட்கள்). ஒவ்வொரு திட்டமும் அனைத்து அம்சங்களையும் திறக்கிறது — கிரெடிட்கள் மட்டுமே நாணயம்.' },
       ],
     },
     'secure-ai-app-builder': {

@@ -256,7 +256,7 @@ export default function ReportsPage() {
                   <div style={{ fontWeight: 700, fontSize: 15, color: "#0f172a" }}>{report.name}</div>
                   <div style={{ fontSize: 12, color: "#64748b", marginTop: 3 }}>{report.description}</div>
                   <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
-                    <span style={{ padding: "2px 8px", background: "#f1f5f9", borderRadius: 4, fontSize: 10, color: "#475569" }}>{report.category}</span>
+                    <span style={{ padding: "2px 8px", background: "#f1f5f9", borderRadius: 4, fontSize: 11, color: "#475569" }}>{report.category}</span>
                     <span style={{ fontSize: 11, color: "#94a3b8" }}>Last: {report.lastGenerated}</span>
                   </div>
                 </div>

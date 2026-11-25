@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { PLAN_RANK, MODEL_META, MODEL_MULTIPLIERS, tierAllowedForPlan, creditCost, estimateCost, resolveBuildTier, computeOverageCharge, websiteLaunchEstimate, type ModelTier, type PlanId, type BuildSizeTier, largestAffordableSmallerBuild } from './credits'
+import { GENERATION_PRICE_FACTOR, PLAN_RANK, MODEL_META, MODEL_MULTIPLIERS, tierAllowedForPlan, creditCost, estimateCost, resolveBuildTier, computeOverageCharge, websiteLaunchEstimate, type ModelTier, type PlanId, type BuildSizeTier, largestAffordableSmallerBuild } from './credits'
 
 const TIERS: ModelTier[] = ['fast', 'default', 'premium', 'fable', 'gpt']
 const PLANS: PlanId[] = ['free', 'spark', 'starter', 'builder', 'pro', 'growth', 'scale']
@@ -95,11 +95,13 @@ describe('resolveBuildTier', () => {
 
 describe('creditCost with buildTier (tiered build pricing)', () => {
   const BUILD_ACTIONS = ['web-build', 'mobile-build', 'website-build', 'saas-build'] as const
+  // The documented tier prices times the generation factor (2 since 18 Nov 2026).
+  const F = GENERATION_PRICE_FACTOR
   const EXPECTED: Record<BuildSizeTier, { fast: number; default: number }> = {
-    small: { fast: 30, default: 50 },
-    medium: { fast: 50, default: 90 },
-    large: { fast: 80, default: 160 },
-    xl: { fast: 120, default: 260 },
+    small: { fast: 30 * F, default: 50 * F },
+    medium: { fast: 50 * F, default: 90 * F },
+    large: { fast: 80 * F, default: 160 * F },
+    xl: { fast: 120 * F, default: 260 * F },
   }
 
   it('matches the documented tier price for every build action and tier', () => {
@@ -125,8 +127,8 @@ describe('creditCost with buildTier (tiered build pricing)', () => {
   })
 
   it('omitting buildTier falls back to the old flat BASE_COSTS x MODEL_MULTIPLIERS price (no hard cutover)', () => {
-    expect(creditCost('web-build', 'fast')).toBe(15) // round(30 * 0.5) — unchanged old behavior
-    expect(creditCost('web-build', 'default')).toBe(75) // round(30 * 2.5) — old flat path picks up the recalibrated multiplier too
+    expect(creditCost('web-build', 'fast')).toBe(15 * GENERATION_PRICE_FACTOR) // round(30 * 0.5), times the generation factor
+    expect(creditCost('web-build', 'default')).toBe(75 * GENERATION_PRICE_FACTOR) // round(30 * 2.5), times the generation factor
   })
 
   it('a non-build action ignores an accidentally-passed buildTier', () => {
@@ -160,15 +162,15 @@ describe('computeOverageCharge', () => {
   })
 
   it('caps the top-up at the jump to the next tier\'s price', () => {
-    // small(50) -> medium(90) on default tier: cap should be exactly 40
-    expect(computeOverageCharge({ buildTier: 'small', modelTier: 'default', actualOutputTokens: 1_000_000 })).toBe(40)
-    // small(30) -> medium(50) on fast tier: cap should be exactly 20
-    expect(computeOverageCharge({ buildTier: 'small', modelTier: 'fast', actualOutputTokens: 1_000_000 })).toBe(20)
+    // small(50) -> medium(90) on default tier: cap should be exactly 40 (times the generation factor)
+    expect(computeOverageCharge({ buildTier: 'small', modelTier: 'default', actualOutputTokens: 1_000_000 })).toBe(40 * GENERATION_PRICE_FACTOR)
+    // small(30) -> medium(50) on fast tier: cap should be exactly 20 (times the generation factor)
+    expect(computeOverageCharge({ buildTier: 'small', modelTier: 'fast', actualOutputTokens: 1_000_000 })).toBe(20 * GENERATION_PRICE_FACTOR)
   })
 
   it('xl has no tier above it to borrow a cap from, so it reuses the large->xl increment', () => {
-    // large(160) -> xl(260) on default tier: cap should be exactly 100, even at extreme usage
-    expect(computeOverageCharge({ buildTier: 'xl', modelTier: 'default', actualOutputTokens: 50_000_000 })).toBe(100)
+    // large(160) -> xl(260) on default tier: cap should be exactly 100 (times the generation factor), even at extreme usage
+    expect(computeOverageCharge({ buildTier: 'xl', modelTier: 'default', actualOutputTokens: 50_000_000 })).toBe(100 * GENERATION_PRICE_FACTOR)
   })
 
   it('never returns a negative or zero charge once triggered', () => {
@@ -180,8 +182,8 @@ describe('computeOverageCharge', () => {
 })
 
 describe('largestAffordableSmallerBuild', () => {
-  it('offers a medium build to a 60-credit user facing an xl plan', () => {
-    expect(largestAffordableSmallerBuild('web-build', 'xl', 60)).toEqual({ tier: 'medium', maxFiles: 10, cost: creditCost('web-build', 'fast', 'medium') })
+  it('offers a medium build to a user who can afford it facing an xl plan', () => {
+    expect(largestAffordableSmallerBuild('web-build', 'xl', 60 * GENERATION_PRICE_FACTOR)).toEqual({ tier: 'medium', maxFiles: 10, cost: creditCost('web-build', 'fast', 'medium') })
   })
   it('only offers tiers smaller than the planned one', () => {
     expect(largestAffordableSmallerBuild('web-build', 'medium', 1000)?.tier).toBe('small')

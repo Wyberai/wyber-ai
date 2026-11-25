@@ -60,16 +60,16 @@ export function GenerateAnimation() {
       {/* Window chrome */}
       <div style={{ padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 8 }}>
         {['#ef4444','#f59e0b','#22c55e'].map(c => <div key={c} style={{ width: 9, height: 9, borderRadius: '50%', background: c, opacity: 0.6 }} />)}
-        <div style={{ flex: 1, textAlign: 'center', fontSize: 10, color: '#3f3f46', fontFamily: 'monospace' }}>wyberai.com/project</div>
+        <div style={{ flex: 1, textAlign: 'center', fontSize: 11, color: '#8797ab', fontFamily: 'monospace' }}>wyberai.com/project</div>
       </div>
       {/* Prompt input */}
       <div style={{ padding: '12px 14px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 10 }}>
         <div style={{ flex: 1, padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(14,165,233,0.3)', background: 'rgba(14,165,233,0.05)', fontSize: 12, color: '#fafafa', fontFamily: 'inherit', minHeight: 20 }}>
           {typed}{typed.length < prompt.length && phase === 0 && <span style={{ animation: 'blink 1s step-end infinite', borderLeft: '2px solid #0EA5E9', marginLeft: 1 }}>&nbsp;</span>}
         </div>
-        <div style={{ width: 28, height: 28, borderRadius: 7, background: phase === 0 ? '#0EA5E9' : '#27272a', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.3s' }}>
+        <div style={{ width: 28, height: 28, borderRadius: 7, background: phase === 0 ? '#0EA5E9' : '#162231', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.3s' }}>
           {phase === 1
-            ? <div style={{ width: 10, height: 10, border: '2px solid #52525b', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+            ? <div style={{ width: 10, height: 10, border: '2px solid #8797ab', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
             : <svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M12 19V5M5 12l7-7 7 7" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none"/></svg>
           }
         </div>
@@ -77,7 +77,7 @@ export function GenerateAnimation() {
       {/* Code output */}
       <div style={{ padding: '12px 14px', flex: 1 }}>
         {phase >= 1 && (
-          <pre style={{ margin: 0, fontSize: 11, lineHeight: 1.7, color: '#71717a', fontFamily: "'Fira Code', monospace", whiteSpace: 'pre-wrap', maxHeight: 160, overflow: 'hidden' }}
+          <pre style={{ margin: 0, fontSize: 11, lineHeight: 1.7, color: '#8797ab', fontFamily: "'Fira Code', monospace", whiteSpace: 'pre-wrap', maxHeight: 160, overflow: 'hidden' }}
             dangerouslySetInnerHTML={{ __html: highlighted + (phase === 1 ? '<span style="display:inline-block;width:6px;height:12px;background:#0EA5E9;animation:blink 1s step-end infinite;vertical-align:middle;border-radius:1px"/>' : '') }}
           />
         )}
@@ -97,7 +97,7 @@ export function GenerateAnimation() {
 export function DeployAnimation() {
   const [step, setStep] = useState(0)
   const steps = [
-    { label: 'Pushing to GitHub...', color: '#52525b', done: false },
+    { label: 'Pushing to GitHub...', color: '#8797ab', done: false },
     { label: 'Building on Vercel...', color: '#f59e0b', done: false },
     { label: 'Deployed successfully!', color: '#22c55e', done: true },
   ]
@@ -111,7 +111,7 @@ export function DeployAnimation() {
     <div style={{ background: '#0d0d0f', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, overflow: 'hidden', height: 280, display: 'flex', flexDirection: 'column' }}>
       <div style={{ padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 8 }}>
         {['#ef4444','#f59e0b','#22c55e'].map(c => <div key={c} style={{ width: 9, height: 9, borderRadius: '50%', background: c, opacity: 0.6 }} />)}
-        <div style={{ flex: 1, textAlign: 'center', fontSize: 10, color: '#3f3f46', fontFamily: 'monospace' }}>Deploy to Vercel</div>
+        <div style={{ flex: 1, textAlign: 'center', fontSize: 11, color: '#8797ab', fontFamily: 'monospace' }}>Deploy to Vercel</div>
       </div>
 
       <div style={{ flex: 1, padding: 20, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
@@ -127,7 +127,7 @@ export function DeployAnimation() {
                     : null
                 }
               </div>
-              <div style={{ fontSize: 13, color: i < step ? '#22c55e' : i === step ? '#fafafa' : '#52525b', fontWeight: i === step ? 600 : 400, transition: 'all 0.3s' }}>{s.label}</div>
+              <div style={{ fontSize: 13, color: i < step ? '#22c55e' : i === step ? '#fafafa' : '#8797ab', fontWeight: i === step ? 600 : 400, transition: 'all 0.3s' }}>{s.label}</div>
             </div>
           ))}
         </div>
@@ -135,7 +135,7 @@ export function DeployAnimation() {
         {/* URL */}
         {step >= 3 && (
           <div style={{ padding: '10px 14px', borderRadius: 9, background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', animation: 'fadeIn 0.4s ease' }}>
-            <div style={{ fontSize: 10, color: '#22c55e', fontWeight: 700, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Live URL</div>
+            <div style={{ fontSize: 11, color: '#22c55e', fontWeight: 700, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Live URL</div>
             <div style={{ fontSize: 12, color: '#fafafa', fontFamily: 'monospace' }}>https://wyberai.com/app/nestfinder</div>
           </div>
         )}
@@ -163,29 +163,29 @@ export function VisualEditAnimation() {
     <div style={{ background: '#0d0d0f', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, overflow: 'hidden', height: 280 }}>
       <div style={{ padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 8 }}>
         {['#ef4444','#f59e0b','#22c55e'].map(c => <div key={c} style={{ width: 9, height: 9, borderRadius: '50%', background: c, opacity: 0.6 }} />)}
-        <div style={{ flex: 1, textAlign: 'center', fontSize: 10, color: '#0EA5E9', fontFamily: 'monospace', fontWeight: 700 }}>✏️ Visual Edit Mode</div>
+        <div style={{ flex: 1, textAlign: 'center', fontSize: 11, color: '#0EA5E9', fontFamily: 'monospace', fontWeight: 700 }}>✏️ Visual Edit Mode</div>
       </div>
 
       {/* Mock app preview */}
       <div style={{ padding: 14, position: 'relative' }}>
         {/* Fake app */}
-        <div style={{ background: '#111113', borderRadius: 10, padding: 14, border: '1px solid rgba(255,255,255,0.07)' }}>
-          <div style={{ fontSize: 11, color: '#52525b', marginBottom: 10 }}>NexusMetrics</div>
+        <div style={{ background: '#0d141e', borderRadius: 10, padding: 14, border: '1px solid rgba(255,255,255,0.07)' }}>
+          <div style={{ fontSize: 11, color: '#8797ab', marginBottom: 10 }}>NexusMetrics</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 10 }}>
             {['$47.8K MRR', '2.1% Churn', '1,847 Users'].map((s, i) => (
-              <div key={i} style={{ padding: '8px', borderRadius: 7, background: '#18181b', textAlign: 'center', fontSize: 11, color: i === 0 && (hovering || selected) ? '#0EA5E9' : '#a1a1aa', border: i === 0 ? `1px solid ${hovering ? '#0EA5E9' : selected ? '#0EA5E9' : 'rgba(255,255,255,0.05)'}` : '1px solid rgba(255,255,255,0.05)', outline: i === 0 && hovering ? '2px solid rgba(14,165,233,0.4)' : 'none', transition: 'all 0.3s', cursor: 'crosshair' }}>
+              <div key={i} style={{ padding: '8px', borderRadius: 7, background: '#111b28', textAlign: 'center', fontSize: 11, color: i === 0 && (hovering || selected) ? '#0EA5E9' : '#9aa8bb', border: i === 0 ? `1px solid ${hovering ? '#0EA5E9' : selected ? '#0EA5E9' : 'rgba(255,255,255,0.05)'}` : '1px solid rgba(255,255,255,0.05)', outline: i === 0 && hovering ? '2px solid rgba(14,165,233,0.4)' : 'none', transition: 'all 0.3s', cursor: 'crosshair' }}>
                 {s}
               </div>
             ))}
           </div>
           {/* Hover tooltip */}
-          {hovering && <div style={{ position: 'absolute', top: 55, left: 14, background: '#0EA5E9', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 5, pointerEvents: 'none', zIndex:10 }}>&lt;div&gt; "MRR"</div>}
+          {hovering && <div style={{ position: 'absolute', top: 55, left: 14, background: '#0EA5E9', color: '#03111c', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 5, pointerEvents: 'none', zIndex:10 }}>&lt;div&gt; "MRR"</div>}
         </div>
 
         {/* Edit prompt */}
         {selected && !changed && (
-          <div style={{ position: 'absolute', bottom: 20, left: 20, right: 20, background: '#111113', border: '1px solid #0EA5E9', borderRadius: 10, padding: 12, animation: 'fadeUp 0.2s ease' }}>
-            <div style={{ fontSize: 10, color: '#0EA5E9', fontWeight: 700, marginBottom: 6 }}>✏️ Edit &lt;div&gt; "12 Leads"</div>
+          <div style={{ position: 'absolute', bottom: 20, left: 20, right: 20, background: '#0d141e', border: '1px solid #0EA5E9', borderRadius: 10, padding: 12, animation: 'fadeUp 0.2s ease' }}>
+            <div style={{ fontSize: 11, color: '#0EA5E9', fontWeight: 700, marginBottom: 6 }}>✏️ Edit &lt;div&gt; "12 Leads"</div>
             <div style={{ fontSize: 12, color: '#fafafa', fontFamily: 'monospace' }}>
               make the text green and bold
               <span style={{ borderLeft: '2px solid #0EA5E9', marginLeft: 1, animation: 'blink 1s step-end infinite' }}>&nbsp;</span>
@@ -219,7 +219,7 @@ export function DatabaseAnimation() {
     <div style={{ background: '#0d0d0f', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, overflow: 'hidden', height: 280, display: 'flex', flexDirection: 'column' }}>
       <div style={{ padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 8 }}>
         {['#ef4444','#f59e0b','#22c55e'].map(c => <div key={c} style={{ width: 9, height: 9, borderRadius: '50%', background: c, opacity: 0.6 }} />)}
-        <div style={{ flex: 1, textAlign: 'center', fontSize: 10, color: '#3f3f46', fontFamily: 'monospace' }}>🗄 Database</div>
+        <div style={{ flex: 1, textAlign: 'center', fontSize: 11, color: '#8797ab', fontFamily: 'monospace' }}>🗄 Database</div>
       </div>
 
       <div style={{ flex: 1, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -229,7 +229,7 @@ export function DatabaseAnimation() {
             <div style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(63,207,142,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🗄</div>
             <div>
               <div style={{ fontSize: 13, fontWeight: 700, color: '#3FCF8E' }}>Supabase</div>
-              <div style={{ fontSize: 10, color: '#52525b' }}>Postgres · Auth · Storage</div>
+              <div style={{ fontSize: 11, color: '#8797ab' }}>Postgres · Auth · Storage</div>
             </div>
             <div style={{ marginLeft: 'auto' }}>
               {step === 0 && (
@@ -260,8 +260,8 @@ export function DatabaseAnimation() {
         </div>
 
         {step === 2 && (
-          <div style={{ padding: '9px 12px', borderRadius: 9, background: '#18181b', border: '1px solid rgba(255,255,255,0.07)', animation: 'fadeIn 0.5s ease 0.2s both' }}>
-            <div style={{ fontSize: 10, color: '#52525b', marginBottom: 4, fontFamily: 'monospace' }}>Project URL</div>
+          <div style={{ padding: '9px 12px', borderRadius: 9, background: '#111b28', border: '1px solid rgba(255,255,255,0.07)', animation: 'fadeIn 0.5s ease 0.2s both' }}>
+            <div style={{ fontSize: 11, color: '#8797ab', marginBottom: 4, fontFamily: 'monospace' }}>Project URL</div>
             <div style={{ fontSize: 11, color: '#3FCF8E', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>https://xkzjpqrs.supabase.co</div>
           </div>
         )}

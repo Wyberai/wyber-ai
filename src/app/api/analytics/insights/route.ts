@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { createAnthropic } from '@/lib/ai-usage'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 
@@ -8,7 +9,7 @@ import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 // specific-to-this-app observations. Same pattern as
 // /api/credits/next-feature-suggestions: a single cheap Haiku call, best-effort,
 // never blocks or errors out the analytics panel on failure.
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY ?? 'placeholder' })
+const client = createAnthropic('app/api/analytics/insights', { apiKey: process.env.ANTHROPIC_API_KEY ?? 'placeholder' })
 
 export async function POST(req: NextRequest) {
   try {

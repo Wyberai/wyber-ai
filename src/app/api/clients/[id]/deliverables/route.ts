@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { clientAccess, canAttachProject } from '@/lib/agency/access'
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id: clientId } = await params
@@ -13,13 +14,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   const admin = await createAdminClient()
 
-  const { data: client } = await admin.from('clients').select('id').eq('id', clientId).eq('owner_id', user.id).maybeSingle()
-  if (!client) return NextResponse.json({ error: 'Client not found' }, { status: 404 })
+  const access = await clientAccess(admin, user.id, clientId)
+  if (!access) return NextResponse.json({ error: 'Client not found' }, { status: 404 })
+  if (!access.canEdit) return NextResponse.json({ error: 'Your role in this workspace is view-only' }, { status: 403 })
 
-  // Must be the caller's own project — otherwise anyone could attach a
+  // Must be the caller's own project, or one in the client's workspace — otherwise anyone could attach a
   // stranger's project as if they'd built it for this client.
-  const { data: project } = await admin.from('projects').select('id').eq('id', projectId).eq('user_id', user.id).maybeSingle()
-  if (!project) return NextResponse.json({ error: 'Project not found' }, { status: 404 })
+  if (!(await canAttachProject(admin, user.id, projectId, access.client))) return NextResponse.json({ error: 'Project not found' }, { status: 404 })
 
   const { data: existing } = await admin.from('client_deliverables').select('sort_order').eq('client_id', clientId).order('sort_order', { ascending: false }).limit(1).maybeSingle()
   const nextSort = (existing?.sort_order ?? -1) + 1

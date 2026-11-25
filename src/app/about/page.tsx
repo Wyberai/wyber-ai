@@ -4,8 +4,8 @@ import type { Metadata } from 'next';
 import { localeAlternates } from '@/lib/i18n/hreflang';
 
 export const metadata: Metadata = {
-  title: 'About',
-  description: 'WyberAi is built by SignalPulse Technologies. We build tools that help founders ship faster.',
+  title: 'About WyberAi: who builds it and why',
+  description: 'WyberAi is built by SignalPulse Technologies, a small team making tools that help founders and businesses ship real software faster.',
   alternates: { canonical: 'https://wyberai.com/about', languages: localeAlternates('/about') },
 };
 
@@ -63,7 +63,7 @@ export default function AboutPage() {
         <div style={{ textAlign: 'center', padding: '40px 0' }}>
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(24px,4vw,34px)', fontWeight: 700, letterSpacing: '-0.025em', color: 'var(--text)', margin: '0 0 12px' }}>Get in touch</h2>
           <p style={{ fontSize: 15, color: 'var(--text2)', marginBottom: 24 }}>Questions, feedback, partnerships — we read every email.</p>
-          <a href="mailto:hello@wyberai.com" style={{ display: 'inline-block', padding: '13px 28px', borderRadius: 10, background: 'var(--sky)', color: '#fff', fontWeight: 700, fontSize: 15 }}>hello@wyberai.com</a>
+          <a href="mailto:hello@wyberai.com" style={{ display: 'inline-block', padding: '13px 28px', borderRadius: 10, background: 'var(--sky)', color: '#03111c', fontWeight: 700, fontSize: 15 }}>hello@wyberai.com</a>
           <p style={{ fontSize: 13, color: 'var(--text3)', marginTop: 20 }}>
             SignalPulse Technologies · Wyoming, USA ·{' '}
             <a href="https://signalpulsehq.com" target="_blank" rel="noreferrer" style={{ color: 'var(--sky)' }}>signalpulsehq.com</a>

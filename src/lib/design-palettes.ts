@@ -277,6 +277,29 @@ export const PALETTES: Palette[] = [
     gradientHero: 'linear-gradient(135deg, hsl(224 85% 52% / 0.12), hsl(48 95% 60% / 0.12))',
     domains: ['education', 'school', 'course', 'learning', 'community', 'event', 'youth', 'club', 'workshop', 'bootcamp'],
   },
+  // ── Added 18 Nov 2026: non-green options for the domains that kept landing on green (law and finance on bottle-green,
+  //    wellness on sage and teal). Four of four fresh production builds had a green or teal accent. ──
+  {
+    id: 'wellness-plum-light', label: 'Plum Studio', vibe: 'Calm studio — soft lilac-white, deep plum primary, gentle and grown-up, no clinical blue and no green', mode: 'light',
+    fontSans: 'Switzer', fontDisplay: 'General Sans', radius: '1rem',
+    tokens: lightBase({ background: '290 30% 98%', foreground: '290 30% 12%', card: '0 0% 100%', popover: '0 0% 100%', muted: '290 22% 94%', 'muted-foreground': '290 10% 40%', secondary: '290 22% 94%', accent: '320 50% 93%', 'accent-foreground': '300 40% 26%', border: '290 18% 88%', input: '290 18% 88%', primary: '291 38% 32%', 'primary-foreground': '290 30% 98%', ring: '291 38% 32%' }),
+    gradientHero: 'linear-gradient(150deg, hsl(291 38% 32% / 0.10), hsl(330 60% 70% / 0.10))',
+    domains: ['wellness', 'yoga', 'meditation', 'therapy', 'spa', 'mental', 'pilates', 'dance', 'studio', 'salon', 'beauty', 'counselling'],
+  },
+  {
+    id: 'trade-blue-light', label: 'Trade Blue', vibe: 'Working shop — cool white, strong blue primary, safety-yellow highlight, plain and readable at arm length', mode: 'light',
+    fontSans: 'Switzer', fontDisplay: 'General Sans', radius: '0.5rem',
+    tokens: lightBase({ background: '215 25% 98%', foreground: '218 35% 10%', card: '0 0% 100%', popover: '0 0% 100%', muted: '215 20% 94%', 'muted-foreground': '215 10% 40%', secondary: '215 20% 94%', accent: '48 95% 90%', 'accent-foreground': '40 80% 20%', border: '215 18% 87%', input: '215 18% 87%', primary: '215 70% 38%', 'primary-foreground': '215 25% 98%', ring: '215 70% 38%' }),
+    gradientHero: 'linear-gradient(150deg, hsl(215 70% 38% / 0.10), hsl(48 95% 55% / 0.10))',
+    domains: ['hardware', 'tools', 'trade', 'construction', 'plumbing', 'electrical', 'repair', 'workshop', 'inventory', 'stock', 'garage', 'mechanic', 'wholesale'],
+  },
+  {
+    id: 'care-ocean-light', label: 'Calm Ocean', vibe: 'Everyday care — pale blue-white, ocean blue primary, big friendly shapes, easy on tired eyes', mode: 'light',
+    fontSans: 'Switzer', fontDisplay: 'General Sans', radius: '1rem',
+    tokens: lightBase({ background: '200 40% 98%', foreground: '205 40% 11%', card: '0 0% 100%', popover: '0 0% 100%', muted: '200 28% 94%', 'muted-foreground': '205 12% 40%', secondary: '200 28% 94%', accent: '190 60% 92%', 'accent-foreground': '200 70% 24%', border: '200 22% 87%', input: '200 22% 87%', primary: '200 80% 33%', 'primary-foreground': '200 40% 98%', ring: '200 80% 33%' }),
+    gradientHero: 'linear-gradient(150deg, hsl(200 80% 33% / 0.10), hsl(190 70% 60% / 0.10))',
+    domains: ['medical', 'clinic', 'pharmacy', 'elderly', 'senior', 'reminder', 'caregiver', 'hospital', 'dental', 'health', 'care', 'nutrition'],
+  },
 ]
 
 const SANS_FALLBACK = "ui-sans-serif, system-ui, sans-serif"

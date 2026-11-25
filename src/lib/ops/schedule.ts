@@ -16,11 +16,14 @@ export const JOBS: Job[] = [
   { path: '/api/cron/email-drip', cron: '30 10 * * *', name: 'Lifecycle emails', what: 'Sends the onboarding and nudge emails to users who are due one.', touchesCustomers: true },
   { path: '/api/cron/expo-sequence', cron: '30 4 * * *', name: 'Expo email sequence', what: 'Sends the next expo email (reminder, thanks or follow-up) to booth leads who are due one.', touchesCustomers: true },
   { path: '/api/cron/crm-brief', cron: '0 3 * * *', name: 'Daily revenue brief', what: 'Refreshes the CRM from every source, then emails you the brief with drafts waiting and unpaid quotes.', touchesCustomers: false },
+  { path: '/api/cron/uptime', cron: '*/5 * * * *', name: 'Email service check', what: 'Checks every 5 minutes that the email service (Continuum) answers, and emails you if it goes down, hourly while it stays down, and when it recovers.', touchesCustomers: false },
   { path: '/api/cron/watchdog', cron: '45 2 * * *', name: 'Health check', what: 'Checks that the agents, tables and signups are healthy, and emails you only if something is wrong.', touchesCustomers: false },
   { path: '/api/cron/weekly-report', cron: '30 3 * * 1', name: 'Weekly report', what: 'Emails you the Monday report: signups against the ramp, pipeline, agents, and the week ahead.', touchesCustomers: false },
   { path: '/api/cron/ops-agents', cron: '15 */3 * * *', name: 'Company agents', what: 'The agents write new drafts for your approval. Nothing is sent.', touchesCustomers: false },
   { path: '/api/cron/security-rescan', cron: '0 3 * * *', name: 'Security rescan', what: 'Re-checks published apps for security problems.', touchesCustomers: true },
   { path: '/api/cron/consultation-reminders', cron: '*/15 * * * *', name: 'Consultation reminders', what: 'Reminds people about consultation calls they booked.', touchesCustomers: true },
+  { path: '/api/cron/domain-sweep', cron: '*/15 * * * *', name: 'Domain order sweep', what: 'Carries on any paid domain order that did not finish, finishes bought domains whose connection was not ready, and emails you when an order stays stuck.', touchesCustomers: true },
+  { path: '/api/cron/domain-reminders', cron: '0 5 * * *', name: 'Domain reminders', what: 'Emails people 30, 14, 7 and 1 days before a domain or Workspace order expires, and once after it has expired.', touchesCustomers: true },
   { path: '/api/cron/wpl-monthly-reminder', cron: '0 6 28-31 * *', name: 'Premier League reminder', what: 'Month-end reminder for the monthly contest.', touchesCustomers: true },
 ]
 

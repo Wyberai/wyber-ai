@@ -360,7 +360,7 @@ export function CanvasChat({ projectId, canvasType }: Props) {
         <button
           onClick={startBlank}
           title={t('blankCanvasTooltip')}
-          style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 7, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#71717a', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+          style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 7, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#8797ab', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
         >
           <IcoBlank />
           {t('blankButton')}
@@ -381,7 +381,7 @@ export function CanvasChat({ projectId, canvasType }: Props) {
                 maxWidth: '88%', padding: '9px 12px',
                 borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px',
                 background: msg.role === 'user' ? '#0EA5E9' : 'rgba(255,255,255,0.05)',
-                color: msg.role === 'user' ? '#fff' : '#e4e4e7',
+                color: msg.role === 'user' ? '#fff' : '#e8eef7',
                 fontSize: 13, lineHeight: 1.55,
                 border: msg.role === 'assistant' ? '1px solid rgba(255,255,255,0.06)' : 'none',
                 whiteSpace: 'pre-wrap',
@@ -400,12 +400,12 @@ export function CanvasChat({ projectId, canvasType }: Props) {
                   </div>
                 </div>
                 <div style={{ fontSize: 13, fontWeight: 600, color: '#fafafa', marginBottom: 4 }}>{String(msg.meta.name)}</div>
-                <div style={{ fontSize: 11, color: '#71717a', marginBottom: 10, lineHeight: 1.45 }}>{String(msg.meta.reason)}</div>
+                <div style={{ fontSize: 11, color: '#8797ab', marginBottom: 10, lineHeight: 1.45 }}>{String(msg.meta.reason)}</div>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <button
                     onClick={() => applyFromCatalog(String(msg.meta!.agent_id))}
                     disabled={applying}
-                    style={{ flex: 1, padding: '8px', borderRadius: 8, border: 'none', background: applying ? '#1a1a24' : '#0EA5E9', color: applying ? '#52525b' : '#fff', fontSize: 12, fontWeight: 700, cursor: applying ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                    style={{ flex: 1, padding: '8px', borderRadius: 8, border: 'none', background: applying ? '#1a1a24' : '#0EA5E9', color: applying ? '#8797ab' : '#fff', fontSize: 12, fontWeight: 700, cursor: applying ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
                   >
                     {applying
                       ? <><div style={{ width: 10, height: 10, border: '1.5px solid rgba(14,165,233,0.3)', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />{t('loadingEllipsis')}</>
@@ -433,7 +433,7 @@ export function CanvasChat({ projectId, canvasType }: Props) {
                   {t('agentReadyPrefix')} {(msg.meta.nodes as unknown[]).length} {t('stepsWord')}
                 </div>
                 {(msg.meta.requiredToolkits as string[]).length > 0 && (
-                  <div style={{ fontSize: 11, color: '#71717a', marginBottom: 10, lineHeight: 1.5 }}>
+                  <div style={{ fontSize: 11, color: '#8797ab', marginBottom: 10, lineHeight: 1.5 }}>
                     <span style={{ color: '#f59e0b', fontWeight: 600 }}>{t('beforeYouRunLabel')}</span>{' '}
                     {t('connectPrefixWord')} {(msg.meta.requiredToolkits as string[]).map(tk => tk.charAt(0).toUpperCase() + tk.slice(1)).join(', ')} {t('inWord')}{' '}
                     <a href="/settings?tab=integrations" target="_blank" rel="noopener noreferrer" style={{ color: '#0EA5E9' }}>{t('settingsIntegrationsLinkText')}</a>.
@@ -442,7 +442,7 @@ export function CanvasChat({ projectId, canvasType }: Props) {
                 <button
                   onClick={() => applyCanvas(msg.meta!.nodes as unknown[], msg.meta!.edges as unknown[])}
                   disabled={applying}
-                  style={{ width: '100%', padding: '9px', borderRadius: 8, border: 'none', background: applying ? '#1a1a24' : '#22c55e', color: applying ? '#52525b' : '#09090b', fontSize: 12, fontWeight: 700, cursor: applying ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                  style={{ width: '100%', padding: '9px', borderRadius: 8, border: 'none', background: applying ? '#1a1a24' : '#22c55e', color: applying ? '#8797ab' : '#05080d', fontSize: 12, fontWeight: 700, cursor: applying ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
                 >
                   {applying
                     ? <><div style={{ width: 10, height: 10, border: '1.5px solid rgba(34,197,94,0.3)', borderTopColor: '#22c55e', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />{t('loadingEllipsis')}</>
@@ -460,7 +460,7 @@ export function CanvasChat({ projectId, canvasType }: Props) {
             <div style={{ fontSize: 12, fontWeight: 700, color: '#f59e0b', marginBottom: 6 }}>
               {t('connectToolsBeforeBuildingTitle')}
             </div>
-            <div style={{ fontSize: 12, color: '#a1a1aa', marginBottom: 12, lineHeight: 1.5 }}>
+            <div style={{ fontSize: 12, color: '#9aa8bb', marginBottom: 12, lineHeight: 1.5 }}>
               {t('automationNeedsAccessPrefix')}{' '}
               <span style={{ color: '#fafafa', fontWeight: 600 }}>{missingTools.join(', ')}</span>.
               {' '}{t('connectThemRunRealSuffix')}
@@ -491,14 +491,14 @@ export function CanvasChat({ projectId, canvasType }: Props) {
               {allToolsConnected && (
                 <button
                   onClick={() => generateCanvas(pendingPrompt)}
-                  style={{ flex: 1, padding: '9px', borderRadius: 8, border: 'none', background: '#0EA5E9', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                  style={{ flex: 1, padding: '9px', borderRadius: 8, border: 'none', background: '#0EA5E9', color: '#03111c', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
                 >
                   {t('buildNowButton')}
                 </button>
               )}
               <button
                 onClick={() => generateCanvas(pendingPrompt)}
-                style={{ flex: allToolsConnected ? 'unset' : 1, padding: '9px 14px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#71717a', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+                style={{ flex: allToolsConnected ? 'unset' : 1, padding: '9px 14px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#8797ab', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
               >
                 {t('buildWithoutConnectionsButton')}
               </button>
@@ -515,7 +515,7 @@ export function CanvasChat({ projectId, canvasType }: Props) {
             {progressMsg ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', borderRadius: 8, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
                 <div style={{ width: 10, height: 10, border: '1.5px solid rgba(14,165,233,0.3)', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.8s linear infinite', flexShrink: 0 }} />
-                <span style={{ fontSize: 12, color: '#a1a1aa' }}>{progressMsg}</span>
+                <span style={{ fontSize: 12, color: '#9aa8bb' }}>{progressMsg}</span>
               </div>
             ) : (
               [0, 1, 2].map(i => (
@@ -528,12 +528,12 @@ export function CanvasChat({ projectId, canvasType }: Props) {
         {/* Suggestions — show only at start */}
         {messages.length === 1 && !loading && !pendingPrompt && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 4 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>{t('tryDescribingLabel')}</div>
+            <div style={{ fontSize: 10, fontWeight: 700, color: '#8797ab', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>{t('tryDescribingLabel')}</div>
             {SUGGESTIONS.map(s => (
               <button key={s} onClick={() => send(s)}
-                style={{ textAlign: 'left', padding: '8px 12px', borderRadius: 9, border: '1px solid rgba(255,255,255,0.07)', background: 'rgba(255,255,255,0.02)', color: '#a1a1aa', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', lineHeight: 1.45, transition: 'all 0.15s' }}
+                style={{ textAlign: 'left', padding: '8px 12px', borderRadius: 9, border: '1px solid rgba(255,255,255,0.07)', background: 'rgba(255,255,255,0.02)', color: '#9aa8bb', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', lineHeight: 1.45, transition: 'all 0.15s' }}
                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(14,165,233,0.3)'; (e.currentTarget as HTMLElement).style.color = '#fafafa' }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.07)'; (e.currentTarget as HTMLElement).style.color = '#a1a1aa' }}>
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.07)'; (e.currentTarget as HTMLElement).style.color = '#9aa8bb' }}>
                 {s}
               </button>
             ))}
@@ -562,13 +562,13 @@ export function CanvasChat({ projectId, canvasType }: Props) {
             <IcoSend />
           </button>
         </div>
-        <div style={{ fontSize: 10, color: '#3f3f46', marginTop: 6, textAlign: 'center' }}>{t('enterToSendHint')}</div>
+        <div style={{ fontSize: 10, color: '#8797ab', marginTop: 6, textAlign: 'center' }}>{t('enterToSendHint')}</div>
       </div>
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes bounce { 0%,80%,100%{transform:translateY(0);opacity:0.4} 40%{transform:translateY(-5px);opacity:1} }
-        textarea::placeholder { color: #52525b; }
+        textarea::placeholder { color: #8797ab; }
       `}</style>
     </div>
   )

@@ -116,7 +116,7 @@ Keep it to 3-6 steps maximum. Each step should be a focused, atomic change.`;
         ⚡ Agent Mode — describe the full feature and WyberAi will plan and execute it step by step
       </div>
 
-      <textarea
+      <textarea aria-label="e.g. Build a full user authentication flow with login, signup, and password reset pages"
         value={goal}
         onChange={e => setGoal(e.target.value)}
         placeholder="e.g. Build a full user authentication flow with login, signup, and password reset pages"
@@ -131,7 +131,7 @@ Keep it to 3-6 steps maximum. Each step should be a focused, atomic change.`;
 
       {steps.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Execution plan</p>
+          <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Execution plan</p>
           {steps.map((step, i) => (
             <div key={step.id} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '8px 10px', borderRadius: 7, background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
               <span style={{ fontSize: 13, color: statusColor(step.status), fontWeight: 700, minWidth: 16, animation: step.status === 'running' ? 'spin 1s linear infinite' : 'none' }}>
@@ -143,7 +143,7 @@ Keep it to 3-6 steps maximum. Each step should be a focused, atomic change.`;
                 </span>
                 {step.filesChanged && step.filesChanged.length > 0 && (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
-                    {step.filesChanged.map(f => <span key={f} style={{ fontSize: 10, fontFamily: 'monospace', background: 'var(--accent-glow)', color: 'var(--accent)', padding: '1px 5px', borderRadius: 3 }}>✎ {f}</span>)}
+                    {step.filesChanged.map(f => <span key={f} style={{ fontSize: 12, fontFamily: 'monospace', background: 'var(--accent-glow)', color: 'var(--accent)', padding: '1px 5px', borderRadius: 3 }}>✎ {f}</span>)}
                   </div>
                 )}
               </div>

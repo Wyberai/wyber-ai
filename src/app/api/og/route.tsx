@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
           flexDirection: 'column',
           alignItems: 'flex-start',
           justifyContent: 'flex-end',
-          background: '#09090b',
+          background: '#05080d',
           padding: '64px 72px',
           fontFamily: 'General Sans',
         }}
@@ -67,7 +67,7 @@ export async function GET(req: NextRequest) {
         </div>
 
         {/* Desc */}
-        <div style={{ fontSize: 24, color: '#71717a', marginBottom: 48, maxWidth: 700 }}>
+        <div style={{ fontSize: 24, color: '#8797ab', marginBottom: 48, maxWidth: 700 }}>
           {desc}
         </div>
 
@@ -84,7 +84,7 @@ export async function GET(req: NextRequest) {
         </div>
 
         {/* URL */}
-        <div style={{ position: 'absolute', top: 48, right: 72, fontSize: 18, color: '#3f3f46', fontWeight: 500 }}>
+        <div style={{ position: 'absolute', top: 48, right: 72, fontSize: 18, color: '#8797ab', fontWeight: 500 }}>
           wyberai.com
         </div>
       </div>

@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { createAnthropic } from '@/lib/ai-usage'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY ?? 'placeholder' })
+const client = createAnthropic('app/api/suggestions', { apiKey: process.env.ANTHROPIC_API_KEY ?? 'placeholder' })
 
 // Clients map category -> their own icon/emoji; the model never picks icons.
 const CATEGORIES = ['commerce', 'booking', 'portfolio', 'productivity', 'social', 'content', 'food', 'events'] as const

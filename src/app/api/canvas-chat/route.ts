@@ -1,9 +1,10 @@
 import { NextRequest } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { createAnthropic } from '@/lib/ai-usage'
 import { createClient } from '@supabase/supabase-js'
 import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+const client = createAnthropic('app/api/canvas-chat', { apiKey: process.env.ANTHROPIC_API_KEY })
 
 function getAdmin() {
   return createClient(

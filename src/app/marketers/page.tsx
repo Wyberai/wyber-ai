@@ -2,7 +2,7 @@ import { NavbarClient as Navbar } from '@/components/shared/NavbarClient';
 import { Footer } from '@/components/shared/FooterClient';
 import Link from 'next/link';
 import type { Metadata } from 'next';
-export const metadata: Metadata = { title: 'WyberAi for Marketers', description: 'Launch landing pages, run experiments, build marketing tools — without waiting on engineering.' };
+export const metadata: Metadata = { title: 'WyberAi for Marketers', description: 'Launch landing pages, run experiments and build marketing tools without waiting on engineering. Describe it in plain English and ship it today.' };
 const FEATURES = [
   { icon: '🎯', title: 'Landing pages in minutes', desc: 'Describe your campaign and get a conversion-optimized page live today. A/B test copy and CTAs without dev tickets.' },
   { icon: '📈', title: 'SEO-ready from day one', desc: 'Next.js SSR means every page is indexed by Google immediately. Meta tags, OG tags, and structured data generated automatically.' },
@@ -36,7 +36,7 @@ export default function MarketersPage() {
         </div>
         <div style={{ padding:'48px', borderRadius:20, background:'linear-gradient(135deg, var(--sky3), var(--bg2))', border:'1px solid var(--border)', textAlign:'center' }}>
           <h2 style={{ fontFamily:'var(--font-display)', fontSize:'clamp(24px,3.5vw,40px)', fontWeight: 700, color:'var(--text)', letterSpacing:'-0.025em', marginBottom:12 }}>Stop waiting on engineering</h2>
-          <p style={{ fontSize:15, color:'var(--text2)', marginBottom:28 }}>Build it yourself. Ship today. 30 free credits/month.</p>
+          <p style={{ fontSize:15, color:'var(--text2)', marginBottom:28 }}>Build it yourself. Ship today. 30 free credits to start.</p>
           <Link href="/signup" className="wy-btn-primary">Start for free →</Link>
         </div>
       </div>

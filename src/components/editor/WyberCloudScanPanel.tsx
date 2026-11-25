@@ -88,7 +88,7 @@ export function WyberCloudScanPanel({ projectId }: { projectId: string }) {
             <div style={{ fontSize: 36, fontWeight: 700, color: scoreColor(report.score), letterSpacing: '-0.03em' }}>{report.score}</div>
             <div>
               <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ide-text)' }}>WyberCloud trust score</div>
-              <div style={{ fontSize: 11, color: 'var(--ide-text3)', marginTop: 2 }}>
+              <div style={{ fontSize: 12, color: 'var(--ide-text3)', marginTop: 2 }}>
                 {report.findings.length} issue{report.findings.length === 1 ? '' : 's'} found across {report.tablesScanned} public table{report.tablesScanned === 1 ? '' : 's'} · {report.protectedTables.length} look{report.protectedTables.length === 1 ? 's' : ''} fine
               </div>
             </div>
@@ -104,25 +104,25 @@ export function WyberCloudScanPanel({ projectId }: { projectId: string }) {
           {report.findings.map((f, i) => (
             <div key={i} style={{ padding: '11px 13px', borderRadius: 8, border: `1px solid ${SEV_COLOR[f.severity]}40`, background: `${SEV_COLOR[f.severity]}0c` }}>
               <div style={{ display: 'flex', alignItems: 'center', marginBottom: 5 }}>
-                <span style={{ fontSize: 10, fontWeight: 700, color: SEV_COLOR[f.severity], textTransform: 'uppercase', letterSpacing: '0.06em' }}>{f.severity}</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: SEV_COLOR[f.severity], textTransform: 'uppercase', letterSpacing: '0.06em' }}>{f.severity}</span>
               </div>
               <div style={{ fontSize: 12.5, color: 'var(--ide-text)', marginBottom: 4, fontWeight: 500 }}>{f.issue}</div>
-              <div style={{ fontSize: 11, color: 'var(--ide-text3)', lineHeight: 1.5 }}>{f.evidence}</div>
+              <div style={{ fontSize: 12, color: 'var(--ide-text3)', lineHeight: 1.5 }}>{f.evidence}</div>
             </div>
           ))}
 
           {report.protectedTables.length > 0 && (
             <div>
-              <p style={{ fontSize: 11, color: 'var(--ide-text3)', margin: '0 0 6px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{report.protectedTables.length} table{report.protectedTables.length === 1 ? '' : 's'} look fine</p>
+              <p style={{ fontSize: 12, color: 'var(--ide-text3)', margin: '0 0 6px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{report.protectedTables.length} table{report.protectedTables.length === 1 ? '' : 's'} look fine</p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                 {report.protectedTables.map((t, i) => (
-                  <span key={i} style={{ fontSize: 11, color: '#34D399', display: 'inline-flex', gap: 4, alignItems: 'center', background: 'rgba(52,211,153,0.08)', borderRadius: 5, padding: '2px 8px' }}>✓ {t}</span>
+                  <span key={i} style={{ fontSize: 12, color: '#34D399', display: 'inline-flex', gap: 4, alignItems: 'center', background: 'rgba(52,211,153,0.08)', borderRadius: 5, padding: '2px 8px' }}>✓ {t}</span>
                 ))}
               </div>
             </div>
           )}
 
-          <div style={{ fontSize: 10, color: 'var(--ide-text3)', opacity: 0.7 }}>
+          <div style={{ fontSize: 12, color: 'var(--ide-text3)', opacity: 0.7 }}>
             method: live schema probe · read-only
           </div>
         </>
@@ -130,10 +130,10 @@ export function WyberCloudScanPanel({ projectId }: { projectId: string }) {
 
       {history.length > 0 && (
         <div>
-          <p style={{ fontSize: 11, color: 'var(--ide-text3)', margin: '0 0 6px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Scan history</p>
+          <p style={{ fontSize: 12, color: 'var(--ide-text3)', margin: '0 0 6px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Scan history</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             {history.map(h => (
-              <div key={h.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 11, color: 'var(--ide-text3)', padding: '4px 0', borderTop: '1px solid var(--ide-border)' }}>
+              <div key={h.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12, color: 'var(--ide-text3)', padding: '4px 0', borderTop: '1px solid var(--ide-border)' }}>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                   <span style={{ color: h.score >= 85 ? '#34D399' : h.score >= 50 ? '#F5A623' : '#F0524B', fontWeight: 700 }}>{h.score}</span>
                   {h.critical_count > 0 && <span style={{ color: '#F0524B' }}>· {h.critical_count} critical</span>}

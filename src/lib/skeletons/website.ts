@@ -151,7 +151,7 @@ export default function Navbar() {
 
 const FEATURES = [
   { icon: Zap, title: 'Lightning fast', desc: 'Built for performance from the ground up. Every interaction feels instant.' },
-  { icon: Shield, title: 'Secure by default', desc: 'Enterprise-grade security baked in, not bolted on. SOC 2 compliant.' },
+  { icon: Shield, title: 'Your data stays yours', desc: 'Describe how this business handles customer data in plain words.' },
   { icon: BarChart2, title: 'Real-time analytics', desc: 'See what\'s happening as it happens. No delays, no approximations.' },
   { icon: Globe, title: 'Works everywhere', desc: 'Desktop, tablet, mobile — the experience is consistent across all devices.' },
   { icon: Users, title: 'Built for teams', desc: 'Collaboration features that scale from 2 to 2,000 people.' },
@@ -339,7 +339,7 @@ const FAQ_ITEMS = [
   { q: 'Is there a free trial?', a: 'Yes — our Pro plan comes with a 14-day free trial, no credit card required.' },
   { q: 'Can I cancel anytime?', a: 'Absolutely. Cancel from your account settings any time. No cancellation fees, no questions asked.' },
   { q: 'Do you support SSO?', a: 'SSO (SAML 2.0) is available on our Enterprise plan. We support Okta, Azure AD, Google Workspace, and more.' },
-  { q: 'Is my data secure?', a: 'We are SOC 2 Type II certified, GDPR compliant, and use AES-256 encryption at rest and in transit.' },
+  { q: 'How is my data handled?', a: 'Replace this answer with how this business really stores and uses customer details. Do not state a certification or legal status unless it is true.' },
 ]
 
 export default function FAQ() {

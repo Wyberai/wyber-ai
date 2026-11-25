@@ -4,6 +4,7 @@ import { useEditorStore } from '@/store/editor'
 import { useT } from '@/lib/i18n/useT'
 import { EDITOR_CONNECTORS_STRINGS } from '@/lib/i18n/dict/editor-connectors'
 import { COMMON_STRINGS } from '@/lib/i18n/dict/common'
+import { supabaseRestHeaders } from '@/lib/supabase/keys'
 
 interface Connector {
   service: string
@@ -122,7 +123,7 @@ export function SupabaseConnector({ onClose }: { onClose: () => void }) {
     try {
       // Validate the credentials work
       const test = await fetch(`${url}/rest/v1/`, {
-        headers: { 'apikey': anonKey, 'Authorization': `Bearer ${anonKey}` }
+        headers: supabaseRestHeaders(anonKey)
       })
       if (!test.ok && test.status !== 200 && test.status !== 401) {
         setError(t('couldNotConnectCheckCreds'))
@@ -179,7 +180,7 @@ export function SupabaseConnector({ onClose }: { onClose: () => void }) {
                 <span style={{ color: '#22c55e', fontSize: 14 }}>✓</span>
                 <span style={{ fontSize: 13, fontWeight: 600, color: '#22c55e' }}>{t('supabaseConnectedLabel')}</span>
               </div>
-              <div style={{ fontSize: 11, color: '#52526a', fontFamily: 'monospace' }}>{connected.config?.url}</div>
+              <div style={{ fontSize: 12, color: '#52526a', fontFamily: 'monospace' }}>{connected.config?.url}</div>
             </div>
             <div style={{ fontSize: 12, color: '#8b8b9a', marginBottom: 16 }}>
               {t('connectedExplainer')}
@@ -208,7 +209,7 @@ export function SupabaseConnector({ onClose }: { onClose: () => void }) {
             <div style={{ fontSize: 13, color: '#8b8b9a', marginBottom: 8 }}>
               {t('pickerIntro')}
             </div>
-            <div style={{ fontSize: 11, color: '#a78bfa', background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.18)', borderRadius: 8, padding: '8px 10px', marginBottom: 12 }}>
+            <div style={{ fontSize: 12, color: '#a78bfa', background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.18)', borderRadius: 8, padding: '8px 10px', marginBottom: 12 }}>
               {t('pickerAccountNoticePrefix')} <strong>{t('pickerAccountNoticeBold')}</strong> {t('pickerAccountNoticeSuffix')}
             </div>
             {pickerBusy && <div style={{ fontSize: 12, color: '#52526a', marginBottom: 10 }}>{t('workingEllipsis')}</div>}
@@ -218,7 +219,7 @@ export function SupabaseConnector({ onClose }: { onClose: () => void }) {
                 <button key={p.id} onClick={() => linkExisting(p.id)} disabled={pickerBusy}
                   style={{ textAlign: 'left', padding: '10px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', background: '#1a1a24', color: '#f0f0f5', fontSize: 13, cursor: pickerBusy ? 'not-allowed' : 'pointer' }}>
                   <div style={{ fontWeight: 600 }}>{p.name}</div>
-                  <div style={{ fontSize: 10, color: '#52526a', fontFamily: 'monospace' }}>{p.id} · {p.region}</div>
+                  <div style={{ fontSize: 12, color: '#52526a', fontFamily: 'monospace' }}>{p.id} · {p.region}</div>
                 </button>
               ))}
               {!pickerBusy && projects.length === 0 && <div style={{ fontSize: 12, color: '#52526a' }}>{t('noExistingProjectsMsg')}</div>}
@@ -237,23 +238,23 @@ export function SupabaseConnector({ onClose }: { onClose: () => void }) {
             </button>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
               <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
-              <span style={{ fontSize: 10, color: '#52526a', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('orPasteKeysManually')}</span>
+              <span style={{ fontSize: 12, color: '#52526a', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('orPasteKeysManually')}</span>
               <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
             </div>
             <div style={{ marginBottom: 14 }}>
-              <label style={{ fontSize: 11, fontWeight: 600, color: '#8b8b9a', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('projectUrlLabel')}</label>
-              <input value={url} onChange={e => setUrl(e.target.value)}
+              <label style={{ fontSize: 12, fontWeight: 600, color: '#8b8b9a', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('projectUrlLabel')}</label>
+              <input aria-label="https://xxxxxxxxxxxx.supabase.co" value={url} onChange={e => setUrl(e.target.value)}
                 placeholder="https://xxxxxxxxxxxx.supabase.co"
                 style={{ width: '100%', background: '#1a1a24', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '10px 12px', color: '#f0f0f5', fontSize: 13, outline: 'none', fontFamily: 'monospace' }} />
             </div>
             <div style={{ marginBottom: 8 }}>
-              <label style={{ fontSize: 11, fontWeight: 600, color: '#8b8b9a', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('anonKeyLabel')}</label>
-              <input value={anonKey} onChange={e => setAnonKey(e.target.value)} type="password"
+              <label style={{ fontSize: 12, fontWeight: 600, color: '#8b8b9a', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('anonKeyLabel')}</label>
+              <input aria-label="eyJhbGciOiJIUzI1NiIs..." value={anonKey} onChange={e => setAnonKey(e.target.value)} type="password"
                 placeholder="eyJhbGciOiJIUzI1NiIs..."
                 style={{ width: '100%', background: '#1a1a24', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '10px 12px', color: '#f0f0f5', fontSize: 13, outline: 'none', fontFamily: 'monospace' }} />
             </div>
             {error && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 10 }}>{error}</div>}
-            <div style={{ fontSize: 11, color: '#52526a', marginBottom: 16 }}>
+            <div style={{ fontSize: 12, color: '#52526a', marginBottom: 16 }}>
               {t('findKeysHint')}
             </div>
             <div style={{ display: 'flex', gap: 8 }}>

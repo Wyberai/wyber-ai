@@ -198,12 +198,12 @@ export function ImagesPanel({ projectId }: { projectId?: string }) {
           providers the AI Employees voice feature already uses in prod. */}
       <div style={{ margin: '10px 12px 0', padding: 10, border: '1px solid var(--ide-border)', borderRadius: 10, background: 'var(--bg-surface)', display: 'flex', flexDirection: 'column', gap: 7 }}>
         <MicroLabel>{t('generateVoiceoverHeading')}</MicroLabel>
-        <textarea
+        <textarea aria-label={t('voiceoverPromptPlaceholder')}
           value={audioText}
           onChange={e => setAudioText(e.target.value)}
           placeholder={t('voiceoverPromptPlaceholder')}
           rows={2}
-          style={{ width: '100%', background: 'var(--bg-elevated)', border: '1px solid var(--ide-border)', borderRadius: 7, color: 'var(--ide-text)', fontSize: 11, lineHeight: 1.5, padding: '6px 9px', outline: 'none', resize: 'vertical', fontFamily: 'var(--font-sans)' }}
+          style={{ width: '100%', background: 'var(--bg-elevated)', border: '1px solid var(--ide-border)', borderRadius: 7, color: 'var(--ide-text)', fontSize: 12, lineHeight: 1.5, padding: '6px 9px', outline: 'none', resize: 'vertical', fontFamily: 'var(--font-sans)' }}
         />
         <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
           <GlowButton size="sm" onClick={generateVoiceover} disabled={audioBusy || !audioText.trim()}>
@@ -211,7 +211,7 @@ export function ImagesPanel({ projectId }: { projectId?: string }) {
           </GlowButton>
           {audioUrl && (
             <button onClick={copyAudioUrl}
-              style={{ fontSize: 11, fontWeight: 600, padding: '5px 11px', borderRadius: 7, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--ide-text2)', cursor: 'pointer' }}>
+              style={{ fontSize: 12, fontWeight: 600, padding: '5px 11px', borderRadius: 7, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--ide-text2)', cursor: 'pointer' }}>
               {t('copyAudioUrlButton')}
             </button>
           )}
@@ -243,24 +243,24 @@ export function ImagesPanel({ projectId }: { projectId?: string }) {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={entry.thumb} alt="" style={{ width: '100%', height: 96, objectFit: 'cover', display: 'block', background: 'var(--bg-elevated)' }} />
                 <div style={{ padding: 9, display: 'flex', flexDirection: 'column', gap: 7 }}>
-                  <textarea
+                  <textarea aria-label={entry.kind === 'persisted' ? t('replaceImagePlaceholder') : t('imagePromptPlaceholderShort')}
                     value={drafts[entry.key] ?? entry.prompt}
                     onChange={e => setDrafts(d => ({ ...d, [entry.key]: e.target.value }))}
                     placeholder={entry.kind === 'persisted' ? t('replaceImagePlaceholder') : t('imagePromptPlaceholderShort')}
                     rows={2}
-                    style={{ width: '100%', background: 'var(--bg-elevated)', border: '1px solid var(--ide-border)', borderRadius: 7, color: 'var(--ide-text)', fontSize: 11, lineHeight: 1.5, padding: '6px 9px', outline: 'none', resize: 'vertical', fontFamily: 'var(--font-sans)' }}
+                    style={{ width: '100%', background: 'var(--bg-elevated)', border: '1px solid var(--ide-border)', borderRadius: 7, color: 'var(--ide-text)', fontSize: 12, lineHeight: 1.5, padding: '6px 9px', outline: 'none', resize: 'vertical', fontFamily: 'var(--font-sans)' }}
                   />
                   <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
                     <GlowButton size="sm" onClick={() => regenerate(entry)} disabled={isBusy}>
                       {action === 'regen' ? t('regeneratingEllipsis') : hero[entry.key] ? t('regenerateHeroButton') : t('regenerateButton')}
                     </GlowButton>
                     <button onClick={() => startUpload(entry)} disabled={isBusy}
-                      style={{ fontSize: 11, fontWeight: 600, padding: '5px 11px', borderRadius: 7, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--ide-text2)', cursor: 'pointer' }}>
+                      style={{ fontSize: 12, fontWeight: 600, padding: '5px 11px', borderRadius: 7, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--ide-text2)', cursor: 'pointer' }}>
                       {action === 'upload' ? t('uploadingEllipsis') : t('uploadButton')}
                     </button>
                     {entry.kind === 'directive' && (
                       <button onClick={() => pin(entry)} disabled={isBusy} title={t('pinTooltip')}
-                        style={{ fontSize: 11, fontWeight: 600, padding: '5px 11px', borderRadius: 7, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--ide-text2)', cursor: 'pointer' }}>
+                        style={{ fontSize: 12, fontWeight: 600, padding: '5px 11px', borderRadius: 7, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--ide-text2)', cursor: 'pointer' }}>
                         {action === 'pin' ? t('pinningEllipsis') : t('pinButton')}
                       </button>
                     )}

@@ -6,6 +6,7 @@ import { getLibraryAnalysis } from '@/lib/byos/library'
 import { LIBRARY_TOOLS, toolBySlug } from '@/lib/byos/slug'
 import { INFRA, featureFit, productVerdict, requiredInfra } from '@/lib/byos/infra'
 import { FIT_STYLE, VERDICT_COPY } from '@/lib/byos/fit-copy'
+import { fitTitle } from '@/lib/seo-title'
 
 /**
  * Static "replace {tool}" pages, one per library entry. Everything on them is
@@ -30,7 +31,7 @@ export async function generateMetadata({ params }: { params: Promise<{ tool: str
   const { tool, analysis } = found
   const total = analysis.modules.reduce((n, m) => n + m.features.length, 0)
   return {
-    title: `Replace ${analysis.product} with software you own`,
+    title: fitTitle(`Replace ${analysis.product} with software you own`),
     description: `${analysis.product} has ${total} features. See which ones we can build for you, which need an outside service, and which we can't, then build only what you use.`,
     alternates: { canonical: `https://wyberai.com/byos/${tool.slug}` },
   }
@@ -38,7 +39,7 @@ export async function generateMetadata({ params }: { params: Promise<{ tool: str
 
 const s = { bg: 'var(--brand-bg)', card: 'var(--brand-bg-raised)', border: 'var(--brand-border)', text: 'var(--brand-text)', muted: 'var(--brand-text-dim)', dim: 'var(--brand-text-faint)', accent: '#0EA5E9' }
 const eyebrow: React.CSSProperties = { fontSize: 13, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: s.dim, margin: '0 0 10px' }
-const cta: React.CSSProperties = { display: 'inline-block', padding: '13px 28px', borderRadius: 10, background: s.accent, color: '#fff', fontSize: 15, fontWeight: 700, textDecoration: 'none' }
+const cta: React.CSSProperties = { display: 'inline-block', padding: '13px 28px', borderRadius: 10, background: s.accent, color: '#03111c', fontSize: 15, fontWeight: 700, textDecoration: 'none' }
 
 export default async function ReplaceToolPage({ params }: { params: Promise<{ tool: string }> }) {
   const found = load((await params).tool)

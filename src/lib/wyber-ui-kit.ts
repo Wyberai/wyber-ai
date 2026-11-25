@@ -298,9 +298,8 @@ export function Button({ variant = 'primary', size = 'md', className, children, 
 } & Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'children'>) {
   return (
     <motion.button
-      whileHover={{ y: -1 }}
-      whileTap={{ scale: 0.97 }}
-      transition={springFast}
+      whileTap={{ scale: 0.98 }}
+      transition={{ duration: 0.12, ease: easeOut }}
       className={cn(
         'inline-flex select-none items-center justify-center gap-2 font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50',
         BUTTON_VARIANTS[variant], BUTTON_SIZES[size], className,
@@ -351,7 +350,7 @@ export function Card({ className, hover = false, children }: { className?: strin
   return (
     <div className={cn(
       'rounded-xl border border-border bg-card text-card-foreground p-6 shadow-[0_1px_2px_hsl(var(--foreground)/0.04)]',
-      hover && 'transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_32px_hsl(var(--foreground)/0.08)] hover:border-primary/30',
+      hover && 'transition-colors duration-200 hover:border-primary/40',
       className,
     )}>
       {children}
@@ -657,11 +656,11 @@ export function FeatureCard({ icon, title, description, className }: {
   icon?: React.ReactNode; title: string; description?: string; className?: string
 }) {
   return (
-    <SpotlightCard className={cn('h-full transition-colors duration-300 hover:border-primary/30', className)}>
+    <Card className={cn('h-full transition-colors duration-200 hover:border-primary/30', className)}>
       {icon && <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">{icon}</div>}
       <div className="text-sm font-semibold text-foreground">{title}</div>
       {description && <div className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{description}</div>}
-    </SpotlightCard>
+    </Card>
   )
 }
 
@@ -676,7 +675,7 @@ export function StatBlock({ value, label, delta, prefix = '', suffix = '', decim
           : value}
       </div>
       <div className="flex items-center gap-2">
-        <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</span>
+        <span className="text-sm text-muted-foreground">{label}</span>
         {typeof delta === 'number' && (
           <span className={cn('inline-flex items-center gap-0.5 text-xs font-semibold', delta >= 0 ? 'text-primary' : 'text-destructive')}>
             {delta >= 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
@@ -720,7 +719,7 @@ export function PricingCard({ name, price, period = '/month', description, featu
   cta?: string; featured?: boolean; onSelect?: () => void; className?: string
 }) {
   return (
-    <Card className={cn('relative flex h-full flex-col', featured && 'border-primary/40 shadow-[0_0_0_1px_hsl(var(--primary)/0.4),0_16px_48px_hsl(var(--primary)/0.12)]', className)}>
+    <Card className={cn('relative flex h-full flex-col', featured && 'border-primary ring-1 ring-primary', className)}>
       {featured && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2">
           <Badge variant="solid">Most popular</Badge>
@@ -761,7 +760,7 @@ export function Navbar({ brand, links = [], cta, className }: {
   return (
     <header className={cn(
       'fixed inset-x-0 top-0 z-40 transition-all duration-300',
-      scrolled ? 'border-b border-border/60 bg-background/75 backdrop-blur-xl' : 'bg-transparent',
+      scrolled ? 'border-b border-border bg-background' : 'bg-background',
       className,
     )}>
       <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
@@ -785,7 +784,7 @@ export function Navbar({ brand, links = [], cta, className }: {
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.25, ease: easeOut }}
-            className="overflow-hidden border-b border-border bg-background/95 backdrop-blur-xl md:hidden"
+            className="overflow-hidden border-b border-border bg-background md:hidden"
           >
             <div className="flex flex-col gap-1 px-6 pb-6 pt-2">
               {links.map(l => (
@@ -842,12 +841,7 @@ export function CTASection({ title, description, primaryCta = 'Get started', sec
 }) {
   return (
     <Reveal className={className}>
-      <div
-        className="relative overflow-hidden rounded-3xl px-8 py-16 text-center md:px-16 md:py-20"
-        style={{ backgroundImage: 'var(--gradient-hero, linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.75)))' }}
-      >
-        <BackgroundGrid variant="dots" fade={false} className="opacity-20" />
-        <NoiseOverlay opacity={0.07} />
+      <div className="relative overflow-hidden rounded-2xl bg-primary px-8 py-16 text-center md:px-16 md:py-20">
         <div className="relative mx-auto max-w-2xl">
           <h2 className="font-display text-3xl font-bold tracking-tight text-primary-foreground md:text-5xl">{title}</h2>
           {description && <p className="mt-4 text-base leading-relaxed text-primary-foreground/80 md:text-lg">{description}</p>}
@@ -1076,7 +1070,9 @@ export function GradientText({ children, as = 'span', speed = 6, className }: {
     <Tag
       className={cn('inline-block bg-clip-text text-transparent', !reduced && 'animate-gradient-move', className)}
       style={{
-        backgroundImage: 'linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)), hsl(var(--primary)))',
+        // primary → foreground → primary: text fill must stay legible on the page background at every
+        // point of the sweep. (--accent is a pale surface tint in most palettes — it made letters vanish.)
+        backgroundImage: 'linear-gradient(90deg, hsl(var(--primary)), hsl(var(--foreground)), hsl(var(--primary)))',
         backgroundSize: '200% 100%',
         animationDuration: speed + 's',
       }}
@@ -2212,7 +2208,7 @@ export function BottomTabBar({ items, active, onChange, className }: {
   className?: string
 }) {
   return (
-    <nav className={cn('fixed inset-x-0 bottom-0 z-50 border-t border-border bg-background/90 backdrop-blur-xl', className)}>
+    <nav className={cn('fixed inset-x-0 bottom-0 z-50 border-t border-border bg-background', className)}>
       <div className="mx-auto flex max-w-lg items-stretch justify-around">
         {items.map(item => {
           const isActive = item.id === active
@@ -2379,7 +2375,9 @@ export function PillTabNav({ tabs, active, onChange, className }: {
   className?: string
 }) {
   return (
-    <div className={cn('inline-flex items-center gap-1 rounded-full border border-border bg-muted p-1', className)}>
+    // isolate: the -z-10 active pill must sit ABOVE this container's own bg-muted, not behind it
+    // (without a stacking context here it rendered underneath and the active label was invisible).
+    <div className={cn('relative isolate inline-flex items-center gap-1 rounded-full border border-border bg-muted p-1', className)}>
       {tabs.map(tab => {
         const isActive = tab.id === active
         return (
@@ -2514,14 +2512,14 @@ export function CondensingNavbar({ brand, links = [], cta, condensedAt = 80, cla
 
   return (
     <motion.nav
-      animate={{
-        height: scrolled ? 56 : 96,
-        backgroundColor: scrolled ? 'hsl(var(--background) / 0.85)' : 'hsl(var(--background) / 0)',
-      }}
+      animate={{ height: scrolled ? 56 : 96 }}
       transition={springFast}
+      // framer-motion cannot tween a color that contains a CSS variable (it throws an
+      // unhandled rejection), so the background fades with a plain CSS transition.
+      style={{ backgroundColor: 'hsl(var(--background))' }}
       className={cn(
-        'fixed inset-x-0 top-0 z-50 backdrop-blur-xl',
-        scrolled ? 'border-b border-border shadow-sm' : 'border-b border-transparent',
+        'fixed inset-x-0 top-0 z-50 transition-[border-color] duration-300',
+        scrolled ? 'border-b border-border' : 'border-b border-transparent',
         className,
       )}
     >
@@ -3044,15 +3042,18 @@ export function HighlightMarker({ children, color = 'primary', delay = 0, classN
 }) {
   const reduced = useReducedMotion()
   const markClass = color === 'accent' ? 'bg-accent/35' : 'bg-primary/30'
+  // Watch the wrapper, not the marker: a marker scaled to zero width has no area, so an IntersectionObserver on it never fires
+  // and the mark stayed invisible (found in a local render, 19 Nov 2026).
+  const ref = useRef<HTMLSpanElement>(null)
+  const inView = useInView(ref, { once: true, margin: '-10%' })
   return (
-    <span className={cn('relative inline-block', className)}>
+    <span ref={ref} className={cn('relative inline-block', className)}>
       <span className="relative z-10">{children}</span>
       <motion.span
         aria-hidden="true"
         className={cn('absolute inset-x-0 bottom-[0.06em] h-[0.4em] origin-left rounded-[2px]', markClass)}
         initial={reduced ? { scaleX: 1 } : { scaleX: 0 }}
-        whileInView={{ scaleX: 1 }}
-        viewport={{ once: true, margin: '-10%' }}
+        animate={{ scaleX: reduced || inView ? 1 : 0 }}
         transition={{ duration: reduced ? 0 : 0.6, delay, ease: easeOut }}
       />
     </span>
@@ -3224,7 +3225,7 @@ export function GradientUnderline({ children, href, className }: {
       <span
         aria-hidden="true"
         className="absolute inset-x-0 bottom-[-0.14em] h-[2px] origin-left scale-x-0 rounded-full transition-transform duration-300 ease-out group-hover:scale-x-100"
-        style={{ backgroundImage: 'linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)))' }}
+        style={{ backgroundImage: 'linear-gradient(90deg, hsl(var(--primary)), hsl(var(--foreground) / 0.7))' }}
       />
     </span>
   )
@@ -5521,7 +5522,7 @@ export function StickyCTABar({ message, ctaLabel = 'Get started', onCta, thresho
           exit={{ y: reduceMotion ? 0 : 80, opacity: 0 }}
           transition={springFast}
           className={cn(
-            'fixed inset-x-0 bottom-0 z-50 flex items-center justify-between gap-4 border-t border-border bg-card/95 px-6 py-4 shadow-[0_-8px_24px_hsl(var(--foreground)/0.08)] backdrop-blur',
+            'fixed inset-x-0 bottom-0 z-50 flex items-center justify-between gap-4 border-t border-border bg-card px-6 py-4',
             className
           )}
         >
@@ -6894,28 +6895,43 @@ export const WYBER_UI_KIT_FILES: Record<string, string> = {
 // buildMobileSystemPrompt at all (React Native has no DOM/Tailwind to run it).
 // Every name below is cross-checked against WYBER_UI_KIT_SOURCE exports by the
 // same test that guards WYBER_UI_KIT_PROMPT.
+// QUIET CRAFT (19 Nov 2026). The kit and the anti-slop rules (unslop.ts, unslop-website.ts, the design directions) used to disagree: the kit's
+// own priority lists led with aurora, mesh, glow orbs and holographic cards, which the anti-slop rules forbid, and the rules won, so builds
+// since 13 Nov stopped importing the kit (2 of 19; 0 of 10 websites). One system now: STRUCTURE comes from the kit (navigation, footer,
+// forms, tables, dialogs, cards, pricing, testimonials), LOOK comes from the design direction, and EFFECT components are off unless the
+// direction names them. This list is that boundary; the test pins it so the two systems cannot drift apart again.
+export const KIT_EFFECT_COMPONENTS: readonly string[] = [
+  'AnimatedGridLines', 'AuroraBackground', 'BackgroundGrid', 'BlurReveal', 'CheckerboardGrid', 'ClayCard', 'ConfettiBurst', 'CTAGradientBanner',
+  'CursorFollowBlob', 'CursorGlow', 'DiagonalStripes', 'DottedSpotlight', 'FlipCard', 'FloatingDockNav', 'GlassPanel', 'GlowOrbCard',
+  'GlowOrbsField', 'GradientBorder', 'GradientText', 'GradientUnderline', 'HeroOrbit', 'HolographicCard', 'ImageRevealCard', 'InfiniteLogoMarquee',
+  'KineticHeadline', 'LiquidBlob', 'LiquidUnderline', 'MagneticButton', 'Marquee', 'MeshGradient', 'NoiseOverlay', 'NotchCard', 'Parallax',
+  'PinnedStory', 'RotatingBadgeText', 'ScreenshotTilt', 'ScrollStack', 'SpotlightCard', 'SpotlightSection', 'SplitFlapCounter', 'SplitTextReveal',
+  'StackedDepthCards', 'StarField', 'StickyShowcase', 'TextMaskReveal', 'TextScramble', 'ThinkingOrbs', 'TiltCard', 'Typewriter', 'VignetteOverlay',
+  'WavesBackground', 'WordCycler',
+]
+
 export const WYBER_UI_KIT_PRIMARY_BY_TYPE: Record<'website' | 'saas' | 'webapp', string> = {
-  website: `PRIORITIZE THESE for this build (marketing/landing site) — reach for them before scanning the full catalog below; it's still there for anything not covered here.
-Hero & motion: HeroHeadline, TextScramble, GradientText, HeroOrbit, SplitHero
-Backgrounds: AuroraBackground, MeshGradient, GlowOrbsField, SpotlightSection
-Sections: Navbar, Footer, CTASection, CTAGradientBanner, PricingCard, PricingToggle, TestimonialWall, LogoCloud, FAQAccordionIcon, StickyCTABar, StatsBanner
-Text & scroll FX: SplitTextReveal, HighlightMarker, KineticHeadline, StickyShowcase, ScrollStack, Parallax, PinnedStory
-Feature showcases: BentoGrid, BentoCard, FeatureCard, HolographicCard, GlowOrbCard, SpotlightCard, TiltCard, DeviceFrameSet, ScreenshotTilt
-Interactions: MagneticButton, InfiniteLogoMarquee, HoverImageGrid`,
-  saas: `PRIORITIZE THESE for this build (SaaS dashboard/app) — reach for them before scanning the full catalog below; it's still there for anything not covered here.
+  website: `PRIORITIZE THESE for this build (marketing/landing site). The kit gives the structure, the DESIGN DIRECTION gives the look; reach for these before scanning the catalog below.
+Frame & navigation: Navbar, CondensingNavbar, Footer, StickyCTABar, SectionHeading, MonoLabel, HairlineFrame
+Hero & type: HeroHeadline, EditorialHeadline, SplitHero, MediaFrame
+Sections: CTASection, FeatureCard, BentoGrid, BentoCard, StatsBanner, StatBlock, LogoCloud, TestimonialCard, TestimonialWall, PricingCard, PricingToggle, FAQAccordionIcon, Accordion
+Basics: Button, Badge, Card, Input, Textarea
+Motion (one quiet reveal per section, never on everything): Reveal, Stagger, StaggerItem`,
+  saas: `PRIORITIZE THESE for this build (SaaS dashboard/app). The kit gives the structure, the DESIGN DIRECTION gives the look; reach for these before scanning the catalog below.
 Navigation: SidebarNav, Breadcrumbs, CommandPalette, PillTabNav, NotificationBell, BackToTop
 Data display: StickyTable, KanbanCard, ProgressRing, Sparkline, MiniBarChart, AvatarStack, FilterChipBar, ComparisonTable, RatingStars, StatCounterGrid, DataRow, StatBlock, AnimatedNumber
-Forms: FloatingLabelInput, OtpInput, StepperWizard, ChipToggleGroup, CustomCheckbox, CustomRadio, SearchWithSuggestions, RangeSlider
+Forms: FloatingLabelInput, OtpInput, StepperWizard, ChipToggleGroup, CustomCheckbox, CustomRadio, SearchWithSuggestions, RangeSlider, FileDropzone
 Feedback & overlays: ToastStack, ConfirmModal, Drawer, Tooltip, PopoverMenu, ContextMenu, Dialog, EmptyState, ShimmerSkeletonCard, SpinnerRing, ProgressBar
-Surfaces & basics: Card, GlassPanel, SpotlightCard, ExpandableCard, Button, Badge, Switch, Tabs
-AI/agent features (if this product has any AI/assistant/automation surface): AIAssistantPanel, PromptInputBar, AIPlanCard, ThinkingOrbs, AIActionBar, ReasoningTrace, AIDiffBlock, FloatingAssistantWidget — reach for these instead of hand-rolling a chat box; a plain white-card dashboard with no signature surface is a build defect, not a valid minimal choice`,
-  webapp: `PRIORITIZE THESE for this build (general web app) — reach for them before scanning the full catalog below; it's still there for anything not covered here.
-Core: Button, Card, GlassPanel, SpotlightCard, EmptyState, Tabs, Dialog, Accordion, Switch, Input, Textarea
-Data: DataRow, StatBlock, AnimatedNumber, ProgressRing, Sparkline, AvatarStack, FilterChipBar
-Feedback: ToastStack, ConfirmModal, Drawer, Tooltip, PopoverMenu, AnnouncementBar
-Forms: StepperWizard, CustomCheckbox, CustomRadio, RangeSlider
-Layout & hero: AuroraBackground, BackgroundGrid, HeroHeadline, SectionHeading, FeatureCard, BentoGrid, BentoCard, Navbar, Footer, CTASection
-AI/agent features (if this product has any AI/assistant/automation surface): AIAssistantPanel, PromptInputBar, AIPlanCard, ThinkingOrbs, AIActionBar, ReasoningTrace, AIDiffBlock, FloatingAssistantWidget`,
+Plans: PricingCard, PricingToggle, PlanComparisonMatrix
+Surfaces & basics: Card, ExpandableCard, Button, Badge, Switch, Tabs
+AI/agent features (only if this product has an AI, assistant or automation surface): AIAssistantPanel, PromptInputBar, AIPlanCard, AIActionBar, ReasoningTrace, AIDiffBlock, FloatingAssistantWidget`,
+  webapp: `PRIORITIZE THESE for this build (general web app). The kit gives the structure, the DESIGN DIRECTION gives the look; reach for these before scanning the catalog below.
+Core: Button, Card, EmptyState, Tabs, Dialog, Accordion, Switch, Input, Textarea
+Data: DataRow, StatBlock, AnimatedNumber, ProgressRing, Sparkline, AvatarStack, FilterChipBar, StickyTable
+Feedback: ToastStack, ConfirmModal, Drawer, Tooltip, PopoverMenu
+Forms: StepperWizard, CustomCheckbox, CustomRadio, RangeSlider, FloatingLabelInput
+Layout: HeroHeadline, SectionHeading, FeatureCard, BentoGrid, BentoCard, Navbar, Footer, CTASection
+AI/agent features (only if this product has an AI, assistant or automation surface): AIAssistantPanel, PromptInputBar, AIPlanCard, AIActionBar, ReasoningTrace, AIDiffBlock, FloatingAssistantWidget`,
 }
 
 // Compact API reference injected into the generation system prompt — the ONLY
@@ -6923,9 +6939,14 @@ AI/agent features (if this product has any AI/assistant/automation surface): AIA
 // if you change an export or prop above, update this block in the same commit
 // (the test cross-checks every export name listed here exists in the source).
 export const WYBER_UI_KIT_PROMPT = `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-WYBER UI KIT — PRE-BUILT PREMIUM COMPONENTS (USE THESE — do NOT hand-write equivalents)
+WYBER UI KIT — OUR OWN DESIGN SYSTEM: STRUCTURE FROM THE KIT, LOOK FROM THE DESIGN DIRECTION
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-The platform injects src/wyber-ui.tsx into every build: ~163 production-grade, motion-enabled components already themed by YOUR design tokens. Import them instead of writing your own buttons/cards/heroes — they make the app feel premium at zero token cost. Unused imports are tree-shaken.
+The platform injects src/wyber-ui.tsx into every build: about 165 components themed by YOUR design tokens. QUIET CRAFT RULES (they win over anything further down this reference):
+1. Build STRUCTURE from the kit: navigation, footer, section headings, cards, forms, tables, tabs, dialogs, toasts, accordions, pricing, testimonials, stats. Import them; do not hand-write equivalents.
+2. The LOOK comes from the DESIGN DIRECTION block: its palette, type, spacing and moves. The kit adapts to your tokens; do not add decoration the direction did not ask for.
+3. EFFECT components are OFF unless the DESIGN DIRECTION block names that effect: ${KIT_EFFECT_COMPONENTS.join(', ')}. Using one the direction did not allow is wrong; the anti-slop rules forbid glossy blobs, orbs, aurora, holographic cards and gradient text.
+4. Motion: Reveal, Stagger, StaggerItem and AnimatedNumber only, one quiet reveal per section, never on every element.
+5. Where the catalog below says "use" or "THE centerpiece" for an EFFECT component, rule 3 overrides it. Unused imports are tree-shaken.
 
 Import (relative — from src/App.tsx use './wyber-ui', from src/components/* use '../wyber-ui'):
 import { Button, SpotlightCard, BentoGrid, BentoCard, Reveal, Stagger, StaggerItem, SectionHeading, HeroHeadline, NoiseOverlay, StickyShowcase, ScrollStack, Parallax, SplitTextReveal, ScrollProgress, TiltCard, LiquidUnderline, Navbar, Footer, CTASection, PricingCard, TestimonialCard, FeatureCard, StatBlock, AnimatedNumber, Marquee, AuroraBackground, BackgroundGrid, GradientBorder, GlassPanel, Card, Badge, Input, Textarea, Tabs, Dialog, Accordion, Switch, Skeleton, EmptyState, MonoLabel, SectionNumber, EditorialHeadline, HairlineFrame, MediaFrame, PinnedStory, DataRow, CursorGlow, cn } from './wyber-ui'
@@ -7144,6 +7165,7 @@ AI / AGENT INTERFACES:
 
 RULES:
 - PREFER kit components over hand-rolled ones for: nav, footer, pricing, testimonials, FAQ, stats, feature grids, CTAs, modals, tabs.
-- Landing pages: hero gets <AuroraBackground/> or <BackgroundGrid/> behind it; every section wrapped in <Reveal> or <Stagger>; use <BentoGrid> for feature showcases.
+- If the build has a DESIGN DIRECTION block, it wins: follow its hero medium, motion and hard rules, and ignore every effect default in this list (no aurora/glow/orb/mesh/spotlight, no Reveal on every section).
+- Otherwise: a landing-page hero may use <BackgroundGrid/> (or <AuroraBackground/> sparingly, once); use <Reveal>/<Stagger> where they serve the content, not on every section; use <BentoGrid> for feature showcases.
 - You may still write custom components for app-specific UI (tables, kanban, calendars) — style them with the same tokens.
 - Do NOT create src/wyber-ui.tsx yourself, do NOT re-export from it, do NOT import it in index.css.`

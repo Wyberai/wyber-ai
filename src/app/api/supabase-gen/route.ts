@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
+import { createAnthropic } from '@/lib/ai-usage'
 import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models';
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY ?? 'placeholder' });
+const client = createAnthropic('app/api/supabase-gen', { apiKey: process.env.ANTHROPIC_API_KEY ?? 'placeholder' });
 
 export async function POST(req: NextRequest) {
   const { projectDescription, files, framework } = await req.json();

@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { createAnthropic } from '@/lib/ai-usage'
 import { createClient } from '@/lib/supabase/server'
 import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 import { cleanAppName } from '@/lib/app-name'
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY ?? 'placeholder' })
+const client = createAnthropic('app/api/projects/auto-name', { apiKey: process.env.ANTHROPIC_API_KEY ?? 'placeholder' })
 
 /**
  * Name a project from its creation prompt, at creation time.

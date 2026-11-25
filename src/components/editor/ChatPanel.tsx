@@ -1,5 +1,11 @@
 'use client'
+import { notBuiltSentence } from '@/lib/not-built-note';
+import { explainableNoChange } from '@/lib/no-change-reply';
+import { repairStringSeams } from '@/lib/string-seam'
 import { creditCost, type ActionType } from '@/lib/credits';
+import { findHeroImage, heroPrompt } from '@/lib/hero-upsell';
+import { replaceTokenInFiles } from '@/lib/image-directives';
+import { persistProjectFiles } from '@/lib/persist-project';
 import { track } from '@/lib/track';
 import { useEditorStore } from '@/store/editor';
 import { useRef, useEffect, useState, useCallback, memo, useMemo, type ReactNode } from 'react';
@@ -18,9 +24,16 @@ import { LoopGuard } from '@/lib/agents/loop-guard';
 import { runQaChecks } from '@/lib/agents/qa-checks';
 import { parsePlanManifest, buildStagedPlan, capPlannedFiles, pickRouterFile, forgeLine, diffPlannedAgainstWritten, wireLooksApplied, type PlannedFile, EDIT_COMPLETENESS_MIN_FILES, FILL_BATCH_SIZE } from '@/lib/staged-plan';
 import { isImportedButMissing } from '@/lib/stub-missing-imports';
+import { withTimeout, isBuildStuck } from '@/lib/stuck-build';
+import { classifyEditTurn, buildEditRetryPrompt, buildNoChangeRetryPrompt, ALREADY_THERE_MSG, EDIT_RETRY_MSG, EDIT_GAVE_UP_MSG } from '@/lib/edit-outcome';
 import { scrubCopy } from '@/lib/customer-copy-rules';
 import { deterministicWire } from '@/lib/deterministic-wire';
 import { resolveBuildTier, largestAffordableSmallerBuild } from '@/lib/credits';
+import { isLaunchReadyApp, floorBuildTier, launchReadyCostText, checkLaunchReady, launchReadySummary } from '@/lib/launch-ready';
+import { isLaunchReadyWebsite, floorWebsiteTier, websiteLaunchReadyCostText, checkWebsiteReady, websiteReadySummary, contactNudge } from '@/lib/website-ready';
+import { isLaunchReadySaas, floorSaasTier, saasLaunchReadyCostText, checkSaasReady, saasReadySummary } from '@/lib/saas-ready';
+import { checkReplacement, replacementSummary, hasReplacementChecklist } from '@/lib/byos/acceptance';
+import { isLaunchReadyMobile, floorMobileTier, mobileLaunchReadyCostText, checkMobileReady, mobileReadySummary } from '@/lib/mobile-ready';
 import { useAgentTurnStore } from '@/store/agent-turn';
 import type { ChatMessage } from '@/store/editor';
 import { AgentTeamFeed, AgentFeedBoundary } from './agent-team/AgentTeamFeed';
@@ -34,7 +47,7 @@ import { UpgradeModal, type NextFeatureSuggestion } from './UpgradeModal';
 import { PLAN_FACTS } from '@/lib/plans';
 import { PlanMode } from './PlanMode';
 import { DirectionCards } from './DirectionCards';
-import { VoiceButton } from './VoiceButton';
+import { VoiceBuildButton } from '@/components/voice/VoiceBuildButton';
 import { FileMentionDropdown } from './FileMentionDropdown';
 import { useT } from '@/lib/i18n/useT';
 import { useLocale } from '@/lib/i18n/LocaleProvider';
@@ -299,10 +312,10 @@ function CodeBlock({ lang, code }: { lang: string; code: string }) {
   return (
     <div style={{ margin:'6px 0', borderRadius:8, border:'1px solid var(--ide-border)', background:'var(--bg-overlay)', overflow:'hidden' }}>
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'4px 8px', borderBottom:'1px solid var(--ide-border)', background:'var(--bg-base)' }}>
-        <span style={{ fontSize:10, color:'var(--ide-text3)', fontFamily:'monospace', textTransform:'uppercase', letterSpacing:'0.04em' }}>{lang || 'code'}</span>
+        <span style={{ fontSize: 12, color:'var(--ide-text3)', fontFamily:'monospace', textTransform:'uppercase', letterSpacing:'0.04em' }}>{lang || 'code'}</span>
         <button
           onClick={() => { navigator.clipboard.writeText(code).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); }); }}
-          style={{ fontSize:10, padding:'2px 7px', borderRadius:5, border:'1px solid var(--ide-border)', background:'transparent', color: copied ? 'var(--ide-green)' : 'var(--ide-text3)', cursor:'pointer', fontWeight:600 }}
+          style={{ fontSize: 12, padding:'2px 7px', borderRadius:5, border:'1px solid var(--ide-border)', background:'transparent', color: copied ? 'var(--ide-green)' : 'var(--ide-text3)', cursor:'pointer', fontWeight:600 }}
         >
           {copied ? '✓ Copied' : 'Copy'}
         </button>
@@ -395,6 +408,18 @@ const isTextFile = (f: File) => f.type.startsWith('text/') || f.type === 'applic
 const isPdfFile = (f: File) => f.type === 'application/pdf' || /\.pdf$/i.test(f.name);
 const isSpreadsheetFile = (f: File) => /\.xlsx?$/i.test(f.name);
 const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
+// Next-step prompts for the latest finished build. The first one is shown as the single recommended step and runs on one
+// click (owner decision, 18 Nov 2026: one line, one button). The list is the same for everyone of that project type, so
+// nothing here claims to know the user's project.
+function nextStepsFor(projectType?: string): string[] {
+  switch (projectType) {
+    case 'website': return ['Add a contact form', 'Add a pricing section', 'Improve it for search (SEO)'];
+    case 'mobile': return ['Add a profile screen', 'Add an empty state for each list', 'Make the buttons bigger and easier to tap'];
+    case 'saas': return ['Add a billing page', 'Add team members and roles', 'Add a first-time setup checklist'];
+    default: return ['Add sign-in and user accounts', 'Make it work well on a phone', 'Add a settings page'];
+  }
+}
+
 interface Props { projectId?: string; userId?: string; projectType?: string }
 
 type ModelTier = 'fast' | 'default' | 'premium' | 'fable' | 'gpt';
@@ -424,6 +449,16 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
   // A message typed while a build/edit is running; sent once it finishes.
   const [queuedMsg, setQueuedMsg] = useState<string | null>(null);
   const autoSendQueuedRef = useRef<string | null>(null);
+  // Agency mode "Fix with AI": the Clients page leaves a drafted prompt for this project. It fills the box so you can
+  // read and edit it, and is never sent for you (every build and edit costs credits).
+  useEffect(() => {
+    if (!resolvedProjectId || !hydrated) return;
+    try {
+      const key = `wyber_draft_${resolvedProjectId}`;
+      const draft = sessionStorage.getItem(key);
+      if (draft) { sessionStorage.removeItem(key); setInput(draft); }
+    } catch { /* storage blocked: nothing to prefill */ }
+  }, [resolvedProjectId, hydrated]);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   // Locally-dismissed design-quality suggestion chips — component-local only,
   // no store/DB change (the suggestion itself is already non-persisted).
@@ -476,6 +511,62 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
     }
     return out;
   }, [messages]);
+  // Watchdog for a "working" bubble nothing is working on. Individual paths have orphaned one more than once (the
+  // 'Working on your changes...' spinner, 16 Nov), and each was fixed by hand and came back. This is the backstop that
+  // does not depend on which path forgot: when no generation is running, an assistant bubble still 'streaming' is closed.
+  // Empty ones (the generic spinner) after 45 s; ones with text (e.g. the dropped-connection rescue, which really polls for
+  // up to 3 minutes) after 4.5 min. Chains dispatch their next pass within ~1 s, so this never fires mid-chain.
+  useEffect(() => {
+    if (isGenerating) return;
+    const stuck = messages.filter(m => m.role === 'assistant' && m.status === 'streaming');
+    if (stuck.length === 0) return;
+    const timers = stuck.map(m => setTimeout(() => {
+      if (useEditorStore.getState().isGenerating) return;
+      const cur = useEditorStore.getState().messages.find(x => x.id === m.id);
+      if (!cur || cur.status !== 'streaming') return;
+      if (!cur.content && !cur.filesChanged?.length) setMessages(prev => prev.filter(x => x.id !== m.id));
+      else updateMessage(m.id, { status: 'done', content: cur.filesChanged?.length ? cur.content : 'That step stopped without a result. Send your request again if something is missing.' });
+    }, m.content ? 270_000 : 45_000));
+    return () => timers.forEach(clearTimeout);
+  }, [isGenerating, messages, setMessages, updateMessage]);
+  // The newest finished build (a message that changed files): the only one that offers next-step chips.
+  const nextStepMsgId = useMemo(() => {
+    for (let i = visibleMessages.length - 1; i >= 0; i--) {
+      const m = visibleMessages[i];
+      if (m.role === 'assistant' && m.status === 'done' && m.filesChanged?.length) return m.id;
+      if (m.role === 'assistant' && m.status === 'streaming') return null;
+    }
+    return null;
+  }, [visibleMessages]);
+  useEffect(() => { setDismissedNext(false); }, [nextStepMsgId]);
+
+  // Paid upsell after a build: swap the generated first-screen picture for an art-directed, high-quality one. Two clicks, so a
+  // stray click never spends credits: the first shows the price, the second generates.
+  const [heroStage, setHeroStage] = useState<'idle' | 'confirm' | 'busy'>('idle');
+  const [heroNote, setHeroNote] = useState('');
+  const heroImageUrl = useMemo(() => findHeroImage(files as Record<string, { content?: string }>), [files]);
+  const heroCost = creditCost('hero-image-gen');
+  const upgradeHero = async () => {
+    if (!resolvedProjectId || !heroImageUrl || heroStage === 'busy') return;
+    setHeroStage('busy'); setHeroNote('');
+    try {
+      const res = await fetch('/api/images/regenerate', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId: resolvedProjectId, prompt: heroPrompt(files as Record<string, { content?: string }>, project?.name), ratio: '1792x1024', quality: 'high' }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.url) { setHeroNote(data.error || 'That did not work and you were not charged.'); setHeroStage('idle'); return; }
+      const updated = replaceTokenInFiles(files as Record<string, { content?: string }>, heroImageUrl, data.url) as typeof files;
+      setFiles(updated);
+      void persistProjectFiles(resolvedProjectId, updated, resolvedUserId);
+      if (typeof data.credits === 'number') useEditorStore.getState().setCredits(data.credits);
+      track('hero_upgrade_done', { projectType: projectType || 'unknown' });
+      setHeroNote('New hero image is in. Check the preview.');
+      setHeroStage('idle');
+    } catch {
+      setHeroNote('Network error. You were not charged.'); setHeroStage('idle');
+    }
+  };
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState('');
   const [elapsed, setElapsed] = useState(0);
@@ -493,6 +584,23 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
     }, 1000);
     return () => clearInterval(t);
   }, [isGenerating]);
+  // Safety net: if nothing is running and nothing has moved for a few minutes while the build still shows as working, close it
+  // ourselves. The build is saved on the server, so the honest state is "built, check the preview", never an endless timer.
+  useEffect(() => {
+    if (!isGenerating) return;
+    const timer = setInterval(() => {
+      if (!isBuildStuck({ isGenerating: true, inflight: inflightGenRef.current, lastActivityAt: lastActivityRef.current, now: Date.now() })) return;
+      const st = useEditorStore.getState();
+      const hasFiles = Object.keys(st.files ?? {}).length > 0 && st.hasGeneratedFiles;
+      const stuck = (st.messages ?? []).filter(m => m.role === 'assistant' && m.status === 'streaming');
+      const text = hasFiles ? 'Built it. Open the preview and tell me what to change next.' : "That took longer than it should. Nothing more is running. Please try again.";
+      for (const m of stuck) st.updateMessage(m.id, hasFiles ? { content: text, status: 'done' } : { content: text, status: 'error' });
+      st.setIsGenerating(false);
+      setProgressSteps([]);
+      clearStreamingContent();
+    }, 15_000);
+    return () => clearInterval(timer);
+  }, [isGenerating, clearStreamingContent]);
   // Phase label derived from elapsed time: one phase per ~10s, CLAMPED at the
   // last entry. The old version advanced every second and wrapped with %, so
   // the label cycled the whole list every few seconds — users watched builds
@@ -591,9 +699,11 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Ref so event handlers always get the latest executeGeneration without stale closure
-  const executeGenerationRef = useRef<((msg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'wire' | 'agentFix'; stageFiles?: string[]; stagePurposes?: string[]; internalPass?: boolean; finalPass?: boolean; quietRetryEligible?: boolean; preserveAgentTurn?: boolean; completenessRetryFor?: PlannedFile[]; completenessRetryCount?: number; knownPlan?: PlannedFile[]; totalPlannedFiles?: number; buildId?: string; buildComplexity?: 'HIGH' | 'LOW'; sharedBubbleId?: string; autoRetry?: boolean }) => Promise<boolean>) | null>(null);
+  const executeGenerationRef = useRef<((msg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'wire' | 'agentFix'; stageFiles?: string[]; stagePurposes?: string[]; internalPass?: boolean; finalPass?: boolean; quietRetryEligible?: boolean; qaFix?: boolean; preserveAgentTurn?: boolean; completenessRetryFor?: PlannedFile[]; completenessRetryCount?: number; knownPlan?: PlannedFile[]; totalPlannedFiles?: number; buildId?: string; buildComplexity?: 'HIGH' | 'LOW'; sharedBubbleId?: string; autoRetry?: boolean }) => Promise<boolean>) | null>(null);
   // Cap consecutive self-heal (autofix) runs so a broken build can't loop and drain credits.
   const autofixCountRef = useRef(0);
+  // One automatic retry per user turn when the reply changed nothing and explained nothing.
+  const noChangeRetriedRef = useRef(false);
   // Set by executeGeneration whenever ITS OWN completeness check (4c) just
   // dispatched a repair pass for files this turn never wrote — mirrors the
   // ownsBubble-gated `completenessRetryFired` local var below, but exposed
@@ -645,6 +755,8 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
   // extended to buildSystemPrompt(), tiered edit pricing) ships.
   const MAX_TOTAL_REPAIR_PASSES = 2;
   const totalRepairPassesRef = useRef(0);
+  // What the launch-ready fix pass was asked to add; its closing message names these instead of a generic "done".
+  const qaSummaryRef = useRef('');
   // One-shot guard so an already-exhausted budget only ever posts its
   // loopStop/"budget reached" message once per turn, regardless of how many
   // separate mechanisms (ChatPanel's own retries, PreviewPanel's independent
@@ -693,6 +805,9 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
   // Distinguishes a user-pressed Stop from the 320s auto-timeout hitting the
   // same AbortController, so the resulting message can be honest about which.
   const userStoppedRef = useRef(false);
+  // Stuck-bubble safety net (see src/lib/stuck-build.ts): how many generate requests run on this page, and when anything last moved.
+  const inflightGenRef = useRef(0);
+  const lastActivityRef = useRef(Date.now());
   // Whether the tab was backgrounded at any point during the CURRENT
   // generation attempt — the only real corroborating signal for "the
   // computer slept / tab was backgrounded", which is what
@@ -712,7 +827,29 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
     return () => document.removeEventListener('visibilitychange', onVisibilityChange);
   }, []);
 
-  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior:'smooth' }); }, [messages, streamingContent]);
+  // Follow new content only while the reader is at the bottom. If they scrolled up to read, leave them there and
+  // offer a "Jump to latest" button. Instant (not smooth) so streaming does not fight the scrollbar, and so
+  // reduced-motion settings are respected by construction.
+  const listRef = useRef<HTMLDivElement>(null);
+  const stuckRef = useRef(true);
+  const [showJump, setShowJump] = useState(false);
+  const [feedback, setFeedback] = useState<Record<string, 'up' | 'down' | undefined>>({});
+  const [dismissedNext, setDismissedNext] = useState(false);
+  const onListScroll = useCallback(() => {
+    const el = listRef.current; if (!el) return;
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+    stuckRef.current = atBottom;
+    setShowJump(prev => (prev === !atBottom ? prev : !atBottom));
+  }, []);
+  const jumpToLatest = useCallback(() => {
+    const el = listRef.current; if (!el) return;
+    el.scrollTop = el.scrollHeight; stuckRef.current = true; setShowJump(false);
+  }, []);
+  useEffect(() => {
+    const el = listRef.current; if (!el) return;
+    if (stuckRef.current) el.scrollTop = el.scrollHeight;
+    else setShowJump(true);
+  }, [messages, streamingContent]);
 
   useEffect(() => {
     const ta = textareaRef.current; if (!ta) return;
@@ -925,6 +1062,11 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
           return
         }
       }
+      // A failed-edit retry that cannot run (budget spent) must still tell the user, never vanish.
+      if (detail.editRetry && (totalRepairPassesRef.current >= MAX_TOTAL_REPAIR_PASSES || (autofixCountRef.current >= MAX_AUTOFIX && !detail.completenessRetryFor?.length))) {
+        useEditorStore.getState().addMessage({ id: uid(), role: 'assistant', content: EDIT_GAVE_UP_MSG, timestamp: Date.now(), status: 'done' })
+        return
+      }
       // Combined ceiling across every repair mechanism (see MAX_TOTAL_REPAIR_PASSES
       // above) — checked first, before either mechanism's own per-type cap, since
       // this is the one point ALL of them dispatch through. Tell the user plainly
@@ -984,7 +1126,7 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
       // continuation: this is the user's own build still in flight (cut stream,
       // missing entry file, failed patches) → visible bubble + persisted receipt.
       // Untagged events (runtime-error self-heals from the preview) stay silent.
-      executeGenerationRef.current?.(detail.prompt, null, { silent: true, continuation: !!detail.continuation, completenessRetryFor: detail.completenessRetryFor, completenessRetryCount: detail.completenessRetryCount })
+      executeGenerationRef.current?.(detail.prompt, null, { silent: true, continuation: !!detail.continuation, qaFix: !!detail.qaFix, completenessRetryFor: detail.completenessRetryFor, completenessRetryCount: detail.completenessRetryCount })
     }
     window.addEventListener('wyber-autofix', autofixHandler)
     // Connector/theme panels send prompts via this event
@@ -1266,14 +1408,14 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
     })();
   }, [resolvedProjectId, resolvedUserId, addMessage, setProject]);
 
-  const executeGeneration = useCallback(async (userMsg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'wire' | 'agentFix'; stageFiles?: string[]; stagePurposes?: string[]; internalPass?: boolean; finalPass?: boolean; quietRetryEligible?: boolean; preserveAgentTurn?: boolean; completenessRetryFor?: PlannedFile[]; completenessRetryCount?: number; knownPlan?: PlannedFile[]; totalPlannedFiles?: number; buildId?: string; buildComplexity?: 'HIGH' | 'LOW'; sharedBubbleId?: string; autoRetry?: boolean }) => {
+  const executeGeneration = useCallback(async (userMsg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'wire' | 'agentFix'; stageFiles?: string[]; stagePurposes?: string[]; internalPass?: boolean; finalPass?: boolean; quietRetryEligible?: boolean; qaFix?: boolean; preserveAgentTurn?: boolean; completenessRetryFor?: PlannedFile[]; completenessRetryCount?: number; knownPlan?: PlannedFile[]; totalPlannedFiles?: number; buildId?: string; buildComplexity?: 'HIGH' | 'LOW'; sharedBubbleId?: string; autoRetry?: boolean }) => {
     // Clear any stale progress steps/reasoning from a previous generation before starting
     setProgressSteps([]);
     setLiveReasoning('');
     completenessRetryFiredRef.current = false;
     streamCutRef.current = false;
     // A fresh user-initiated turn resets the self-heal budget (silent autofix runs do not).
-    if (!opts?.silent && !opts?.autoRetry) { autofixCountRef.current = 0; loopGuardRef.current.reset(); buildAutoRetryCountRef.current = 0; totalRepairPassesRef.current = 0; repairBudgetNotifiedRef.current = false; }
+    if (!opts?.silent && !opts?.autoRetry) { autofixCountRef.current = 0; noChangeRetriedRef.current = false; loopGuardRef.current.reset(); buildAutoRetryCountRef.current = 0; totalRepairPassesRef.current = 0; repairBudgetNotifiedRef.current = false; }
     // A genuinely fresh visible turn — not a staged pass (stage set), not a
     // self-heal/autofix rerun (silent), not a truncated-stream continuation,
     // not runAgenticBuild's own fallback re-entry (preserveAgentTurn). This is
@@ -1333,7 +1475,7 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
     // background pass") for the UI/eligibility checks elsewhere that don't
     // care about money.
     const isSelfHeal = !!opts?.silent;
-    const freeSelfHeal = isSelfHeal && totalRepairPassesRef.current <= FREE_REPAIR_PASSES;
+    const freeSelfHeal = isSelfHeal && (!!opts?.qaFix || totalRepairPassesRef.current <= FREE_REPAIR_PASSES);
     if (!freeSelfHeal) consumeCredit();
     // displayContent lets a caller send a large/technical userMsg to the model
     // (e.g. an approved plan's full spec) while showing something clean and
@@ -1542,6 +1684,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
                 prompt: userMsg, stage: 'plan', projectType,
                 userId: resolvedUserId, projectId: resolvedProjectId, isFirstBuild: true,
               }),
+              signal: AbortSignal.timeout(60_000),
             }).then(r => r.ok ? r.text() : '').then(parsePlanManifest).catch(() => [] as PlannedFile[]))
       : null;
     const completenessPlanPromise = editPlanPromise ?? newBuildPlanPromise;
@@ -1608,6 +1751,8 @@ const storeProjectId = useEditorStore.getState().project?.id;
     // Lets a dropped stream pick up the server's finished output (see the
     // reader loop below and "Resumable turns" in api/generate/route.ts).
     const turnId = crypto.randomUUID();
+    inflightGenRef.current += 1;
+    lastActivityRef.current = Date.now();
     try {
       const res = await fetch('/api/generate', {
         method:'POST',
@@ -1770,6 +1915,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
           const { done, value } = await reader.read();
           if (done) break;
           armIdleTimer();
+          lastActivityRef.current = Date.now();
           full += decoder.decode(value, { stream:true });
 
           // Extract [progress: ...] markers and surface them live
@@ -1891,15 +2037,19 @@ const storeProjectId = useEditorStore.getState().project?.id;
       const langMap: Record<string,string> = { ts:'typescript', tsx:'typescript', js:'javascript', jsx:'javascript', css:'css', html:'html', json:'json', vue:'vue' };
       // 1. Apply full <file> blocks (new files or full rewrites)
       if (newFiles.length > 0) {
-        for (const { path, content } of newFiles) {
+        for (const { path, content: rawContent } of newFiles) {
           const ext = path.split('.').pop() ?? '';
+          // A string split by a newline where output was cut at the token limit and continued never compiles: rejoin it.
+          const content = repairStringSeams(path, rawContent).content;
           updatedFiles[path] = { path, content, language: langMap[ext] ?? 'plaintext' };
         }
       }
       // 2. Apply <edit> diff blocks (fast path)
       let failedPaths: string[] = [];
+      let changedByEdits = 0;
       if (editBlocks.length > 0) {
         const result = applyEdits(updatedFiles, editBlocks);
+        changedByEdits = Object.keys(result.updated).length;
         for (const [path, content] of Object.entries(result.updated)) {
           const ext = path.split('.').pop() ?? '';
           updatedFiles[path] = { path, content, language: langMap[ext] ?? 'plaintext' };
@@ -1978,10 +2128,44 @@ const storeProjectId = useEditorStore.getState().project?.id;
       // by design) — but never on the QA fix pass itself (silent, no stage),
       // so a failed fix can't loop.
       const qaEligible = !isSelfHeal || (opts?.stage === 'fill' && !!opts?.finalPass)
-      if (AGENT_TEAM_ENABLED && qaEligible && !fileCut && !editCut
+      // The agent team UI is off, but the launch-ready source checks (web app, website, SaaS, mobile) and the
+      // Replace-your-SaaS feature check are not part of it: they run on their own gate, show their result as a
+      // normal chat message, and act only on their own findings (never on the older generic structural checks).
+      const launchQaOn = isLaunchReadyApp(projectType) || isLaunchReadyWebsite(projectType) || isLaunchReadySaas(projectType)
+        || isLaunchReadyMobile(projectType) || !!checkReplacement(updatedFiles)
+      // The launch-ready check and its fix pass belong to a FIRST build only. After that, a request such as "add a settings page"
+      // changes only what was asked: running the check there started an unrequested pass (found 16 Nov). `hasGeneratedFiles` is the value
+      // from before this pass; the final staged fill pass is part of the first build.
+      const qaFirstBuild = !hasGeneratedFiles || (opts?.stage === 'fill' && !!opts?.finalPass)
+      if ((AGENT_TEAM_ENABLED || (launchQaOn && qaFirstBuild)) && qaEligible && !fileCut && !editCut
           && (!opts?.stage || opts?.finalPass)
           && (newFiles.length > 0 || editBlocks.length > 0)) {
-        const qaIssues = runQaChecks(updatedFiles, projectType).filter(i => i.kind !== 'missing-entry')
+        const say = (text: string) => {
+          if (AGENT_TEAM_ENABLED) { pushAgentEvents({ agent: 'qa', status: 'done', detail: text }); return }
+          useEditorStore.getState().addMessage({ id: uid(), role: 'assistant', content: text, timestamp: Date.now(), status: 'done' })
+          persistMessage('assistant', text)
+        }
+        const qaIssues = runQaChecks(updatedFiles, projectType)
+          .filter(i => i.kind !== 'missing-entry')
+          .filter(i => AGENT_TEAM_ENABLED || i.kind === 'launch-ready')
+        // Launch-ready web apps: tell the owner plainly what the source check found (it reads code, it does not run the app).
+        // When a fix pass follows, stay quiet: it ends with one "finished the last checks" line instead of a list of what was missing first.
+        const fixFollows = qaIssues.length > 0
+        if (isLaunchReadyApp(projectType)) {
+          if (!fixFollows) say(launchReadySummary(checkLaunchReady(updatedFiles)))
+        } else if (isLaunchReadyWebsite(projectType)) {
+          if (!fixFollows) say(websiteReadySummary(checkWebsiteReady(updatedFiles)))
+          // A site with no contact facts cannot be reached: say so once, and how to fix it.
+          const contactMsg = contactNudge(updatedFiles)
+          if (contactMsg) say(contactMsg)
+        } else if (isLaunchReadySaas(projectType) && !hasReplacementChecklist(updatedFiles)) {
+          if (!fixFollows) say(saasReadySummary(checkSaasReady(updatedFiles)))
+        } else if (isLaunchReadyMobile(projectType)) {
+          if (!fixFollows) say(mobileReadySummary(checkMobileReady(updatedFiles)))
+        }
+        // Replace-your-SaaS builds: tell the owner how many of the listed features really appear on a screen.
+        const replacement = checkReplacement(updatedFiles)
+        if (replacement) say(replacementSummary(replacement))
         if (qaIssues.length > 0) {
           qaRetryFired = true
           // Same reasoning as the placeholder-retry branch above.
@@ -1992,13 +2176,17 @@ const storeProjectId = useEditorStore.getState().project?.id;
           // feed the user is looking at right after their build finished —
           // that made a normal-looking build sprout a list of problems it
           // supposedly just had, right as it wrapped up.
+          // The fix prompts say what is missing; this tells the model how to answer (a pass that only
+          // talks changes nothing, which is what the first localhost test of this wiring produced).
           const combined = qaIssues.slice(0, 4).map(i => i.fixPrompt).join('\n')
+            + '\nMake these changes now. Output each changed file as a COMPLETE <file> block (only files that change; keep every other behaviour and all owner facts as they are). AUTOMATED CONTINUATION: after the last </file> tag, write ZERO additional words.'
+          qaSummaryRef.current = qaIssues.slice(0, 4).map(i => i.detail.replace(/^(Replacement feature missing|Missing|Add):?\s*/i, '')).join('; ')
           setTimeout(() => {
             window.dispatchEvent(new CustomEvent('wyber-autofix', {
               detail: { continuation: true, qaFix: true, prompt: combined }
             }))
           }, 700)
-        } else {
+        } else if (!replacement && !isLaunchReadyApp(projectType) && !isLaunchReadyWebsite(projectType) && !isLaunchReadySaas(projectType) && !isLaunchReadyMobile(projectType)) {
           pushAgentEvents({ agent: 'qa', status: 'done', detail: t('qaPassedMsg') })
         }
       }
@@ -2014,7 +2202,8 @@ const storeProjectId = useEditorStore.getState().project?.id;
       // wyber-autofix continuation the other safety nets above use.
       if (completenessPlanPromise && !fileCut && !editCut && !placeholderRetryFired && !qaRetryFired
           && (newFiles.length > 0 || editBlocks.length > 0)) {
-        const planned = await completenessPlanPromise
+        // Bounded: a slow plan request must never hold the whole build bubble open (live, 23 Nov: files written, bubble stuck for ever).
+        const planned = await withTimeout(completenessPlanPromise, 25_000, [] as PlannedFile[])
         if (planned.length >= EDIT_COMPLETENESS_MIN_FILES) {
           const writtenPaths = [...newFiles.map(f => f.path), ...editBlocks.map(e => e.path)]
           // On a NEW build the plan is only a forecast: the build model often
@@ -2223,7 +2412,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
       if (failedPaths.length > 0) {
         setTimeout(() => {
           window.dispatchEvent(new CustomEvent('wyber-autofix', {
-            detail: { continuation: true, prompt: `Some edits could not be applied automatically. Output the COMPLETE updated <file> block (full file contents, not a diff) for each of these files: ${failedPaths.join(', ')}. AUTOMATED CONTINUATION: after the last </file> tag, write ZERO additional words.` }
+            detail: { continuation: true, editRetry: true, prompt: buildEditRetryPrompt(failedPaths, updatedFiles as Record<string, { content?: string } | string>, userMsg) }
           }));
         }, 400);
       }
@@ -2260,7 +2449,9 @@ const storeProjectId = useEditorStore.getState().project?.id;
       // (confirmed live: a turn claimed "Loaded all 50 restaurants" while nothing in the
       // app changed). The server mirrors this same check before deciding whether to
       // refund (see generate/route.ts), so this case is never silently charged either.
-      const hasRealChange = newFiles.length > 0 || editBlocks.length > 0;
+      // Edits that matched nothing are not a change either, but a retry is already on its way for them (step 4 above).
+      const editOutcome = classifyEditTurn({ editBlockCount: editBlocks.length, newFileCount: newFiles.length, changedPathCount: changedByEdits, failedPathCount: failedPaths.length });
+      const hasRealChange = editOutcome === 'applied' || editOutcome === 'unmatched';
       if (!hasRealChange) {
         // An internal pass the orchestrator is about to silently retry (see
         // the fill-batch loop's quietRetryEligible on its first attempt only)
@@ -2270,16 +2461,37 @@ const storeProjectId = useEditorStore.getState().project?.id;
         // message if this was NOT a quiet-retry-eligible attempt (i.e. the
         // retry itself also came back empty, or this was a user-visible turn
         // to begin with).
-        if (isVisible && !editIncompleteReported && !opts?.quietRetryEligible) {
+        if (isVisible && !editIncompleteReported && !opts?.quietRetryEligible && !opts?.qaFix) {
           const emittedNothing = full.trim().length === 0;
+          // When the model wrote a real explanation or question (it declined to invent reviews, say), show that, not a canned error.
+          const explained = (fileCut || editCut || emittedNothing) ? null : explainableNoChange(full);
+          // The edit matched but left the page as it was: the thing is already there. Say so plainly.
+          if (editOutcome === 'already-there') {
+            updateMessage(assistantId, { content: ALREADY_THERE_MSG, status: 'done' });
+            persistMessage('assistant', ALREADY_THERE_MSG);
+            setLiveReasoning('');
+            return false;
+          }
+          // The reply changed nothing and explained nothing: retry ONCE with a firmer instruction before giving up, so a valid request
+          // is not lost to one empty answer (live, 23 Nov: about 1 in 7 edits). The retry may say "already on the page" or explain.
+          if (editOutcome === 'no-blocks' && !explained && !fileCut && !editCut && hasGeneratedFiles && !opts?.silent && !opts?.stage
+              && !opts?.continuation && !noChangeRetriedRef.current && ownsBubble) {
+            noChangeRetriedRef.current = true;
+            setMessages(prev => prev.filter(m => m.id !== assistantId));
+            setLiveReasoning('');
+            setTimeout(() => {
+              window.dispatchEvent(new CustomEvent('wyber-autofix', { detail: { continuation: true, editRetry: true, prompt: buildNoChangeRetryPrompt(userMsg) } }));
+            }, 300);
+            return false;
+          }
           const errMsg = (fileCut || editCut)
             ? t('streamCutOffMsg')
             : emittedNothing
             ? t('emptyResponseMsg')
-            : t('nothingChangedMsg');
-          updateMessage(assistantId, { content: errMsg, status: (fileCut || editCut) ? 'done' : 'error', retryPrompt: userMsg, retryLane: 'build' });
+            : explained ?? t('nothingChangedMsg');
+          updateMessage(assistantId, { content: errMsg, status: (fileCut || editCut) ? 'done' : (explained ? 'done' : 'error'), retryPrompt: explained ? undefined : userMsg, retryLane: 'build' });
           persistMessage('assistant', errMsg);
-        } else if (isVisible && opts?.quietRetryEligible) {
+        } else if (isVisible && (opts?.quietRetryEligible || opts?.qaFix)) {
           // Close out the streaming bubble this pass added with no visible
           // text rather than an alarming error message — the orchestrator is
           // about to silently retry, and there's no ChatMessage field to fully
@@ -2304,8 +2516,12 @@ const storeProjectId = useEditorStore.getState().project?.id;
       // chatText had already lost (live: they were persisted into history).
       const recapText = lastBlockEnd === -1 ? chatText : stripAgentEvents(full.slice(lastBlockEnd).replace(/^<\/(file|edit)>/, ''));
       let finalContent = cleanMessage(recapText, t('doneCheckPreviewMsg'));
+      // Nothing was placed on the page: do not let the model's "I added it" recap stand. The retry is already running.
+      if (editOutcome === 'unmatched') finalContent = EDIT_RETRY_MSG;
       if (opts?.continuation && finalContent === t('doneCheckPreviewMsg')) {
         finalContent = t('continuationDoneMsg');
+        // A launch-ready fix pass says what it was asked to add, not a generic "done".
+        if (opts?.qaFix && qaSummaryRef.current) finalContent = '✓ Finished the last checks.';
       }
       // A cut stream means the turn ends mid-work — say so, or the preamble
       // reads as a finished summary ("…Let me look at App.tsx:") and the user
@@ -2337,7 +2553,15 @@ const storeProjectId = useEditorStore.getState().project?.id;
       // continuation path used elsewhere) renders its own terminal "done" —
       // or the existing "still missing" message (4d) — once it resolves.
       if (ownsBubble && completenessRetryFired) {
-        updateMessage(assistantId, { status: 'streaming' });
+        // Leaving this bubble at 'streaming' was never resolved by the follow-up pass: it stayed as an orphaned
+        // "Working on your changes..." above the finished follow-up (seen again 16 Nov). Close it now and say honestly
+        // what landed in this pass and that the rest is still coming (same as the first-build path).
+        const partialPaths = [...new Set([...newFiles.map(f => f.path), ...editBlocks.map(e => e.path)])];
+        const partialMsg = partialPaths.length > 0
+          ? `${partialPaths.length} file${partialPaths.length === 1 ? '' : 's'} changed — finishing the rest now, a few more updates coming below.`
+          : 'Finishing the rest now — a few more updates coming below.';
+        updateMessage(assistantId, { content: partialMsg, status: 'done', filesChanged: partialPaths });
+        persistMessage('assistant', partialMsg, partialPaths);
       } else if (ownsBubble) {
         // Edit turns change files via <edit>/edit_file, not new <file>
         // blocks — list those too or an edit's receipt has no file chips.
@@ -2476,6 +2700,8 @@ const storeProjectId = useEditorStore.getState().project?.id;
         }
       }
     } finally {
+      inflightGenRef.current = Math.max(0, inflightGenRef.current - 1);
+      lastActivityRef.current = Date.now();
       clearTimeout(genTimeout);
       wakeLock?.release().catch(() => {});
       if (abortControllerRef.current === genController) abortControllerRef.current = null;
@@ -2486,6 +2712,12 @@ const storeProjectId = useEditorStore.getState().project?.id;
       if (ownsBubble) setIsGenerating(false);
       clearStreamingContent();
       setProgressSteps([]);
+      // The staged build charges after the response headers arrive, so the balance
+      // fetched at stream start can be stale. Re-read it once the run is over.
+      fetch('/api/credits/deduct', { method: 'GET' })
+        .then(r => r.json())
+        .then(data => { if (typeof data?.credits === 'number') useEditorStore.getState().setCredits(data.credits); })
+        .catch(() => {});
     }
     return succeeded;
   }, [credits, files, messages, framework, resolvedProjectId, resolvedUserId, knowledge, addMessage, updateMessage, setMessages, setIsGenerating, bumpGenerationTurn, setStreamingContent, clearStreamingContent, consumeCredit, setFiles, hasGeneratedFiles, setHasGeneratedFiles, saveProject, persistMessage, pushCheckpoint, project, setProject, pushAgentEvents, failBuildAfterDrop]);
@@ -2518,6 +2750,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
     const chainId = uid();
     addMessage({ id: chainId, role: 'assistant', content: '✦ Planning your build...', timestamp: Date.now(), status: 'streaming' });
     setIsGenerating(true);
+    lastActivityRef.current = Date.now();
     // One id for every request in this build's chain (scaffold + its fill
     // batches, or the one-shot fallback) — lets the server sum real usage
     // across the WHOLE build for the overage safety valve instead of just
@@ -2557,6 +2790,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
             isFirstBuild: true,
             maxPlannedFiles: opts?.maxFiles,
           }),
+          signal: AbortSignal.timeout(90_000),
         });
         if (!res.ok) return [];
         const header = res.headers.get('X-Build-Complexity');
@@ -2639,15 +2873,27 @@ const storeProjectId = useEditorStore.getState().project?.id;
     // quoted 120 credits (server charges 80) and a simple 6-10 file plan was
     // quoted 50 (server charges 30), walling users who could afford it.
     const isOneShotBuild = !staged || !staged.shouldStage;
-    const estimateBuildTier = plannedFileCount > 0
+    const launchReadyApp = isLaunchReadyApp(projectType);
+    const baseEstimateTier = plannedFileCount > 0
       ? (isOneShotBuild ? resolveBuildTier({ isComplex: buildComplexity === 'HIGH' }) : resolveBuildTier({ totalPlannedFiles: plannedFileCount }))
       : undefined;
+    // Launch-ready web apps are priced as at least a large build; the server applies the same floor (generate/route.ts).
+    const launchReadySite = isLaunchReadyWebsite(projectType);
+    // Launch-ready builds: the server charges a build the planner calls complex at the 'default' price column, so the estimate must too.
+    const complexBuild = buildComplexity === 'HIGH';
+    const estimateBuildTier = baseEstimateTier && launchReadyApp ? floorBuildTier(baseEstimateTier)
+      : baseEstimateTier && launchReadySite ? floorWebsiteTier(baseEstimateTier)
+      : baseEstimateTier && isLaunchReadySaas(projectType) ? floorSaasTier(baseEstimateTier)
+      : baseEstimateTier && isLaunchReadyMobile(projectType) ? floorMobileTier(baseEstimateTier)
+      : baseEstimateTier;
+    const anyLaunchReady = launchReadyApp || launchReadySite || isLaunchReadySaas(projectType) || isLaunchReadyMobile(projectType);
+    const estimateTierName: ModelTier = anyLaunchReady && complexBuild ? 'default' : effectiveModelTier;
     if (estimateBuildTier) {
       const buildActionType: ActionType = projectType === 'mobile' ? 'mobile-build'
         : projectType === 'website' ? 'website-build'
         : projectType === 'saas' ? 'saas-build'
         : 'web-build';
-      const estimatedCost = creditCost(buildActionType, effectiveModelTier, estimateBuildTier);
+      const estimatedCost = creditCost(buildActionType, estimateTierName, estimateBuildTier);
       // Read credits fresh from the store — the closure value can be stale if
       // a real-time subscription updated the balance after the last render.
       const freshCredits = useEditorStore.getState().credits ?? 0;
@@ -2693,7 +2939,7 @@ I can build a **simpler version** instead: just the core screens (up to ${simple
     // down, before the user ever really saw it.
     const costSuffix = estimateBuildTier ? ` — ~${creditCost(
       projectType === 'mobile' ? 'mobile-build' : projectType === 'website' ? 'website-build' : projectType === 'saas' ? 'saas-build' : 'web-build',
-      effectiveModelTier, estimateBuildTier,
+      estimateTierName, estimateBuildTier,
     )}cr` : '';
 
     // Update the "Planning..." bubble with the real credit estimate now that
@@ -2703,13 +2949,21 @@ I can build a **simpler version** instead: just the core screens (up to ${simple
         : projectType === 'website' ? 'website-build'
         : projectType === 'saas' ? 'saas-build'
         : 'web-build';
-      const exactCost = creditCost(buildActionForCost, effectiveModelTier, estimateBuildTier);
+      const exactCost = creditCost(buildActionForCost, estimateTierName, estimateBuildTier);
       const hi = Math.ceil(exactCost * 1.12);
       const appLabel = projectType === 'mobile' ? 'mobile app'
         : projectType === 'website' ? 'website'
         : projectType === 'saas' ? 'SaaS'
         : 'app';
-      const preMsg = `Building your ${appLabel} — ${plannedFileCount} files planned, ~${exactCost}–${hi} credits. Starting now.`;
+      const preMsg = launchReadyApp
+        ? `Building your launch-ready ${appLabel} — ${plannedFileCount} files planned. Cost: ${launchReadyCostText(complexBuild)}. Starting now.`
+        : launchReadySite
+        ? `Building your launch-ready ${appLabel} — ${plannedFileCount} files planned. Cost: ${websiteLaunchReadyCostText(complexBuild)}. Starting now.`
+        : isLaunchReadySaas(projectType)
+        ? `Building your launch-ready ${appLabel} — ${plannedFileCount} files planned. Cost: ${saasLaunchReadyCostText(complexBuild)}. Starting now.`
+        : isLaunchReadyMobile(projectType)
+        ? `Building your launch-ready ${appLabel} — ${plannedFileCount} files planned. Cost: ${mobileLaunchReadyCostText(complexBuild)}. Starting now.`
+        : `Building your ${appLabel} — ${plannedFileCount} files planned, ~${exactCost}–${hi} credits. Starting now.`;
       updateMessage(chainId, { content: preMsg, status: 'done' });
       // Do NOT persist the intermediate progress message — finishChain persists
       // the final summary. Persisting here creates a duplicate DB row that comes
@@ -2780,8 +3034,8 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
         // claiming the build (or even this bubble) is finished.
         const screenNamesSoFar = liveFilesOneShot.map(p => p.split('/').pop()?.replace(/\.(tsx?|jsx?)$/, '') ?? p);
         const partialMsg = screenNamesSoFar.length > 0
-          ? `${screenNamesSoFar.length} file${screenNamesSoFar.length === 1 ? '' : 's'} in — wiring up the rest now, a few more updates coming below.`
-          : 'Wiring up the rest now — a few more updates coming below.';
+          ? 'Finishing the rest.'
+          : 'Finishing the rest.';
         updateMessage(chainId, { content: partialMsg, status: 'done', filesChanged: liveFilesOneShot });
         persistMessage('assistant', partialMsg, liveFilesOneShot);
       } else if (oneShotOk) {
@@ -2790,7 +3044,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
           ? screenNamesOneShot[0]
           : `${screenNamesOneShot.slice(0, -1).join(', ')} and ${screenNamesOneShot[screenNamesOneShot.length - 1]}`;
         const oneShotSummary = screenNamesOneShot.length > 0
-          ? `Built it — ${screenListOneShot} ${screenNamesOneShot.length === 1 ? 'is' : 'are'} live. Tell me what to change next.`
+          ? ('Built it. Open the preview and tell me what to change next.' + (notBuiltSentence((useEditorStore.getState().files ?? {}) as Record<string, unknown>) ? ' ' + notBuiltSentence((useEditorStore.getState().files ?? {}) as Record<string, unknown>) : ''))
           : t('doneCheckPreviewMsg');
         updateMessage(chainId, { content: oneShotSummary, status: 'done', filesChanged: liveFilesOneShot });
         persistMessage('assistant', oneShotSummary, liveFilesOneShot);
@@ -2985,13 +3239,17 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
       ? screenNames[0]
       : `${screenNames.slice(0, -1).join(', ')} and ${screenNames[screenNames.length - 1]}`;
     const summary = screenNames.length > 0
-      ? `Built it — ${screenList} ${screenNames.length === 1 ? 'is' : 'are'} live. Tell me what to change next.`
+      ? ('Built it. Open the preview and tell me what to change next.' + (notBuiltSentence((useEditorStore.getState().files ?? {}) as Record<string, unknown>) ? ' ' + notBuiltSentence((useEditorStore.getState().files ?? {}) as Record<string, unknown>) : ''))
       : t('doneCheckPreviewMsg');
     // buildId ties this to the server-side [generate cache] elapsed_ms lines
     // for the same build — cross-reference to split "model latency" from
     // "everything else" (client round-trips, retries, credit checks, wiring).
     console.log(`[build timing] buildId=${buildId} projectType=${projectType} path=staged fileCount=${staged.files.length} fillBatches=${batchesToRun.length} plan_ms=${planDoneTime - buildStartTime} scaffold_ms=${scaffoldDoneTime - planDoneTime} fill_ms=${fillDoneTime - scaffoldDoneTime} wire_ms=${Date.now() - fillDoneTime} total_ms=${Date.now() - buildStartTime}`);
     finishChain(summary, liveScreens.map(f => f.path));
+    // First-build verification (flag-gated inside PreviewPanel; a no-op when
+    // NEXT_PUBLIC_BUILD_PROBE is off). Fire-and-forget so it can never delay
+    // or fail the build itself.
+    try { window.dispatchEvent(new CustomEvent('wyber-probe-request', { detail: { projectType } })) } catch { /* advisory */ }
 
     } catch (e: any) {
       // Any unhandled exception in the build chain (network error, 402 mid-fill,
@@ -3470,7 +3728,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
   };
 
   return (
-    <div style={{ height:'100%', display:'flex', flexDirection:'column', background:'var(--bg-surface)', position:'relative' }}
+    <div className="wy-chat-root" style={{ height:'100%', display:'flex', flexDirection:'column', background:'var(--bg-surface)', position:'relative' }}
       onDragOver={e => { e.preventDefault(); setDragOver(true); }}
       onDragLeave={() => setDragOver(false)}
       onDrop={handleDrop}
@@ -3481,7 +3739,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
           <div style={{ width:7, height:7, borderRadius:'50%', background:'var(--ide-green)', boxShadow:'0 0 6px rgba(34,197,94,0.5)' }} />
           <span style={{ fontSize:12, fontWeight:600, color:'var(--ide-text)', letterSpacing:'-0.02em' }}>WyberAi</span>
           {lastModel && lastCreditCost && (
-            <span style={{ fontSize:10, padding:'1px 6px', borderRadius:10, background:'var(--bg-overlay)', color:'var(--ide-text3)', border:'1px solid var(--ide-border)' }}>
+            <span style={{ fontSize: 12, padding:'1px 6px', borderRadius:10, background:'var(--bg-overlay)', color:'var(--ide-text3)', border:'1px solid var(--ide-border)' }}>
               {lastCreditCost}cr
             </span>
           )}
@@ -3491,7 +3749,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
             <button
               onClick={handleUndo}
               title={t('undoTooltip')}
-              style={{ fontSize:10, padding:'3px 8px', borderRadius:5, border:'1px solid var(--ide-border)', background:'transparent', color:'var(--ide-text3)', cursor:'pointer', fontWeight:600, letterSpacing:'-0.01em', transition:'var(--t)' }}
+              style={{ fontSize: 12, padding:'3px 8px', borderRadius:5, border:'1px solid var(--ide-border)', background:'transparent', color:'var(--ide-text3)', cursor:'pointer', fontWeight:600, letterSpacing:'-0.01em', transition:'var(--t)' }}
             >
               {t('undoButton')}
             </button>
@@ -3499,7 +3757,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
           <button
             onClick={() => setPlanMode(v => !v)}
             title={t('planModeTooltip')}
-            style={{ fontSize:10, padding:'3px 8px', borderRadius:5, border:`1px solid ${planMode ? 'var(--accent-dim)' : 'var(--ide-border)'}`, background: planMode ? 'var(--accent-glow)' : 'transparent', color: planMode ? 'var(--accent)' : 'var(--ide-text3)', cursor:'pointer', fontWeight:600, letterSpacing:'-0.01em', transition:'var(--t)' }}
+            style={{ fontSize: 12, padding:'3px 8px', borderRadius:5, border:`1px solid ${planMode ? 'var(--accent-dim)' : 'var(--ide-border)'}`, background: planMode ? 'var(--accent-glow)' : 'transparent', color: planMode ? 'var(--accent)' : 'var(--ide-text3)', cursor:'pointer', fontWeight:600, letterSpacing:'-0.01em', transition:'var(--t)' }}
           >
             {t('planModeButton')}
           </button>
@@ -3516,6 +3774,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
             framework={framework}
             fileContext={Object.entries(files).slice(0,10).map(([p,f]) => `<file path="${p}">\n${(f as any).content.slice(0,1500)}\n</file>`).join('\n\n')}
             projectId={projectId}
+            projectType={projectType}
             onApprove={(planSpec, paletteId) => {
               const { image, prompt: originalPrompt } = pendingPlan;
               setPendingPlan(null);
@@ -3539,13 +3798,13 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
             </div>
             <div>
               <div style={{ fontSize:12, fontWeight:700, color:'var(--ide-text)', letterSpacing:'-0.01em' }}>{t('planOfferTitle')}</div>
-              <div style={{ fontSize:11, color:'var(--ide-text3)', marginTop:1 }}>
+              <div style={{ fontSize: 12, color:'var(--ide-text3)', marginTop:1 }}>
                 {t('planOfferDesc')}
               </div>
             </div>
           </div>
           {/* Free design-direction pick — applies to both buttons' builds */}
-          <DirectionCards prompt={pendingPlanOffer.prompt} selectedId={offerPaletteId} onPick={setOfferPaletteId} />
+          <DirectionCards prompt={pendingPlanOffer.prompt} selectedId={offerPaletteId} onPick={setOfferPaletteId} projectType={projectType} />
           <div style={{ display:'flex', gap:7 }}>
             <button
               onClick={() => {
@@ -3553,7 +3812,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
                 setPendingPlanOffer(null);
                 setPendingPlan({ prompt, image: img });
               }}
-              style={{ flex:1, padding:'7px 0', borderRadius:7, border:'none', background:'var(--accent)', color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer' }}
+              style={{ flex:1, padding:'7px 0', borderRadius:7, border:'none', background:'var(--accent)', color:'#03111c', fontSize:12, fontWeight:700, cursor:'pointer' }}
             >
               {t('showPlanButton').replace('{credits}', String(creditCost('plan', 'default')))}
             </button>
@@ -3582,7 +3841,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
               <div style={{ fontSize: 12, fontWeight: 700, color: '#fbbf24', letterSpacing: '-0.01em', marginBottom: 3 }}>
                 {t('regulatedTitle')}
               </div>
-              <div style={{ fontSize: 11, color: '#a3a3a3', lineHeight: 1.6 }}>
+              <div style={{ fontSize: 12, color: '#a3a3a3', lineHeight: 1.6 }}>
                 {t('regulatedIntroPrefix')}{' '}
                 <strong style={{ color: '#fef3c7' }}>
                   {pendingRegulated.domains.map(d => d.label).join(' and ')}
@@ -3594,13 +3853,13 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 5, paddingLeft: 29 }}>
             {pendingRegulated.domains.map(d => (
-              <div key={d.label} style={{ fontSize: 11, color: '#fef3c7', background: 'rgba(251,191,36,0.06)', border: '1px solid rgba(251,191,36,0.15)', borderRadius: 6, padding: '5px 9px', lineHeight: 1.5 }}>
+              <div key={d.label} style={{ fontSize: 12, color: '#fef3c7', background: 'rgba(251,191,36,0.06)', border: '1px solid rgba(251,191,36,0.15)', borderRadius: 6, padding: '5px 9px', lineHeight: 1.5 }}>
                 <strong>{d.label}:</strong> {d.requirement}
               </div>
             ))}
           </div>
 
-          <div style={{ fontSize: 11, color: '#71717a', lineHeight: 1.6, paddingLeft: 29 }}>
+          <div style={{ fontSize: 12, color: '#8797ab', lineHeight: 1.6, paddingLeft: 29 }}>
             {t('regulatedFooterNotice')}
           </div>
 
@@ -3661,7 +3920,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
             </div>
             <div>
               <div style={{ fontSize:12, fontWeight:700, color:'var(--ide-text)', letterSpacing:'-0.01em' }}>{t('depGateTitle')}</div>
-              <div style={{ fontSize:11, color:'var(--ide-text3)', marginTop:1 }}>
+              <div style={{ fontSize: 12, color:'var(--ide-text3)', marginTop:1 }}>
                 {t('depGateDesc')}
               </div>
             </div>
@@ -3673,7 +3932,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
               <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:8 }}>
                 <span style={{ fontSize:14 }}>🗄</span>
                 <span style={{ fontSize:12, fontWeight:700, color:'#3FCF8E' }}>Supabase</span>
-                <span style={{ fontSize:11, color:'var(--ide-text3)' }}>{t('supabaseSectionDesc')}</span>
+                <span style={{ fontSize: 12, color:'var(--ide-text3)' }}>{t('supabaseSectionDesc')}</span>
               </div>
               <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
                 {['SUPABASE_URL', 'SUPABASE_ANON_KEY'].map(key => (
@@ -3681,10 +3940,10 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
                     placeholder={key === 'SUPABASE_URL' ? 'https://xxxx.supabase.co' : 'eyJhbGci...'}
                     value={inlineSecrets[key] ?? ''}
                     onChange={e => setInlineSecrets(s => ({ ...s, [key]: e.target.value }))}
-                    style={{ width:'100%', padding:'6px 9px', borderRadius:6, border:'1px solid rgba(63,207,142,0.2)', background:'var(--bg-elevated)', color:'var(--ide-text)', fontSize:11, fontFamily:'monospace', outline:'none' }}
+                    style={{ width:'100%', padding:'6px 9px', borderRadius:6, border:'1px solid rgba(63,207,142,0.2)', background:'var(--bg-elevated)', color:'var(--ide-text)', fontSize: 12, fontFamily:'monospace', outline:'none' }}
                   />
                 ))}
-                <div style={{ fontSize:10, color:'var(--ide-text3)' }}>
+                <div style={{ fontSize: 12, color:'var(--ide-text3)' }}>
                   {t('supabaseFindKeysNote')}
                 </div>
               </div>
@@ -3697,15 +3956,15 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
               <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:8 }}>
                 <span style={{ fontSize:14 }}>💳</span>
                 <span style={{ fontSize:12, fontWeight:700, color:'#635BFF' }}>Stripe</span>
-                <span style={{ fontSize:11, color:'var(--ide-text3)' }}>{t('stripeSectionDesc')}</span>
+                <span style={{ fontSize: 12, color:'var(--ide-text3)' }}>{t('stripeSectionDesc')}</span>
               </div>
               <input
                 placeholder="pk_live_... or pk_test_..."
                 value={inlineSecrets['STRIPE_PUBLISHABLE_KEY'] ?? ''}
                 onChange={e => setInlineSecrets(s => ({ ...s, 'STRIPE_PUBLISHABLE_KEY': e.target.value }))}
-                style={{ width:'100%', padding:'6px 9px', borderRadius:6, border:'1px solid rgba(99,91,255,0.2)', background:'var(--bg-elevated)', color:'var(--ide-text)', fontSize:11, fontFamily:'monospace', outline:'none' }}
+                style={{ width:'100%', padding:'6px 9px', borderRadius:6, border:'1px solid rgba(99,91,255,0.2)', background:'var(--bg-elevated)', color:'var(--ide-text)', fontSize: 12, fontFamily:'monospace', outline:'none' }}
               />
-              <div style={{ fontSize:10, color:'var(--ide-text3)', marginTop:5 }}>
+              <div style={{ fontSize: 12, color:'var(--ide-text3)', marginTop:5 }}>
                 {t('stripeFindKeysNote')}
               </div>
             </div>
@@ -3724,7 +3983,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
                     placeholder={k.placeholder}
                     value={inlineSecrets[k.name] ?? ''}
                     onChange={e => setInlineSecrets(s => ({ ...s, [k.name]: e.target.value }))}
-                    style={{ width:'100%', padding:'6px 9px', borderRadius:6, border:`1px solid ${pendingGenArgs.customGroup!.color}33`, background:'var(--bg-elevated)', color:'var(--ide-text)', fontSize:11, fontFamily:'monospace', outline:'none' }}
+                    style={{ width:'100%', padding:'6px 9px', borderRadius:6, border:`1px solid ${pendingGenArgs.customGroup!.color}33`, background:'var(--bg-elevated)', color:'var(--ide-text)', fontSize: 12, fontFamily:'monospace', outline:'none' }}
                   />
                 ))}
               </div>
@@ -3737,7 +3996,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
               <div style={{ fontSize:12, fontWeight:700, color:'var(--blue)', marginBottom:6 }}>
                 {t('composioToolsNeeded').replace('{tools}', pendingGenArgs.composioTools.join(', '))}
               </div>
-              <div style={{ fontSize:11, color:'var(--ide-text3)' }}>
+              <div style={{ fontSize: 12, color:'var(--ide-text3)' }}>
                 {t('composioConnectNote')}
               </div>
             </div>
@@ -3748,7 +4007,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
             <button
               onClick={saveSecretsAndBuild}
               disabled={secretSaving}
-              style={{ flex:1, padding:'7px 0', borderRadius:7, border:'none', background:'var(--accent)', color:'white', fontSize:12, fontWeight:700, cursor:'pointer', opacity: secretSaving ? 0.7 : 1 }}
+              style={{ flex:1, padding:'7px 0', borderRadius:7, border:'none', background:'var(--accent)', color:'#03111c', fontSize:12, fontWeight:700, cursor:'pointer', opacity: secretSaving ? 0.7 : 1 }}
             >
               {secretSaving ? tc('saving') : t('saveKeysAndBuildButton')}
             </button>
@@ -3780,12 +4039,8 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
           <LiveErrorsBanner projectId={resolvedProjectId} />
         </AgentFeedBoundary>
       )}
-      {resolvedProjectId && projectType === 'website' && (
-        <AgentFeedBoundary>
-          <WebsiteLaunchChecklist projectId={resolvedProjectId} />
-        </AgentFeedBoundary>
-      )}
-      <div style={{ flex:1, overflow:'auto', padding:'8px 0', scrollbarWidth:'thin' }}>
+      <div style={{ flex:1, minHeight:0, position:'relative', display:'flex', flexDirection:'column' }}>
+      <div ref={listRef} onScroll={onListScroll} role="log" aria-label="Conversation" aria-relevant="additions" aria-busy={isGenerating || chatThinking} tabIndex={0} className="wy-chat-list" style={{ flex:1, overflow:'auto', padding:'8px 0', scrollbarWidth:'thin', overscrollBehavior:'contain' }}>
         {visibleMessages.map(msg => (
           <div key={msg.id} style={{ padding:'4px 12px', marginBottom:1 }}>
             {msg.role === 'user' ? (
@@ -3801,8 +4056,8 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
                       style={{ width:'100%', padding:'9px 13px', borderRadius:10, border:'1px solid var(--accent)', background:'var(--bg-elevated)', color:'var(--ide-text)', fontSize:12, lineHeight:1.55, fontFamily:'inherit', resize:'vertical', outline:'none' }}
                     />
                     <div style={{ display:'flex', gap:6, justifyContent:'flex-end' }}>
-                      <button onClick={handleCancelEdit} style={{ fontSize:11, padding:'4px 10px', borderRadius:6, border:'1px solid var(--ide-border)', background:'transparent', color:'var(--ide-text3)', cursor:'pointer', fontWeight:600 }}>{tc('cancel')}</button>
-                      <button onClick={handleSaveEdit} disabled={!editingText.trim()} style={{ fontSize:11, padding:'4px 10px', borderRadius:6, border:'none', background:'var(--accent)', color:'#fff', cursor: editingText.trim() ? 'pointer' : 'not-allowed', fontWeight:600, opacity: editingText.trim() ? 1 : 0.5 }}>{t('saveRegenerateButton')}</button>
+                      <button onClick={handleCancelEdit} style={{ fontSize: 12, padding:'4px 10px', borderRadius:6, border:'1px solid var(--ide-border)', background:'transparent', color:'var(--ide-text3)', cursor:'pointer', fontWeight:600 }}>{tc('cancel')}</button>
+                      <button onClick={handleSaveEdit} disabled={!editingText.trim()} style={{ fontSize: 12, padding:'4px 10px', borderRadius:6, border:'none', background:'var(--accent)', color:'#03111c', cursor: editingText.trim() ? 'pointer' : 'not-allowed', fontWeight:600, opacity: editingText.trim() ? 1 : 0.5 }}>{t('saveRegenerateButton')}</button>
                     </div>
                   </div>
                 </div>
@@ -3810,14 +4065,14 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
                 <div style={{ display:'flex', justifyContent:'flex-end', alignItems:'flex-end', gap:5 }}>
                   {!isGenerating && !msg.content.startsWith('[Image:') && (
                     <button
-                      onClick={() => handleStartEdit(msg)}
+                      onClick={() => handleStartEdit(msg)} type="button" className="wy-tap" aria-label={t('editRegenerateTooltip')}
                       title={t('editRegenerateTooltip')}
                       style={{ background:'none', border:'none', color:'var(--ide-text3)', cursor:'pointer', padding:3, borderRadius:5, display:'flex', flexShrink:0 }}
                     >
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
                     </button>
                   )}
-                  <div style={{ background:'var(--accent)', borderRadius:'12px 12px 3px 12px', padding:'9px 13px', fontSize:13, lineHeight:1.55, color:'#fff', maxWidth:'85%', letterSpacing:'-0.01em' }}>
+                  <div style={{ background:'var(--accent)', borderRadius:'12px 12px 3px 12px', padding:'9px 13px', fontSize:13, lineHeight:1.55, color:'#03111c', maxWidth:'85%', letterSpacing:'-0.01em' }}>
                     {msg.content.startsWith('[Image:') ? (
                       <div style={{ display:'flex', alignItems:'center', gap:5 }}>
                         <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" style={{opacity:0.8}}><rect x="1" y="1" width="14" height="14" rx="2" stroke="currentColor" strokeWidth="1.5" fill="none"/><circle cx="5.5" cy="5.5" r="1.5"/><path d="M1 11l4-4 3 3 2-2 5 5" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -3837,7 +4092,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
                     {msg.status === 'streaming'
                       ? <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
                           {liveReasoning && (
-                            <div style={{ fontSize:10.5, fontStyle:'italic', color:'var(--ide-text3)', maxHeight:54, overflow:'hidden', maskImage:'linear-gradient(to bottom, black 60%, transparent)', WebkitMaskImage:'linear-gradient(to bottom, black 60%, transparent)' }}>
+                            <div style={{ fontSize: 12.5, fontStyle:'italic', color:'var(--ide-text3)', maxHeight:54, overflow:'hidden', maskImage:'linear-gradient(to bottom, black 60%, transparent)', WebkitMaskImage:'linear-gradient(to bottom, black 60%, transparent)' }}>
                               🧠 {liveReasoning.slice(-260)}
                             </div>
                           )}
@@ -3850,7 +4105,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
                                 {progressSteps.map((step, i) => {
                                   const isLast = i === progressSteps.length - 1;
                                   return (
-                                    <span key={i} style={{ display:'flex', alignItems:'center', gap:6, fontSize:11, color: isLast ? 'var(--ide-text2)' : 'var(--ide-text3)' }}>
+                                    <span key={i} style={{ display:'flex', alignItems:'center', gap:6, fontSize: 12, color: isLast ? 'var(--ide-text2)' : 'var(--ide-text3)' }}>
                                       {isLast
                                         ? <span style={{ width:9, height:9, borderRadius:'50%', border:'1.5px solid var(--accent)', borderTopColor:'transparent', animation:'spin 0.8s linear infinite', display:'inline-block', flexShrink:0 }}/>
                                         : <span style={{ width:9, height:9, borderRadius:'50%', background:'var(--ide-green)', display:'inline-block', flexShrink:0 }}/>
@@ -3859,9 +4114,9 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
                                     </span>
                                   );
                                 })}
-                                <span style={{ fontSize:10, color:'var(--ide-text3)', marginTop:1 }}>{elapsed > 0 && `${elapsed}s`}</span>
+                                <span style={{ fontSize: 12, color:'var(--ide-text3)', marginTop:1 }}>{elapsed > 0 && `${elapsed}s`}</span>
                               </div>
-                            : <span style={{ display:'flex', alignItems:'center', gap:7, color:'var(--ide-text3)', fontSize:11 }}>
+                            : <span style={{ display:'flex', alignItems:'center', gap:7, color:'var(--ide-text3)', fontSize: 12 }}>
                                 <span style={{ width:10, height:10, borderRadius:'50%', border:'2px solid var(--accent)', borderTopColor:'transparent', animation:'spin 0.8s linear infinite', display:'inline-block' }}/>
                                 <span className="ide-shimmer-text">{buildMsg}</span> {elapsed > 0 && `(${elapsed}s)`}
                               </span>
@@ -3876,13 +4131,13 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
                                   if (next.has(msg.id)) next.delete(msg.id); else next.add(msg.id);
                                   return next;
                                 })}
-                                style={{ display:'flex', alignItems:'center', gap:4, fontSize:10.5, fontWeight:600, color:'var(--ide-text3)', background:'transparent', border:'none', cursor:'pointer', padding:0 }}
+                                style={{ display:'flex', alignItems:'center', gap:4, fontSize: 12.5, fontWeight:600, color:'var(--ide-text3)', background:'transparent', border:'none', cursor:'pointer', padding:0 }}
                               >
                                 🧠 {expandedReasoning.has(msg.id) ? t('hideReasoningLabel') : t('showReasoningLabel')}
                                 <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" style={{ transform: expandedReasoning.has(msg.id) ? 'rotate(180deg)' : 'none', transition:'transform 0.15s' }}><path d="M6 9l6 6 6-6"/></svg>
                               </button>
                               {expandedReasoning.has(msg.id) && (
-                                <div style={{ marginTop:5, padding:'8px 10px', borderRadius:8, border:'1px solid var(--ide-border)', background:'var(--bg-elevated)', fontSize:11, fontStyle:'italic', lineHeight:1.6, color:'var(--ide-text3)', whiteSpace:'pre-wrap' }}>
+                                <div style={{ marginTop:5, padding:'8px 10px', borderRadius:8, border:'1px solid var(--ide-border)', background:'var(--bg-elevated)', fontSize: 12, fontStyle:'italic', lineHeight:1.6, color:'var(--ide-text3)', whiteSpace:'pre-wrap' }}>
                                   {msg.reasoning}
                                 </div>
                               )}
@@ -3904,7 +4159,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
                                     if (next.has(msg.id)) next.delete(msg.id); else next.add(msg.id);
                                     return next;
                                   })}
-                                  style={{ display:'flex', alignItems:'center', gap:4, fontSize:10.5, fontWeight:600, color:'var(--ide-text3)', background:'transparent', border:'none', cursor:'pointer', padding:0, marginTop:4 }}
+                                  style={{ display:'flex', alignItems:'center', gap:4, fontSize: 12.5, fontWeight:600, color:'var(--ide-text3)', background:'transparent', border:'none', cursor:'pointer', padding:0, marginTop:4 }}
                                 >
                                   {detailsOpen ? t('hideDetailsLabel') : t('showDetailsLabel')}
                                   <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" style={{ transform: detailsOpen ? 'rotate(180deg)' : 'none', transition:'transform 0.15s' }}><path d="M6 9l6 6 6-6"/></svg>
@@ -3921,11 +4176,17 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
                     }
                   </div>
                   {msg.filesChanged && msg.filesChanged.length > 0 && (
-                    <div style={{ marginTop:6, display:'flex', flexWrap:'wrap', gap:3 }}>
-                      {msg.filesChanged.map(f => (
-                        <span key={f} style={{ background:'var(--accent-glow)', color:'var(--accent)', padding:'1px 6px', borderRadius:4, fontSize:10, border:'1px solid var(--accent-dim)', fontFamily:'monospace' }}>✎ {f}</span>
-                      ))}
-                    </div>
+                    // A whole-product build touches 20+ files: fold them behind one line instead of a wall of chips.
+                    <details open={msg.filesChanged.length <= 4} style={{ marginTop:6 }}>
+                      {msg.filesChanged.length > 4 && (
+                        <summary style={{ cursor:'pointer', fontSize:12, color:'var(--ide-text2)' }}>{msg.filesChanged.length} files written</summary>
+                      )}
+                      <div style={{ marginTop:4, display:'flex', flexWrap:'wrap', gap:3 }}>
+                        {msg.filesChanged.map(f => (
+                          <span key={f} style={{ background:'var(--accent-glow)', color:'var(--accent)', padding:'1px 6px', borderRadius:4, fontSize: 12, border:'1px solid var(--accent-dim)', fontFamily:'monospace' }}>✎ {f}</span>
+                        ))}
+                      </div>
+                    </details>
                   )}
                   {msg.agentReport && (
                     <AgentFeedBoundary>
@@ -3941,7 +4202,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
                         <div>
                           <div style={{ fontSize:12, fontWeight:700, color:'#38bdf8', marginBottom:4 }}>Build more, faster.</div>
                           <div style={{ fontSize:12, color:'var(--ide-text2)', lineHeight:1.5 }}>
-                            You're on free — {credits} credit{credits === 1 ? '' : 's'} left. Go annual from {creditsCurrency === 'INR' ? '₹399/mo' : '$23/mo'} and <span style={{ color:'#22c55e', fontWeight:700 }}>save 20%</span> — 150 credits/mo.
+                            You're on free — {credits} credit{credits === 1 ? '' : 's'} left. Go annual from {creditsCurrency === 'INR' ? '₹399/mo' : '$23/mo'} and <span style={{ color:'#22c55e', fontWeight:700 }}>save 20%</span> — {PLAN_FACTS.starter.credits} credits/mo.
                           </div>
                         </div>
                         <button onClick={() => setBuildNudgeDismissed(true)} style={{ background:'none', border:'none', color:'var(--ide-text3)', cursor:'pointer', fontSize:16, lineHeight:1, padding:2, flexShrink:0 }}>×</button>
@@ -3995,21 +4256,58 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
                     <div style={{ marginTop:5, display:'flex', gap:4 }}>
                       <button
                         onClick={() => handleCopyMessage(msg.id, msg.content)}
-                        title={t('copyMessageTooltip')}
-                        style={{ fontSize:10, padding:'2px 7px', borderRadius:5, border:'1px solid var(--ide-border)', background:'transparent', color: copiedMessageId === msg.id ? 'var(--ide-green)' : 'var(--ide-text3)', cursor:'pointer', fontWeight:600 }}
+                        className="wy-tap wy-act" aria-label={t('copyMessageTooltip')} title={t('copyMessageTooltip')}
+                        style={{ fontSize: 12, padding:'2px 7px', borderRadius:5, border:'1px solid var(--ide-border)', background:'transparent', color: copiedMessageId === msg.id ? 'var(--ide-green)' : 'var(--ide-text3)', cursor:'pointer', fontWeight:600 }}
                       >
                         {copiedMessageId === msg.id ? '✓ ' + tc('copied') : tc('copy')}
                       </button>
                       {msg.status === 'error' && msg.retryPrompt && !isGenerating && (
                         <button
                           onClick={() => handleRetry(msg.id)}
-                          title={t('retryMessageTooltip')}
-                          style={{ fontSize:10, padding:'2px 7px', borderRadius:5, border:'1px solid var(--ide-border)', background:'transparent', color:'var(--ide-text3)', cursor:'pointer', fontWeight:600, display:'flex', alignItems:'center', gap:3 }}
+                          className="wy-tap wy-act" aria-label={t('retryMessageTooltip')} title={t('retryMessageTooltip')}
+                          style={{ fontSize: 12, padding:'2px 7px', borderRadius:5, border:'1px solid var(--ide-border)', background:'transparent', color:'var(--ide-text3)', cursor:'pointer', fontWeight:600, display:'flex', alignItems:'center', gap:3 }}
                         >
                           <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v5h5"/></svg>
                           {tc('retry')}
                         </button>
                       )}
+                      {msg.status === 'done' && (
+                        <span role="group" aria-label="Rate this response" style={{ display:'inline-flex', gap:4, marginLeft:'auto' }}>
+                          {(['up','down'] as const).map(v => (
+                            <button key={v} type="button" className="wy-tap wy-act" aria-pressed={feedback[msg.id] === v}
+                              aria-label={v === 'up' ? 'Good response' : 'Needs work'} title={v === 'up' ? 'Good response' : 'Needs work'}
+                              onClick={() => { setFeedback(f => ({ ...f, [msg.id]: f[msg.id] === v ? undefined as unknown as 'up' : v })); if (feedback[msg.id] !== v) track('chat_feedback', { value: v, files: msg.filesChanged?.length ?? 0, projectType: projectType || 'unknown' }); }}
+                              style={{ fontSize:12, padding:'2px 7px', borderRadius:5, border:'1px solid var(--ide-border)', background: feedback[msg.id] === v ? 'var(--accent-dim)' : 'transparent', color: feedback[msg.id] === v ? 'var(--ide-text)' : 'var(--ide-text3)', cursor:'pointer', display:'flex', alignItems:'center' }}>
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ transform: v === 'down' ? 'rotate(180deg)' : undefined }}><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg>
+                            </button>
+                          ))}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  {msg.id === nextStepMsgId && !isGenerating && !dismissedNext && (
+                    <div style={{ marginTop:8, display:'flex', flexWrap:'wrap', gap:6, alignItems:'center' }} role="group" aria-label="Suggested next steps">
+                      <span style={{ fontSize:12, color:'var(--ide-text3)' }}>Recommended next:</span>
+                      {/* One recommended step, one click: it sends straight away. The edit price is shown before it runs, as for any change. */}
+                      {nextStepsFor(projectType).slice(0, 1).map(label => (
+                        <button key={label} type="button" onClick={() => {
+                            track('chat_next_step_picked', { label, projectType: projectType || 'unknown' });
+                            setInput(label);
+                            setDismissedNext(true);
+                            setTimeout(() => (document.querySelector('[data-send-button]') as HTMLButtonElement | null)?.click(), 120);
+                          }}
+                          style={{ fontSize:12, fontWeight:700, padding:'6px 14px', borderRadius:999, border:'none', background:'#0EA5E9', color:'#03111c', cursor:'pointer', fontFamily:'var(--font-sans)' }}>{label} →</button>
+                      ))}
+                      {projectType !== 'mobile' && heroImageUrl && (
+                        <button type="button" disabled={heroStage === 'busy'}
+                          onClick={() => { if (heroStage === 'confirm') void upgradeHero(); else { setHeroStage('confirm'); track('hero_upgrade_offer_clicked', { projectType: projectType || 'unknown' }); } }}
+                          style={{ fontSize:12, fontWeight:700, padding:'6px 14px', borderRadius:999, border:'1px solid #0EA5E9', background: heroStage === 'confirm' ? '#0EA5E9' : 'transparent', color: heroStage === 'confirm' ? '#03111c' : '#0EA5E9', cursor: heroStage === 'busy' ? 'wait' : 'pointer', fontFamily:'var(--font-sans)' }}>
+                          {heroStage === 'busy' ? 'Creating your hero…' : heroStage === 'confirm' ? `Confirm: spend ${heroCost} credits` : `✨ Premium hero image · ${heroCost} credits`}
+                        </button>
+                      )}
+                      {heroNote && <span role="status" style={{ fontSize:12, color:'var(--ide-text3)' }}>{heroNote}</span>}
+                      <button type="button" className="wy-tap" aria-label="Hide suggestions" onClick={() => setDismissedNext(true)}
+                        style={{ background:'none', border:'none', color:'var(--ide-text3)', cursor:'pointer', fontSize:14, lineHeight:1, padding:0 }}>×</button>
                     </div>
                   )}
                   {/* Highest-intent upsell moment: they just tried to build and
@@ -4044,7 +4342,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
                       <button
                         onClick={() => { setInput(msg.designSuggestion!.prompt); textareaRef.current?.focus(); }}
                         title={t('fillFollowUpTooltip')}
-                        style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--ide-text2)', cursor: 'pointer', fontFamily: 'var(--font-sans)', whiteSpace: 'nowrap' }}
+                        style={{ fontSize: 12, padding: '4px 10px', borderRadius: 20, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--ide-text2)', cursor: 'pointer', fontFamily: 'var(--font-sans)', whiteSpace: 'nowrap' }}
                         onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--ide-text)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(14,165,233,0.4)'; }}
                         onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--ide-text2)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--ide-border)'; }}
                       >
@@ -4105,7 +4403,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
                       {progressSteps.map((step, i) => {
                         const isLast = i === progressSteps.length - 1;
                         return (
-                          <span key={i} style={{ display:'flex', alignItems:'center', gap:6, fontSize:11, color: isLast ? 'var(--ide-text2)' : 'var(--ide-text3)' }}>
+                          <span key={i} style={{ display:'flex', alignItems:'center', gap:6, fontSize: 12, color: isLast ? 'var(--ide-text2)' : 'var(--ide-text3)' }}>
                             {isLast
                               ? <span style={{ width:9, height:9, borderRadius:'50%', border:'1.5px solid var(--accent)', borderTopColor:'transparent', animation:'spin 0.8s linear infinite', display:'inline-block', flexShrink:0 }}/>
                               : <span style={{ width:9, height:9, borderRadius:'50%', background:'var(--ide-green)', display:'inline-block', flexShrink:0 }}/>
@@ -4114,7 +4412,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
                           </span>
                         );
                       })}
-                      <span style={{ fontSize:10, color:'var(--ide-text3)', marginTop:1 }}>{elapsed > 0 && `${elapsed}s`}</span>
+                      <span style={{ fontSize: 12, color:'var(--ide-text3)', marginTop:1 }}>{elapsed > 0 && `${elapsed}s`}</span>
                     </div>
                   : <div style={{ display:'flex', alignItems:'center', gap:6, paddingTop:2, fontSize:12, color:'var(--ide-text3)' }}>
                       <span style={{ width:10, height:10, borderRadius:'50%', border:'2px solid var(--accent)', borderTopColor:'transparent', animation:'spin 0.8s linear infinite', display:'inline-block' }}/>
@@ -4141,6 +4439,13 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
         )}
         <div ref={messagesEndRef} />
       </div>
+      {showJump && (
+        <button type="button" onClick={jumpToLatest} className="wy-jump wy-tap" aria-label="Jump to latest message">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+          Latest
+        </button>
+      )}
+      </div>
 
       {/* Attached files */}
       {attachedFiles.length > 0 && (
@@ -4152,7 +4457,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
                 : <span style={{ fontSize:18, flexShrink:0 }}>{f.kind === 'image' ? '🖼' : f.kind === 'pdf' ? '📕' : f.kind === 'text' && /\.xlsx?$/i.test(f.name) ? '📊' : f.kind === 'text' ? '📄' : '📎'}</span>}
               <div style={{ minWidth:0 }}>
                 <div style={{ fontSize:12, color:'var(--text-primary)', fontWeight:500, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{f.name}</div>
-                <div style={{ fontSize:10, color:'var(--text-muted)' }}>{f.uploading ? t('uploadingLabel') : f.kind === 'image' ? t('imageLabel') : f.kind === 'pdf' ? t('pdfReadLabel') : f.kind === 'text' && /\.xlsx?$/i.test(f.name) ? t('spreadsheetReadLabel') : f.kind === 'text' ? t('docReadLabel') : t('attachedLabel')}</div>
+                <div style={{ fontSize: 12, color:'var(--text-muted)' }}>{f.uploading ? t('uploadingLabel') : f.kind === 'image' ? t('imageLabel') : f.kind === 'pdf' ? t('pdfReadLabel') : f.kind === 'text' && /\.xlsx?$/i.test(f.name) ? t('spreadsheetReadLabel') : f.kind === 'text' ? t('docReadLabel') : t('attachedLabel')}</div>
               </div>
               <button onClick={() => removeAttachedFile(f.localId)} style={{ background:'none', border:'none', color:'var(--text-muted)', cursor:'pointer', fontSize:16, flexShrink:0, lineHeight:1 }}>×</button>
             </div>
@@ -4174,6 +4479,11 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
               }}
               onClose={() => setMentionQuery(null)}
             />
+          )}
+          {resolvedProjectId && projectType === 'website' && (
+            <AgentFeedBoundary>
+              <WebsiteLaunchChecklist projectId={resolvedProjectId} />
+            </AgentFeedBoundary>
           )}
           {/* Smart prompt suggestions — show contextual chips when input is empty */}
           {!input && !isGenerating && !pendingGenArgs && !pendingPlan && !pendingPlanOffer && credits > 0 && messages.length > 0 && (
@@ -4199,18 +4509,18 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
                   key={s.label}
                   onClick={() => {
                     if (isWyberCloud) {
-                      window.dispatchEvent(new CustomEvent('wyber-open-panel-tab', { detail: 'cloud' }));
+                      window.dispatchEvent(new CustomEvent('wyber-open-panel-tab', { detail: 'database' })); // 'database' is WyberCloud (free); 'cloud' is the bring-your-own Supabase form
                     } else if ('prompt' in s) {
                       setInput(s.prompt);
                       textareaRef.current?.focus();
                     }
                   }}
                   style={isWyberCloud ? {
-                    fontSize: 10, padding: '3px 9px', borderRadius: 6, cursor: 'pointer', fontFamily: 'var(--font-sans)',
+                    fontSize: 12, padding: '3px 9px', borderRadius: 6, cursor: 'pointer', fontFamily: 'var(--font-sans)',
                     transition: 'all 0.15s', whiteSpace: 'nowrap', border: '1px solid transparent',
                     background: 'linear-gradient(135deg, #60a5fa, #2563eb)', color: 'white', fontWeight: 600,
                   } : {
-                    fontSize: 10, padding: '3px 9px', borderRadius: 6, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--ide-text3)', cursor: 'pointer', fontFamily: 'var(--font-sans)', transition: 'all 0.15s', whiteSpace: 'nowrap',
+                    fontSize: 12, padding: '3px 9px', borderRadius: 6, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--ide-text3)', cursor: 'pointer', fontFamily: 'var(--font-sans)', transition: 'all 0.15s', whiteSpace: 'nowrap',
                   }}
                   onMouseEnter={e => { if (!isWyberCloud) { (e.target as HTMLElement).style.borderColor = '#0EA5E9'; (e.target as HTMLElement).style.color = '#0EA5E9'; } else { (e.target as HTMLElement).style.opacity = '0.9'; } }}
                   onMouseLeave={e => { if (!isWyberCloud) { (e.target as HTMLElement).style.borderColor = 'var(--ide-border)'; (e.target as HTMLElement).style.color = 'var(--ide-text3)'; } else { (e.target as HTMLElement).style.opacity = '1'; } }}
@@ -4220,17 +4530,17 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
             </div>
           )}
           {queuedMsg && (
-            <div style={{ display:'flex', alignItems:'flex-start', gap:8, margin:'8px 10px 0', padding:'6px 10px', borderRadius:8, background:'var(--bg-overlay)', border:'1px solid var(--ide-border)', fontSize:11, color:'var(--ide-text2)' }}>
+            <div style={{ display:'flex', alignItems:'flex-start', gap:8, margin:'8px 10px 0', padding:'6px 10px', borderRadius:8, background:'var(--bg-overlay)', border:'1px solid var(--ide-border)', fontSize: 12, color:'var(--ide-text2)' }}>
               <span style={{ flexShrink:0, color:'var(--accent)', fontWeight:600 }}>Up next</span>
               <span style={{ flex:1, minWidth:0, whiteSpace:'pre-wrap', wordBreak:'break-word', maxHeight:54, overflow:'hidden' }}>{queuedMsg}</span>
-              <button onClick={() => { setInput(prev => prev ? `${queuedMsg}\n${prev}` : queuedMsg); setQueuedMsg(null); }} title="Edit queued message"
-                style={{ flexShrink:0, background:'none', border:'none', color:'var(--ide-text3)', cursor:'pointer', fontSize:11, padding:0 }}>Edit</button>
-              <button onClick={() => setQueuedMsg(null)} title="Remove queued message"
+              <button onClick={() => { setInput(prev => prev ? `${queuedMsg}\n${prev}` : queuedMsg); setQueuedMsg(null); }} className="wy-tap" aria-label="Edit queued message" title="Edit queued message"
+                style={{ flexShrink:0, background:'none', border:'none', color:'var(--ide-text3)', cursor:'pointer', fontSize: 12, padding:0 }}>Edit</button>
+              <button onClick={() => setQueuedMsg(null)} className="wy-tap" aria-label="Remove queued message" title="Remove queued message"
                 style={{ flexShrink:0, background:'none', border:'none', color:'var(--ide-text3)', cursor:'pointer', fontSize:13, lineHeight:1, padding:0 }}>&times;</button>
             </div>
           )}
           <textarea
-            ref={textareaRef} value={input}
+            ref={textareaRef} value={input} aria-label="Message WyberAi" className="wy-chat-input" enterKeyHint="send"
             onChange={e => {
               const v = e.target.value;
               setInput(v);
@@ -4247,21 +4557,22 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'5px 8px 7px', gap: 6 }}>
             <div style={{ display:'flex', gap:4, alignItems:'center', flex: 1 }}>
               <input ref={fileInputRef} type="file" multiple style={{ display:'none' }} onChange={e => { Array.from(e.target.files || []).forEach(handleFile); e.target.value=''; }} />
-              <button onClick={() => fileInputRef.current?.click()} title={t('attachFilesTooltip')}
+              <button type="button" className="wy-tap" aria-label={t('attachFilesTooltip')} onClick={() => fileInputRef.current?.click()} title={t('attachFilesTooltip')}
                 style={{ background:'none', border:'none', color:'var(--ide-text3)', cursor:'pointer', padding:'3px 5px', borderRadius:5, transition:'var(--t)', display:'flex', alignItems:'center' }}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
               </button>
-              <VoiceButton
+              <VoiceBuildButton
                 size={24}
+                surface="editor"
+                showType={false}
                 disabled={isGenerating}
-                lang={LOCALE_SPEECH_CODE[locale]}
-                onTranscript={txt => setInput(prev => prev ? prev + ' ' + txt : txt)}
+                onConfirm={({ prompt }) => setInput(prev => prev ? prev + ' ' + prompt : prompt)}
               />
               {/* Cost estimate — Haiku only */}
               {(() => {
                 const est = creditCost(isFirstBuild ? 'web-build' : 'small-edit', 'fast');
                 return (
-                  <span title={t('costEstimateTooltip')} style={{ fontSize:10, padding:'2px 7px', borderRadius:5, border:'1px solid var(--ide-border)', background:'transparent', color:'var(--ide-text3)', fontFamily:'var(--font-sans)', letterSpacing:'-0.01em', display:'inline-flex', alignItems:'center', gap:3 }}>
+                  <span title={t('costEstimateTooltip')} style={{ fontSize: 12, padding:'2px 7px', borderRadius:5, border:'1px solid var(--ide-border)', background:'transparent', color:'var(--ide-text3)', fontFamily:'var(--font-sans)', letterSpacing:'-0.01em', display:'inline-flex', alignItems:'center', gap:3 }}>
                     ~{est}cr
                   </span>
                 );
@@ -4274,7 +4585,8 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
             return (
             <button
               onClick={showStop ? handleStop : isGenerating ? () => { const text = input.trim(); setQueuedMsg(prev => prev ? `${prev}\n${text}` : text); setInput(''); } : handleSend}
-              data-send-button="true"
+              data-send-button="true" type="button" className="wy-tap wy-send"
+              aria-label={showStop ? t('stopGeneratingTooltip') : isGenerating ? 'Queue this message' : 'Send message'}
               title={showStop ? t('stopGeneratingTooltip') : isGenerating ? 'Queue — runs when this one finishes' : undefined}
               disabled={!isGenerating && ((!input.trim() && !attachedImage && attachedFiles.length === 0) || !!pendingPlan || !!pendingGenArgs || !!pendingPlanOffer)}
               style={{

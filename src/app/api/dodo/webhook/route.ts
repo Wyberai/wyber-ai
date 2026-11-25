@@ -14,6 +14,11 @@ import { PLAN_VALUE, PLAN_VALUE_INR } from '@/lib/pricing-values'
 import { templateFilesToProjectFiles } from '@/lib/template-to-project'
 import { accrueAffiliateCommission, reverseAffiliateCommissionForPayment } from '@/lib/affiliate'
 import { rewardReferrerOnFirstPayment } from '@/lib/referral'
+import { PLAN_FACTS, TOPUP_PACKS, LARGE_PLAN_CREDITS } from '@/lib/plans'
+
+// A domain purchase makes about ten calls (registrar, DNS, hosting) and sends an email. The default limit can cut that off
+// halfway, so this handler is given a minute. If it is ever cut off anyway, the sweep (/api/cron/domain-sweep) resumes it.
+export const maxDuration = 60
 
 function getAdmin() {
   return createClient(
@@ -32,24 +37,25 @@ function getAdmin() {
 // this ships without touching the Dodo product catalog again; new rate is
 // ~₹9.98-9.99/credit, matching Spark exactly.
 const TOPUPS: Record<string, number> = {
-  [process.env.DODO_TOPUP_200      || 'TOPUP_UNSET1']: 40,
-  [process.env.DODO_TOPUP_600      || 'TOPUP_UNSET2']: 100,
-  [process.env.DODO_TOPUP_2000     || 'TOPUP_UNSET3']: 200,
+  [process.env.DODO_TOPUP_200      || 'TOPUP_UNSET1']: TOPUP_PACKS[0].credits,
+  [process.env.DODO_TOPUP_600      || 'TOPUP_UNSET2']: TOPUP_PACKS[1].credits,
+  [process.env.DODO_TOPUP_2000     || 'TOPUP_UNSET3']: TOPUP_PACKS[2].credits,
   // India (INR) top-ups — same credit packs, separate INR-priced products.
-  [process.env.DODO_TOPUP_200_INR  || 'TOPUP_UNSET4']: 40,
-  [process.env.DODO_TOPUP_600_INR  || 'TOPUP_UNSET5']: 100,
-  [process.env.DODO_TOPUP_2000_INR || 'TOPUP_UNSET6']: 200,
+  [process.env.DODO_TOPUP_200_INR  || 'TOPUP_UNSET4']: TOPUP_PACKS[0].credits,
+  [process.env.DODO_TOPUP_600_INR  || 'TOPUP_UNSET5']: TOPUP_PACKS[1].credits,
+  [process.env.DODO_TOPUP_2000_INR || 'TOPUP_UNSET6']: TOPUP_PACKS[2].credits,
 }
 
 // Plan config, shared by the USD and INR products (same tier, same credits —
 // only the charge currency differs). Spark is the India-only entry tier.
 type PlanConfig = { credits: number; dailyCredits: number; plan: string; label: string }
-const SPARK:   PlanConfig = { credits: 50,    dailyCredits: 2,   plan: 'spark',   label: 'Spark'   }
-const STARTER: PlanConfig = { credits: 150,   dailyCredits: 6,   plan: 'starter', label: 'Starter' }
-const BUILDER: PlanConfig = { credits: 500,   dailyCredits: 20,  plan: 'builder', label: 'Builder' }
-const PRO:     PlanConfig = { credits: 1500,  dailyCredits: 60,  plan: 'pro',     label: 'Pro'     }
-const GROWTH:  PlanConfig = { credits: 4000,  dailyCredits: 160, plan: 'growth',  label: 'Growth'  }
-const SCALE:   PlanConfig = { credits: 10000, dailyCredits: 400, plan: 'scale',   label: 'Scale'   }
+// Credits come from PLAN_FACTS (src/lib/plans.ts), the single source of truth, so the site and the grant cannot drift.
+const SPARK:   PlanConfig = { credits: PLAN_FACTS.spark.credits,   dailyCredits: 2,   plan: 'spark',   label: 'Spark'   }
+const STARTER: PlanConfig = { credits: PLAN_FACTS.starter.credits, dailyCredits: 6,   plan: 'starter', label: 'Starter' }
+const BUILDER: PlanConfig = { credits: PLAN_FACTS.builder.credits, dailyCredits: 20,  plan: 'builder', label: 'Builder' }
+const PRO:     PlanConfig = { credits: PLAN_FACTS.pro.credits,     dailyCredits: 60,  plan: 'pro',     label: 'Pro'     }
+const GROWTH:  PlanConfig = { credits: LARGE_PLAN_CREDITS.growth, dailyCredits: 160, plan: 'growth',  label: 'Growth'  }
+const SCALE:   PlanConfig = { credits: LARGE_PLAN_CREDITS.scale,  dailyCredits: 400, plan: 'scale',   label: 'Scale'   }
 
 // Keyed by Dodo product ID env var. INR product IDs map to the SAME config, so
 // a rupee checkout grants credits/plan identically — without these the payment
@@ -228,6 +234,8 @@ export async function POST(req: NextRequest) {
     // to zero the moment a payment actually succeeds (see payment.succeeded /
     // subscription.renewed below) so a later, unrelated failure starts fresh.
     if (eventType === 'payment.failed') {
+      // A failed domain payment is not a plan payment: no plan-billing dunning email. The person can retry on the same payment page.
+      if (metadata.purchase_type === 'commerce_order') return NextResponse.json({ received: true })
       if (userEmail) {
         (async () => {
           try {
@@ -254,6 +262,48 @@ export async function POST(req: NextRequest) {
       // below. reverseAffiliateCommissionForPayment never throws itself.
       if (refundedPaymentId) await reverseAffiliateCommissionForPayment(admin, refundedPaymentId)
       console.log(`Refund processed for ${userId}`)
+      return NextResponse.json({ received: true })
+    }
+
+    // Domain / Workspace order (ResellerClub, src/lib/domains): register or provision once payment is confirmed.
+    // Idempotent: fulfilOrder only acts on an order still waiting for payment, so a retried delivery does nothing twice.
+    if (eventType === 'payment.succeeded' && metadata.purchase_type === 'commerce_order') {
+      const orderId = String(metadata.commerce_order_id || '')
+      if (orderId) {
+        const { getProvider } = await import('@/lib/domains')
+        const { supabaseStore } = await import('@/lib/domains/store')
+        const { fulfilOrder } = await import('@/lib/domains/orders')
+        const provider = getProvider()
+        if (!provider) {
+          sendAdminPaymentAlert(userEmail || 'unknown', `Domain order ${orderId} was paid but the domain provider is not configured. Fulfil it by hand.`).catch(() => {})
+        } else {
+          const store = supabaseStore(admin)
+          // The registrar is charged for real, so the amount paid must cover the order before anything is registered.
+          const { paymentCoversOrder } = await import('@/lib/domains/payment-check')
+          const pending = await store.getOrder(orderId)
+          const covers = pending ? paymentCoversOrder(pending.total_cents, event.data as Record<string, unknown> | undefined) : { verdict: 'ok' as const }
+          if (covers.verdict === 'short') {
+            sendAdminPaymentAlert(userEmail || 'unknown', `Domain order ${orderId} was NOT fulfilled: ${'reason' in covers ? covers.reason : 'payment too low'}. The order stays awaiting_payment; check the payment in Dodo, then fix or refund.`).catch(() => {})
+            return NextResponse.json({ received: true, held: true })
+          }
+          if (covers.verdict === 'unverified') {
+            sendAdminPaymentAlert(userEmail || 'unknown', `Domain order ${orderId} was fulfilled but the paid amount could not be read from the payment event (${covers.reason}). Check it in Dodo.`).catch(() => {})
+          }
+          const r = await fulfilOrder({ provider, store }, orderId)
+          if (!r.ok) sendAdminPaymentAlert(userEmail || 'unknown', `Domain order ${orderId} was paid but did not finish (${r.status}). Open it in commerce_orders.`).catch(() => {})
+          // Tell the customer, once: only the delivery that did the work sends the email. Awaited so a frozen function cannot drop it.
+          if (r.ran) {
+            try {
+              const [{ orderMail }, { sendEmail }] = await Promise.all([import('@/lib/domains/notify'), import('@/lib/email/transport')])
+              const order = await store.getOrder(orderId)
+              if (order) {
+                const mail = orderMail(order, r.ok ? 'done' : 'attention', process.env.NEXT_PUBLIC_APP_URL || 'https://wyberai.com')
+                await sendEmail({ from: 'WyberAi <hello@wyberai.com>', to: mail.to, subject: mail.subject, text: mail.text })
+              }
+            } catch (e) { console.error('[domains] customer email failed', orderId, e instanceof Error ? e.message : e) }
+          }
+        }
+      }
       return NextResponse.json({ received: true })
     }
 

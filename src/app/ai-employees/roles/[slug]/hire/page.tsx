@@ -4,7 +4,7 @@ import { use, useState, useEffect } from 'react'
 import { getRoleBySlug } from '@/lib/employee-roles'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 
-const s = { bg: '#0b0d12', card: '#111115', border: '#1e1e26', text: '#e4e4e7', muted: '#71717a', dim: '#3f3f46' }
+const s = { bg: '#05080d', card: '#0d141e', border: '#1b2a3b', text: '#e8eef7', muted: '#8797ab', dim: '#8797ab' }
 const SKY = '#0EA5E9'
 
 export default function HireRequestPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -96,7 +96,7 @@ export default function HireRequestPage({ params }: { params: Promise<{ slug: st
                 <textarea value={note} onChange={e => setNote(e.target.value)} rows={3} placeholder="What you'd want them focused on first…" style={{ ...inp, resize: 'vertical' }} />
               </div>
               {error && <p style={{ fontSize: 13, color: '#ef4444', margin: 0 }}>{error}</p>}
-              <button type="submit" disabled={submitting} style={{ padding: '14px', borderRadius: 11, background: submitting ? '#1a1a22' : SKY, border: 'none', color: submitting ? s.dim : '#fff', fontSize: 15, fontWeight: 700, cursor: submitting ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
+              <button type="submit" disabled={submitting} style={{ padding: '14px', borderRadius: 11, background: submitting ? '#14202e' : SKY, border: 'none', color: submitting ? s.dim : '#fff', fontSize: 15, fontWeight: 700, cursor: submitting ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
                 {submitting ? 'Taking you to checkout…' : `Continue to payment — ${price?.priceLabel ?? ''}`}
               </button>
               <p style={{ fontSize: 11, color: s.dim, textAlign: 'center' }}>Secure monthly payment via Dodo. Your employee activates the moment payment succeeds.</p>
@@ -109,5 +109,5 @@ export default function HireRequestPage({ params }: { params: Promise<{ slug: st
   )
 }
 
-const lbl: React.CSSProperties = { display: 'block', fontSize: 13, fontWeight: 700, color: '#e4e4e7', marginBottom: 4 }
-const inp: React.CSSProperties = { width: '100%', boxSizing: 'border-box', background: '#111115', border: '1px solid #2a2a35', borderRadius: 10, padding: '11px 14px', fontSize: 14, color: '#e4e4e7', outline: 'none', fontFamily: 'inherit' }
+const lbl: React.CSSProperties = { display: 'block', fontSize: 13, fontWeight: 700, color: '#e8eef7', marginBottom: 4 }
+const inp: React.CSSProperties = { width: '100%', boxSizing: 'border-box', background: '#0d141e', border: '1px solid #2a2a35', borderRadius: 10, padding: '11px 14px', fontSize: 14, color: '#e8eef7', outline: 'none', fontFamily: 'inherit' }

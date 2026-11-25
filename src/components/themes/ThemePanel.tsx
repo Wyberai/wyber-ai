@@ -147,7 +147,7 @@ export function ThemePanel() {
                     </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 4 }}>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--ide-text)', letterSpacing: '-0.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--ide-text)', letterSpacing: '-0.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {busy ? 'Applying…' : done ? '✓ Applied' : pal.label}
                     </span>
                     <MicroLabel style={{ flexShrink: 0 }}>{pal.mode}</MicroLabel>
@@ -163,11 +163,11 @@ export function ThemePanel() {
               <MicroLabel>Custom</MicroLabel>
               <div style={{ display: 'flex', gap: 5 }}>
                 <button onClick={() => updateDraft({ tokens: { ...DARK_SCAFFOLD } })}
-                  style={{ fontSize: 10, padding: '3px 9px', borderRadius: 6, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--ide-text3)', cursor: 'pointer', fontWeight: 600 }}>
+                  style={{ fontSize: 12, padding: '3px 9px', borderRadius: 6, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--ide-text3)', cursor: 'pointer', fontWeight: 600 }}>
                   ◑ Dark base
                 </button>
                 <button onClick={() => updateDraft({ tokens: { ...LIGHT_SCAFFOLD } })}
-                  style={{ fontSize: 10, padding: '3px 9px', borderRadius: 6, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--ide-text3)', cursor: 'pointer', fontWeight: 600 }}>
+                  style={{ fontSize: 12, padding: '3px 9px', borderRadius: 6, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--ide-text3)', cursor: 'pointer', fontWeight: 600 }}>
                   ☀ Light base
                 </button>
               </div>
@@ -183,7 +183,7 @@ export function ThemePanel() {
                     onChange={e => setDraftColor(token, e.target.value)}
                     style={{ width: 22, height: 22, border: 'none', background: 'transparent', padding: 0, cursor: 'pointer' }}
                   />
-                  <span style={{ fontSize: 11, color: 'var(--ide-text2)', fontWeight: 600 }}>{label}</span>
+                  <span style={{ fontSize: 12, color: 'var(--ide-text2)', fontWeight: 600 }}>{label}</span>
                 </label>
               ))}
             </div>

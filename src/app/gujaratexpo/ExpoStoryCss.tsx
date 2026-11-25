@@ -116,6 +116,8 @@ export function ExpoStoryCss({ audience, picker }: { audience: AudienceId; picke
           <div className={s.eyebrow}><span className={s.live}>●</span> TECH EXPO GUJARAT · BOOTH S23 · 27–29 NOV</div>
           <h1 className={s.storyH1}>{copy.head}</h1>
           <p className={s.storySub}>{copy.sub}</p>
+          <p className={s.boothLine}>Come to booth S23. Tell us what is broken. Watch it built in 15 minutes.</p>
+          <div className={s.heroCta}><a href="#book" className={s.btn}>Book 15 minutes at the booth</a></div>
           <div className={s.pickerWrap}>{picker}</div>
         </div>
 
@@ -150,7 +152,7 @@ export function ExpoStoryCss({ audience, picker }: { audience: AudienceId; picke
         {/* chapter 4: locked */}
         <div className={`${s.textBlock} ${d(s.sdCh4)}`}>
           <h2 className={s.storyH2}>Locked.</h2>
-          <p className={s.storySub}>Before you publish, WyberAi probes your database the way an attacker would.</p>
+          <p className={s.storySub}>The moment you publish, WyberAi probes your database the way an attacker would.</p>
         </div>
 
         {/* chapter 5: live */}

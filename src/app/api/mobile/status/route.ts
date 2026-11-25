@@ -18,10 +18,11 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url)
     const buildId = searchParams.get('buildId')
+    const projectId = searchParams.get('projectId')
     const platform = searchParams.get('platform')
 
-    if (!buildId || !platform) {
-      return NextResponse.json({ error: 'buildId and platform required' }, { status: 400 })
+    if ((!buildId && !projectId) || !platform) {
+      return NextResponse.json({ error: 'buildId (or projectId) and platform required' }, { status: 400 })
     }
 
     if (!['apk', 'ipa'].includes(platform)) {
@@ -29,6 +30,22 @@ export async function GET(req: NextRequest) {
     }
 
     const admin = await createAdminClient()
+
+    // Latest build for a project: lets the panel pick up a finished build (and its download link) after the page was
+    // closed or reloaded, instead of showing the Build button again as if nothing had happened.
+    if (!buildId && projectId) {
+      const { data: latest } = await admin
+        .from('mobile_builds')
+        .select('id, status, build_url, error_message, platform')
+        .eq('project_id', projectId)
+        .eq('user_id', user.id)
+        .eq('platform', platform)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      if (!latest) return NextResponse.json({ build: null })
+      return NextResponse.json({ build: { id: latest.id, status: latest.status, platform: latest.platform, buildUrl: latest.build_url, errorMessage: latest.error_message } })
+    }
 
     const { data: build } = await admin
       .from('mobile_builds')

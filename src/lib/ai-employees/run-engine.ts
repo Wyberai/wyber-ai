@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { createAnthropic } from '@/lib/ai-usage'
 import { Composio } from '@composio/core'
 import { createServiceClient } from '@/lib/supabase/server'
 import { creditCost } from '@/lib/credits'
@@ -7,7 +8,7 @@ import { embed } from '@/lib/ai-employees/embeddings'
 import { withCacheBreakpoint } from '@/lib/anthropic-cache'
 import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+const anthropic = createAnthropic('lib/ai-employees/run-engine', { apiKey: process.env.ANTHROPIC_API_KEY! })
 const MAX_TOOL_ITERATIONS = 15
 const ITER_COST = creditCost('execution', 'default')
 const MAX_RUN_COST = ITER_COST * 16

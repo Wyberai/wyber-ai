@@ -103,6 +103,7 @@ export const TYPES = [
   { tag: 'WEB APP', title: 'Tools for your team', p: 'Trackers, approvals, invoices and dashboards that replace sheets and chat threads.' },
   { tag: 'MOBILE APP', title: 'An app people install', p: 'Orders, attendance or delivery proof on a phone, for your team or your customers.' },
   { tag: 'SAAS', title: 'A product you sell', p: 'Logins, a database and a link customers can sign up on. Ready to put in front of buyers.' },
+  { tag: 'REPLACE', title: 'Replace your SaaS', p: 'Your own, in-house. Swap a SaaS you pay for with your own version, built around the features you actually use. You own the code.' },
 ]
 
 export const STEPS = [
@@ -110,32 +111,43 @@ export const STEPS = [
   { n: 'SAY IT', d: 'Describe it in plain words. WyberAi plans the build before it writes a line.', m: 'Describe it. WyberAi plans first.' },
   { n: 'SEE IT', d: 'Fresh code, never a template. Web app, mobile app, website or SaaS.', m: 'Fresh code, never a template.' },
   { n: 'SHAPE IT', d: 'Change anything by chatting. It fixes its own mistakes.', m: 'Change it by chatting. It repairs itself.' },
-  { n: 'LOCK IT', d: 'It probes its own database like an attacker before you publish.', m: 'It probes its own database first.', tag: 'BUILT IN' },
+  { n: 'LOCK IT', d: 'It probes its own database like an attacker the moment you publish.', m: 'It probes its own database on publish.', tag: 'BUILT IN' },
   { n: 'SHIP IT' },
+]
+
+// The six things WyberAi does on top of plain vibe coding. Every line is held to what the code does:
+// the database scan runs right after a publish (not before); exposed secret keys block a publish and an export;
+// the security checklist and the public checks at /tools run on demand. See src/lib/security-claims.test.ts.
+export const POWERS = [
+  { n: '01', a: 'Data leak ', b: 'test.', p: 'A real Row-Level Security test against your live database, not a linter guessing at your schema. It runs right after every publish, and a critical leak is flagged the moment it is found.' },
+  { n: '02', a: 'Secret-key ', b: 'guard.', p: 'If a secret key or service password is exposed in your code, publishing and export stop until it is removed.' },
+  { n: '03', a: 'Security ', b: 'checklist.', p: 'Run a full security checklist from the editor at any time, against the files WyberAi actually wrote.' },
+  { n: '04', a: 'AI slop ', b: 'remover.', p: 'Rules against the generic made-by-AI look are built into the builder, and a scanner counts the signs on any site and quotes every one it finds. Paste any web address at wyberai.com/tools, free and without signing up.' },
+  { n: '05', a: 'Our own ', b: 'design system.', p: 'Over 150 original components and 31 design directions, built in-house and used on every build, so it does not look like the default AI output. WyberAi analysed 3,903 public, open-licensed GitHub repositories (design tokens, fonts and component names) to study how modern web and mobile interfaces are built. Fresh code every time.' },
+  { n: '06', a: 'SEO + AEO ', b: 'friendly.', p: 'On websites, an SEO pass with automatic fixes and an AI-readable copy of every page, so Google and AI answer engines can read the site. A site that only loads through JavaScript can look empty to them.' },
 ]
 
 export const WHY = [
   { n: '01', a: 'Fresh code, ', b: 'every time.', p: 'No drag-and-drop and no stale templates. WyberAi writes real React and Tailwind from scratch for every project.' },
   { n: '02', a: 'Self-healing ', b: 'builds.', p: 'A broken import or a cut-off file does not stop the build. WyberAi finds the failure and repairs it in the same run.' },
-  { n: '03', a: 'It probes your database ', b: 'like an attacker.', p: 'A real Row-Level Security test against your live database, not a linter guessing at your schema. It runs before every publish, and a critical leak blocks the release.' },
-  { n: '04', a: 'Your code. ', b: 'Zero lock-in.', p: 'Push to your own GitHub repo, connect your own domain, and fork it or hire developers later. Auth, database and API routes come wired up, and the database runs on WyberCloud, free for 2 years.' },
+  { n: '03', a: 'Your code. Your GitHub. ', b: 'Your domain.', p: 'Push to your own GitHub repo, connect your own domain, and fork it or hire developers later. Auth, database and API routes come wired up, and the database runs on WyberCloud, free for 2 years.' },
 ]
 
 /* ---------- story: the clutter that becomes software ---------- */
 
 export const STORY_COPY: Record<AudienceId, { head: string; sub: string; chat: string }> = {
   software: {
-    head: 'Build any digital product. Ship it in minutes.',
+    head: 'Vibe coding with superpowers.',
     sub: 'Timesheets. Chat threads. A status sheet nobody trusts. Say what is broken. Get software.',
     chat: 'Show the rupee value next to every invoice.',
   },
   business: {
-    head: 'Build any digital product. Ship it in minutes.',
+    head: 'Vibe coding with superpowers.',
     sub: 'Challans. Cheques. GST printouts. A ledger only one can read. Say what is broken. Get software.',
     chat: 'Make anything close to the one-year limit red.',
   },
   student: {
-    head: 'Build any digital product. Ship it in minutes.',
+    head: 'Vibe coding with superpowers.',
     sub: 'A timetable. Sticky notes. Placement notices. Six reminder apps. Say what you need. Get software.',
     chat: 'Add a prep notes section for every company.',
   },

@@ -42,7 +42,7 @@ export default function AcceptForm({ token, totalLabel }: { token: string; total
         <span>I have read the scope, price and terms above and I accept this quote.</span>
       </label>
       {error && <div role="alert" style={{ color: '#b91c1c', fontSize: 14 }}>{error}</div>}
-      <button type="submit" disabled={state === 'sending' || !agree || name.trim().length < 2} style={{ padding: '13px 18px', borderRadius: 10, border: 'none', background: '#0EA5E9', color: '#fff', fontSize: 16, fontWeight: 800, cursor: 'pointer', opacity: state === 'sending' || !agree || name.trim().length < 2 ? 0.55 : 1 }}>
+      <button type="submit" disabled={state === 'sending' || !agree || name.trim().length < 2} style={{ padding: '13px 18px', borderRadius: 10, border: 'none', background: '#0EA5E9', color: '#03111c', fontSize: 16, fontWeight: 800, cursor: 'pointer', opacity: state === 'sending' || !agree || name.trim().length < 2 ? 0.55 : 1 }}>
         {state === 'sending' ? 'Sending…' : 'Accept quote'}
       </button>
     </form>

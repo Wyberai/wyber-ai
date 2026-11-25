@@ -155,7 +155,7 @@ export default function AgentStudioPage() {
           <button onClick={() => router.push('/agents')} style={{background:'none',border:'none',color:'#52526a',cursor:'pointer',fontSize:13}}>← Agents</button>
           <span style={{color:'rgba(255,255,255,0.15)'}}>|</span>
           <span style={{fontSize:14,fontWeight:600}}>{agent.name}</span>
-          <span style={{fontSize:11,padding:'2px 8px',borderRadius:10,background:'rgba(99,102,241,0.1)',color:'#6366f1',border:'1px solid rgba(99,102,241,0.2)'}}>{agent.agent_id}</span>
+          <span style={{fontSize:11,padding:'2px 8px',borderRadius:10,background:'rgba(99,102,241,0.1)',color:'#a5b4fc',border:'1px solid rgba(99,102,241,0.2)'}}>{agent.agent_id}</span>
           <div style={{marginLeft:'auto'}}>
             <span style={{fontSize:11,padding:'3px 10px',borderRadius:10,background:allConnected?'rgba(34,197,94,0.1)':'rgba(245,158,11,0.1)',color:allConnected?'#22c55e':'#f59e0b',border:`1px solid ${allConnected?'rgba(34,197,94,0.2)':'rgba(245,158,11,0.2)'}`}}>
               {allConnected?'✓ Ready':'Connect tools to run'}
@@ -167,10 +167,10 @@ export default function AgentStudioPage() {
       <div style={{maxWidth:1100,margin:'0 auto',padding:32,display:'grid',gridTemplateColumns:'1fr 360px',gap:24}}>
         <div>
           <div style={{background:'#111118',border:'1px solid rgba(255,255,255,0.06)',borderRadius:12,padding:24,marginBottom:20}}>
-            <div style={{fontSize:11,fontWeight:700,color:'#6366f1',letterSpacing:'0.08em',textTransform:'uppercase',marginBottom:6}}>{agent.category} · {agent.complexity}</div>
+            <div style={{fontSize:11,fontWeight:700,color:'#a5b4fc',letterSpacing:'0.08em',textTransform:'uppercase',marginBottom:6}}>{agent.category} · {agent.complexity}</div>
             <div style={{fontSize:18,fontWeight:700,marginBottom:8}}>{agent.name}</div>
             <div style={{fontSize:13,color:'#8b8b9a',lineHeight:1.6,marginBottom:12}}>{agent.problem}</div>
-            <div style={{background:'rgba(34,197,94,0.06)',border:'1px solid rgba(34,197,94,0.12)',borderRadius:8,padding:12,fontSize:13,color:'#a1a1aa'}}>
+            <div style={{background:'rgba(34,197,94,0.06)',border:'1px solid rgba(34,197,94,0.12)',borderRadius:8,padding:12,fontSize:13,color:'#9aa8bb'}}>
               <span style={{color:'#22c55e',fontWeight:700}}>Outcome: </span>{agent.outcome}
             </div>
           </div>
@@ -192,7 +192,7 @@ export default function AgentStudioPage() {
                     </div>
                     {isConnected
                       ? <span style={{fontSize:11,color:'#22c55e',fontWeight:700}}>✓ Connected</span>
-                      : <button onClick={() => setConnecting(isOpen?null:tool.id)} style={{padding:'5px 12px',borderRadius:6,border:'1px solid rgba(99,102,241,0.3)',background:'rgba(99,102,241,0.08)',color:'#6366f1',fontSize:12,fontWeight:600,cursor:'pointer'}}>{isOpen?'Cancel':'Connect'}</button>
+                      : <button onClick={() => setConnecting(isOpen?null:tool.id)} style={{padding:'5px 12px',borderRadius:6,border:'1px solid rgba(99,102,241,0.3)',background:'rgba(99,102,241,0.08)',color:'#a5b4fc',fontSize:12,fontWeight:600,cursor:'pointer'}}>{isOpen?'Cancel':'Connect'}</button>
                     }
                   </div>
                   {isOpen && (
@@ -204,7 +204,7 @@ export default function AgentStudioPage() {
                             value={credentials[tool.id]?.[f.key]||''}
                             onChange={e => setCredentials(p => ({...p,[tool.id]:{...(p[tool.id]||{}),[f.key]:e.target.value}}))}
                             style={{width:'100%',background:'#1a1a24',border:'1px solid rgba(255,255,255,0.08)',borderRadius:6,padding:'7px 10px',color:'#f0f0f5',fontSize:12,outline:'none',fontFamily:'monospace'}}/>
-                          <div style={{fontSize:10,color:'#52526a',marginTop:2}}>{f.helpText}</div>
+                          <div style={{fontSize: 11,color:'#52526a',marginTop:2}}>{f.helpText}</div>
                         </div>
                       ))}
                       <button onClick={() => connectTool(tool.id)} style={{padding:'7px 16px',borderRadius:6,border:'none',background:'#6366f1',color:'white',fontSize:12,fontWeight:700,cursor:'pointer',marginTop:4}}>
@@ -230,7 +230,7 @@ export default function AgentStudioPage() {
                 { key: 'email',     label: '📧  On Email' },
               ] as const).map(({ key, label }) => (
                 <button key={key} onClick={() => setScheduleMode(key)}
-                  style={{flex:1,minWidth:90,padding:'8px 4px',borderRadius:8,border:`1px solid ${scheduleMode===key?'rgba(99,102,241,0.4)':'rgba(255,255,255,0.06)'}`,background:scheduleMode===key?'rgba(99,102,241,0.1)':'transparent',color:scheduleMode===key?'#a5b4fc':'#71717a',fontSize:11,fontWeight:600,cursor:'pointer',transition:'all 0.15s'}}>
+                  style={{flex:1,minWidth:90,padding:'8px 4px',borderRadius:8,border:`1px solid ${scheduleMode===key?'rgba(99,102,241,0.4)':'rgba(255,255,255,0.06)'}`,background:scheduleMode===key?'rgba(99,102,241,0.1)':'transparent',color:scheduleMode===key?'#a5b4fc':'#8797ab',fontSize:11,fontWeight:600,cursor:'pointer',transition:'all 0.15s'}}>
                   {label}
                 </button>
               ))}
@@ -300,7 +300,7 @@ export default function AgentStudioPage() {
             ) : scheduleMode === 'email' ? (
               <div style={{background:'rgba(14,165,233,0.04)',border:'1px solid rgba(14,165,233,0.12)',borderRadius:10,padding:16}}>
                 <div style={{fontSize:12,fontWeight:700,color:'#7dd3fc',marginBottom:8}}>Gmail trigger — checks every ~15 min</div>
-                <div style={{fontSize:12,color:'#a1a1aa',lineHeight:1.6,marginBottom:14}}>
+                <div style={{fontSize:12,color:'#9aa8bb',lineHeight:1.6,marginBottom:14}}>
                   Wyber polls your Gmail inbox every ~15 minutes. When a new email arrives, this agent runs automatically with the email as input. You must have Gmail connected in Settings → Integrations.
                 </div>
                 <button onClick={toggleEmailTrigger} disabled={emailTriggerLoading}
@@ -325,17 +325,17 @@ export default function AgentStudioPage() {
                 <div style={{padding:'8px 12px',borderRadius:8,marginBottom:12,background:currentExec.status==='completed'?'rgba(34,197,94,0.06)':'rgba(239,68,68,0.06)',border:`1px solid ${currentExec.status==='completed'?'rgba(34,197,94,0.15)':'rgba(239,68,68,0.15)'}`,fontSize:12,fontWeight:700,color:currentExec.status==='completed'?'#22c55e':'#ef4444'}}>
                   {currentExec.status==='completed'?`✓ Completed · ${currentExec.steps} API calls`:'✗ Failed'}
                 </div>
-                {currentExec.summary && <div style={{fontSize:12,color:'#a1a1aa',lineHeight:1.6,marginBottom:12,padding:12,background:'rgba(255,255,255,0.02)',borderRadius:8,maxHeight:220,overflowY:'auto',whiteSpace:'pre-wrap'}}>{currentExec.summary}</div>}
+                {currentExec.summary && <div style={{fontSize:12,color:'#9aa8bb',lineHeight:1.6,marginBottom:12,padding:12,background:'rgba(255,255,255,0.02)',borderRadius:8,maxHeight:220,overflowY:'auto',whiteSpace:'pre-wrap'}}>{currentExec.summary}</div>}
                 {currentExec.logs.map((log,i) => (
                   <div key={i} style={{fontSize:11,padding:'3px 8px',borderRadius:4,marginBottom:2,color:log.type==='error'?'#ef4444':log.type==='success'?'#22c55e':log.type==='warning'?'#f59e0b':'#8b8b9a'}}>{log.message}</div>
                 ))}
               </div>
             )}
-            {!currentExec && !running && <div style={{textAlign:'center',padding:'32px 0',color:'#3f3f46',fontSize:13}}>Run the agent to see results here</div>}
+            {!currentExec && !running && <div style={{textAlign:'center',padding:'32px 0',color:'#8797ab',fontSize:13}}>Run the agent to see results here</div>}
           </div>
 
           <div style={{background:'rgba(99,102,241,0.04)',border:'1px solid rgba(99,102,241,0.12)',borderRadius:12,padding:16,marginTop:12}}>
-            <div style={{fontSize:12,fontWeight:700,color:'#6366f1',marginBottom:8}}>🔒 Security</div>
+            <div style={{fontSize:12,fontWeight:700,color:'#a5b4fc',marginBottom:8}}>🔒 Security</div>
             <div style={{fontSize:11,color:'#52526a',lineHeight:1.6}}>
               • AES-256-GCM encryption at rest<br/>
               • Credentials decrypted only during execution<br/>

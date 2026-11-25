@@ -134,7 +134,7 @@ const TRACKS: Track[] = [
   {
     id: 'mobile',
     title: 'Mobile Apps',
-    color: '#8b5cf6',
+    color: '#a78bfa',
     accent: 'rgba(139,92,246,0.12)',
     icon: <IconPhone />,
     tagline: 'Generate full React Native apps that run on iOS and Android via Expo.',
@@ -170,182 +170,6 @@ const TRACKS: Track[] = [
         prompt: null,
         builderLink: '/dashboard',
         builderLabel: 'Open your project → Export',
-      },
-    ],
-  },
-  {
-    id: 'agents',
-    title: 'AI Agents',
-    color: '#10b981',
-    accent: 'rgba(16,185,129,0.12)',
-    icon: <IconAgent />,
-    tagline: 'Build agents that monitor, decide, and act — on a schedule or a trigger.',
-    steps: [
-      {
-        id: 'agents-0',
-        title: 'Create your first agent',
-        description: 'Describe what you want the agent to watch and what it should do. Wyber generates the node graph, selects the right tools, and writes the AI instructions.',
-        prompt: 'Build an agent that monitors my Gmail inbox every morning, summarizes any emails from investors or enterprise prospects, and sends me the summary as a Slack DM at 8 AM.',
-        builderLink: '/dashboard?new=agent',
-        builderLabel: 'Open Agent Builder',
-      },
-      {
-        id: 'agents-1',
-        title: 'Connect your tools',
-        description: 'Go to Settings → Integrations and connect the apps your agent needs. Wyber uses Composio for 250+ integrations — no API keys to manage per-tool.',
-        prompt: 'Add a condition node: if the email contains words like "urgent" or "demo request", also post to a #leads Slack channel with a high-priority tag.',
-        builderLink: '/settings?tab=integrations',
-        builderLabel: 'Connect integrations',
-      },
-      {
-        id: 'agents-2',
-        title: 'Set a schedule or trigger',
-        description: 'Agents run on cron schedules, webhooks, or manual triggers. Combine both — for example: poll every 15 minutes AND allow manual runs.',
-        prompt: 'Change the trigger so the agent runs every 15 minutes during business hours (9 AM–6 PM on weekdays) and immediately when I click "Run now".',
-        builderLink: '/agents',
-        builderLabel: 'Open Agents',
-      },
-      {
-        id: 'agents-3',
-        title: 'Test and activate',
-        description: 'Hit Run in the canvas to execute a live test. Each node logs its output inline. When everything looks right, activate the agent to run automatically.',
-        prompt: null,
-        builderLink: '/agents',
-        builderLabel: 'Open Agents → Run',
-      },
-    ],
-  },
-  {
-    id: 'workflows',
-    title: 'Workflows',
-    color: '#f59e0b',
-    accent: 'rgba(245,158,11,0.12)',
-    icon: <IconFlow />,
-    tagline: 'Automate multi-step processes between apps with trigger → action chains.',
-    steps: [
-      {
-        id: 'workflows-0',
-        title: 'Build your first workflow',
-        description: 'Describe a "when X happens, do Y" scenario. Wyber generates the trigger node, action nodes, and data mappings between them.',
-        prompt: 'When a new row is added to my Airtable "Leads" base, create a contact in HubSpot, send a welcome email via Gmail, and post a message in the #new-leads Slack channel with the lead\'s name and company.',
-        builderLink: '/dashboard?new=workflow',
-        builderLabel: 'Open Workflow Builder',
-      },
-      {
-        id: 'workflows-1',
-        title: 'Add conditions and branching',
-        description: 'Condition nodes let the workflow take different paths based on the data. Branch on field values, API responses, or AI decisions.',
-        prompt: 'Add a condition: if the lead\'s company size is over 100 employees, also assign them to an enterprise rep in HubSpot and add the "Enterprise" tag.',
-        builderLink: '/flows',
-        builderLabel: 'Open Workflows',
-      },
-      {
-        id: 'workflows-2',
-        title: 'Use an AI decision node',
-        description: 'Drop an AI Agent node into your workflow to classify, summarize, or decide — then route the output to the next action.',
-        prompt: 'Before creating the HubSpot contact, add an AI node that reads the lead\'s LinkedIn bio (from Airtable) and scores them 1–10 for enterprise fit. Only create the contact if the score is 7 or higher.',
-        builderLink: '/flows',
-        builderLabel: 'Open Workflows',
-      },
-      {
-        id: 'workflows-3',
-        title: 'Test, then activate',
-        description: 'Run a test with sample data to confirm every node executes correctly. When the run log shows all green, activate the workflow to run automatically.',
-        prompt: null,
-        builderLink: '/flows',
-        builderLabel: 'Open Workflows → Activate',
-      },
-    ],
-  },
-  {
-    id: 'employees',
-    title: 'AI Employees',
-    color: '#38bdf8',
-    accent: 'rgba(56,189,248,0.12)',
-    icon: <IconEmployee />,
-    tagline: 'Hire AI employees that run on a schedule and execute real tasks autonomously.',
-    steps: [
-      {
-        id: 'employees-0',
-        title: 'Browse the role catalog',
-        description: 'Explore 100 roles across Sales, Marketing, Engineering, Finance, and more. Each is the AI equivalent of a senior specialist — they run on a schedule, complete real tasks, and report back.',
-        prompt: null,
-        builderLink: '/employees',
-        builderLabel: 'Browse Role Catalog',
-      },
-      {
-        id: 'employees-1',
-        title: 'Hire your first employee',
-        description: 'Pick a role, customize the instructions, and connect your tools via Composio. Your AI Employee runs on your schedule and emails you what it did.',
-        prompt: 'I want to hire a Lead Qualification Specialist. They should check our HubSpot pipeline daily, score leads 1–10 based on company size and intent signals, and send a prioritized list to Slack every morning at 8 AM.',
-        builderLink: '/ai-employees/new',
-        builderLabel: 'Hire an Employee',
-      },
-      {
-        id: 'employees-2',
-        title: 'Set a schedule',
-        description: 'Configure when your AI Employee runs — hourly, daily, weekly, or on a webhook trigger. The employee autonomously executes up to 15 tool calls per run.',
-        prompt: 'Set the Lead Qualification Specialist to run at 7:30 AM Monday through Friday. Also allow manual runs from the dashboard.',
-        builderLink: '/ai-employees',
-        builderLabel: 'Open AI Employees',
-      },
-      {
-        id: 'employees-3',
-        title: 'Review the run digest',
-        description: 'After each run, your employee generates a structured digest: actions taken, tool calls made, and outcomes. Review it in the dashboard or receive it via Slack.',
-        prompt: null,
-        builderLink: '/ai-employees',
-        builderLabel: 'Open AI Employees → Runs',
-      },
-    ],
-  },
-  {
-    id: 'gtm',
-    title: 'GTM Engine',
-    color: '#10b981',
-    accent: 'rgba(16,185,129,0.12)',
-    icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>,
-    tagline: 'Define your ICP, find leads, and launch outreach sequences — all from one place.',
-    steps: [
-      {
-        id: 'gtm-0',
-        title: 'Define your ICP',
-        description: 'Tell Wyber who you sell to — industry, company size, seniority, geography. The AI builds your Ideal Customer Profile and calculates your total addressable market.',
-        prompt: 'My ICP is VP of Engineering at Series A-C SaaS companies with 50-500 employees in the US. Our value prop is reducing deployment time by 80% with AI-powered CI/CD.',
-        builderLink: '/gtm/setup',
-        builderLabel: 'Set up ICP',
-      },
-      {
-        id: 'gtm-1',
-        title: 'Find and import leads',
-        description: 'Search Apollo\'s 270M+ contact database or import your own CSV. Wyber enriches each lead with verified emails, company data, and intent signals.',
-        prompt: null,
-        builderLink: '/gtm/leads/import',
-        builderLabel: 'Import Leads',
-      },
-      {
-        id: 'gtm-2',
-        title: 'Build a sequence',
-        description: 'Pick from 10 battle-tested outreach templates or build your own. Multi-channel: email, call, LinkedIn, and meeting booking steps with AI personalization.',
-        prompt: null,
-        builderLink: '/gtm/sequences',
-        builderLabel: 'Browse Sequences',
-      },
-      {
-        id: 'gtm-3',
-        title: 'Launch a campaign',
-        description: 'Create a campaign on the visual canvas. Connect your sequence, select your lead list, and launch. A/B test subject lines and track opens, replies, and meetings booked.',
-        prompt: null,
-        builderLink: '/gtm/campaigns/new',
-        builderLabel: 'Create Campaign',
-      },
-      {
-        id: 'gtm-4',
-        title: 'Sync to your CRM',
-        description: 'Two-way sync with HubSpot or Salesforce. Qualified leads push to your CRM automatically with ICP scores, intent signals, and enrichment data.',
-        prompt: null,
-        builderLink: '/gtm/settings',
-        builderLabel: 'Connect CRM',
       },
     ],
   },
@@ -390,7 +214,7 @@ function CopyButton({ text }: { text: string }) {
         padding: '5px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer',
         border: `1px solid ${copied ? 'rgba(16,185,129,0.4)' : 'rgba(255,255,255,0.12)'}`,
         background: copied ? 'rgba(16,185,129,0.1)' : 'rgba(255,255,255,0.05)',
-        color: copied ? '#10b981' : 'var(--text3, #71717a)',
+        color: copied ? '#10b981' : 'var(--text3, #8797ab)',
         transition: 'all 0.15s',
         fontFamily: 'inherit',
       }}
@@ -403,7 +227,7 @@ function CopyButton({ text }: { text: string }) {
 
 // ── Certificate card ──────────────────────────────────────────────────────────
 function CertificateCard({ name, date }: { name: string; date: string }) {
-  const shareText = encodeURIComponent(`I just earned my Wyber Certified — All Six Products certificate 🎓\n\nI can now build web apps, mobile apps, AI agents, workflows, and AI employees in plain English with @wyberai.\n\nwww.wyberai.com/learn`)
+  const shareText = encodeURIComponent(`I just earned my Wyber Certified — web and mobile app certificate 🎓\n\nI can now build and ship web apps and mobile apps in plain English with @wyberai.\n\nwww.wyberai.com/learn`)
   const twitterUrl = `https://twitter.com/intent/tweet?text=${shareText}`
   const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent('https://wyberai.com/learn')}&summary=${shareText}`
   const ogUrl = `/api/og/certificate?name=${encodeURIComponent(name)}&date=${encodeURIComponent(date)}`
@@ -426,7 +250,7 @@ function CertificateCard({ name, date }: { name: string; date: string }) {
         <span style={{ fontSize: 36 }}>🎓</span>
       </div>
 
-      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#6366f1', marginBottom: 10 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#a5b4fc', marginBottom: 10 }}>
         Certificate of Completion
       </div>
       <h2 style={{
@@ -436,8 +260,8 @@ function CertificateCard({ name, date }: { name: string; date: string }) {
       }}>
         Wyber Certified
       </h2>
-      <div style={{ fontSize: 14, color: 'var(--text2, #8b8b9a)', marginBottom: 4 }}>All Six Products</div>
-      <div style={{ fontSize: 13, color: 'var(--text3, #52526a)', marginBottom: 6 }}>Web Apps · Mobile · AI Agents · Workflows · AI Employees</div>
+      <div style={{ fontSize: 14, color: 'var(--text2, #8b8b9a)', marginBottom: 4 }}>Web Apps and Mobile Apps</div>
+      <div style={{ fontSize: 13, color: 'var(--text3, #52526a)', marginBottom: 6 }}>Build · Iterate · Connect a database · Deploy · Export</div>
 
       <div style={{ margin: '20px auto', padding: '12px 24px', background: 'rgba(255,255,255,0.03)', borderRadius: 10, border: '1px solid rgba(255,255,255,0.06)', display: 'inline-block' }}>
         <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text, #f0f0f5)' }}>{name}</div>
@@ -568,7 +392,7 @@ export default function LearnPage() {
 
         {/* Hero */}
         <section style={{ textAlign: 'center', padding: 'clamp(48px,8vw,80px) clamp(20px,5vw,40px) clamp(32px,5vw,56px)', borderBottom: '1px solid var(--border, rgba(255,255,255,0.06))' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#6366f1', marginBottom: 14 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#a5b4fc', marginBottom: 14 }}>
             Interactive Learning
           </div>
           <h1 style={{
@@ -579,7 +403,7 @@ export default function LearnPage() {
             Learn to build with Wyber
           </h1>
           <p style={{ fontSize: 'clamp(14px,2vw,18px)', color: 'var(--text2, #8b8b9a)', maxWidth: 520, margin: '0 auto 28px', lineHeight: 1.65 }}>
-            Six tracks. Copy a prompt, open the builder, mark it done. Finish all five and earn your Wyber Certified certificate.
+            Two tracks. Copy a prompt, open the builder, mark it done. Finish both and earn your Wyber Certified certificate.
           </p>
 
           {/* Overall progress bar */}
@@ -636,9 +460,9 @@ export default function LearnPage() {
                     <span style={{ flexShrink: 0, opacity: isActive ? 1 : 0.6 }}>{t.icon}</span>
                     <span style={{ flex: 1 }}>{t.title}</span>
                     {trackComplete
-                      ? <span style={{ width: 18, height: 18, borderRadius: '50%', background: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#fff' }}><IconCheck /></span>
+                      ? <span style={{ width: 18, height: 18, borderRadius: '50%', background: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#03111c' }}><IconCheck /></span>
                       : trackStepsDone > 0
-                        ? <span style={{ fontSize: 10, fontWeight: 700, color: t.color, flexShrink: 0 }}>{trackStepsDone}/{t.steps.length}</span>
+                        ? <span style={{ fontSize: 11, fontWeight: 700, color: t.color, flexShrink: 0 }}>{trackStepsDone}/{t.steps.length}</span>
                         : null
                     }
                   </button>
@@ -662,7 +486,7 @@ export default function LearnPage() {
                   {track.title}
                 </h2>
                 {progress.completedTracks.includes(track.id) && (
-                  <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 20, background: 'rgba(16,185,129,0.12)', color: '#10b981', border: '1px solid rgba(16,185,129,0.25)' }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 20, background: 'rgba(16,185,129,0.12)', color: '#34d399', border: '1px solid rgba(16,185,129,0.25)' }}>
                     Complete ✓
                   </span>
                 )}
@@ -705,7 +529,7 @@ export default function LearnPage() {
 
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
-                          <span style={{ fontSize: 10, fontWeight: 700, color: track.color, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: track.color, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
                             Step {idx + 1}
                           </span>
                           <h3 style={{
@@ -727,7 +551,7 @@ export default function LearnPage() {
                             borderRadius: 10, padding: '12px 14px', marginBottom: 14,
                           }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, gap: 8, flexWrap: 'wrap' }}>
-                              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text3, #52526a)' }}>
+                              <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text3, #52526a)' }}>
                                 Try this prompt
                               </span>
                               <CopyButton text={step.prompt} />
@@ -776,7 +600,7 @@ export default function LearnPage() {
               <div style={{ marginTop: 24, padding: '16px 20px', borderRadius: 12, background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.2)', display: 'flex', alignItems: 'center', gap: 12 }}>
                 <span style={{ fontSize: 20 }}>🎉</span>
                 <div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: '#10b981', marginBottom: 2 }}>{track.title} complete!</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: '#34d399', marginBottom: 2 }}>{track.title} complete!</div>
                   <div style={{ fontSize: 13, color: 'var(--text2, #8b8b9a)' }}>
                     {progress.completedTracks.length < 5
                       ? `${5 - progress.completedTracks.length} track${5 - progress.completedTracks.length !== 1 ? 's' : ''} to go for your certificate.`

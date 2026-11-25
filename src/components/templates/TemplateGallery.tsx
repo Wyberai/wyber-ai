@@ -187,7 +187,7 @@ export function TemplateGallery({ onClose }: Props) {
 
       {/* Search */}
       <div style={{ padding: '8px 10px', borderBottom: '1px solid var(--ide-border)', flexShrink: 0 }}>
-        <input
+        <input aria-label="Search apps..."
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Search apps..."
@@ -199,7 +199,7 @@ export function TemplateGallery({ onClose }: Props) {
       <div style={{ display: 'flex', gap: 5, padding: '6px 10px', borderBottom: '1px solid var(--ide-border)', overflowX: 'auto', flexShrink: 0 }}>
         {['All', ...ALL_CATEGORIES].map(cat => (
           <button key={cat} onClick={() => setCategory(cat)}
-            style={{ padding: '3px 9px', borderRadius: 20, border: `1px solid ${category === cat ? '#0EA5E9' : 'var(--ide-border)'}`, background: category === cat ? 'rgba(14,165,233,0.1)' : 'transparent', color: category === cat ? '#0EA5E9' : 'var(--text-secondary)', fontSize: 10, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.15s', letterSpacing: '0.02em', textTransform: 'uppercase' }}>
+            style={{ padding: '3px 9px', borderRadius: 20, border: `1px solid ${category === cat ? '#0EA5E9' : 'var(--ide-border)'}`, background: category === cat ? 'rgba(14,165,233,0.1)' : 'transparent', color: category === cat ? '#0EA5E9' : 'var(--text-secondary)', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.15s', letterSpacing: '0.02em', textTransform: 'uppercase' }}>
             {cat}
           </button>
         ))}
@@ -207,8 +207,8 @@ export function TemplateGallery({ onClose }: Props) {
 
       {/* Count + instant badge */}
       <div style={{ padding: '5px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 500 }}>{filtered.length} templates</span>
-        <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 4, background: 'rgba(34,197,94,0.1)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.2)', letterSpacing: '0.04em' }}>⚡ INSTANT LOAD</span>
+        <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500 }}>{filtered.length} templates</span>
+        <span style={{ fontSize: 12, fontWeight: 700, padding: '2px 7px', borderRadius: 4, background: 'rgba(34,197,94,0.1)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.2)', letterSpacing: '0.04em' }}>⚡ INSTANT LOAD</span>
       </div>
 
       {/* Grid */}
@@ -241,19 +241,19 @@ export function TemplateGallery({ onClose }: Props) {
                     }
                   </div>
                   {/* Speed badge */}
-                  <span style={{ fontSize: 8, fontWeight: 700, padding: '1px 5px', borderRadius: 3, background: hasPrebuilt ? 'rgba(34,197,94,0.1)' : 'rgba(14,165,233,0.1)', color: hasPrebuilt ? '#22c55e' : '#0EA5E9', border: `1px solid ${hasPrebuilt ? 'rgba(34,197,94,0.2)' : 'rgba(14,165,233,0.2)'}`, letterSpacing: '0.03em' }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, padding: '1px 5px', borderRadius: 3, background: hasPrebuilt ? 'rgba(34,197,94,0.1)' : 'rgba(14,165,233,0.1)', color: hasPrebuilt ? '#22c55e' : '#0EA5E9', border: `1px solid ${hasPrebuilt ? 'rgba(34,197,94,0.2)' : 'rgba(14,165,233,0.2)'}`, letterSpacing: '0.03em' }}>
                     {isLoading ? (loadingPhase === 'instant' ? 'LOADING' : 'STYLING') : hasPrebuilt ? '< 1s' : '~12s'}
                   </span>
                 </div>
 
                 {/* Text */}
                 <div>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.02em', marginBottom: 2, lineHeight: 1.2 }}>{t.name}</div>
-                  <div style={{ fontSize: 10, color: 'var(--text-muted)', lineHeight: 1.4 }}>{t.description}</div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.02em', marginBottom: 2, lineHeight: 1.2 }}>{t.name}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.4 }}>{t.description}</div>
                 </div>
 
                 {/* Category */}
-                <span style={{ fontSize: 9, fontWeight: 700, padding: '1px 6px', borderRadius: 4, background: c.bg, color: c.icon, border: `1px solid ${c.border}`, textTransform: 'uppercase', letterSpacing: '0.04em', alignSelf: 'flex-start' }}>
+                <span style={{ fontSize: 12, fontWeight: 700, padding: '1px 6px', borderRadius: 4, background: c.bg, color: c.icon, border: `1px solid ${c.border}`, textTransform: 'uppercase', letterSpacing: '0.04em', alignSelf: 'flex-start' }}>
                   {t.category}
                 </span>
               </button>
