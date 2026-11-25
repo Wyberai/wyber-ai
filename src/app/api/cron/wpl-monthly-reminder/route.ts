@@ -11,7 +11,7 @@ export const maxDuration = 60
 // Champion / Most Creative before the period rolls — Fan Favorite is fully
 // automatic by vote count and needs no reminder.
 export async function GET(req: NextRequest) {
-  if (req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!process.env.CRON_SECRET || req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

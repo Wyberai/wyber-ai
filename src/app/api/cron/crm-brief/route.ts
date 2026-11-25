@@ -24,7 +24,7 @@ async function agentsSection(admin: Awaited<ReturnType<typeof createAdminClient>
 // founder the revenue brief. Off with CRM_BRIEF_DISABLED=true. ?dry=1 returns
 // the brief text without sending anything.
 export async function GET(req: NextRequest) {
-  if (req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!process.env.CRON_SECRET || req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
   if (process.env.CRM_BRIEF_DISABLED === 'true') return NextResponse.json({ skipped: true, reason: 'CRM_BRIEF_DISABLED' })

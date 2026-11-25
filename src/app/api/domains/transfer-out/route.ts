@@ -13,6 +13,9 @@ export async function POST(req: NextRequest) {
   if (!user) return unauthorized()
   const ctx = await context()
   if (!ctx) return notConfigured()
+  // Moving a domain away is the one step that cannot be undone from here, so the sign-in must be recent (a stolen old session is not enough).
+  const lastSignIn = Date.parse(user.last_sign_in_at ?? '')
+  if (!Number.isFinite(lastSignIn) || Date.now() - lastSignIn > 15 * 60_000) return NextResponse.json({ error: 'For your safety, please sign in again before you move a domain. Then come back to this page.', reauth: true }, { status: 403 })
   const b = (await req.json().catch(() => ({}))) as { domain?: string; action?: string }
   const domain = String(b.domain ?? '').trim().toLowerCase()
   const action = b.action === 'lock' ? 'lock' : b.action === 'unlock' ? 'unlock' : null

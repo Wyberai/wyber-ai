@@ -21,7 +21,7 @@ function getAdmin() {
 export async function GET(req: NextRequest) {
   // Verify this is a legitimate Vercel Cron call
   const auth = req.headers.get('authorization')
-  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!process.env.CRON_SECRET || auth !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

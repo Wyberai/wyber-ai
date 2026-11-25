@@ -278,6 +278,17 @@ export async function POST(req: NextRequest) {
           sendAdminPaymentAlert(userEmail || 'unknown', `Domain order ${orderId} was paid but the domain provider is not configured. Fulfil it by hand.`).catch(() => {})
         } else {
           const store = supabaseStore(admin)
+          // The registrar is charged for real, so the amount paid must cover the order before anything is registered.
+          const { paymentCoversOrder } = await import('@/lib/domains/payment-check')
+          const pending = await store.getOrder(orderId)
+          const covers = pending ? paymentCoversOrder(pending.total_cents, event.data as Record<string, unknown> | undefined) : { verdict: 'ok' as const }
+          if (covers.verdict === 'short') {
+            sendAdminPaymentAlert(userEmail || 'unknown', `Domain order ${orderId} was NOT fulfilled: ${'reason' in covers ? covers.reason : 'payment too low'}. The order stays awaiting_payment; check the payment in Dodo, then fix or refund.`).catch(() => {})
+            return NextResponse.json({ received: true, held: true })
+          }
+          if (covers.verdict === 'unverified') {
+            sendAdminPaymentAlert(userEmail || 'unknown', `Domain order ${orderId} was fulfilled but the paid amount could not be read from the payment event (${covers.reason}). Check it in Dodo.`).catch(() => {})
+          }
           const r = await fulfilOrder({ provider, store }, orderId)
           if (!r.ok) sendAdminPaymentAlert(userEmail || 'unknown', `Domain order ${orderId} was paid but did not finish (${r.status}). Open it in commerce_orders.`).catch(() => {})
           // Tell the customer, once: only the delivery that did the work sends the email. Awaited so a frozen function cannot drop it.

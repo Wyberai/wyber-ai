@@ -20,8 +20,17 @@ export function getProvider(env: Record<string, string | undefined> = process.en
   const url = env[ENV_NAMES.relayUrl]?.trim()
   const secret = env[ENV_NAMES.relaySecret]?.trim()
   if (!url || !secret) return null
+  // Customer details and registrar calls cross this link, so on production it must be HTTPS (the relay README puts Caddy in front).
+  if (!relayUrlAllowed(url, env)) { console.error('[domains] DOMAINS_RELAY_URL must start with https:// on production; domains stay switched off'); return null }
   const currency = env[ENV_NAMES.currency]?.trim().toUpperCase() === 'INR' ? 'INR' : 'USD'
   return new RelayDomainsClient({ url, secret, currency, env })
+}
+
+/** https always; plain http only outside production (a local or preview relay). */
+export function relayUrlAllowed(url: string, env: Record<string, string | undefined> = process.env): boolean {
+  if (url.toLowerCase().startsWith('https://')) return true
+  const production = env.VERCEL_ENV === 'production' || env.NODE_ENV === 'production'
+  return !production && url.toLowerCase().startsWith('http://')
 }
 
 export const isSandbox = (p: DomainsProvider | null) => p?.name === 'fake'

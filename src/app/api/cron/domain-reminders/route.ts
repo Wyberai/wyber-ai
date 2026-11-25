@@ -8,7 +8,7 @@ export const maxDuration = 60
 // Daily (vercel.json): emails 30, 14, 7 and 1 days before a domain or Workspace order expires, once per threshold.
 // ?dry=1 returns what would be sent and sends nothing.
 export async function GET(req: NextRequest) {
-  if (req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!process.env.CRON_SECRET || req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const dry = req.nextUrl.searchParams.get('dry') === '1'
   const admin = await createAdminClient()
   const horizon = new Date(Date.now() + 31 * 86_400_000).toISOString()

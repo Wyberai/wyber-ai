@@ -11,7 +11,7 @@ export const maxDuration = 300
 //   OPS_AGENTS_DISABLED=true  stops every agent.
 //   ?dry=1                    shows what each agent WOULD do; no model calls, no writes.
 export async function GET(req: NextRequest) {
-  if (req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!process.env.CRON_SECRET || req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
   if (process.env.OPS_AGENTS_DISABLED === 'true') return NextResponse.json({ skipped: true, reason: 'OPS_AGENTS_DISABLED' })

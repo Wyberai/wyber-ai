@@ -16,7 +16,7 @@ function healthUrl(): string {
 }
 
 export async function GET(req: NextRequest) {
-  if (req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!process.env.CRON_SECRET || req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (process.env.UPTIME_DISABLED === 'true') return NextResponse.json({ skipped: true, reason: 'UPTIME_DISABLED' })
   const dry = req.nextUrl.searchParams.get('dry') === '1'
 

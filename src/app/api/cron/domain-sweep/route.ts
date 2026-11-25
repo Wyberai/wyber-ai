@@ -19,7 +19,7 @@ const MIN = 60_000
 const APP = () => process.env.NEXT_PUBLIC_APP_URL || 'https://wyberai.com'
 
 export async function GET(req: NextRequest) {
-  if (req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!process.env.CRON_SECRET || req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const dry = req.nextUrl.searchParams.get('dry') === '1'
   const ctx = await context()
   if (!ctx) return NextResponse.json({ ok: true, skipped: 'domains are not configured' })

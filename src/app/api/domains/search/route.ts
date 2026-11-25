@@ -4,10 +4,14 @@ import { getProvider, inrPerUsd, isSandbox } from '@/lib/domains'
 import { policyLines } from '@/lib/domains/policy'
 import { SUPPORTED_YEARS } from '@/lib/domains/config'
 import { notConfigured, requireUser, unauthorized } from '@/lib/domains/route-helpers'
+import { rateLimit } from '@/lib/rate-limit'
 
 // GET /api/domains/search?q=ashabakery&years=1: availability and real prices for a handful of sensible extensions.
 export async function GET(req: NextRequest) {
-  if (!(await requireUser())) return unauthorized()
+  const user = await requireUser()
+  if (!user) return unauthorized()
+  // Each search makes several calls to the registrar through one shared address, so one account must not be able to use them all up.
+  if (!rateLimit(`domain-search:${user.id}`, 40, 10 * 60_000).allowed) return NextResponse.json({ error: 'Too many searches. Wait a few minutes and try again.' }, { status: 429 })
   const provider = getProvider()
   if (!provider) return notConfigured()
   const q = req.nextUrl.searchParams.get('q') ?? ''
