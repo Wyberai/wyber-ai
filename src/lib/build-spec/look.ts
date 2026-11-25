@@ -84,7 +84,15 @@ const GROUP_HELP: Record<DirectionGroup, string> = {
   tool: 'dense, utilitarian, dashboards and working tools',
 }
 
-export interface LookBrief { mode: 'light' | 'dark'; groups: DirectionGroup[]; palette: string; type: string; mood: string[]; why: string }
+export interface LookBrief {
+  mode: 'light' | 'dark'; groups: DirectionGroup[]; palette: string; type: string; mood: string[]; why: string
+  /** Colour families that ALL suit this business, best first. A build takes the one this industry has used least recently. */
+  palettes?: string[]
+  /** One word from INDUSTRIES: which recent builds this one must not look like. */
+  industry?: string
+}
+
+export const INDUSTRIES = ['dental', 'medical', 'legal', 'finance', 'food', 'retail', 'gaming', 'fitness', 'beauty', 'education', 'real-estate', 'hospitality', 'technology', 'manufacturing', 'logistics', 'home-services', 'creative', 'nonprofit', 'agriculture', 'other']
 
 export function buildLookPrompt(prompt: string, surface: 'website' | 'app' | 'saas'): { system: string; user: string } {
   const groups = (Object.keys(GROUP_HELP) as DirectionGroup[]).map(g => `- ${g}: ${GROUP_HELP[g]}`).join('\n')
@@ -95,10 +103,11 @@ export function buildLookPrompt(prompt: string, surface: 'website' | 'app' | 'sa
     'A dental clinic feels clean, calm and trustworthy. A gaming store feels dark, energetic and bold. A family law firm feels restrained and serious. A bakery feels warm. An accountancy tool feels precise. Think about who is looking and what they must feel in five seconds.',
     'Do NOT default to cream grounds with orange or red. Warm earthy colours are right only for food, craft, hospitality and similar. Clinics, law, finance and software almost never want them.',
     `Pick "groups" (one or two) from:\n${groups}`,
-    `Pick "palette" (one) from:\n${palettes}`,
+    `Pick "palettes": FOUR colour families that are ALL genuinely right for this business, best first, from the list below. Later builds for the same kind of business use the other three, so never pad the list with a family that is wrong for it. Warm earthy families (terracotta, amber) belong only to food, craft, hospitality, children and retail.\n${palettes}`,
+    `Pick "industry" (one word) from: ${INDUSTRIES.join(', ')}.`,
     `Pick "type" (one) from:\n${types}`,
     'Pick "mode": "light" or "dark". Dark only when the business and audience suit it (gaming, nightlife, cinema, some tech).',
-    'Reply with one JSON object and nothing else: {"mode": "light", "groups": ["human"], "palette": "teal", "type": "geometric", "mood": ["calm","clear","trusting"], "why": "one sentence"}',
+    'Reply with one JSON object and nothing else: {"industry": "dental", "mode": "light", "groups": ["human"], "palettes": ["teal","sky","forest","navy"], "type": "geometric", "mood": ["calm","clear","trusting"], "why": "one sentence"}',
   ].join('\n')
   return { system, user: `Brief:\n${prompt.slice(0, 1800)}` }
 }
@@ -109,7 +118,8 @@ export function validateLookBrief(v: unknown): string[] {
   const out: string[] = []
   if (o.mode !== 'light' && o.mode !== 'dark') out.push('mode must be light or dark')
   if (!Array.isArray(o.groups) || o.groups.length < 1 || o.groups.length > 2 || o.groups.some(g => !(g in GROUP_HELP))) out.push('groups: one or two of ' + Object.keys(GROUP_HELP).join(', '))
-  if (!o.palette || !(o.palette in HUE_FAMILIES)) out.push('palette must be one of ' + Object.keys(HUE_FAMILIES).join(', '))
+  const families = o.palettes ?? (o.palette ? [o.palette] : [])
+  if (!Array.isArray(families) || families.length < 1 || families.length > 5 || families.some(f => !(f in HUE_FAMILIES))) out.push('palettes: one to five of ' + Object.keys(HUE_FAMILIES).join(', '))
   if (!o.type || !(o.type in PAIRINGS)) out.push('type must be one of ' + Object.keys(PAIRINGS).join(', '))
   return out
 }
@@ -216,7 +226,14 @@ export interface ResolvedLook { directionId: string; look: Look; brief: LookBrie
 export async function askLookBrief(prompt: string, surface: 'website' | 'app' | 'saas', call: ModelCall, onUsage: (r: ModelReply) => void): Promise<LookBrief | null> {
   const p = buildLookPrompt(prompt, surface)
   const asked = await askForJson<LookBrief>({ call, system: p.system, user: p.user, attempts: 1, timeoutMs: 20000, onUsage, validate: validateLookBrief })
-  return asked.ok ? asked.value : null
+  return asked.ok ? normalizeLookBrief(asked.value) : null
+}
+
+/** A valid reply made complete: distinct colour families with the first as the default, and a known industry word. */
+export function normalizeLookBrief(b: LookBrief): LookBrief {
+  const palettes = [...new Set(b.palettes?.length ? b.palettes : [b.palette])]
+  const industry = b.industry && INDUSTRIES.includes(b.industry) ? b.industry : 'other'
+  return { ...b, palettes, palette: palettes[0], industry }
 }
 
 /** A design drawn from the brief with a seed: cheap, synchronous, and different for every seed. */

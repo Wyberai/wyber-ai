@@ -4,7 +4,7 @@ import { parseFactsFromPrompt, stripFactsSuffix } from '../build-spec/facts'
 import type { ModelCall } from '../build-spec/types'
 import { chooseShape } from './choose'
 import { askLookBrief, drawLook } from '../build-spec/look'
-import { claimUnique, designKey, wantsSameDesign, type DesignRegistry } from '../build-spec/design-registry'
+import { claimUnique, designKey, wantsSameDesign, rotateBriefColour, type DesignRegistry } from '../build-spec/design-registry'
 import { buildModelPrompt, normalizeModel, validateModel } from './model'
 import { planApp } from './plan'
 import { renderApp } from './render'
@@ -27,10 +27,12 @@ export async function generateApp(input: AppGenerateInput, deps: { writeModel: M
     if (!lookBrief && !input.directionId) notes.push('look: kept the keyword choice')
     // THE RULE: a design that exists is never built again unless the user asked for exactly that.
     const sameOnPurpose = Boolean(input.directionId) || wantsSameDesign(input.prompt)
+    // Colour rotates per industry: of the families that all suit this business, take the one recent builds have used least.
+    const rotatedLook = lookBrief && !sameOnPurpose ? await rotateBriefColour(lookBrief, deps.designs, input.seed) : lookBrief
     const picked = await claimUnique({
-      seed: input.seed, registry: sameOnPurpose ? null : deps.designs, owner: input.seed,
+      seed: input.seed, registry: sameOnPurpose ? null : deps.designs, owner: input.seed, industry: rotatedLook?.industry, family: rotatedLook?.palette,
       build: seed => {
-        const art = lookBrief ? drawLook(lookBrief, seed, 'app', { named: true, avoid: input.avoid }) : null
+        const art = rotatedLook ? drawLook(rotatedLook, seed, 'app', { named: true, avoid: input.avoid }) : null
         return planApp(input.prompt, { seed, facts, directionId: art?.directionId ?? input.directionId, avoid: input.avoid, look: art?.look })
       },
       keyOf: s => designKey({ directionId: s.direction.id, look: s.look, layout: Object.values(s.layout).join('.') }),

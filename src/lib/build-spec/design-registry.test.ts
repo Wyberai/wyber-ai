@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { MemoryDesignRegistry, claimUnique, designKey, hueBucket, supabaseDesignRegistry, wantsSameDesign } from './design-registry'
-import { drawLook, lookFor, type LookBrief } from './look'
+import { MemoryDesignRegistry, claimUnique, designKey, hueBucket, rotateBriefColour, rotateFamily, supabaseDesignRegistry, wantsSameDesign } from './design-registry'
+import { drawLook, lookFor, normalizeLookBrief, validateLookBrief, type LookBrief } from './look'
 import { planWebsite } from '../website-spec/plan'
 import { websiteLayoutKey } from '../website-spec/generate'
 
@@ -100,5 +100,66 @@ describe('the database registry', () => {
     expect(await supabaseDesignRegistry(fake({ error: { code: '42P01', message: 'relation does not exist' } })).claim('k', { owner: 'a', directionId: 'd' })).toBe(true)
     const throwing = { from: () => { throw new Error('boom') } }
     expect(await supabaseDesignRegistry(throwing).claim('k', { owner: 'a', directionId: 'd' })).toBe(true)
+  })
+})
+
+describe('colour rotates between builds of the same industry', () => {
+  const legal: LookBrief = { mode: 'light', groups: ['editorial'], palette: 'navy', palettes: ['navy', 'forest', 'slate', 'plum'], industry: 'legal', type: 'serif-classic', mood: ['serious'], why: 'law' }
+
+  it('takes an unused family in the art director order, then the one used longest ago', () => {
+    expect(rotateFamily(['navy', 'forest', 'slate'], [])).toBe('navy')
+    expect(rotateFamily(['navy', 'forest', 'slate'], ['navy'])).toBe('forest')
+    expect(rotateFamily(['navy', 'forest', 'slate'], ['forest', 'navy'])).toBe('slate')
+    expect(rotateFamily(['navy', 'forest', 'slate'], ['slate', 'forest', 'navy'])).toBe('navy')
+  })
+
+  it('eight law sites in a row cycle through all four suitable families: no two neighbours share one, and none leaves the list', async () => {
+    const registry = new MemoryDesignRegistry()
+    const used: string[] = []
+    for (let i = 0; i < 8; i++) {
+      const b = await rotateBriefColour(legal, registry, 'p' + i)
+      await registry.claim('k' + i, { owner: 'p' + i, directionId: 'd', industry: b.industry, family: b.palette })
+      used.push(b.palette)
+    }
+    expect(used).toEqual(['navy', 'forest', 'slate', 'plum', 'navy', 'forest', 'slate', 'plum'])
+  })
+
+  it('another industry does not affect it, and a project retrying its own build keeps its colour', async () => {
+    const registry = new MemoryDesignRegistry()
+    await registry.claim('a', { owner: 'other', directionId: 'd', industry: 'dental', family: 'navy' })
+    expect((await rotateBriefColour(legal, registry, 'me')).palette).toBe('navy')
+    await registry.claim('b', { owner: 'me', directionId: 'd', industry: 'legal', family: 'navy' })
+    expect((await rotateBriefColour(legal, registry, 'me')).palette).toBe('navy')
+    expect((await rotateBriefColour(legal, registry, 'someone-new')).palette).toBe('forest')
+  })
+
+  it('stays as chosen when there is no registry, no alternative, or the history cannot be read', async () => {
+    expect((await rotateBriefColour(legal, null, 'x')).palette).toBe('navy')
+    expect((await rotateBriefColour({ ...legal, palettes: ['navy'] }, new MemoryDesignRegistry(), 'x')).palette).toBe('navy')
+    const broken = { claim: async () => true, recentFamilies: async () => { throw new Error('down') } }
+    expect((await rotateBriefColour(legal, broken, 'x')).palette).toBe('navy')
+  })
+
+  it('a checked-but-unused fallback design is not recorded', async () => {
+    const registry = new MemoryDesignRegistry()
+    expect(await registry.isFree('fallback-key', 'p')).toBe(true)
+    expect(registry.size).toBe(0)
+    expect(await registry.recentFamilies('legal', 'q')).toEqual([])
+  })
+})
+
+describe('the art director reply', () => {
+  const base = { mode: 'light', groups: ['editorial'], type: 'serif-classic', mood: [], why: '' }
+  it('keeps the ranked families, defaults to the first, and keeps only a known industry word', () => {
+    const b = normalizeLookBrief({ ...base, palettes: ['navy', 'forest', 'navy'], palette: '', industry: 'legal' } as unknown as LookBrief)
+    expect(b.palettes).toEqual(['navy', 'forest'])
+    expect(b.palette).toBe('navy')
+    expect(b.industry).toBe('legal')
+    expect(normalizeLookBrief({ ...base, palette: 'teal', industry: 'space-lawyers' } as unknown as LookBrief).industry).toBe('other')
+  })
+  it('rejects an unknown family in the list and accepts an old-style single palette', () => {
+    expect(validateLookBrief({ ...base, palettes: ['navy', 'neon'] })[0]).toMatch(/palettes/)
+    expect(validateLookBrief({ ...base, palette: 'navy' })).toEqual([])
+    expect(validateLookBrief(base)[0]).toMatch(/palettes/)
   })
 })

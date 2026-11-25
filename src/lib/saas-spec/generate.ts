@@ -5,7 +5,7 @@ import type { ModelCall, ModelReply } from '../build-spec/types'
 import { isIndianPrompt } from '../build-spec/locale'
 import { chooseShape, SAAS_LIMITS } from '../app-spec/choose'
 import { askLookBrief, drawLook } from '../build-spec/look'
-import { claimUnique, designKey, wantsSameDesign, type DesignRegistry } from '../build-spec/design-registry'
+import { claimUnique, designKey, wantsSameDesign, rotateBriefColour, type DesignRegistry } from '../build-spec/design-registry'
 import { repairLengths } from '../build-spec/trim'
 import { normalizeCopy, validateCopy } from '../website-spec/copy'
 import type { SiteCopy } from '../website-spec/types'
@@ -45,10 +45,12 @@ export async function generateSaas(input: SaasGenerateInput, deps: { write: Mode
     if (!lookBrief && !input.directionId) notes.push('look: kept the keyword choice')
     // THE RULE: a design that exists is never built again unless the user asked for exactly that.
     const sameOnPurpose = Boolean(input.directionId) || wantsSameDesign(input.prompt)
+    // Colour rotates per industry: of the families that all suit this business, take the one recent builds have used least.
+    const rotatedLook = lookBrief && !sameOnPurpose ? await rotateBriefColour(lookBrief, deps.designs, input.seed) : lookBrief
     const picked = await claimUnique({
-      seed: input.seed, registry: sameOnPurpose ? null : deps.designs, owner: input.seed,
+      seed: input.seed, registry: sameOnPurpose ? null : deps.designs, owner: input.seed, industry: rotatedLook?.industry, family: rotatedLook?.palette,
       build: seed => {
-        const art = lookBrief ? drawLook(lookBrief, seed, 'saas', { named: true, avoid: input.avoid }) : null
+        const art = rotatedLook ? drawLook(rotatedLook, seed, 'saas', { named: true, avoid: input.avoid }) : null
         return planSaas(input.prompt, { seed, facts, directionId: art?.directionId ?? input.directionId, avoid: input.avoid, currency: currencyFor(input.prompt), look: art?.look })
       },
       keyOf: s => designKey({ directionId: s.direction.id, look: s.look, layout: [...Object.values(s.layout), ...Object.values(s.app.layout)].join('.') }),

@@ -5278,6 +5278,8 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
     // directions and the layout seeds never ran on a first web build (found 18 Nov 2026 from production logs: no [design-direction] line).
     // Only the passes that set the design (a one-shot build or the scaffold), so a staged build's fill and wire passes do not re-deal
     // a different random palette.
+    // Set by the design block below when its design is only the fallback for the structured build (see claimFallbackDesign() further down).
+    let claimFallbackDesign: (() => Promise<void>) | null = null
     if (isNewBuild && (stage === 'full' || stage === 'scaffold') && projectType !== 'mobile') {
       // Inject a complete, hand-tuned, domain-matched HSL token palette as a
       // concrete DESIGN BRIEF (not vague adjectives). Guarantees every fresh
@@ -5292,13 +5294,14 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
       // motion and hard rules, so the generic layout seed below (which hard-codes aurora/glow/spotlight heroes)
       // is skipped when one applies. An explicit paletteId that is a direction id (Plan Mode) wins.
       let directionApplied = false
+      claimFallbackDesign = null
       // The ART DIRECTOR (src/lib/build-spec/look.ts) also decides the look of the free-form build, so a build that falls out of the
       // structured path never gets the old keyword look (live, 24 Nov: every dental site came out cream and wine). An explicit direction
       // from Plan Mode still wins. One small Haiku call; any failure keeps the existing selection below.
       if (!(typeof paletteId === 'string' && paletteId) && (projectType === 'website' || projectType === 'saas' || projectType === 'app' || projectType === 'webapp' || !projectType)) {
         try {
           const { askLookBrief, drawLook, skinDirection } = await import('@/lib/build-spec/look')
-          const { claimUnique, designKey, wantsSameDesign } = await import('@/lib/build-spec/design-registry')
+          const { claimUnique, designKey, wantsSameDesign, rotateBriefColour } = await import('@/lib/build-spec/design-registry')
           const { getDirectionById } = await import('@/lib/design-directions')
           const { renderDirectionBrief } = await import('@/lib/direction-brief')
           const surface = projectType === 'website' ? 'website' : projectType === 'saas' ? 'saas' : 'app'
@@ -5308,10 +5311,25 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
           }, () => {})
           const owner = String(projectId ?? buildId ?? prompt)
           // THE RULE: a design that exists is never built again unless the user asked for exactly that.
-          const picked = lookBrief
+          const registry = wantsSameDesign(prompt) ? null : await designRegistry()
+          const rotated = lookBrief ? await rotateBriefColour(lookBrief, registry, owner) : null
+          // When the structured build is going to be tried, this design is only the fallback: check that it is free but record
+          // nothing, and record it later only if the fallback is what actually gets built.
+          const structuredFirst = stage === 'full' && !selfHeal && (
+            (projectType === 'website' && (await import('@/lib/website-spec/flag')).websiteSpecEnabled()) ||
+            (projectType === 'saas' && (await import('@/lib/saas-spec/flag')).saasSpecEnabled()) ||
+            (surface === 'app' && (await import('@/lib/app-spec/flag')).webappSpecEnabled()))
+          const picked = rotated
             ? await claimUnique({
-                seed: owner, registry: wantsSameDesign(prompt) ? null : await designRegistry(), owner,
-                build: seed => drawLook(lookBrief, seed, surface, { named: true }),
+                seed: owner, owner, industry: rotated.industry, family: rotated.palette,
+                registry: !registry ? null : !structuredFirst ? registry : {
+                  claim: async (key, meta) => {
+                    const free = registry.isFree ? await registry.isFree(key, meta.owner) : true
+                    if (free) claimFallbackDesign = async () => { await registry.claim(key, meta) }
+                    return free
+                  },
+                },
+                build: seed => drawLook(rotated, seed, surface, { named: true }),
                 keyOf: r => designKey({ directionId: r.directionId, look: r.look }),
                 directionOf: r => r.directionId,
               })
@@ -5923,6 +5941,10 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
           console.log('[mobile-spec] threw, falling back to the free-form build:', String(mobErr))
         }
       }
+
+      // The structured build did not handle this request, so the fallback design is the one being built: record it now.
+      const recordFallbackDesign = claimFallbackDesign as (() => Promise<void>) | null
+      if (!handledBySpec && recordFallbackDesign) await recordFallbackDesign()
 
       let handledByParallel = handledBySpec
       if (!handledBySpec && useToolUse && isNewBuild && newBuildComplexity !== true && process.env.CLAUDE_PARALLEL_BUILD !== 'off') {

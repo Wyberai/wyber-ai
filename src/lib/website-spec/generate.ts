@@ -5,7 +5,7 @@ import { buildLanguagePrompt, languagesFromReply, validateLanguageReply } from '
 import type { ModelCall, ModelReply } from '../build-spec/types'
 import { buildCopyPrompt, normalizeCopy, validateCopy } from './copy'
 import { askLookBrief, drawLook } from '../build-spec/look'
-import { claimUnique, designKey, wantsSameDesign, type DesignRegistry } from '../build-spec/design-registry'
+import { claimUnique, designKey, wantsSameDesign, rotateBriefColour, type DesignRegistry } from '../build-spec/design-registry'
 import { repairLengths } from '../build-spec/trim'
 import { planWebsite } from './plan'
 import { renderWebsite, type Translations } from './render'
@@ -59,10 +59,12 @@ export async function generateWebsite(input: GenerateInput, deps: GenerateDeps):
     if (!brief && !input.directionId) notes.push('look: kept the keyword choice')
     // THE RULE: a design that exists is never built again unless the user asked for exactly that. Draw with new seeds until one is free.
     const sameOnPurpose = Boolean(input.directionId) || wantsSameDesign(input.prompt)
+    // Colour rotates per industry: of the families that all suit this business, take the one recent builds have used least.
+    const rotatedBrief = brief && !sameOnPurpose ? await rotateBriefColour(brief, deps.designs, input.seed) : brief
     const picked = await claimUnique({
-      seed: input.seed, registry: sameOnPurpose ? null : deps.designs, owner: input.seed,
+      seed: input.seed, registry: sameOnPurpose ? null : deps.designs, owner: input.seed, industry: rotatedBrief?.industry, family: rotatedBrief?.palette,
       build: seed => {
-        const art = brief ? drawLook(brief, seed, 'website', { named: !!facts.name, avoid: input.avoid }) : null
+        const art = rotatedBrief ? drawLook(rotatedBrief, seed, 'website', { named: !!facts.name, avoid: input.avoid }) : null
         return planWebsite(input.prompt, { seed, facts, directionId: art?.directionId ?? input.directionId, avoid: input.avoid, look: art?.look })
       },
       keyOf: s => designKey({ directionId: s.direction.id, look: s.look, layout: websiteLayoutKey(s) }),

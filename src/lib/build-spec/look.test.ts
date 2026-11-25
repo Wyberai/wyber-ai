@@ -57,7 +57,7 @@ describe('the art director', () => {
 
   it('validates the model answer', () => {
     expect(validateLookBrief(dental)).toEqual([])
-    expect(validateLookBrief({ ...dental, palette: 'neon' })[0]).toMatch(/palette/)
+    expect(validateLookBrief({ ...dental, palette: 'neon' })[0]).toMatch(/palettes/)
     expect(validateLookBrief({ ...dental, groups: [] })[0]).toMatch(/groups/)
     expect(validateLookBrief({ ...dental, mode: 'grey' })[0]).toMatch(/mode/)
   })
