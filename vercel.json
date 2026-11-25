@@ -58,6 +58,14 @@
       "schedule": "*/15 * * * *"
     },
     {
+      "path": "/api/cron/domain-sweep",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/domain-reminders",
+      "schedule": "0 5 * * *"
+    },
+    {
       "path": "/api/cron/wpl-monthly-reminder",
       "schedule": "0 6 28-31 * *"
     }

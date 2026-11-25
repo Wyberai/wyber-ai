@@ -1,0 +1,13 @@
+[Unit]
+Description=WyberAi domains relay
+After=network-online.target
+
+[Service]
+EnvironmentFile=/etc/wyber-relay.env
+ExecStart=/usr/bin/node /opt/wyber-relay/server.mjs
+Restart=always
+User=nobody
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

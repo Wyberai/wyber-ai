@@ -10,6 +10,7 @@ import { COMMON_STRINGS } from '@/lib/i18n/dict/common';
 import { estimateCost } from '@/lib/credits';
 import { LaunchKit } from './LaunchKit';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
+import DomainsManager from '@/components/domains/DomainsManager';
 
 interface Props {
   initialProfile?: { credits: number; plan: string; email: string; id?: string } | null;
@@ -64,13 +65,7 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
   const [customDomainError, setCustomDomainError] = useState('');
   const [dnsInstructions, setDnsInstructions] = useState<any>(null);
   const [dnsProvider, setDnsProvider] = useState<{ name: string; dashboardUrl: string } | null>(null);
-  const [buyDomainQuery, setBuyDomainQuery] = useState('');
-  const [buyDomainResult, setBuyDomainResult] = useState<{ name: string; available: boolean; priceCents: number | null } | null>(null);
-  const [buyDomainStatus, setBuyDomainStatus] = useState<'idle' | 'searching' | 'buying' | 'error'>('idle');
-  const [buyDomainError, setBuyDomainError] = useState('');
-  const [domainContact, setDomainContact] = useState({
-    firstName: '', lastName: '', email: '', phone: '', address1: '', city: '', state: '', zip: '', country: '',
-  });
+  const [domainHandoff, setDomainHandoff] = useState<Record<string, string> | null>(null);
   const [copied, setCopied] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState('');
@@ -123,8 +118,9 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
       sessionStorage.removeItem(key);
       const h = JSON.parse(raw) as { contact?: Record<string, unknown> };
       if (h.contact) {
-        const clean = Object.fromEntries(Object.entries(h.contact).filter(([k, v]) => typeof v === 'string' && k in domainContact));
-        setDomainContact(c => ({ ...c, ...clean }));
+        const allowed = ['firstName', 'lastName', 'email', 'phone', 'address1', 'city', 'state', 'zip', 'country'];
+        const clean = Object.fromEntries(Object.entries(h.contact).filter(([k, v]) => typeof v === 'string' && allowed.includes(k))) as Record<string, string>;
+        setDomainHandoff(clean);
       }
       setShowShareModal(true);
     } catch { /* storage blocked or bad note: nothing to prefill */ }
@@ -361,63 +357,6 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
     } catch {
       setCustomDomainStatus('error');
       setCustomDomainError(t('failedToConnectDomain'));
-    }
-  };
-
-  const handleSearchDomain = async () => {
-    if (!buyDomainQuery.trim()) return;
-    setBuyDomainStatus('searching');
-    setBuyDomainError('');
-    setBuyDomainResult(null);
-    try {
-      const res = await fetch(`/api/domain/search?name=${encodeURIComponent(buyDomainQuery.trim())}`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || t('searchFailed'));
-      setBuyDomainResult(data);
-      setBuyDomainStatus('idle');
-    } catch (err) {
-      setBuyDomainStatus('error');
-      setBuyDomainError(err instanceof Error ? err.message : t('searchFailed'));
-    }
-  };
-
-  const domainContactComplete = Object.values(domainContact).every(v => v.trim().length > 0);
-
-  const handleBuyDomain = async () => {
-    if (!buyDomainResult?.available || !buyDomainResult.priceCents || !domainContactComplete) return;
-    setBuyDomainStatus('buying');
-    setBuyDomainError('');
-    // Checkout opens in a NEW tab so the editor (and any in-flight build) stays
-    // alive — same-tab navigation meant users came back via Back to a remounted
-    // session. The blank tab must be opened synchronously inside the click
-    // gesture; window.open after the fetch resolves gets swallowed by popup
-    // blockers. Falls back to same-tab if the popup was blocked anyway.
-    const tab = window.open('about:blank', '_blank');
-    try {
-      const res = await fetch('/api/domain/purchase', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId, domain: buyDomainResult.name, priceCents: buyDomainResult.priceCents, contactInfo: domainContact }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || t('purchaseFailed'));
-      if (data.url) {
-        if (tab) {
-          tab.location.href = data.url;
-          // The editor stays open now — release the button so it doesn't sit
-          // on "Starting checkout..." forever while the user pays in the other tab.
-          setBuyDomainStatus('idle');
-        } else {
-          window.location.href = data.url;
-        }
-      } else {
-        tab?.close();
-        setBuyDomainStatus('idle');
-      }
-    } catch (err) {
-      tab?.close();
-      setBuyDomainStatus('error');
-      setBuyDomainError(err instanceof Error ? err.message : t('purchaseFailed'));
     }
   };
 
@@ -744,63 +683,14 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
 
                 <div style={{ height: 1, background: 'var(--ide-border)' }} />
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  <span style={{ fontSize: 12, color: 'var(--ide-text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Buy a Domain</span>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <input
-                      style={inputStyle}
-                      placeholder="mynewapp.com"
-                      value={buyDomainQuery}
-                      onChange={e => { setBuyDomainQuery(e.target.value); setBuyDomainResult(null); }}
-                      onKeyDown={e => e.key === 'Enter' && handleSearchDomain()}
-                    />
-                    <button
-                      onClick={handleSearchDomain}
-                      disabled={!buyDomainQuery.trim() || buyDomainStatus === 'searching'}
-                      style={{ ...btn, whiteSpace: 'nowrap', background: 'var(--bg-elevated)' }}
-                    >
-                      {buyDomainStatus === 'searching' ? 'Searching...' : 'Search'}
-                    </button>
-                  </div>
+                {/* ResellerClub domains and Google Workspace (src/lib/domains). Shows only when the service is configured. */}
+                <ErrorBoundary fallbackMessage="Domains could not load. The rest of the editor is unaffected.">
+                  <details key={domainHandoff ? 'handoff' : 'plain'} open={domainHandoff ? true : undefined} style={{ fontSize: 13 }}>
+                    <summary style={{ cursor: 'pointer', fontWeight: 600 }}>Buy a domain or business email (price + $1 flat)</summary>
+                    <div style={{ marginTop: 10 }}><DomainsManager projectId={projectId} initialContact={domainHandoff} /></div>
+                  </details>
+                </ErrorBoundary>
 
-                  {buyDomainResult && (
-                    <div style={{ background: buyDomainResult.available ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)', border: `1px solid ${buyDomainResult.available ? 'rgba(34,197,94,0.2)' : 'rgba(239,68,68,0.2)'}`, borderRadius: 8, padding: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      {buyDomainResult.available ? (
-                        <>
-                          <span style={{ fontSize: 12, color: '#22c55e', fontWeight: 600 }}>
-                            {buyDomainResult.name} is available — ${((buyDomainResult.priceCents ?? 0) / 100).toFixed(2)}/year
-                          </span>
-
-                          <span style={{ fontSize: 12, color: 'var(--ide-text3)' }}>
-                            Domain registration requires registrant contact info (ICANN requirement) — this is who will be listed as the owner.
-                          </span>
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-                            <input style={inputStyle} placeholder="First name" value={domainContact.firstName} onChange={e => setDomainContact(c => ({ ...c, firstName: e.target.value }))} />
-                            <input style={inputStyle} placeholder="Last name" value={domainContact.lastName} onChange={e => setDomainContact(c => ({ ...c, lastName: e.target.value }))} />
-                            <input style={inputStyle} placeholder="Email" value={domainContact.email} onChange={e => setDomainContact(c => ({ ...c, email: e.target.value }))} />
-                            <input style={inputStyle} placeholder="Phone (+1...)" value={domainContact.phone} onChange={e => setDomainContact(c => ({ ...c, phone: e.target.value }))} />
-                            <input style={{ ...inputStyle, gridColumn: '1 / -1' }} placeholder="Address" value={domainContact.address1} onChange={e => setDomainContact(c => ({ ...c, address1: e.target.value }))} />
-                            <input style={inputStyle} placeholder="City" value={domainContact.city} onChange={e => setDomainContact(c => ({ ...c, city: e.target.value }))} />
-                            <input style={inputStyle} placeholder="State" value={domainContact.state} onChange={e => setDomainContact(c => ({ ...c, state: e.target.value }))} />
-                            <input style={inputStyle} placeholder="ZIP" value={domainContact.zip} onChange={e => setDomainContact(c => ({ ...c, zip: e.target.value }))} />
-                            <input style={inputStyle} placeholder="Country (US)" value={domainContact.country} onChange={e => setDomainContact(c => ({ ...c, country: e.target.value }))} />
-                          </div>
-
-                          <button
-                            onClick={handleBuyDomain}
-                            disabled={buyDomainStatus === 'buying' || !domainContactComplete}
-                            style={{ ...btn, background: 'rgba(34,197,94,0.1)', borderColor: 'rgba(34,197,94,0.3)', color: '#22c55e', justifyContent: 'center' }}
-                          >
-                            {buyDomainStatus === 'buying' ? 'Starting checkout...' : `Buy for $${((buyDomainResult.priceCents ?? 0) / 100).toFixed(2)}`}
-                          </button>
-                        </>
-                      ) : (
-                        <span style={{ fontSize: 12, color: '#ef4444', fontWeight: 600 }}>{buyDomainResult.name} is not available</span>
-                      )}
-                    </div>
-                  )}
-                  {buyDomainError && <span style={{ fontSize: 12, color: '#ef4444' }}>{buyDomainError}</span>}
-                </div>
               </>
             )}
           </div>

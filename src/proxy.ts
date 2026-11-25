@@ -226,7 +226,10 @@ export async function proxy(request: NextRequest) {
     // (migration not applied) the read yields false and the gate stays off.
     // Everything here is fail-open: an MFA hiccup must never lock out the app.
     try {
-      const { data: prof } = await supabase.from('profiles').select('mfa_enabled').eq('id', user.id).single()
+      // Only someone with a verified second factor can be asked for it, so everyone else skips two extra lookups on every
+      // page they open. If the factor list is not on the user object, the check below runs as before.
+      const hasFactor = user.factors === undefined ? true : user.factors.some(f => f.status === 'verified')
+      const { data: prof } = hasFactor ? await supabase.from('profiles').select('mfa_enabled').eq('id', user.id).single() : { data: null }
       if (prof?.mfa_enabled) {
         const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
         if (aal && aal.currentLevel === 'aal1' && aal.nextLevel === 'aal2') {

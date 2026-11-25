@@ -1,6 +1,6 @@
 'use client'
 import Link from 'next/link'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 import { stageFor, sortByNeed, type Stage } from '@/lib/agency/stage'
 import { formatMoney } from '@/lib/agency/quote'
@@ -12,6 +12,8 @@ import { QuotesTab } from './QuotesTab'
 import { ShareTab } from './ShareTab'
 import { BusinessPanel } from './BusinessPanel'
 import { Checklist, checklistSteps } from './Checklist'
+import { AgencyIntro } from './AgencyIntro'
+import { AgencySetup } from './AgencySetup'
 import type { AgencyProfile } from '@/lib/agency/profile'
 
 type Tab = 'work' | 'brief' | 'quotes' | 'share'
@@ -45,6 +47,16 @@ export function ClientsPageClient({ initialClients, projects, workspaces: initia
   const [wsName, setWsName] = useState('')
   const [inviteEmail, setInviteEmail] = useState('')
   const [teamSpace, setTeamSpace] = useState('')
+  const [showSetup, setShowSetup] = useState(false)
+  // null until the browser has been asked, so the intro never flashes for someone who already dismissed it.
+  const [introDismissed, setIntroDismissed] = useState<boolean | null>(null)
+  useEffect(() => { try { setIntroDismissed(localStorage.getItem('wyber-clients-intro-dismissed') === '1') } catch { setIntroDismissed(false) } }, [])
+  const hasBusiness = !!profiles.me?.business_name || Object.values(profiles).some(p => !!p?.business_name)
+  // Someone who has not started: no clients and no business details. They get the short brief and the setup, not an empty list.
+  const notStarted = clients.length === 0 && !hasBusiness
+  const showIntro = notStarted && introDismissed === false && !showSetup
+  // Arriving from the agencies page (?welcome=1) opens the setup straight away.
+  useEffect(() => { if (welcome && notStarted) setShowSetup(true) }, [welcome]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const showToast = (msg: string, ok = true) => { setToast({ msg, ok }); setTimeout(() => setToast(null), 4200) }
 
@@ -67,19 +79,24 @@ export function ClientsPageClient({ initialClients, projects, workspaces: initia
     return false
   }
 
+  /** Creates a client and opens its brief. Used by "+ New client" and by the agency setup. */
+  async function createClientNamed(name: string, orgId?: string, assumeOwner = false): Promise<boolean> {
+    const r = await api('POST', '/api/clients', { name, orgId })
+    if (!r.ok) { showToast(r.data.error ?? 'Failed to create', false); return false }
+    // A workspace the person has only just created is not in the list yet, and they are its owner.
+    const role = orgId ? (workspaces.find(w => w.id === orgId)?.role ?? (assumeOwner ? 'owner' : 'member')) : 'owner'
+    setClients(prev => [{ ...r.data.client, credits_used: 0, client_deliverables: [], client_feedback: [], client_updates: [], client_quotes: [], _role: role, _canEdit: true, _canDelete: true }, ...prev])
+    setExpanded(r.data.client.id); setTab(t => ({ ...t, [r.data.client.id]: 'brief' }))
+    showToast('Client created. Send them an intake link, or attach a project.')
+    return true
+  }
+
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
     if (!newName.trim()) return
     setCreating(true)
-    const orgId = newOrg || undefined
-    const r = await api('POST', '/api/clients', { name: newName.trim(), orgId })
-    if (r.ok) {
-      const role = orgId ? (workspaces.find(w => w.id === orgId)?.role ?? 'member') : 'owner'
-      setClients(prev => [{ ...r.data.client, credits_used: 0, client_deliverables: [], client_feedback: [], client_updates: [], client_quotes: [], _role: role, _canEdit: true, _canDelete: true }, ...prev])
-      setExpanded(r.data.client.id); setTab(t => ({ ...t, [r.data.client.id]: 'brief' }))
-      setNewName(''); setNewOrg(''); setShowCreate(false)
-      showToast('Client created. Send them an intake link, or attach a project.')
-    } else showToast(r.data.error ?? 'Failed to create', false)
+    const ok = await createClientNamed(newName.trim(), newOrg || undefined)
+    if (ok) { setNewName(''); setNewOrg(''); setShowCreate(false) }
     setCreating(false)
   }
 
@@ -125,6 +142,21 @@ export function ClientsPageClient({ initialClients, projects, workspaces: initia
         <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.04em', color: '#fff', margin: '0 0 6px' }}>Clients</h1>
         <p style={{ color: '#8797ab', fontSize: 14, margin: '0 0 20px', maxWidth: 620, lineHeight: 1.6 }}>Run the whole job from one place: their brief, the build, their feedback, the handover and the quote.</p>
 
+        {showSetup && (
+          <AgencySetup
+            onProfile={p => setProfiles(prev => ({ ...prev, me: p }))}
+            onWorkspace={w => setWorkspaces(prev => [...prev, w])}
+            onCreateClient={(name, orgId) => createClientNamed(name, orgId, true)}
+            onClose={() => setShowSetup(false)}
+          />
+        )}
+        {showIntro && (
+          <AgencyIntro
+            onSetup={() => setShowSetup(true)}
+            onSkip={() => { setIntroDismissed(true); try { localStorage.setItem('wyber-clients-intro-dismissed', '1') } catch { /* private window */ } }}
+          />
+        )}
+
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', margin: '0 0 22px' }} role="tablist" aria-label="Filter clients">
           {([['all', 'All'], ['needs', `Needs you${needsCount ? ` (${needsCount})` : ''}`], ...(workspaces.length ? [['personal', 'Just me'], ...workspaces.map(w => [w.id, w.name])] : [])] as Array<[string, string]>).map(([id, label]) => (
             <button key={id} role="tab" aria-selected={filter === id} onClick={() => setFilter(id)} style={{ ...ghostBtn, padding: '6px 14px', borderRadius: 20, color: filter === id ? '#03111c' : id === 'needs' && needsCount ? '#F59E0B' : '#9aa8bb', background: filter === id ? SKY : 'none', borderColor: filter === id ? SKY : '#1b2a3b', fontWeight: 600 }}>{label}</button>
@@ -136,8 +168,7 @@ export function ClientsPageClient({ initialClients, projects, workspaces: initia
 
         {showBiz && <BusinessPanel profiles={profiles} workspaces={workspaces} onSaved={(k, p) => setProfiles(prev => ({ ...prev, [k]: p }))} toast={showToast} onClose={() => setShowBiz(false)} />}
 
-        <Checklist force={welcome} steps={checklistSteps(clients, !!profiles.me?.business_name || Object.values(profiles).some(p => !!p?.business_name), { business: () => setShowBiz(true), newClient: () => setShowCreate(true) })} />
-
+        {!showIntro && !showSetup && <Checklist force={welcome} steps={checklistSteps(clients, !!profiles.me?.business_name || Object.values(profiles).some(p => !!p?.business_name), { business: () => setShowBiz(true), newClient: () => setShowCreate(true) })} />}
         {showTeam && (
           <div style={{ background: '#0d141e', border: '1px solid #1b2a3b', borderRadius: 14, padding: 20, marginBottom: 24 }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>Working with someone?</div>
@@ -174,7 +205,7 @@ export function ClientsPageClient({ initialClients, projects, workspaces: initia
           </form>
         )}
 
-        {shown.length === 0 ? (
+        {shown.length === 0 && (showIntro || showSetup) ? null : shown.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '56px 0' }}>
             <p style={{ color: '#e8eef7', fontSize: 16, fontWeight: 600, marginBottom: 6 }}>{clients.length === 0 ? 'No clients yet' : filter === 'needs' ? 'Nothing needs you right now' : 'No clients here yet'}</p>
             <p style={{ color: '#9aa8bb', fontSize: 14, margin: '0 auto 20px', maxWidth: 460, lineHeight: 1.6 }}>

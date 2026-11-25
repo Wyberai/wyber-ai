@@ -39,6 +39,8 @@ All times India time. The full list with plain descriptions is on `/admin/today`
 | `/api/cron/agent-scheduler` | every minute | Runs customers' scheduled automations. |
 | `/api/cron/mcp-consumer` | every minute | Processes requests from the Claude connector. |
 | `/api/cron/wpl-monthly-reminder` | last days of the month | Month-end contest reminder. |
+| `/api/cron/domain-sweep` | every 15 minutes | Carries on any paid domain order that did not finish (a cut-off payment handler, or an empty reseller balance that has since been topped up), finishes bought domains whose DNS was not ready, and emails you when an order stays stuck (30 minutes, 6 hours, 24 hours) and once a day with any checkout opened but never confirmed. |
+| `/api/cron/domain-reminders` | daily | Emails people 30, 14, 7 and 1 days before a domain or Workspace order expires, and once after it has expired. |
 
 ## The company agents
 

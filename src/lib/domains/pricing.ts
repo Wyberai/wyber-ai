@@ -1,0 +1,130 @@
+import { DOMAIN_MARGIN_CENTS, tldConfig } from './config'
+import type { CostTable } from './types'
+
+// Pure price maths. Customers always pay USD through the platform's checkout. The reseller account may be priced in
+// INR, so the registry cost is converted with an explicit rate (DOMAINS_INR_PER_USD) and rounded UP to the cent so the
+// platform never sells below cost because of rounding.
+
+export function toUsdCents(minor: number, currency: 'USD' | 'INR', inrPerUsd?: number): number {
+  if (currency === 'USD') return Math.round(minor)
+  if (!inrPerUsd || !(inrPerUsd > 0)) throw new Error('DOMAINS_INR_PER_USD is required when the provider prices in INR')
+  // minor = paise; paise / rate = US cents.
+  return Math.ceil(minor / inrPerUsd)
+}
+
+/**
+ * A price for a term. The live cost list states only the one-year price for most extensions, and registries charge by the
+ * year, so a longer term is the one-year price times the years. A term the list states itself is used as it is.
+ */
+function perTerm(map: Record<number, number> | undefined, years: number): number | undefined {
+  if (!map) return undefined
+  if (map[years] != null) return map[years]
+  return map[1] != null && years >= 1 ? map[1] * years : undefined
+}
+
+export interface DomainQuote {
+  domain: string
+  years: number
+  registryCents: number
+  marginCents: number
+  totalCents: number
+  currency: 'USD'
+  /** Renewal for the same term, same flat margin. */
+  renewalTotalCents: number | null
+}
+
+export function splitDomain(domain: string): { label: string; tld: string } | null {
+  const d = domain.trim().toLowerCase().replace(/\.$/, '')
+  // Longest matching configured TLD wins, so example.co.in is .co.in and not .in.
+  const cfgs = ['co.in', 'com', 'in', 'app', 'io']
+  for (const t of cfgs.sort((a, b) => b.length - a.length)) {
+    if (d.endsWith('.' + t)) {
+      const label = d.slice(0, -(t.length + 1))
+      if (label && !label.includes('.')) return { label, tld: t }
+    }
+  }
+  return null
+}
+
+export function quoteDomain(
+  domain: string,
+  years: number,
+  table: CostTable,
+  inrPerUsd?: number,
+): DomainQuote | null {
+  const parts = splitDomain(domain)
+  if (!parts) return null
+  const cfg = tldConfig(parts.tld)
+  if (!cfg) return null
+  const row = table.domains[cfg.productKey]
+  const reg = perTerm(row?.register, years)
+  if (reg == null || !(reg > 0)) return null
+  const registryCents = toUsdCents(reg, table.currency, inrPerUsd)
+  const ren = perTerm(row.renew, years)
+  const renewalRegistry = ren != null && ren > 0 ? toUsdCents(ren, table.currency, inrPerUsd) : null
+  return {
+    domain: `${parts.label}.${parts.tld}`,
+    years,
+    registryCents,
+    marginCents: DOMAIN_MARGIN_CENTS,
+    totalCents: registryCents + DOMAIN_MARGIN_CENTS,
+    currency: 'USD',
+    renewalTotalCents: renewalRegistry == null ? null : renewalRegistry + DOMAIN_MARGIN_CENTS,
+  }
+}
+
+/** Renewal of a domain we already sold: the registry's RENEWAL price for the term plus the same flat margin. Null when the provider table has no renewal price. */
+export function quoteRenewal(
+  domain: string,
+  years: number,
+  table: CostTable,
+  inrPerUsd?: number,
+): Omit<DomainQuote, 'renewalTotalCents'> | null {
+  const parts = splitDomain(domain)
+  if (!parts) return null
+  const cfg = tldConfig(parts.tld)
+  if (!cfg) return null
+  const ren = perTerm(table.domains[cfg.productKey]?.renew, years)
+  if (ren == null || !(ren > 0)) return null
+  const registryCents = toUsdCents(ren, table.currency, inrPerUsd)
+  return { domain: `${parts.label}.${parts.tld}`, years, registryCents, marginCents: DOMAIN_MARGIN_CENTS, totalCents: registryCents + DOMAIN_MARGIN_CENTS, currency: 'USD' }
+}
+
+export interface WorkspaceQuote {
+  seats: number
+  months: number
+  perSeatMonthCostCents: number
+  perSeatMonthMarginCents: number
+  registryCents: number
+  marginCents: number
+  totalCents: number
+  currency: 'USD'
+}
+
+export function quoteWorkspace(opts: {
+  seats: number
+  months: number
+  costPerSeatMonthMinor: number
+  currency: 'USD' | 'INR'
+  inrPerUsd?: number
+  marginPerSeatMonthCents: number
+}): WorkspaceQuote {
+  const { seats, months } = opts
+  if (!Number.isInteger(seats) || seats < 1) throw new Error('seats must be a whole number of at least 1')
+  if (!Number.isInteger(months) || months < 1) throw new Error('months must be a whole number of at least 1')
+  const unitCost = toUsdCents(opts.costPerSeatMonthMinor, opts.currency, opts.inrPerUsd)
+  const registryCents = unitCost * seats * months
+  const marginCents = opts.marginPerSeatMonthCents * seats * months
+  return {
+    seats,
+    months,
+    perSeatMonthCostCents: unitCost,
+    perSeatMonthMarginCents: opts.marginPerSeatMonthCents,
+    registryCents,
+    marginCents,
+    totalCents: registryCents + marginCents,
+    currency: 'USD',
+  }
+}
+
+export const formatUsd = (cents: number): string => `$${(cents / 100).toFixed(2)}`

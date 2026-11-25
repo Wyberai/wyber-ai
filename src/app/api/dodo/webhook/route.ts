@@ -16,6 +16,10 @@ import { accrueAffiliateCommission, reverseAffiliateCommissionForPayment } from 
 import { rewardReferrerOnFirstPayment } from '@/lib/referral'
 import { PLAN_FACTS, TOPUP_PACKS, LARGE_PLAN_CREDITS } from '@/lib/plans'
 
+// A domain purchase makes about ten calls (registrar, DNS, hosting) and sends an email. The default limit can cut that off
+// halfway, so this handler is given a minute. If it is ever cut off anyway, the sweep (/api/cron/domain-sweep) resumes it.
+export const maxDuration = 60
+
 function getAdmin() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -230,6 +234,8 @@ export async function POST(req: NextRequest) {
     // to zero the moment a payment actually succeeds (see payment.succeeded /
     // subscription.renewed below) so a later, unrelated failure starts fresh.
     if (eventType === 'payment.failed') {
+      // A failed domain payment is not a plan payment: no plan-billing dunning email. The person can retry on the same payment page.
+      if (metadata.purchase_type === 'commerce_order') return NextResponse.json({ received: true })
       if (userEmail) {
         (async () => {
           try {
@@ -256,6 +262,37 @@ export async function POST(req: NextRequest) {
       // below. reverseAffiliateCommissionForPayment never throws itself.
       if (refundedPaymentId) await reverseAffiliateCommissionForPayment(admin, refundedPaymentId)
       console.log(`Refund processed for ${userId}`)
+      return NextResponse.json({ received: true })
+    }
+
+    // Domain / Workspace order (ResellerClub, src/lib/domains): register or provision once payment is confirmed.
+    // Idempotent: fulfilOrder only acts on an order still waiting for payment, so a retried delivery does nothing twice.
+    if (eventType === 'payment.succeeded' && metadata.purchase_type === 'commerce_order') {
+      const orderId = String(metadata.commerce_order_id || '')
+      if (orderId) {
+        const { getProvider } = await import('@/lib/domains')
+        const { supabaseStore } = await import('@/lib/domains/store')
+        const { fulfilOrder } = await import('@/lib/domains/orders')
+        const provider = getProvider()
+        if (!provider) {
+          sendAdminPaymentAlert(userEmail || 'unknown', `Domain order ${orderId} was paid but the domain provider is not configured. Fulfil it by hand.`).catch(() => {})
+        } else {
+          const store = supabaseStore(admin)
+          const r = await fulfilOrder({ provider, store }, orderId)
+          if (!r.ok) sendAdminPaymentAlert(userEmail || 'unknown', `Domain order ${orderId} was paid but did not finish (${r.status}). Open it in commerce_orders.`).catch(() => {})
+          // Tell the customer, once: only the delivery that did the work sends the email. Awaited so a frozen function cannot drop it.
+          if (r.ran) {
+            try {
+              const [{ orderMail }, { sendEmail }] = await Promise.all([import('@/lib/domains/notify'), import('@/lib/email/transport')])
+              const order = await store.getOrder(orderId)
+              if (order) {
+                const mail = orderMail(order, r.ok ? 'done' : 'attention', process.env.NEXT_PUBLIC_APP_URL || 'https://wyberai.com')
+                await sendEmail({ from: 'WyberAi <hello@wyberai.com>', to: mail.to, subject: mail.subject, text: mail.text })
+              }
+            } catch (e) { console.error('[domains] customer email failed', orderId, e instanceof Error ? e.message : e) }
+          }
+        }
+      }
       return NextResponse.json({ received: true })
     }
 
