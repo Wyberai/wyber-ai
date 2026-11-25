@@ -53,7 +53,7 @@ export interface Blueprint {
 
 export type HeroVariant = 'split' | 'editorial' | 'stacked'
 export type HeaderVariant = 'navbar' | 'condensing'
-export type ServicesVariant = 'cards' | 'list' | 'bento' | 'grid'
+export type ServicesVariant = 'cards' | 'list' | 'bento' | 'grid' | 'tabs' | 'stack' | 'scroller' | 'ledger' | 'zigzag' | 'mosaic'
 
 export interface ImageSlot {
   id: string
@@ -83,15 +83,21 @@ export interface SeoPlan {
 /** Structure choices that make two sites with the same blueprint read differently. Seeded, biased by the direction. */
 /** Which Wyber Sections composition each part of the page uses (src/lib/wyber-sections.ts). Absent on specs saved before the sections existed: those render the older kit blocks. */
 export interface SectionStyles {
-  header: 'bar' | 'centered' | 'index'
-  hero: 'split' | 'editorial' | 'centered' | 'full' | 'minimal'
-  features: 'index' | 'cards' | 'bento' | 'grid'
-  steps: 'columns' | 'timeline'
-  about: 'split' | 'band'
-  faq: 'split' | 'boxed'
-  cta: 'band' | 'split'
-  contact: 'split' | 'centered'
-  footer: 'giant' | 'slim'
+  header: 'bar' | 'centered' | 'index' | 'stack' | 'island' | 'details' | 'utility'
+  hero: 'split' | 'editorial' | 'centered' | 'full' | 'minimal' | 'splitscreen' | 'tabbed' | 'index' | 'triptych' | 'sheet' | 'overlap' | 'ledger'
+  features: 'index' | 'cards' | 'bento' | 'grid' | 'tabs' | 'stack' | 'scroller' | 'ledger' | 'zigzag' | 'mosaic'
+  steps: 'columns' | 'timeline' | 'rail' | 'path' | 'accordion'
+  about: 'split' | 'band' | 'statement' | 'notes' | 'overlap'
+  faq: 'split' | 'boxed' | 'columns' | 'details'
+  cta: 'band' | 'split' | 'centered' | 'strip'
+  contact: 'split' | 'centered' | 'inverted' | 'stacked'
+  footer: 'giant' | 'slim' | 'columns' | 'centered'
+  /** The visit section: a fact list (default), fact cards, or the place set as a statement. Absent on specs saved before these existed. */
+  visit?: 'list' | 'cards' | 'statement'
+  /** The band under the hero: the facts ticker (default), a ribbon of the names on the page, or nothing. */
+  strip?: 'ticker' | 'ribbon' | 'none'
+  /** Which section follows the hero: the first list (default) or the about section. */
+  lead?: 'list' | 'about'
 }
 
 export interface LayoutPlan {

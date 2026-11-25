@@ -40,3 +40,7 @@ Not built: gallery/image strip. The website plan only has a hero slot and an abo
 ## Anti-slop scanner
 
 `src/lib/unslop.ts` (`scanSlopSource`) skips only paths matching `wyber-ui` or `wyber-grow`, so `src/wyber-sections.tsx` IS scanned like generated source. The sections are written to pass it with no exemption (checked by `src/lib/wyber-sections.test.ts`). Nothing in the scanner was changed.
+
+## 25 Nov 2026 addition: 11 headers/heroes and 23 sections
+
+All new components in `wyber-sections-heroes.ts` and `wyber-sections-blocks.ts` are original. Nothing was fetched through the Jiro MCP (no `get_component`, no `search_components`), and no Jiro markup, copy or layout was read or reproduced. Inspiration is by general pattern only (sticky pinning, snap scrolling, native disclosures, ledgers with dotted leaders, rails, mosaics); see `docs/design-reference/section-patterns-nov25.md` for the full pattern table and the list of patterns deliberately not built.

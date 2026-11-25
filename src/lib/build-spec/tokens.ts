@@ -36,7 +36,21 @@ p, li, dd, blockquote, figcaption { text-wrap: pretty; }
     [data-sv] { animation: wyber-sv linear both; animation-timeline: view(); animation-range: entry calc(var(--sv-d, 0) * 1%) entry calc(35% + var(--sv-d, 0) * 1%); }
   }
 }
-@media print { [data-sv] { animation: none; } }`
+@media print { [data-sv] { animation: none; } }
+@keyframes wyber-grow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    [data-grow] { transform-origin: top; animation: wyber-grow linear both; animation-timeline: view(); animation-range: entry 20% cover 70%; }
+  }
+}
+@media print { [data-grow] { animation: none; } }
+@supports (interpolate-size: allow-keywords) {
+  @media (prefers-reduced-motion: no-preference) {
+    details[data-anim] { interpolate-size: allow-keywords; }
+    details[data-anim]::details-content { block-size: 0; overflow: hidden; transition: block-size 0.35s cubic-bezier(0.22, 1, 0.36, 1), content-visibility 0.35s allow-discrete; }
+    details[data-anim][open]::details-content { block-size: auto; }
+  }
+}`
 
 export function renderTokensCss(directionId: string, langs: LangId[] = ['en'], extra = '', look?: Look | null): string {
   const d0 = getDirectionById(directionId)

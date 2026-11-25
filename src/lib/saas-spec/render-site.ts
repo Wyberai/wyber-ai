@@ -2,6 +2,7 @@ import type { AppEntity, AppModel } from '../app-spec/types'
 import type { SiteCopy } from '../website-spec/types'
 import type { SaasSpec } from './types'
 import { imageDirective } from '../build-spec/images'
+import { FAQ_NAME, FEATURE_NAME, FOOTER_NAME, HEADER_NAME, STEPS_NAME } from '../website-spec/composition'
 
 // The marketing site of a SaaS, built from the website pipeline's product plan and copy, the Wyber UI kit and the product's own sample data.
 // The hero shows a real preview of the product (its own columns and its own sample rows, labelled Sample); no invented screenshots,
@@ -95,7 +96,12 @@ export function renderSite(spec: SaasSpec, copy: SiteCopy, app: AppModel): strin
   const reveal = mo.reveal ? ' reveal' : ''
   const sec = new Set<string>()
   const S = (n: string): string => (sec.add(n), n)
-  if (lay.heroPhoto) {
+  if (lay.heroTabs && features && !lay.heroPhoto && site.hero !== 'editorial') {
+    // the product's own features as tabs on the left of the hero; the product preview sits in its own band under it
+    hero = `<${S('HeroTabbed')} eyebrow={COPY.hero.eyebrow} headline={COPY.hero.headline} accent={COPY.hero.accent} sub={COPY.hero.sub} cta={COPY.hero.cta} onCta={() => openApp()} secondaryLabel={COPY.hero.secondary} secondaryHref="#features" items={${cp(features.id)}.items}${reveal ? ' reveal' : ''} />
+        <p className="mx-auto max-w-[1320px] px-5 pt-2 text-xs text-muted-foreground sm:px-8 lg:px-12">Demo mode: nothing is charged, sent or stored on a server.</p>
+        <section className="mx-auto max-w-5xl px-6 py-16">${preview}</section>`
+  } else if (lay.heroPhoto) {
     hero = `<HeroFullBleed eyebrow={COPY.hero.eyebrow} headline={COPY.hero.headline} sub={COPY.hero.sub} cta={COPY.hero.cta} onCta={() => openApp()} secondaryLabel={COPY.hero.secondary} secondaryHref="#features" media={<img src="${heroPhotoSrc}" alt={COPY.hero.imageAlt || BRAND} loading="eager" decoding="async" />}${reveal} />
         <p className="mx-auto max-w-[1320px] px-5 pt-6 text-xs text-muted-foreground sm:px-8 lg:px-12">Demo mode: nothing is charged, sent or stored on a server.</p>
         <section className="mx-auto max-w-5xl px-6 py-16">${preview}</section>`
@@ -196,21 +202,23 @@ export function renderSite(spec: SaasSpec, copy: SiteCopy, app: AppModel): strin
   if (mo.progress) U('ScrollProgress')
   if (mo.backToTop) U('BackToTop')
 
-  const headerName = S(({ bar: 'HeaderBar', centered: 'HeaderCentered', index: 'HeaderIndex' } as const)[lay.header])
+  const headerName = S(HEADER_NAME[lay.header])
   let ti = 0
   const tone = (): string => (lay.rhythm === 'plain' ? 'plain' : lay.rhythm === 'rules' ? 'rule' : ti++ % 2 === 1 ? 'card' : 'plain')
   const listProps = (id: string) => `eyebrow={${cp(id)}.eyebrow} title={${cp(id)}.title} description={${cp(id)}.description} items={${cp(id)}.items}${reveal}`
 
-  const featuresTag = features ? S(features.variant === 'bento' ? 'FeaturesBento' : features.variant === 'cards' ? 'FeaturesCards' : 'FeaturesIndex') : ''
-  const stepsTag = steps ? S(lay.steps === 'timeline' ? 'StepsTimeline' : 'StepsColumns') : ''
-  const faqTag = faq ? S(lay.faq === 'split' ? 'FaqSplit' : 'FaqBoxed') : ''
-  const footerTag = S(lay.heroPhoto || lay.rhythm === 'rules' ? 'FooterGiant' : 'FooterSlim')
+  const featuresTag = features ? S(FEATURE_NAME[features.variant ?? 'list']) : ''
+  const stepsTag = steps ? S(STEPS_NAME[lay.steps]) : ''
+  const faqTag = faq ? S(FAQ_NAME[lay.faq === 'centered' ? 'boxed' : lay.faq]) : ''
+  const footerTag = S(lay.footer ? FOOTER_NAME[lay.footer] : lay.heroPhoto || lay.rhythm === 'rules' ? 'FooterGiant' : 'FooterSlim')
 
   const bandBlock = lay.heroPhoto
     ? `<${S('PhotoBand')} media={<img src="${bandPhotoSrc}" alt={'Close view of the work and the place. ' + (COPY.hero.imageAlt || '')} loading="lazy" decoding="async" />}${reveal} />`
     : ''
   const priceTone = tone()
+  const ribbonBlock = mo.reveal && lay.strip === 'ribbon' && features ? `<${S('RibbonBand')} items={${cp(features.id)}.items.map((x: { title: string }) => x.title)} label={${cp(features.id)}.title} />` : ''
   const body = [
+    ribbonBlock,
     features ? `<section id="features"><${featuresTag} ${listProps(features.id)} tone="${tone()}" /></section>` : '',
     bandBlock,
     steps ? `<section id="how"><${stepsTag} ${listProps(steps.id)} tone="${tone()}" /></section>` : '',
@@ -225,9 +233,9 @@ export function renderSite(spec: SaasSpec, copy: SiteCopy, app: AppModel): strin
     faq ? `<section id="faq"><${faqTag} eyebrow={${cp(faq.id)}.eyebrow} title={${cp(faq.id)}.title} description={${cp(faq.id)}.description} faq={${cp(faq.id)}.faq} tone="${tone()}"${reveal} /></section>` : '',
   ].filter(Boolean).join('\n        ')
 
-  const ctaTag = S(lay.heroPhoto ? 'CtaPhoto' : lay.rhythm === 'rules' ? 'CtaSplit' : 'CtaBand')
+  const ctaTag = S(lay.heroPhoto && (!lay.cta || lay.cta === 'band') ? 'CtaPhoto' : lay.cta ? ({ band: 'CtaBand', split: 'CtaSplit', centered: 'CtaCentered', strip: 'CtaStrip' } as const)[lay.cta] : lay.rhythm === 'rules' ? 'CtaSplit' : 'CtaBand')
   const ctaBlock = cta
-    ? `<${ctaTag} title={${cp(cta.id)}.title} description={${cp(cta.id)}.description} cta={${cp(cta.id)}.button || COPY.hero.cta} onCta={() => openApp()}${lay.heroPhoto ? ` media={<img src="${closePhotoSrc}" alt={'Quiet view of the place. ' + (COPY.hero.imageAlt || '')} loading="lazy" decoding="async" />}` : ''}${reveal} />
+    ? `<${ctaTag} title={${cp(cta.id)}.title} description={${cp(cta.id)}.description} cta={${cp(cta.id)}.button || COPY.hero.cta} onCta={() => openApp()}${ctaTag === 'CtaPhoto' ? ` media={<img src="${closePhotoSrc}" alt={'Quiet view of the place. ' + (COPY.hero.imageAlt || '')} loading="lazy" decoding="async" />}` : ''}${reveal} />
         <p className="mx-auto max-w-[1320px] px-5 py-4 text-xs text-muted-foreground sm:px-8 lg:px-12">Demo mode: nothing is charged, sent or stored on a server.</p>`
     : ''
 

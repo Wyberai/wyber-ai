@@ -13,10 +13,15 @@
 // no uppercase tracked labels, no hue gradients, no glow, no backdrop blur, no transition-all, no hover scale, no more than a handful of
 // rounded-full. The only gradient is a black photo scrim.
 
+import { WYBER_HEROES_SOURCE, WYBER_HEROES_NAMES } from './wyber-sections-heroes'
+import { WYBER_BLOCKS_SOURCE, WYBER_BLOCKS_NAMES } from './wyber-sections-blocks'
+
 export const WYBER_SECTIONS_PATH = 'src/wyber-sections.tsx'
 
-export const WYBER_SECTIONS_SOURCE = String.raw`// Wyber Sections — page sections provided by the platform. Auto-injected; edits here are overwritten on every build.
-import React, { useState, useEffect, useRef } from 'react'
+// The generated file is three parts joined: this base (primitives, first headers, heroes and sections), then more headers and heroes
+// (wyber-sections-heroes.ts), then more page sections (wyber-sections-blocks.ts). They share the primitives declared here.
+const WYBER_SECTIONS_BASE = String.raw`// Wyber Sections — page sections provided by the platform. Auto-injected; edits here are overwritten on every build.
+import React, { useState, useEffect, useRef, useId } from 'react'
 import { flushSync } from 'react-dom'
 import { motion, AnimatePresence, useReducedMotion, useMotionValue, useSpring, useTransform } from 'framer-motion'
 import { ArrowUpRight, Plus, Minus, Menu, X } from 'lucide-react'
@@ -908,6 +913,8 @@ export function FooterSlim({ brand, description, columns = [], note }: FooterPro
 }
 `
 
+export const WYBER_SECTIONS_SOURCE = WYBER_SECTIONS_BASE + WYBER_HEROES_SOURCE + WYBER_BLOCKS_SOURCE
+
 // Map merged into the same places as WYBER_UI_KIT_FILES (user files always win).
 export const WYBER_SECTIONS_FILES: Record<string, string> = {
   [WYBER_SECTIONS_PATH]: WYBER_SECTIONS_SOURCE,
@@ -921,4 +928,5 @@ export const WYBER_SECTION_NAMES = [
   'StepsColumns', 'StepsTimeline', 'AboutSplit', 'AboutBand', 'FaqSplit', 'FaqBoxed',
   'CtaBand', 'CtaSplit', 'CtaPhoto', 'PhotoBand', 'ContactSplit', 'ContactCentered', 'VisitList', 'FooterGiant', 'FooterSlim',
   'FactTicker', 'AnchorMorph', 'withViewTransition',
+  ...WYBER_HEROES_NAMES, ...WYBER_BLOCKS_NAMES,
 ] as const

@@ -5,6 +5,7 @@ import { seededRandom } from '../build-spec/random'
 import { languagesFor } from '../build-spec/languages'
 import { feelScore } from '../build-spec/feel'
 import { BLUEPRINTS, classifyIntent } from './intents'
+import { ABOUT_SHOWS_PHOTO, HERO_NEEDS_PHOTO, HERO_NO_PHOTO, HERO_PHOTO_FIRST, featuresVariant, rowsVariantFor } from './composition'
 import type {
   BuildSpec, HeaderVariant, HeroVariant, ImageSlot, IntentBrief, LangId, LayoutPlan, MotionPlan, OwnerFacts, PlannedSection, SectionStyles, ServicesVariant,
 } from './types'
@@ -96,38 +97,63 @@ export function motionFor(d: Direction, seed: string): MotionPlan {
   }
 }
 
-/** Which section compositions a direction's group leans on. The seed picks among them, so two sites in one group still differ. */
-const SX_BY_GROUP: Record<string, { [K in keyof SectionStyles]: SectionStyles[K][] }> = {
-  editorial: { header: ['index', 'bar'], hero: ['editorial', 'minimal'], features: ['index', 'grid'], steps: ['columns', 'timeline'], about: ['band', 'split'], faq: ['split', 'boxed'], cta: ['band', 'split'], contact: ['split', 'centered'], footer: ['giant', 'slim'] },
-  'type-led': { header: ['index', 'bar'], hero: ['editorial', 'minimal', 'centered'], features: ['index', 'grid'], steps: ['columns', 'timeline'], about: ['band', 'split'], faq: ['split', 'boxed'], cta: ['band', 'split'], contact: ['split', 'centered'], footer: ['giant', 'slim'] },
-  human: { header: ['bar', 'centered'], hero: ['split', 'full', 'centered'], features: ['cards', 'bento', 'grid'], steps: ['columns', 'timeline'], about: ['split', 'band'], faq: ['boxed', 'split'], cta: ['split', 'band'], contact: ['split', 'centered'], footer: ['slim', 'giant'] },
-  physical: { header: ['centered', 'bar'], hero: ['full', 'split', 'centered'], features: ['cards', 'grid', 'bento'], steps: ['columns', 'timeline'], about: ['split', 'band'], faq: ['boxed', 'split'], cta: ['band', 'split'], contact: ['split', 'centered'], footer: ['giant', 'slim'] },
-  tool: { header: ['bar', 'index'], hero: ['split', 'minimal', 'centered'], features: ['bento', 'cards', 'grid'], steps: ['columns', 'timeline'], about: ['split', 'band'], faq: ['split', 'boxed'], cta: ['split', 'band'], contact: ['split', 'centered'], footer: ['slim', 'giant'] },
-  'light-tech': { header: ['bar', 'index'], hero: ['centered', 'split', 'minimal'], features: ['bento', 'grid', 'cards'], steps: ['columns', 'timeline'], about: ['split', 'band'], faq: ['boxed', 'split'], cta: ['split', 'band'], contact: ['centered', 'split'], footer: ['slim', 'giant'] },
-  dark: { header: ['index', 'bar'], hero: ['full', 'centered', 'editorial'], features: ['cards', 'bento', 'index'], steps: ['columns', 'timeline'], about: ['band', 'split'], faq: ['split', 'boxed'], cta: ['band', 'split'], contact: ['split', 'centered'], footer: ['giant', 'slim'] },
-  'brand-block': { header: ['bar', 'centered'], hero: ['split', 'full', 'minimal'], features: ['cards', 'bento', 'grid'], steps: ['columns', 'timeline'], about: ['split', 'band'], faq: ['boxed', 'split'], cta: ['band', 'split'], contact: ['split', 'centered'], footer: ['slim', 'giant'] },
+/**
+ * Which section compositions a direction's group leans on. The seed picks among them, so two sites in one group still differ. The pools were
+ * widened on 25 Nov 2026 (12 heroes, 7 headers, 10 feature layouts, 5 step layouts, 5 about layouts and so on): the registry guarantees no two
+ * builds share a design fingerprint, and this is the space the page structure is drawn from.
+ */
+type Pools = { [K in keyof SectionStyles]-?: NonNullable<SectionStyles[K]>[] }
+const SHARED: Pick<Pools, 'steps' | 'faq' | 'cta' | 'contact' | 'footer' | 'visit' | 'strip' | 'lead'> = {
+  steps: ['columns', 'timeline', 'rail', 'path', 'accordion'], faq: ['split', 'boxed', 'columns', 'details'], cta: ['band', 'split', 'centered', 'strip'],
+  contact: ['split', 'centered', 'inverted', 'stacked'], footer: ['giant', 'slim', 'columns', 'centered'], visit: ['list', 'cards', 'statement'],
+  strip: ['ticker', 'ribbon', 'none'], lead: ['list', 'about'],
+}
+const ABOUT_ALL: Pools['about'] = ['split', 'band', 'statement', 'notes', 'overlap']
+const SX_BY_GROUP: Record<string, Pools> = {
+  editorial: { ...SHARED, header: ['index', 'bar', 'stack', 'details', 'centered'], hero: ['editorial', 'minimal', 'index', 'ledger', 'sheet', 'triptych', 'overlap', 'split', 'centered'], features: ['index', 'grid', 'ledger', 'zigzag', 'stack', 'tabs', 'mosaic'], about: ABOUT_ALL },
+  'type-led': { ...SHARED, header: ['index', 'bar', 'stack', 'details', 'utility'], hero: ['editorial', 'minimal', 'centered', 'index', 'ledger', 'sheet', 'triptych', 'overlap', 'split'], features: ['index', 'grid', 'ledger', 'zigzag', 'stack', 'tabs', 'mosaic'], about: ABOUT_ALL },
+  human: { ...SHARED, header: ['bar', 'centered', 'island', 'utility', 'stack'], hero: ['split', 'full', 'centered', 'overlap', 'splitscreen', 'sheet', 'tabbed', 'triptych'], features: ['cards', 'bento', 'grid', 'mosaic', 'scroller', 'tabs', 'zigzag'], about: ABOUT_ALL },
+  physical: { ...SHARED, header: ['centered', 'bar', 'utility', 'island', 'details'], hero: ['full', 'split', 'splitscreen', 'triptych', 'overlap', 'centered', 'sheet', 'ledger'], features: ['cards', 'grid', 'bento', 'scroller', 'mosaic', 'zigzag', 'stack'], about: ABOUT_ALL },
+  tool: { ...SHARED, header: ['bar', 'index', 'island', 'details', 'utility'], hero: ['split', 'minimal', 'centered', 'tabbed', 'index', 'ledger', 'sheet', 'splitscreen', 'overlap'], features: ['bento', 'cards', 'grid', 'tabs', 'stack', 'mosaic', 'scroller'], about: ABOUT_ALL },
+  'light-tech': { ...SHARED, header: ['bar', 'island', 'index', 'utility', 'details'], hero: ['centered', 'split', 'minimal', 'tabbed', 'sheet', 'index', 'ledger', 'splitscreen', 'overlap'], features: ['bento', 'grid', 'cards', 'tabs', 'mosaic', 'stack', 'scroller'], about: ABOUT_ALL },
+  dark: { ...SHARED, header: ['index', 'bar', 'details', 'island', 'stack'], hero: ['full', 'centered', 'editorial', 'splitscreen', 'index', 'sheet', 'tabbed', 'triptych'], features: ['cards', 'bento', 'index', 'tabs', 'stack', 'mosaic', 'scroller'], about: ABOUT_ALL },
+  'brand-block': { ...SHARED, header: ['bar', 'centered', 'island', 'utility', 'stack'], hero: ['split', 'full', 'minimal', 'splitscreen', 'overlap', 'sheet', 'tabbed', 'centered'], features: ['cards', 'bento', 'grid', 'mosaic', 'scroller', 'zigzag', 'tabs'], about: ABOUT_ALL },
 }
 
-export function sectionStylesFor(d: Direction, seed: string): SectionStyles {
-  const r = seededRandom(seed + ':sections')
+/** The pools a direction draws from, after the gates: a photograph-led direction only gets heroes that show the photograph, a type-led one never the heroes that need it, and the facts-based variants need facts. */
+export function sxPoolsFor(d: Direction, hasFacts = false): Pools {
   const g = SX_BY_GROUP[d.group] ?? SX_BY_GROUP.human
-  const pick = <T,>(a: T[]): T => a[Math.floor(r() * a.length)]
   // A direction whose hero media is a photograph must not draw the type-only hero (it has no image slot, so the site would ship with no
   // photography at all: live 23 Nov, a brief that asked for "photo-led" got a text-only page). A type-led direction must not draw a photo hero.
-  // The photograph must be in the first screen: full-bleed or split. (Centred, editorial and minimal heroes put it below the fold or drop it.)
-  const photoFirst = g.hero.filter(h => h === 'full' || h === 'split')
-  const heroes = HERO_IMAGE_MEDIA.has(d.rules.heroMedia) ? (photoFirst.length ? photoFirst : (['full', 'split'] as const).slice()) : g.hero.filter(h => h !== 'full')
-  return { header: pick(g.header), hero: pick(heroes.length ? heroes : ['minimal' as const]), features: pick(g.features), steps: pick(g.steps), about: pick(g.about), faq: pick(g.faq), cta: pick(g.cta), contact: pick(g.contact), footer: pick(g.footer) }
+  // The photograph must be in the first screen. (Centred, editorial, minimal, sheet and the index heroes put it below the fold or drop it.)
+  const photoFirst = g.hero.filter(h => HERO_PHOTO_FIRST.has(h))
+  const heroes = HERO_IMAGE_MEDIA.has(d.rules.heroMedia)
+    ? (photoFirst.length ? photoFirst : (['full', 'split'] as SectionStyles['hero'][]))
+    : g.hero.filter(h => !HERO_NEEDS_PHOTO.has(h))
+  const keepFacts = <T,>(a: T[], needsFacts: T[]) => (hasFacts ? a : a.filter(x => !needsFacts.includes(x)))
+  const hero = keepFacts(heroes, ['ledger' as const])
+  return { ...g, hero: hero.length ? hero : ['minimal'], header: keepFacts(g.header, ['utility' as const]) }
 }
 
-export function layoutFor(d: Direction, seed: string): LayoutPlan {
+export function sectionStylesFor(d: Direction, seed: string, hasFacts = false): SectionStyles {
+  const r = seededRandom(seed + ':sections')
+  const g = sxPoolsFor(d, hasFacts)
+  const pick = <T,>(a: T[]): T => a[Math.floor(r() * a.length)]
+  const base = { header: pick(g.header), hero: pick(g.hero), features: pick(g.features), steps: pick(g.steps), about: pick(g.about), faq: pick(g.faq), cta: pick(g.cta), contact: pick(g.contact), footer: pick(g.footer) }
+  const extra = { visit: pick(g.visit), strip: pick(g.strip), lead: pick(g.lead) }
+  // two interactive explorers back to back repeat each other: a tabbed hero already shows the list as tabs
+  if (base.hero === 'tabbed' && base.features === 'tabs') base.features = pick(g.features.filter(f => f !== 'tabs'))
+  return { ...base, ...extra }
+}
+
+export function layoutFor(d: Direction, seed: string, hasFacts = false): LayoutPlan {
   const r = seededRandom(seed + ':layout')
   const coin = () => r() < 0.5
   const rhythm: LayoutPlan['rhythm'] = EDITORIAL.has(d.group) ? 'rules' : d.palette.mode === 'dark' ? 'bands' : (['bands', 'plain', 'rules'] as const)[Math.floor(r() * 3)]
   const base = { heroFlip: coin(), heroMediaFirst: coin(), rhythm, steps: coin() ? 'timeline' as const : 'columns' as const, faq: coin() ? 'split' as const : 'centered' as const, contactFlip: coin(), aboutFlip: coin() }
   // the sections plan wins for steps and faq, so the older fields agree with it
-  const sx = sectionStylesFor(d, seed)
-  return { sx, ...base, steps: sx.steps, faq: sx.faq === 'split' ? 'split' : 'centered' }
+  const sx = sectionStylesFor(d, seed, hasFacts)
+  return { sx, ...base, steps: sx.steps === 'timeline' || sx.steps === 'path' ? 'timeline' : 'columns', faq: sx.faq === 'split' || sx.faq === 'details' ? 'split' : 'centered' }
 }
 
 export function planWebsite(prompt: string, o: PlanOptions): BuildSpec {
@@ -135,10 +161,12 @@ export function planWebsite(prompt: string, o: PlanOptions): BuildSpec {
   const brief: IntentBrief = classifyIntent(prompt, facts)
   const bp = BLUEPRINTS[brief.intent]
   const d = pickWebsiteDirection(prompt, o)
-  const layout = layoutFor(d, o.seed)
+  const hasFacts = Boolean(facts.city || facts.hours || facts.phone || facts.address)
+  const layout = layoutFor(d, o.seed, hasFacts)
   const sx = layout.sx!
   const hero: HeroVariant = sx.hero === 'editorial' ? 'editorial' : sx.hero === 'centered' || sx.hero === 'full' ? 'stacked' : 'split'
-  const sv: ServicesVariant = sx.features === 'index' ? 'list' : sx.features
+  const sv: ServicesVariant = featuresVariant(sx.features)
+  const rv: ServicesVariant = rowsVariantFor(sx.features)
 
   const sections: PlannedSection[] = bp.sections
     .filter(s => !s.needs || s.needs.every(k => Boolean(facts[k]) || (k === 'email' && brief.modules.includes('enquiry'))))
@@ -149,20 +177,26 @@ export function planWebsite(prompt: string, o: PlanOptions): BuildSpec {
         : s.kind === 'steps' ? { min: 3, max: 4 }
         : s.kind === 'faq' ? { min: 4, max: 6 }
         : { min: 0, max: 0 }
-      return { ...s, variant: s.kind === 'services' ? sv : undefined, count }
+      return { ...s, variant: s.kind === 'services' ? sv : s.kind === 'rows' ? rv : undefined, count }
     })
+  // Some pages open with the about section instead of the list: only when both exist and about does not already come first.
+  const iList = sections.findIndex(s => s.kind === 'services' || s.kind === 'rows')
+  const iAbout = sections.findIndex(s => s.kind === 'about')
+  const leadAbout = sx.lead === 'about' && iList >= 0 && iAbout > iList
+  if (leadAbout) sections.splice(iList, 0, sections.splice(iAbout, 1)[0])
+  layout.sx = { ...sx, lead: leadAbout ? 'about' : 'list' }
 
   const images: ImageSlot[] = []
   // Slots carry the direction's STYLE only. The subject is written by the copy step from the real brief (an image prompt must
   // never contain the goal action, a phone number or any wording the image model could paint as a sign).
-  if (HERO_IMAGE_MEDIA.has(d.rules.heroMedia) && sx.hero !== 'minimal') {
+  if (HERO_IMAGE_MEDIA.has(d.rules.heroMedia) && !HERO_NO_PHOTO.has(sx.hero)) {
     images.push({
       id: 'hero', brief: d.imageBrief, eager: true, altFrom: 'hero',
-      ratio: sx.hero === 'editorial' ? '21/9' : sx.hero === 'full' ? '16/9' : '4/5',
+      ratio: sx.hero === 'editorial' || sx.hero === 'sheet' ? '21/9' : sx.hero === 'full' ? '16/9' : '4/5',
     })
   }
-  if ((EDITORIAL.has(d.group) || d.group === 'physical') && sections.some(s => s.id === 'about')) {
-    images.push({ id: 'about', brief: d.imageBrief, ratio: sx.about === 'band' ? '21/9' : '4/5', eager: false, altFrom: 'about' })
+  if ((EDITORIAL.has(d.group) || d.group === 'physical') && sections.some(s => s.id === 'about') && ABOUT_SHOWS_PHOTO.has(sx.about)) {
+    images.push({ id: 'about', brief: d.imageBrief, ratio: sx.about === 'band' ? '21/9' : sx.about === 'overlap' ? '4/3' : '4/5', eager: false, altFrom: 'about' })
   }
 
   const schemaType = SCHEMA_BY_INDUSTRY.find(([re]) => re.test(brief.industry))?.[1] ?? bp.schemaType

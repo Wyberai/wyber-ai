@@ -541,7 +541,7 @@ describe('photo-first hero (a direction whose hero media is a photograph)', () =
     expect(src).toContain('<CtaPhoto')
     expect((src.match(/{{wyber-image:/g) || []).length).toBe(3) // hero, wide band, closing: three different scenes
     expect(new Set([...src.matchAll(/\{\{wyber-image: (.*?) \| 16:9\}\}/g)].map(m => m[1])).size).toBe(3)
-    expect(src).toMatch(/<Header(Bar|Centered|Index)[^>]* over /) // the header sits transparent over the photograph
+    expect(src).toMatch(/<Header(Bar|Centered|Index|Stack|Island|Details)[^>]* over /) // the header sits transparent over the photograph
     expect(src).not.toMatch(/gradient/)
     expect(scanSlopSource({ 'src/Site.tsx': src }).issues.map(i => i.id + ': ' + i.sample)).toEqual([])
   })

@@ -32,7 +32,7 @@ export function demoSiteCopy(spec: BuildSpec, c: DemoCopy): SiteCopy {
   const sections: SiteCopy['sections'] = {}
   for (const s of spec.sections) {
     if (s.kind === 'services') {
-      const n = s.variant === 'bento' ? 4 : s.variant === 'cards' ? 6 : 5
+      const n = s.variant === 'bento' || s.variant === 'grid' ? 4 : s.variant === 'cards' ? 6 : 5
       sections[s.id] = { title: c.featuresTitle, description: c.featuresDescription, items: c.features.slice(0, n) }
     } else if (s.kind === 'steps') {
       sections[s.id] = { title: c.stepsTitle, items: c.steps.slice(0, 3) }

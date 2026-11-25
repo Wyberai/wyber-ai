@@ -4,7 +4,7 @@
 
 import type { AppModel } from '../app-spec/types'
 import type { OwnerFacts } from '../build-spec/types'
-import type { BuildSpec } from '../website-spec/types'
+import type { BuildSpec, SectionStyles } from '../website-spec/types'
 
 export type { OwnerFacts, AppModel, BuildSpec }
 
@@ -37,10 +37,18 @@ export interface SaasLayoutPlan {
   /** Photo-first hero (a direction whose hero media is a photograph): one full-bleed photo, flat dark overlay, headline low and left. */
   heroPhoto: boolean
   /** Which section header the page uses. */
-  header: 'bar' | 'centered' | 'index'
-  steps: 'timeline' | 'columns'
+  header: SectionStyles['header']
+  /** Older saved specs carry only 'timeline' or 'columns' for steps and 'split' or 'centered' for the FAQ; the renderer maps both. */
+  steps: SectionStyles['steps'] | 'timeline' | 'columns'
   pricing: 'cards' | 'table'
-  faq: 'split' | 'centered'
+  faq: SectionStyles['faq'] | 'split' | 'centered'
+  /** Wider page structure (25 Nov 2026). Absent on specs saved before: the renderer then keeps the older choices. */
+  features?: SectionStyles['features']
+  cta?: SectionStyles['cta']
+  footer?: SectionStyles['footer']
+  strip?: 'ribbon' | 'none'
+  /** The hero shows the product's own features as tabs (the preview moves below it). */
+  heroTabs?: boolean
   rhythm: 'bands' | 'plain' | 'rules'
 }
 

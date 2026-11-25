@@ -6,7 +6,8 @@ import { getDirectionById, type Direction } from '../design-directions'
 import { appLayoutFor } from '../app-spec/plan'
 import { classifyAppIntent, APP_BLUEPRINTS } from '../app-spec/intents'
 import { BLUEPRINTS } from '../website-spec/intents'
-import { headerVariantFor, heroVariantFor, motionFor, servicesVariantFor } from '../website-spec/plan'
+import { headerVariantFor, heroVariantFor, motionFor, sxPoolsFor } from '../website-spec/plan'
+import { featuresVariant } from '../website-spec/composition'
 import type { AppSpec } from '../app-spec/types'
 import type { BuildSpec, PlannedSection } from '../website-spec/types'
 import type { OwnerFacts, SaasLayoutPlan, SaasSpec } from './types'
@@ -42,26 +43,36 @@ export function saasLayoutFor(d: Direction, seed: string): SaasLayoutPlan {
   const r = seededRandom(seed + ':saaslayout')
   const hero = heroVariantFor(d)
   const editorial = d.group === 'editorial' || d.group === 'type-led'
+  const pools = sxPoolsFor(d, false)
+  const pick = <T,>(a: T[]): T => a[Math.floor(r() * a.length)]
+  const heroPhoto = d.rules.heroMedia === 'photo'
+  const features = pick(pools.features)
   return {
     heroPreview: hero === 'split' ? 'right' : 'below',
-    heroPhoto: d.rules.heroMedia === 'photo',
-    header: editorial ? 'centered' : (['bar', 'index', 'bar'] as const)[Math.floor(r() * 3)],
-    steps: r() < 0.5 ? 'timeline' : 'columns',
+    heroPhoto,
+    header: pick(pools.header),
+    steps: pick(pools.steps),
     pricing: r() < 0.65 ? 'cards' : 'table',
-    faq: r() < 0.5 ? 'split' : 'centered',
+    faq: pick(pools.faq),
     rhythm: editorial ? 'rules' : d.palette.mode === 'dark' ? 'bands' : (['bands', 'plain', 'rules'] as const)[Math.floor(r() * 3)],
+    features,
+    cta: heroPhoto ? 'band' : pick(pools.cta),
+    footer: pick(pools.footer),
+    strip: pick(['ribbon', 'none', 'none'] as const),
+    // a product page can lead with its own features as tabs; not on a photograph hero, and not when the features are tabs already
+    heroTabs: !heroPhoto && !editorial && features !== 'tabs' && r() < 0.3,
   }
 }
 
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 
 /** The marketing site's plan: always the website pipeline's product blueprint (features, how it works, FAQ, closing call to action). */
-function planSite(prompt: string, d: Direction, facts: OwnerFacts, seed: string): BuildSpec {
+function planSite(prompt: string, d: Direction, facts: OwnerFacts, seed: string, features: SaasLayoutPlan['features']): BuildSpec {
   const bp = BLUEPRINTS.product
-  const sv = servicesVariantFor(d)
+  const sv = featuresVariant(features ?? 'cards')
   const sections: PlannedSection[] = bp.sections.map(s => {
     const count =
-      s.kind === 'services' ? (sv === 'bento' ? { min: 4, max: 4 } : { min: 3, max: 6 })
+      s.kind === 'services' ? (sv === 'bento' || sv === 'grid' ? { min: 4, max: 4 } : { min: 3, max: 6 })
       : s.kind === 'steps' ? { min: 3, max: 4 }
       : s.kind === 'faq' ? { min: 4, max: 6 }
       : { min: 0, max: 0 }
@@ -96,13 +107,14 @@ export function planSaas(prompt: string, o: SaasPlanOptions): SaasSpec {
     layout: appLayoutFor(d, o.seed),
     blueprint: APP_BLUEPRINTS[intent.intent].id,
   }
+  const layout = saasLayoutFor(d, o.seed)
   return {
     look: o.look,
     version: 1, kind: 'saas',
-    site: planSite(prompt, d, facts, o.seed),
+    site: planSite(prompt, d, facts, o.seed, layout.features),
     app,
     direction: app.direction,
-    layout: saasLayoutFor(d, o.seed),
+    layout,
     currency: o.currency ?? '$',
   }
 }

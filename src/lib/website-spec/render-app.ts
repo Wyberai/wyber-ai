@@ -1,4 +1,5 @@
 import { imageDirective, subjectFor } from './render-images'
+import { ABOUT_NAME, CONTACT_NAME, FAQ_NAME, FEATURE_NAME, FOOTER_NAME, HEADER_NAME, HERO_NAME, STEPS_NAME, VISIT_NAME } from './composition'
 import { UI } from './ui-strings'
 import { DEFAULT_LAYOUT, DEFAULT_MOTION, type BuildSpec, type ImageSlot, type LangId, type LayoutPlan, type MotionPlan, type PlannedSection, type SiteCopy } from './types'
 
@@ -233,8 +234,6 @@ function body(c: Ctx, s: PlannedSection): string {
 /* ───────── Wyber Sections path (specs that carry layout.sx) ───────── */
 
 type Tone = 'plain' | 'card' | 'rule'
-const HERO_NAME = { split: 'HeroSplitPhoto', editorial: 'HeroEditorial', centered: 'HeroCentered', full: 'HeroFullBleed', minimal: 'HeroMinimal' } as const
-const FEATURE_NAME = { list: 'FeaturesIndex', cards: 'FeaturesCards', bento: 'FeaturesBento', grid: 'FeaturesGrid' } as const
 const S = (c: Ctx, ...names: string[]) => names.forEach(n => c.sec.add(n))
 
 function mediaImg(c: Ctx, slot: ImageSlot, alt: string, eager: boolean): string {
@@ -248,8 +247,11 @@ function heroSections(c: Ctx): string {
   const name = HERO_NAME[sx.hero]
   S(c, name)
   const media = slot ? ` media={${mediaImg(c, slot, 'COPY.hero.imageAlt', true)}}` : ''
+  // the tabbed and index heroes show the first list on the page (the owner's own items), so they take its copy
+  const listSec = c.spec.sections.find(x => x.kind === 'services' || x.kind === 'rows')
+  const list = (sx.hero === 'tabbed' || sx.hero === 'index') && listSec ? ` items={${cp(listSec.id)}.items} itemsHref="#${listSec.id}"` : ''
   return `<section>
-          <${name} eyebrow={COPY.hero.eyebrow} headline={COPY.hero.headline} accent={COPY.hero.accent} sub={COPY.hero.sub} cta={hasContact ? COPY.hero.cta : undefined} onCta={() => go(primaryHref)} secondaryLabel={COPY.hero.secondary} secondaryHref="#${first}" facts={heroFacts}${media} reveal={${c.mo.reveal}} flip={${c.lay.heroFlip}} />
+          <${name} eyebrow={COPY.hero.eyebrow} headline={COPY.hero.headline} accent={COPY.hero.accent} sub={COPY.hero.sub} cta={hasContact ? COPY.hero.cta : undefined} onCta={() => go(primaryHref)} secondaryLabel={COPY.hero.secondary} secondaryHref="#${first}" facts={heroFacts}${media}${list} reveal={${c.mo.reveal}} flip={${c.lay.heroFlip}} />
         </section>`
 }
 
@@ -273,32 +275,32 @@ function sectionSections(c: Ctx, s: PlannedSection, tone: Tone): string {
   switch (s.kind) {
     case 'services':
     case 'rows': {
-      const name = s.kind === 'rows' ? 'FeaturesIndex' : FEATURE_NAME[s.variant ?? 'list']
+      const name = FEATURE_NAME[s.variant ?? 'list']
       S(c, name)
       const firstList = c.spec.sections.find(x => x.kind === 'services' || x.kind === 'rows')?.id === s.id
       const band = firstList && !c.spec.sections.some(x => x.kind === 'about') ? detailBand(c) : ''
       return wrap(`<${name} ${head} description={${k}.description} items={${k}.items!} ${common} />`) + band
     }
     case 'steps': {
-      const name = sx.steps === 'timeline' ? 'StepsTimeline' : 'StepsColumns'
+      const name = STEPS_NAME[sx.steps]
       S(c, name)
       return wrap(`<${name} ${head} description={${k}.description} items={${k}.items!} ${common} />`)
     }
     case 'about': {
       const slot = c.spec.images.find(i => i.id === 'about')
-      const name = sx.about === 'band' ? 'AboutBand' : 'AboutSplit'
+      const name = ABOUT_NAME[sx.about]
       S(c, name)
       const media = slot ? ` media={${mediaImg(c, slot, `${k}.imageAlt ?? ''`, false)}}` : ''
       const band = detailBand(c)
       return wrap(`<${name} ${head} paragraphs={${k}.paragraphs!}${media} flip={${c.lay.aboutFlip}} ${common} />`) + band
     }
     case 'faq': {
-      const name = sx.faq === 'split' ? 'FaqSplit' : 'FaqBoxed'
+      const name = FAQ_NAME[sx.faq]
       S(c, name)
       return wrap(`<${name} ${head} description={${k}.description} faq={${k}.faq!} ${common} />`)
     }
     case 'contact': {
-      const name = sx.contact === 'split' ? 'ContactSplit' : 'ContactCentered'
+      const name = CONTACT_NAME[sx.contact]
       S(c, name)
       return wrap(`{hasContact && (
             <${name} ${head} description={${k}.description} facts={contactFacts} flip={${c.lay.contactFlip}} ${common}>
@@ -314,16 +316,17 @@ function sectionSections(c: Ctx, s: PlannedSection, tone: Tone): string {
         const far = imageDirective(heroSlot, 'A quiet wide view of the same place with people small in the frame, calm end of the day: ' + subjectFor(c.spec, c.copy, heroSlot))
         return wrap(`<CtaPhoto title={${k}.title} description={${k}.description} cta={hasContact ? ${k}.button : undefined} onCta={() => go(primaryHref)} secondaryLabel={COPY.hero.secondary} secondaryHref="#${first}" media={<img src="${far}" alt={COPY.hero.imageAlt ?? ''} loading="lazy" decoding="async" />} reveal={${c.mo.reveal}} />`)
       }
-      const name = sx.cta === 'band' ? 'CtaBand' : 'CtaSplit'
+      const name = sx.cta === 'band' ? 'CtaBand' : ({ split: 'CtaSplit', centered: 'CtaCentered', strip: 'CtaStrip' } as const)[sx.cta]
       S(c, name)
       return wrap(`<${name} title={${k}.title} description={${k}.description} cta={hasContact ? ${k}.button : undefined} onCta={() => go(primaryHref)} secondaryLabel={COPY.hero.secondary} secondaryHref="#${first}" reveal={${c.mo.reveal}} />`)
     }
     case 'visit':
     default: {
-      S(c, 'VisitList')
+      const visitName = VISIT_NAME[sx.visit ?? 'list']
+      S(c, visitName)
       const map = c.spec.brief.modules.includes('map')
       const link = map ? `{OWNER.address && <a className="text-base font-medium underline underline-offset-[6px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring" href={'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(OWNER.address + ' ' + OWNER.city)}>{T.maps}</a>}` : ''
-      return wrap(`<VisitList ${head} description={${k}.description} facts={visitFacts} ${common}>${link}</VisitList>`)
+      return wrap(`<${visitName} ${head} description={${k}.description} facts={visitFacts} ${common}>${link}</${visitName}>`)
     }
   }
 }
@@ -360,8 +363,8 @@ export function renderApp(spec: BuildSpec, copy: SiteCopy, translations: Transla
     const item = `{ label: (COPY.nav && COPY.nav[${JSON.stringify(s.id)}]) || ${JSON.stringify(s.nav)}, href: '#${s.id}' }`
     return s.kind === 'contact' ? `...(hasContact ? [${item}] : [])` : item
   }).join(',\n    ')
-  const Header = sx ? ({ bar: 'HeaderBar', centered: 'HeaderCentered', index: 'HeaderIndex' } as const)[sx.header] : spec.header === 'condensing' ? 'CondensingNavbar' : 'Navbar'
-  const Foot = sx ? (sx.footer === 'giant' ? 'FooterGiant' : 'FooterSlim') : 'Footer'
+  const Header = sx ? HEADER_NAME[sx.header] : spec.header === 'condensing' ? 'CondensingNavbar' : 'Navbar'
+  const Foot = sx ? FOOTER_NAME[sx.footer] : 'Footer'
   if (sx) S(c, Header, Foot)
   const hlCode = mo.highlight
     ? `function hl(text: string, accent?: string): React.ReactNode {
@@ -375,9 +378,13 @@ export function renderApp(spec: BuildSpec, copy: SiteCopy, translations: Transla
     : ''
   const names = [...used].sort()
   if (sx) S(c, 'AnchorMorph', 'withViewTransition')
-  if (sx && mo.reveal) S(c, 'FactTicker')
+  const strip = sx && mo.reveal ? sx.strip ?? 'ticker' : 'none'
+  const listForRibbon = spec.sections.find(x => x.kind === 'services' || x.kind === 'rows')
+  const ribbon = strip === 'ribbon' && listForRibbon ? listForRibbon : undefined
+  if (strip === 'ticker') S(c, 'FactTicker')
+  if (ribbon) S(c, 'RibbonBand')
   const secImport = c.sec.size ? 'import { ' + [...c.sec].sort().join(', ') + " } from './wyber-sections'\n" : ''
-  const tickerCode = sx && mo.reveal
+  const tickerCode = strip === 'ticker'
     ? `  const tickerItems = [OWNER.city, OWNER.hours, OWNER.phone, OWNER.address].filter(Boolean) as string[]
 `
     : ''
@@ -490,12 +497,13 @@ ${langToggleCode}${factsCode}${tickerCode}  const headerCta = (langToggle || has
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-background focus:px-4 focus:py-2">{T.skip}</a>
       <${Header}
         brand={BRAND}
-        links={links}${sx && sx.hero === 'full' && spec.images.some(i => i.id === 'hero') ? '\n        over' : ''}
+        links={links}${sx && sx.hero === 'full' && spec.images.some(i => i.id === 'hero') ? '\n        over' : ''}${sx && sx.header === 'utility' ? '\n        notes={[OWNER.hours, OWNER.phone, OWNER.city].filter(Boolean) as string[]}' : ''}
         cta={headerCta}
       />
       <main id="main">
         ${heroJsx}
-        ${sx && mo.reveal ? '{tickerItems.length >= 3 && <div className="pb-4 md:pb-8"><FactTicker items={tickerItems} label={T.area} /></div>}' : ''}
+        ${strip === 'ticker' ? '{tickerItems.length >= 3 && <div className="pb-4 md:pb-8"><FactTicker items={tickerItems} label={T.area} /></div>}' : ''}
+        ${ribbon ? `<RibbonBand items={${cp(ribbon.id)}.items.map((x: { title: string }) => x.title)} label={${cp(ribbon.id)}.title} />` : ''}
         ${bodies.join('\n        ')}
       </main>
       ${mo.stickyCta ? '{hasContact && <StickyCTABar message={BRAND} ctaLabel={COPY.hero.cta} onCta={() => go(primaryHref)} />}' : ''}

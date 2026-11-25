@@ -4,6 +4,7 @@ import { DEMOS } from './demo-copy'
 import { KIT_EFFECT_COMPONENTS } from '../wyber-ui-kit'
 import { checkWebsiteReady, kitImportCount } from '../website-ready'
 import { scanSlopSource } from '../unslop'
+import { HERO_PHOTO_FIRST } from './composition'
 
 describe('intent classifier', () => {
   it.each([
@@ -278,7 +279,7 @@ describe('photo moments on a photo-led website', () => {
       const src = renderWebsite(spec, d.copy).files['src/App.tsx'] ?? ''
       found++
       expect(src).toContain('<PhotoBand')
-      expect(src).toMatch(/<Header(Bar|Centered|Index)\s+brand=\{BRAND\}\s+links=\{links\}\s+over\s/)
+      expect(src).toMatch(/<Header(Bar|Centered|Index|Stack|Island|Details|Utility)\s+brand=\{BRAND\}\s+links=\{links\}\s+over\s/)
       const scenes = [...src.matchAll(/\{\{wyber-image: (.*?) \| /g)].map(m => m[1])
       expect(new Set(scenes).size).toBe(scenes.length)
       if (found >= 3) return
@@ -337,13 +338,13 @@ describe('type and photography hold across every direction (regression: 23 Nov, 
     expect(WYBER_SECTIONS_SOURCE).toMatch(/<em className="not-italic text-primary">/)
   })
 
-  it('every photo-led direction, on every seed and blueprint, puts a photograph in the first screen (full-bleed or split hero)', async () => {
+  it('every photo-led direction, on every seed and blueprint, puts a photograph in the first screen (a hero from the photo-first set)', async () => {
     const { DIRECTIONS } = await import('../design-directions')
     const photo = DIRECTIONS.filter(d => d.surfaces.includes('website') && ['photo', 'video', 'illustration', 'cutouts', 'line-art'].includes(d.rules.heroMedia))
     expect(photo.length).toBeGreaterThan(5)
     for (const d of photo) for (const demo of DEMOS) for (let i = 0; i < 6; i++) {
       const spec = planWebsite(demo.prompt, { seed: demo.seed + i, facts: demo.facts, directionId: d.id })
-      expect(['full', 'split'], `${d.id}/${demo.key}/${i}`).toContain(spec.layout?.sx?.hero)
+      expect([...HERO_PHOTO_FIRST], `${d.id}/${demo.key}/${i}`).toContain(spec.layout?.sx?.hero)
       expect(spec.images.some(x => x.id === 'hero'), `${d.id}/${demo.key}/${i} has a hero photo slot`).toBe(true)
     }
   })
