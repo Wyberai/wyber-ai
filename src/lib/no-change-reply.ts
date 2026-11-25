@@ -17,9 +17,13 @@ function prose(raw: string): string {
     .trim()
 }
 
+// A short, honest "this is already there" answer is a real answer, not a failure (the retry prompt asks for it in exactly this form).
+const ALREADY_THERE = /^\s*already (?:on the page|there|in place|present)\b|\b(?:is|are) already (?:on the page|there|in place|present|included)\b/i
+
 /** The model's own words when they are an honest explanation, else null (the caller then shows its generic message). */
 export function explainableNoChange(raw: string): string | null {
   const t = prose(raw)
+  if (t.length >= 12 && t.length <= 1800 && ALREADY_THERE.test(t)) return t
   if (t.length < 60 || t.length > 1800) return null
   if (COMPLETION_CLAIM.test(t)) return null
   return t

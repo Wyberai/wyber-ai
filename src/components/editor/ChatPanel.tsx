@@ -24,6 +24,8 @@ import { LoopGuard } from '@/lib/agents/loop-guard';
 import { runQaChecks } from '@/lib/agents/qa-checks';
 import { parsePlanManifest, buildStagedPlan, capPlannedFiles, pickRouterFile, forgeLine, diffPlannedAgainstWritten, wireLooksApplied, type PlannedFile, EDIT_COMPLETENESS_MIN_FILES, FILL_BATCH_SIZE } from '@/lib/staged-plan';
 import { isImportedButMissing } from '@/lib/stub-missing-imports';
+import { withTimeout, isBuildStuck } from '@/lib/stuck-build';
+import { classifyEditTurn, buildEditRetryPrompt, buildNoChangeRetryPrompt, ALREADY_THERE_MSG, EDIT_RETRY_MSG, EDIT_GAVE_UP_MSG } from '@/lib/edit-outcome';
 import { scrubCopy } from '@/lib/customer-copy-rules';
 import { deterministicWire } from '@/lib/deterministic-wire';
 import { resolveBuildTier, largestAffordableSmallerBuild } from '@/lib/credits';
@@ -582,6 +584,23 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
     }, 1000);
     return () => clearInterval(t);
   }, [isGenerating]);
+  // Safety net: if nothing is running and nothing has moved for a few minutes while the build still shows as working, close it
+  // ourselves. The build is saved on the server, so the honest state is "built, check the preview", never an endless timer.
+  useEffect(() => {
+    if (!isGenerating) return;
+    const timer = setInterval(() => {
+      if (!isBuildStuck({ isGenerating: true, inflight: inflightGenRef.current, lastActivityAt: lastActivityRef.current, now: Date.now() })) return;
+      const st = useEditorStore.getState();
+      const hasFiles = Object.keys(st.files ?? {}).length > 0 && st.hasGeneratedFiles;
+      const stuck = (st.messages ?? []).filter(m => m.role === 'assistant' && m.status === 'streaming');
+      const text = hasFiles ? 'Built it. Open the preview and tell me what to change next.' : "That took longer than it should. Nothing more is running. Please try again.";
+      for (const m of stuck) st.updateMessage(m.id, hasFiles ? { content: text, status: 'done' } : { content: text, status: 'error' });
+      st.setIsGenerating(false);
+      setProgressSteps([]);
+      clearStreamingContent();
+    }, 15_000);
+    return () => clearInterval(timer);
+  }, [isGenerating, clearStreamingContent]);
   // Phase label derived from elapsed time: one phase per ~10s, CLAMPED at the
   // last entry. The old version advanced every second and wrapped with %, so
   // the label cycled the whole list every few seconds — users watched builds
@@ -683,6 +702,8 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
   const executeGenerationRef = useRef<((msg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'wire' | 'agentFix'; stageFiles?: string[]; stagePurposes?: string[]; internalPass?: boolean; finalPass?: boolean; quietRetryEligible?: boolean; qaFix?: boolean; preserveAgentTurn?: boolean; completenessRetryFor?: PlannedFile[]; completenessRetryCount?: number; knownPlan?: PlannedFile[]; totalPlannedFiles?: number; buildId?: string; buildComplexity?: 'HIGH' | 'LOW'; sharedBubbleId?: string; autoRetry?: boolean }) => Promise<boolean>) | null>(null);
   // Cap consecutive self-heal (autofix) runs so a broken build can't loop and drain credits.
   const autofixCountRef = useRef(0);
+  // One automatic retry per user turn when the reply changed nothing and explained nothing.
+  const noChangeRetriedRef = useRef(false);
   // Set by executeGeneration whenever ITS OWN completeness check (4c) just
   // dispatched a repair pass for files this turn never wrote — mirrors the
   // ownsBubble-gated `completenessRetryFired` local var below, but exposed
@@ -784,6 +805,9 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
   // Distinguishes a user-pressed Stop from the 320s auto-timeout hitting the
   // same AbortController, so the resulting message can be honest about which.
   const userStoppedRef = useRef(false);
+  // Stuck-bubble safety net (see src/lib/stuck-build.ts): how many generate requests run on this page, and when anything last moved.
+  const inflightGenRef = useRef(0);
+  const lastActivityRef = useRef(Date.now());
   // Whether the tab was backgrounded at any point during the CURRENT
   // generation attempt — the only real corroborating signal for "the
   // computer slept / tab was backgrounded", which is what
@@ -1037,6 +1061,11 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
           })
           return
         }
+      }
+      // A failed-edit retry that cannot run (budget spent) must still tell the user, never vanish.
+      if (detail.editRetry && (totalRepairPassesRef.current >= MAX_TOTAL_REPAIR_PASSES || (autofixCountRef.current >= MAX_AUTOFIX && !detail.completenessRetryFor?.length))) {
+        useEditorStore.getState().addMessage({ id: uid(), role: 'assistant', content: EDIT_GAVE_UP_MSG, timestamp: Date.now(), status: 'done' })
+        return
       }
       // Combined ceiling across every repair mechanism (see MAX_TOTAL_REPAIR_PASSES
       // above) — checked first, before either mechanism's own per-type cap, since
@@ -1386,7 +1415,7 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
     completenessRetryFiredRef.current = false;
     streamCutRef.current = false;
     // A fresh user-initiated turn resets the self-heal budget (silent autofix runs do not).
-    if (!opts?.silent && !opts?.autoRetry) { autofixCountRef.current = 0; loopGuardRef.current.reset(); buildAutoRetryCountRef.current = 0; totalRepairPassesRef.current = 0; repairBudgetNotifiedRef.current = false; }
+    if (!opts?.silent && !opts?.autoRetry) { autofixCountRef.current = 0; noChangeRetriedRef.current = false; loopGuardRef.current.reset(); buildAutoRetryCountRef.current = 0; totalRepairPassesRef.current = 0; repairBudgetNotifiedRef.current = false; }
     // A genuinely fresh visible turn — not a staged pass (stage set), not a
     // self-heal/autofix rerun (silent), not a truncated-stream continuation,
     // not runAgenticBuild's own fallback re-entry (preserveAgentTurn). This is
@@ -1655,6 +1684,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
                 prompt: userMsg, stage: 'plan', projectType,
                 userId: resolvedUserId, projectId: resolvedProjectId, isFirstBuild: true,
               }),
+              signal: AbortSignal.timeout(60_000),
             }).then(r => r.ok ? r.text() : '').then(parsePlanManifest).catch(() => [] as PlannedFile[]))
       : null;
     const completenessPlanPromise = editPlanPromise ?? newBuildPlanPromise;
@@ -1721,6 +1751,8 @@ const storeProjectId = useEditorStore.getState().project?.id;
     // Lets a dropped stream pick up the server's finished output (see the
     // reader loop below and "Resumable turns" in api/generate/route.ts).
     const turnId = crypto.randomUUID();
+    inflightGenRef.current += 1;
+    lastActivityRef.current = Date.now();
     try {
       const res = await fetch('/api/generate', {
         method:'POST',
@@ -1883,6 +1915,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
           const { done, value } = await reader.read();
           if (done) break;
           armIdleTimer();
+          lastActivityRef.current = Date.now();
           full += decoder.decode(value, { stream:true });
 
           // Extract [progress: ...] markers and surface them live
@@ -2013,8 +2046,10 @@ const storeProjectId = useEditorStore.getState().project?.id;
       }
       // 2. Apply <edit> diff blocks (fast path)
       let failedPaths: string[] = [];
+      let changedByEdits = 0;
       if (editBlocks.length > 0) {
         const result = applyEdits(updatedFiles, editBlocks);
+        changedByEdits = Object.keys(result.updated).length;
         for (const [path, content] of Object.entries(result.updated)) {
           const ext = path.split('.').pop() ?? '';
           updatedFiles[path] = { path, content, language: langMap[ext] ?? 'plaintext' };
@@ -2167,7 +2202,8 @@ const storeProjectId = useEditorStore.getState().project?.id;
       // wyber-autofix continuation the other safety nets above use.
       if (completenessPlanPromise && !fileCut && !editCut && !placeholderRetryFired && !qaRetryFired
           && (newFiles.length > 0 || editBlocks.length > 0)) {
-        const planned = await completenessPlanPromise
+        // Bounded: a slow plan request must never hold the whole build bubble open (live, 23 Nov: files written, bubble stuck for ever).
+        const planned = await withTimeout(completenessPlanPromise, 25_000, [] as PlannedFile[])
         if (planned.length >= EDIT_COMPLETENESS_MIN_FILES) {
           const writtenPaths = [...newFiles.map(f => f.path), ...editBlocks.map(e => e.path)]
           // On a NEW build the plan is only a forecast: the build model often
@@ -2376,7 +2412,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
       if (failedPaths.length > 0) {
         setTimeout(() => {
           window.dispatchEvent(new CustomEvent('wyber-autofix', {
-            detail: { continuation: true, prompt: `Some edits could not be applied automatically. Output the COMPLETE updated <file> block (full file contents, not a diff) for each of these files: ${failedPaths.join(', ')}. AUTOMATED CONTINUATION: after the last </file> tag, write ZERO additional words.` }
+            detail: { continuation: true, editRetry: true, prompt: buildEditRetryPrompt(failedPaths, updatedFiles as Record<string, { content?: string } | string>, userMsg) }
           }));
         }, 400);
       }
@@ -2413,7 +2449,9 @@ const storeProjectId = useEditorStore.getState().project?.id;
       // (confirmed live: a turn claimed "Loaded all 50 restaurants" while nothing in the
       // app changed). The server mirrors this same check before deciding whether to
       // refund (see generate/route.ts), so this case is never silently charged either.
-      const hasRealChange = newFiles.length > 0 || editBlocks.length > 0;
+      // Edits that matched nothing are not a change either, but a retry is already on its way for them (step 4 above).
+      const editOutcome = classifyEditTurn({ editBlockCount: editBlocks.length, newFileCount: newFiles.length, changedPathCount: changedByEdits, failedPathCount: failedPaths.length });
+      const hasRealChange = editOutcome === 'applied' || editOutcome === 'unmatched';
       if (!hasRealChange) {
         // An internal pass the orchestrator is about to silently retry (see
         // the fill-batch loop's quietRetryEligible on its first attempt only)
@@ -2427,6 +2465,25 @@ const storeProjectId = useEditorStore.getState().project?.id;
           const emittedNothing = full.trim().length === 0;
           // When the model wrote a real explanation or question (it declined to invent reviews, say), show that, not a canned error.
           const explained = (fileCut || editCut || emittedNothing) ? null : explainableNoChange(full);
+          // The edit matched but left the page as it was: the thing is already there. Say so plainly.
+          if (editOutcome === 'already-there') {
+            updateMessage(assistantId, { content: ALREADY_THERE_MSG, status: 'done' });
+            persistMessage('assistant', ALREADY_THERE_MSG);
+            setLiveReasoning('');
+            return false;
+          }
+          // The reply changed nothing and explained nothing: retry ONCE with a firmer instruction before giving up, so a valid request
+          // is not lost to one empty answer (live, 23 Nov: about 1 in 7 edits). The retry may say "already on the page" or explain.
+          if (editOutcome === 'no-blocks' && !explained && !fileCut && !editCut && hasGeneratedFiles && !opts?.silent && !opts?.stage
+              && !opts?.continuation && !noChangeRetriedRef.current && ownsBubble) {
+            noChangeRetriedRef.current = true;
+            setMessages(prev => prev.filter(m => m.id !== assistantId));
+            setLiveReasoning('');
+            setTimeout(() => {
+              window.dispatchEvent(new CustomEvent('wyber-autofix', { detail: { continuation: true, editRetry: true, prompt: buildNoChangeRetryPrompt(userMsg) } }));
+            }, 300);
+            return false;
+          }
           const errMsg = (fileCut || editCut)
             ? t('streamCutOffMsg')
             : emittedNothing
@@ -2459,6 +2516,8 @@ const storeProjectId = useEditorStore.getState().project?.id;
       // chatText had already lost (live: they were persisted into history).
       const recapText = lastBlockEnd === -1 ? chatText : stripAgentEvents(full.slice(lastBlockEnd).replace(/^<\/(file|edit)>/, ''));
       let finalContent = cleanMessage(recapText, t('doneCheckPreviewMsg'));
+      // Nothing was placed on the page: do not let the model's "I added it" recap stand. The retry is already running.
+      if (editOutcome === 'unmatched') finalContent = EDIT_RETRY_MSG;
       if (opts?.continuation && finalContent === t('doneCheckPreviewMsg')) {
         finalContent = t('continuationDoneMsg');
         // A launch-ready fix pass says what it was asked to add, not a generic "done".
@@ -2641,6 +2700,8 @@ const storeProjectId = useEditorStore.getState().project?.id;
         }
       }
     } finally {
+      inflightGenRef.current = Math.max(0, inflightGenRef.current - 1);
+      lastActivityRef.current = Date.now();
       clearTimeout(genTimeout);
       wakeLock?.release().catch(() => {});
       if (abortControllerRef.current === genController) abortControllerRef.current = null;
@@ -2689,6 +2750,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
     const chainId = uid();
     addMessage({ id: chainId, role: 'assistant', content: '✦ Planning your build...', timestamp: Date.now(), status: 'streaming' });
     setIsGenerating(true);
+    lastActivityRef.current = Date.now();
     // One id for every request in this build's chain (scaffold + its fill
     // batches, or the one-shot fallback) — lets the server sum real usage
     // across the WHOLE build for the overage safety valve instead of just
@@ -2728,6 +2790,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
             isFirstBuild: true,
             maxPlannedFiles: opts?.maxFiles,
           }),
+          signal: AbortSignal.timeout(90_000),
         });
         if (!res.ok) return [];
         const header = res.headers.get('X-Build-Complexity');
