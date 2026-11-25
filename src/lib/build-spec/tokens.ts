@@ -1,7 +1,7 @@
 import { getDirectionById } from '../design-directions'
 import { directionFontsUrl } from '../direction-fonts'
 import type { LangId } from './types'
-import { recolorTokens, type Look } from './look'
+import { skinDirection, type Look } from './look'
 
 const TOKEN_ORDER = [
   'background', 'foreground', 'card', 'card-foreground', 'popover', 'popover-foreground', 'primary', 'primary-foreground',
@@ -42,7 +42,7 @@ export function renderTokensCss(directionId: string, langs: LangId[] = ['en'], e
   const d0 = getDirectionById(directionId)
   if (!d0) throw new Error('unknown direction ' + directionId)
   // the art director's skin: a hue for this business and a font pairing (colour contrast is re-checked in recolorTokens)
-  const d = look ? { ...d0, palette: { ...d0.palette, tokens: recolorTokens(d0.palette.tokens, look.hue) }, fonts: { ...d0.fonts, display: look.fonts.display, body: look.fonts.body, displayWeight: look.fonts.displayWeight, displayTracking: look.fonts.displayTracking } } : d0
+  const d = look ? skinDirection(d0, look) : d0
   const scriptFallback = langs.map(l => SCRIPT_FONTS[l]?.css).filter(Boolean).map(x => x + ', ').join('')
   const vars = TOKEN_ORDER.filter(k => d.palette.tokens[k]).map(k => '  --' + k + ': ' + d.palette.tokens[k] + ';').join('\n')
   return `@tailwind base;

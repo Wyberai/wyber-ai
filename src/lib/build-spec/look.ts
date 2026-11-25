@@ -191,6 +191,15 @@ export function lookFor(b: LookBrief, seed: string): Look {
   return { hue, family: b.palette, type: b.type, fonts: list[Math.floor(rnd() * list.length)], why: b.why }
 }
 
+/** The direction with the art director's skin applied: recoloured tokens and the chosen font pairing. Used for CSS and for the free-form design brief. */
+export function skinDirection(d: Direction, look: Look): Direction {
+  return {
+    ...d,
+    palette: { ...d.palette, tokens: recolorTokens(d.palette.tokens, look.hue) },
+    fonts: { ...d.fonts, display: look.fonts.display, body: look.fonts.body, displayWeight: look.fonts.displayWeight, displayTracking: look.fonts.displayTracking },
+  }
+}
+
 export interface ResolvedLook { directionId: string; look: Look; brief: LookBrief }
 
 /** Ask the art director, then resolve a direction and a skin. Null when the model gives no usable answer (the caller keeps its old behaviour). */

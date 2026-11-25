@@ -94,3 +94,25 @@ describe('the art director', () => {
     expect(bad).toBeNull()
   })
 })
+
+import { skinDirection, lookFor as lookForTest } from './look'
+import fs from 'node:fs'
+import path from 'node:path'
+describe('the free-form build uses the art director too', () => {
+  it('skinDirection recolours the tokens and swaps the fonts, keeping contrast', () => {
+    const d = DIRECTIONS.find(x => x.id === 'ty-poster')!
+    const look = lookForTest({ mode: 'light', groups: ['human'], palette: 'teal', type: 'geometric', mood: ['calm'], why: '' }, 'seed')
+    const s = skinDirection(d, look)
+    expect(s.fonts.display).toBe(look.fonts.display)
+    expect(parse(s.palette.tokens.background)[0]).toBe(look.hue)
+    expect(s.id).toBe(d.id)
+  })
+  it('the generate route asks the art director before the old keyword and classifier selection', () => {
+    const route = fs.readFileSync(path.join(__dirname, '..', '..', 'app', 'api', 'generate', 'route.ts'), 'utf8')
+    const art = route.indexOf('via art-director')
+    const old = route.indexOf('pickDirectionSmart(prompt')
+    expect(art).toBeGreaterThan(0)
+    expect(art).toBeLessThan(old)
+    expect(route).toContain('!directionApplied && (await import(\'@/lib/direction-flag\')).directionsEnabled()')
+  })
+})

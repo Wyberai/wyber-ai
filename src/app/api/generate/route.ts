@@ -5287,7 +5287,30 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
       // motion and hard rules, so the generic layout seed below (which hard-codes aurora/glow/spotlight heroes)
       // is skipped when one applies. An explicit paletteId that is a direction id (Plan Mode) wins.
       let directionApplied = false
-      if ((await import('@/lib/direction-flag')).directionsEnabled()) {
+      // The ART DIRECTOR (src/lib/build-spec/look.ts) also decides the look of the free-form build, so a build that falls out of the
+      // structured path never gets the old keyword look (live, 24 Nov: every dental site came out cream and wine). An explicit direction
+      // from Plan Mode still wins. One small Haiku call; any failure keeps the existing selection below.
+      if (!(typeof paletteId === 'string' && paletteId) && (projectType === 'website' || projectType === 'saas' || projectType === 'app' || projectType === 'webapp' || !projectType)) {
+        try {
+          const { resolveLook, skinDirection } = await import('@/lib/build-spec/look')
+          const { getDirectionById } = await import('@/lib/design-directions')
+          const { renderDirectionBrief } = await import('@/lib/direction-brief')
+          const surface = projectType === 'website' ? 'website' : projectType === 'saas' ? 'saas' : 'app'
+          const art = await resolveLook(prompt, String(projectId ?? buildId ?? prompt), surface, async (system, user) => {
+            const m = await client.messages.create({ model: CHEAP_MODEL, thinking: CHEAP_THINKING, max_tokens: 500, system, messages: [{ role: 'user', content: user }] })
+            return { text: m.content.map(b => (b.type === 'text' ? b.text : '')).join(''), inputTokens: m.usage.input_tokens ?? 0, outputTokens: m.usage.output_tokens ?? 0 }
+          }, () => {}, { named: true })
+          const base = art ? getDirectionById(art.directionId) : undefined
+          if (art && base) {
+            perRequestParts.push(renderDirectionBrief(skinDirection(base, art.look)))
+            directionApplied = true
+            console.log(`[design-direction] ${base.id} via art-director hue=${art.look.hue} family=${art.look.family} fonts=${art.look.fonts.display}/${art.look.fonts.body} projectType=${projectType ?? 'unknown'}`)
+          }
+        } catch (err) {
+          console.warn('[design-direction] art director failed, using the existing selection:', err)
+        }
+      }
+      if (!directionApplied && (await import('@/lib/direction-flag')).directionsEnabled()) {
         try {
           const { renderDirectionBrief } = await import('@/lib/direction-brief')
           const { pickDirectionSmart } = await import('@/lib/direction-classifier')
