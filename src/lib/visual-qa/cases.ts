@@ -59,7 +59,7 @@ export function withSections(spec: BuildSpec, sx: SectionStyles, photo: boolean)
     ...spec,
     sections,
     images,
-    layout: { ...spec.layout!, sx, steps: sx.steps, faq: sx.faq === 'split' ? 'split' : 'centered' },
+    layout: { ...spec.layout!, sx, steps: sx.steps === 'timeline' ? 'timeline' : 'columns', faq: sx.faq === 'split' ? 'split' : 'centered' },
     hero: sx.hero === 'editorial' ? 'editorial' : sx.hero === 'centered' || sx.hero === 'full' ? 'stacked' : 'split',
   }
 }
@@ -83,7 +83,7 @@ export function websiteCases(): QaCase[] {
     const len = lengths[i % lengths.length]
     const direction = dirs[i % dirs.length]
     // each slot steps through its options at its own pace, so compositions meet each other in many combinations
-    const at = <K extends keyof SectionStyles>(k: K, stride: number): SectionStyles[K] => SX_OPTIONS[k][Math.floor(i / stride) % SX_OPTIONS[k].length]
+    const at = <K extends keyof SectionStyles>(k: K, stride: number): SectionStyles[K] => SX_OPTIONS[k]![Math.floor(i / stride) % SX_OPTIONS[k]!.length]!
     const sx: SectionStyles = {
       header: at('header', 3), hero: at('hero', 1), features: at('features', 1), steps: at('steps', 1),
       about: at('about', 2), faq: at('faq', 3), cta: PRODUCT_CTA[b.key]?.cta ?? at('cta', 2), contact: at('contact', 3), footer: at('footer', 4),
@@ -109,11 +109,12 @@ export function websiteCases(): QaCase[] {
   })
 }
 
-const HERO = { split: 'HeroSplitPhoto', editorial: 'HeroEditorial', centered: 'HeroCentered', full: 'HeroFullBleed', minimal: 'HeroMinimal' } as const
-const FEATURE = { index: 'FeaturesIndex', cards: 'FeaturesCards', bento: 'FeaturesBento', grid: 'FeaturesGrid' } as const
+const HERO: Record<string, string> = { split: 'HeroSplitPhoto', editorial: 'HeroEditorial', centered: 'HeroCentered', full: 'HeroFullBleed', minimal: 'HeroMinimal' }
+const FEATURE: Record<string, string> = { index: 'FeaturesIndex', cards: 'FeaturesCards', bento: 'FeaturesBento', grid: 'FeaturesGrid' }
+const HEADER: Record<string, string> = { bar: 'HeaderBar', centered: 'HeaderCentered', index: 'HeaderIndex' }
 
 function sectionNames(sx: SectionStyles, spec: BuildSpec, media: boolean): string[] {
-  const names = [({ bar: 'HeaderBar', centered: 'HeaderCentered', index: 'HeaderIndex' } as const)[sx.header], HERO[sx.hero], sx.footer === 'giant' ? 'FooterGiant' : 'FooterSlim']
+  const names: string[] = [HEADER[sx.header], HERO[sx.hero], sx.footer === 'giant' ? 'FooterGiant' : 'FooterSlim']
   for (const s of spec.sections) {
     if (s.kind === 'services') names.push(FEATURE[sx.features])
     if (s.kind === 'rows') names.push('FeaturesIndex')
