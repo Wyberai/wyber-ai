@@ -268,19 +268,20 @@ function useHeader() {
   return { scrolled, open, setOpen }
 }
 
-function MenuButton({ open, setOpen }: { open: boolean; setOpen: (v: boolean) => void }) {
+// wide: the menu button stays up to the wider breakpoint, for a header whose full link row needs it
+function MenuButton({ open, setOpen, wide }: { open: boolean; setOpen: (v: boolean) => void; wide?: boolean }) {
   return (
-    <button type="button" aria-label="Menu" aria-expanded={open} onClick={() => setOpen(!open)} className={cn('flex h-11 w-11 items-center justify-center rounded-lg border border-border text-foreground lg:hidden', FOCUS)}>
+    <button type="button" aria-label="Menu" aria-expanded={open} onClick={() => setOpen(!open)} className={cn('flex h-11 w-11 items-center justify-center rounded-lg border border-border text-foreground', wide ? 'xl:hidden' : 'lg:hidden', FOCUS)}>
       {open ? <X className="h-5 w-5" aria-hidden="true" /> : <Menu className="h-5 w-5" aria-hidden="true" />}
     </button>
   )
 }
 
-function MobileMenu({ open, setOpen, links, cta }: { open: boolean; setOpen: (v: boolean) => void; links: SectionLink[]; cta?: React.ReactNode }) {
+function MobileMenu({ open, setOpen, links, cta, wide }: { open: boolean; setOpen: (v: boolean) => void; links: SectionLink[]; cta?: React.ReactNode; wide?: boolean }) {
   return (
     <AnimatePresence>
       {open && (
-        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2, ease: EASE }} className="border-b border-border bg-background lg:hidden">
+        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2, ease: EASE }} className={cn('border-b border-border bg-background', wide ? 'xl:hidden' : 'lg:hidden')}>
           <div className={cn(WRAP, 'flex flex-col pb-6 pt-2')}>
             {links.map((l, i) => (
               <a key={l.href} href={l.href} onClick={() => setOpen(false)} className={cn('flex items-baseline gap-4 border-b border-border py-4 font-display text-2xl text-foreground', FOCUS)}>
@@ -343,6 +344,8 @@ export function HeaderCentered({ brand, links = [], cta, over }: { brand: string
 
 export function HeaderIndex({ brand, links = [], cta, over }: { brand: string; links?: SectionLink[]; cta?: React.ReactNode; over?: boolean }) {
   const { scrolled, open, setOpen } = useHeader()
+  // numbered links, a long name and a button do not fit side by side on a small laptop: the row waits for a wider screen and drops its numbers
+  const wide = Boolean(longBrand(brand))
   return (
     <header className={cn(headerBase, headerSkin(over, scrolled, open), over && !scrolled && !open ? 'border-b border-transparent' : 'border-b border-border')}>
       <nav className={cn(WRAP, 'flex min-h-[72px] items-center justify-between gap-4 py-2 lg:gap-6')}>
@@ -350,16 +353,16 @@ export function HeaderIndex({ brand, links = [], cta, over }: { brand: string; l
           <span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-foreground font-display text-lg text-background">{brand.slice(0, 1)}</span>
           <span className={cn('font-display text-lg', longBrand(brand))}>{brand}</span>
         </a>
-        <div className="hidden items-center gap-5 lg:flex xl:gap-7">
+        <div className={cn('hidden items-center gap-5', wide ? 'xl:flex' : 'lg:flex xl:gap-7')}>
           {links.map((l, i) => (
             <a key={l.href} href={l.href} className={cn('flex items-baseline gap-2 whitespace-nowrap text-sm text-foreground transition-colors hover:text-primary', FOCUS)}>
-              <span className="font-mono text-xs text-muted-foreground">{pad(i + 1)}</span>{l.label}
+              {!wide && <span className="font-mono text-xs text-muted-foreground">{pad(i + 1)}</span>}{l.label}
             </a>
           ))}
         </div>
-        <div className="flex items-center gap-3"><div className="hidden whitespace-nowrap lg:block">{cta}</div><MenuButton open={open} setOpen={setOpen} /></div>
+        <div className="flex items-center gap-3"><div className={cn('hidden whitespace-nowrap', wide ? 'xl:block' : 'lg:block')}>{cta}</div><MenuButton open={open} setOpen={setOpen} wide={wide} /></div>
       </nav>
-      <MobileMenu open={open} setOpen={setOpen} links={links} cta={cta} />
+      <MobileMenu open={open} setOpen={setOpen} links={links} cta={cta} wide={wide} />
     </header>
   )
 }

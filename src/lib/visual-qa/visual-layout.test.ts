@@ -41,6 +41,8 @@ describe('visual QA matrix', () => {
     const coverage = coverageReport(cases)
     expect(cases.filter(c => c.id.startsWith('web-')).length).toBeGreaterThanOrEqual(40)
     expect(WANTED.filter(n => !coverage.sections.includes(n))).toEqual([])
+    // long business names are where headers break, so every header must meet one
+    for (const header of ['HeaderBar', 'HeaderCentered', 'HeaderIndex']) expect(cases.some(c => c.id.endsWith('-long') && c.sections.includes(header)), header + ' with long copy').toBe(true)
     expect(coverage.missingDirections).toEqual([])
     expect(coverage.missingPairings).toEqual([])
     expect(coverage.missingFamilies).toEqual([])
@@ -107,6 +109,14 @@ describe.skipIf(skip)('visual QA in Chrome', () => {
     expect(result.errors).toEqual([])
     expect(report(result.findings)).toEqual([])
   }, 400000)
+
+  // the full link row appears at 1024px, where a long name, the links and the button have the least room
+  it('keeps every header uncrushed on a small laptop with a long business name', async () => {
+    const cases = ['HeaderBar', 'HeaderCentered', 'HeaderIndex'].map(h => websiteCases().find(c => c.id.endsWith('-long') && c.sections.includes(h))!)
+    const result = await runSuite(browser, cases, { widths: [1024], concurrency: defaultConcurrency(), step: 1 })
+    expect(result.errors).toEqual([])
+    expect(report(result.findings)).toEqual([])
+  }, 200000)
 
   it('finds no layout fault in a SaaS product and a web app', async () => {
     const result = await runSuite(browser, [saasCases()[0], appCases()[0]], { widths: [390, 1440], states: true, concurrency: defaultConcurrency(), step: 0.6 })

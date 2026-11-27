@@ -384,7 +384,8 @@
         const around = [...p.childNodes].some(n => n.nodeType === 3 && n.nodeValue.trim().length > 1)
         if (around) continue
       }
-      if (r.width >= 39.5 && r.height >= 39.5) continue
+      // the layout size ignores a transform, so a button still springing into place is not judged half grown
+      if (Math.max(r.width, el.offsetWidth || 0) >= 39.5 && Math.max(r.height, el.offsetHeight || 0) >= 39.5) continue
       out.push(finding('tap-target', el, Math.round(r.width) + 'x' + Math.round(r.height) + 'px'))
     }
     return out

@@ -85,7 +85,7 @@ export function websiteCases(): QaCase[] {
     // each slot steps through its options at its own pace, so compositions meet each other in many combinations
     const at = <K extends keyof SectionStyles>(k: K, stride: number): SectionStyles[K] => SX_OPTIONS[k][Math.floor(i / stride) % SX_OPTIONS[k].length]
     const sx: SectionStyles = {
-      header: at('header', 1), hero: at('hero', 1), features: at('features', 1), steps: at('steps', 1),
+      header: at('header', 3), hero: at('hero', 1), features: at('features', 1), steps: at('steps', 1),
       about: at('about', 2), faq: at('faq', 3), cta: PRODUCT_CTA[b.key]?.cta ?? at('cta', 2), contact: at('contact', 3), footer: at('footer', 4),
     }
     const photo = PRODUCT_CTA[b.key]?.photo ?? i % 5 !== 3
