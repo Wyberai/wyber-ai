@@ -202,7 +202,7 @@ export default function EntityPage(props: { entity: Entity; api: Api }) {
                 <Card className="p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <button type="button" onClick={() => setOpenId(r.id)} aria-label={'Open ' + titleOf(entity, r)} className="block max-w-full truncate text-left font-medium text-foreground underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring">{titleOf(entity, r)}</button>
+                      <button type="button" onClick={() => setOpenId(r.id)} aria-label={'Open ' + titleOf(entity, r)} className="block min-h-10 min-w-10 max-w-full truncate text-left font-medium text-foreground underline-offset-4 md:min-h-0 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring">{titleOf(entity, r)}</button>
                       <div className="mt-1 flex flex-wrap gap-2">
                         {r.demo ? <Badge variant="outline">Demo</Badge> : null}
                         {isOverdue(entity, r) ? <Badge variant="destructive">Overdue</Badge> : null}
@@ -211,7 +211,7 @@ export default function EntityPage(props: { entity: Entity; api: Api }) {
                     </div>
                     {actions(r)}
                   </div>
-                  <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                  <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm [&>*:last-child:nth-child(odd)]:col-span-2">
                     {shown.filter(f => f.id !== entity.title && (!statusField || f.id !== statusField.id)).map(f => (
                       <div key={f.id}><dt className="text-xs text-muted-foreground">{f.label}</dt><dd className="text-foreground">{formatValue(store, entity, f, r) || '-'}</dd></div>
                     ))}
@@ -291,7 +291,7 @@ export default function EntityPage(props: { entity: Entity; api: Api }) {
             })}
             <div className="flex flex-wrap gap-2">
               <Button size="sm" onClick={() => { setEditing(opened); setOpenId(null) }}><Pencil size={14} aria-hidden="true" />Edit</Button>
-              {reminderEligible(entity, opened) && reminderLink(store, entity, opened) ? <a href={reminderLink(store, entity, opened)} target="_blank" rel="noreferrer" className="inline-flex h-9 items-center gap-2 rounded-lg border border-border px-3 text-sm text-foreground hover:bg-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring"><MessageCircle size={14} aria-hidden="true" />WhatsApp reminder</a> : null}
+              {reminderEligible(entity, opened) && reminderLink(store, entity, opened) ? <a href={reminderLink(store, entity, opened)} target="_blank" rel="noreferrer" className="inline-flex h-10 items-center gap-2 rounded-lg border border-border px-3 text-sm text-foreground hover:bg-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring"><MessageCircle size={14} aria-hidden="true" />WhatsApp reminder</a> : null}
             </div>
           </div>
         ) : null}
@@ -381,7 +381,7 @@ export default function HomePage({ api }: { api: Api }) {
             </div>
             <div className="flex items-center gap-2">
               {reminderEligible(d.entity, d.row) && reminderLink(store, d.entity, d.row) ? (
-                <a href={reminderLink(store, d.entity, d.row)} target="_blank" rel="noreferrer" className="inline-flex h-9 items-center gap-2 rounded-lg border border-border px-3 text-sm text-foreground hover:bg-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring"><MessageCircle size={14} aria-hidden="true" />Remind</a>
+                <a href={reminderLink(store, d.entity, d.row)} target="_blank" rel="noreferrer" className="inline-flex h-10 items-center gap-2 rounded-lg border border-border px-3 text-sm text-foreground hover:bg-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring"><MessageCircle size={14} aria-hidden="true" />Remind</a>
               ) : null}
               <Button variant="outline" size="sm" onClick={() => api.go(d.entity.id)}>Open<ArrowRight size={14} aria-hidden="true" /></Button>
             </div>

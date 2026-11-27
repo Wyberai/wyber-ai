@@ -96,3 +96,6 @@ scripts/template-gen/_pilot-output*/
 # underscore-prefixed throwaway scripts under template-gen
 /scripts/template-gen/_*.mjs
 /marketing/gujarat-tech-expo/out/
+
+# visual QA output
+verify-out-visual/

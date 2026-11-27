@@ -285,9 +285,9 @@ const BUTTON_VARIANTS: Record<string, string> = {
   destructive: 'bg-destructive text-destructive-foreground hover:brightness-110',
 }
 const BUTTON_SIZES: Record<string, string> = {
-  sm: 'h-8 px-3 text-xs rounded-md',
-  md: 'h-10 px-4 text-sm rounded-lg',
-  lg: 'h-12 px-6 text-base rounded-lg',
+  sm: 'min-h-10 px-3 py-1 text-xs rounded-md md:min-h-8',
+  md: 'min-h-10 px-4 py-1.5 text-sm rounded-lg',
+  lg: 'min-h-12 px-6 py-2 text-base rounded-lg',
 }
 
 export function Button({ variant = 'primary', size = 'md', className, children, ...rest }: {
@@ -407,7 +407,7 @@ export function Tabs({ tabs, active, onChange, className }: {
         <button
           key={t.id}
           onClick={() => onChange(t.id)}
-          className={cn('relative rounded-md px-3.5 py-1.5 text-sm font-medium transition-colors', active === t.id ? 'text-foreground' : 'text-muted-foreground hover:text-foreground')}
+          className={cn('relative min-h-10 rounded-md px-3.5 py-1.5 text-sm font-medium transition-colors md:min-h-0', active === t.id ? 'text-foreground' : 'text-muted-foreground hover:text-foreground')}
         >
           {active === t.id && (
             <motion.span layoutId={idRef.current} transition={springFast} className="absolute inset-0 rounded-md bg-background shadow-sm" />
@@ -448,7 +448,7 @@ export function Dialog({ open, onClose, title, children, className }: {
           >
             <div className="mb-4 flex items-start justify-between gap-4">
               {title && <h3 className="font-display text-lg font-semibold tracking-tight">{title}</h3>}
-              <button onClick={onClose} aria-label="Close" className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+              <button onClick={onClose} aria-label="Close" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-muted-foreground md:h-7 md:w-7 transition-colors hover:bg-accent hover:text-foreground">
                 <X size={18} />
               </button>
             </div>
@@ -868,7 +868,7 @@ export function MonoLabel({ children, accent = false, className }: {
 }) {
   return (
     <span className={cn(
-      'font-mono text-[10px] font-medium uppercase tracking-[0.2em]',
+      'font-mono text-xs font-medium uppercase tracking-[0.16em]',
       accent ? 'text-primary' : 'text-muted-foreground',
       className,
     )}>
@@ -1380,11 +1380,11 @@ export function BrowserFrame({ url = 'yourapp.com', children, className, content
     <div className={cn('overflow-hidden rounded-2xl border border-border bg-card shadow-2xl shadow-foreground/10', className)}>
       <div className="flex items-center gap-3 border-b border-border bg-muted/40 px-4 py-3">
         <hero_TrafficLights />
-        <div className="mx-auto flex w-full max-w-[min(60%,320px)] items-center justify-center gap-1.5 rounded-md border border-border/60 bg-background/60 px-3 py-1 font-mono text-[11px] text-muted-foreground">
-          <Lock className="h-3 w-3" />
-          <span className="truncate">{url}</span>
+        <div className="mx-auto flex w-full min-w-0 max-w-[320px] items-center justify-center gap-1.5 rounded-md border border-border/60 bg-background/60 px-2 py-1 font-mono text-xs text-muted-foreground sm:max-w-[min(60%,320px)] sm:px-3">
+          <Lock className="h-3 w-3 shrink-0" />
+          <span className="min-w-0 text-center leading-snug">{url}</span>
         </div>
-        <div className="w-[38px] shrink-0" aria-hidden="true" />
+        <div className="hidden w-[38px] shrink-0 sm:block" aria-hidden="true" />
       </div>
       <div className={cn('bg-background', contentClassName)}>{children}</div>
     </div>
@@ -2220,7 +2220,7 @@ export function BottomTabBar({ items, active, onChange, className }: {
                 item.onClick?.()
               }}
               className={cn(
-                'relative flex flex-1 flex-col items-center gap-1 px-2 py-2.5 text-[11px] transition-colors',
+                'relative flex flex-1 flex-col items-center gap-1 px-1 py-2.5 text-xs transition-colors',
                 isActive ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
               )}
             >
@@ -4850,7 +4850,7 @@ export function Drawer({ open, onClose, title, children, side = 'right', classNa
               {title && <div className="text-lg font-semibold text-foreground">{title}</div>}
               <button
                 onClick={onClose}
-                className="ml-auto rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                className="ml-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:h-7 md:w-7"
                 aria-label="Close"
               >
                 <X className="h-4 w-4" />
@@ -5505,6 +5505,7 @@ export function StickyCTABar({ message, ctaLabel = 'Get started', onCta, thresho
 }) {
   const [visible, setVisible] = useState(false);
   const reduceMotion = useReducedMotion();
+  const barRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleScroll = () => setVisible(window.scrollY > threshold);
@@ -5513,10 +5514,19 @@ export function StickyCTABar({ message, ctaLabel = 'Get started', onCta, thresho
     return () => window.removeEventListener('scroll', handleScroll);
   }, [threshold]);
 
+  // while the bar shows, the page ends that much later, so its last lines can be scrolled clear of the bar
+  useEffect(() => {
+    if (!visible) return;
+    const before = document.body.style.paddingBottom;
+    document.body.style.paddingBottom = (barRef.current?.offsetHeight || 80) + 'px';
+    return () => { document.body.style.paddingBottom = before; };
+  }, [visible]);
+
   return (
     <AnimatePresence>
       {visible && (
         <motion.div
+          ref={barRef}
           initial={{ y: reduceMotion ? 0 : 80, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: reduceMotion ? 0 : 80, opacity: 0 }}

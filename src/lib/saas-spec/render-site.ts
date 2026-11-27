@@ -66,7 +66,7 @@ export function renderSite(spec: SaasSpec, copy: SiteCopy, app: AppModel): strin
                   <Badge variant="outline">Sample data</Badge>
                 </div>
                 ${pv.stats.length ? `<div className="mt-4 grid grid-cols-3 gap-2 sm:gap-3">
-                  ${pv.stats.map(s => `<div className="rounded-lg border border-border bg-card p-2.5 sm:p-3"><p className="font-display text-lg font-semibold leading-tight text-foreground sm:text-xl">${s.value.replace('{CUR}', '{CURRENCY}')}</p><p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">${JSON.stringify(s.label).slice(1, -1)}</p></div>`).join('\n                  ')}
+                  ${pv.stats.map(s => `<div className="rounded-lg border border-border bg-card p-2.5 sm:p-3"><p className="font-display text-base font-semibold leading-tight text-foreground [overflow-wrap:anywhere] lg:text-xl">${s.value.replace('{CUR}', '{CURRENCY}')}</p><p className="mt-0.5 text-xs leading-snug text-muted-foreground">${JSON.stringify(s.label).slice(1, -1)}</p></div>`).join('\n                  ')}
                 </div>` : ''}
                 <div className="mt-4 overflow-hidden rounded-lg border border-border">
                   <table className="w-full text-left text-xs sm:text-sm">
@@ -81,7 +81,7 @@ export function renderSite(spec: SaasSpec, copy: SiteCopy, app: AppModel): strin
 
   const buttons = `<div className="mt-8 flex flex-wrap items-center gap-4">
               <Button size="lg" onClick={() => openApp()}>{COPY.hero.cta}</Button>
-              <a href="#features" className="text-sm font-medium underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring">{COPY.hero.secondary}</a>
+              <a href="#features" className="py-2.5 text-sm font-medium underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring">{COPY.hero.secondary}</a>
             </div>
             <p className="mt-4 text-xs text-muted-foreground">Demo mode: nothing is charged, sent or stored on a server.</p>`
   const headline = mo.highlight ? (U('HighlightMarker'), '{hl(COPY.hero.headline, COPY.hero.accent)}') : '{COPY.hero.headline}'

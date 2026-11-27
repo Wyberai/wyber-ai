@@ -414,9 +414,9 @@ export function renderApp(spec: BuildSpec, copy: SiteCopy, translations: Transla
 
   const langToggleCode = langs.length > 1
     ? `  const langToggle = LANGS.length > 1 ? (
-    <div role="group" aria-label={T.language} className="flex overflow-hidden rounded-md border border-border text-sm">
+    <div role="group" aria-label={T.language} className="flex shrink-0 overflow-hidden whitespace-nowrap rounded-md border border-border text-sm">
       {LANGS.map(l => (
-        <button key={l} type="button" aria-pressed={l === lang} onClick={() => ${sx ? 'withViewTransition(() => setLang(l))' : 'setLang(l)'}} className={'px-3 py-1.5 font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring ' + (l === lang ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground')}>{UI[l].label}</button>
+        <button key={l} type="button" aria-pressed={l === lang} onClick={() => ${sx ? 'withViewTransition(() => setLang(l))' : 'setLang(l)'}} className={'min-h-10 min-w-10 px-3 py-1.5 font-medium transition-colors md:min-h-0 md:min-w-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring ' + (l === lang ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground')}>{UI[l].label}</button>
       ))}
     </div>
   ) : null

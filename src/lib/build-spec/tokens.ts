@@ -1,4 +1,5 @@
-import { getDirectionById } from '../design-directions'
+import { getDirectionById, hslToHex } from '../design-directions'
+import { contrastRatio, luminance } from '../color-contrast'
 import { directionFontsUrl } from '../direction-fonts'
 import type { LangId } from './types'
 import { skinDirection, type Look } from './look'
@@ -17,6 +18,38 @@ const SCRIPT_FONTS: Partial<Record<LangId, { css: string; family: string }>> = {
   kn: { css: "'Noto Sans Kannada'", family: 'Noto+Sans+Kannada:wght@400;500;600' },
   bn: { css: "'Noto Sans Bengali'", family: 'Noto+Sans+Bengali:wght@400;500;600' },
   gu: { css: "'Noto Sans Gujarati'", family: 'Noto+Sans+Gujarati:wght@400;500;600' },
+}
+
+type HSL = [number, number, number]
+const parseHsl = (v: string | undefined): HSL | null => {
+  const m = /^(-?[\d.]+)\s+([\d.]+)%\s+([\d.]+)%/.exec(v ?? '')
+  return m ? [Number(m[1]), Number(m[2]), Number(m[3])] : null
+}
+
+/**
+ * The readable version of a brand colour used as TEXT on the page and card grounds. Null when the colour already reads (4.5:1),
+ * so palettes that were fine are untouched. Fills (bg-primary and the label on them) are never changed.
+ */
+export function textSafe(tokens: Record<string, string>, key: 'primary' | 'destructive'): string | null {
+  const colour = parseHsl(tokens[key])
+  const grounds = [parseHsl(tokens.background), parseHsl(tokens.card)].filter(Boolean) as HSL[]
+  if (!colour || !grounds.length) return null
+  // badges put a 10% tint of the colour behind its own label, so that tinted ground counts too
+  const tint = (g: string) => '#' + [1, 3, 5].map(i => Math.round(parseInt(g.slice(i, i + 2), 16) * 0.9 + parseInt(hslToHex(colour).slice(i, i + 2), 16) * 0.1).toString(16).padStart(2, '0')).join('')
+  const behind = grounds.map(g => hslToHex(g)).flatMap(g => [g, tint(g)])
+  const worst = (c: HSL) => Math.min(...behind.map(g => contrastRatio(hslToHex(c), g)))
+  if (worst(colour) >= 4.5) return null
+  const darken = luminance(hslToHex(grounds[0])) > 0.18
+  let c = colour
+  for (let i = 0; i < 100 && worst(c) < 4.6; i++) c = [c[0], c[1], Math.max(0, Math.min(100, c[2] + (darken ? -1 : 1)))]
+  return c[0] + ' ' + c[1] + '% ' + c[2] + '%'
+}
+
+function textInkCss(tokens: Record<string, string>): string {
+  return (['primary', 'destructive'] as const).map(key => {
+    const ink = textSafe(tokens, key)
+    return ink ? '.text-' + key + ' { color: hsl(' + ink + '); }\n' : ''
+  }).join('')
 }
 
 /** index.css for any generated product: the direction's tokens, fonts and base styles. `extra` is appended before the reduced-motion block. */
@@ -69,7 +102,7 @@ body {
 }
 .font-display { font-family: var(--font-display); font-weight: ${d.fonts.displayWeight}; letter-spacing: ${d.fonts.displayTracking}; }
 .font-mono { font-family: var(--font-mono); }
-${MOTION_CSS}
+${textInkCss(d.palette.tokens)}${MOTION_CSS}
 ${extra}
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }

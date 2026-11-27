@@ -35,6 +35,36 @@ type Tone = 'plain' | 'card' | 'rule'
 
 /* ------------------------------- primitives ------------------------------- */
 
+// A very wide display face and one long word can be wider than a phone. The heading then steps down in size until its longest
+// word fits: words are never split, and headings that already fit are left exactly as designed.
+function useFitWords<T extends HTMLElement>(min = 24) {
+  const ref = useRef<T>(null)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const fit = () => {
+      el.style.fontSize = ''
+      // size containment stops the long word from stretching the column, so the overflow can be measured
+      el.style.contain = 'inline-size'
+      if (el.clientWidth >= 80) {
+        let size = parseFloat(getComputedStyle(el).fontSize)
+        for (let i = 0; i < 40 && size > min && el.scrollWidth > el.clientWidth + 1; i++) {
+          size = Math.max(min, size * 0.95)
+          el.style.fontSize = size + 'px'
+        }
+      }
+      el.style.contain = ''
+    }
+    fit()
+    const fonts = (document as Document & { fonts?: FontFaceSet }).fonts
+    fonts?.ready.then(fit)
+    fonts?.addEventListener?.('loadingdone', fit)
+    window.addEventListener('resize', fit)
+    return () => { fonts?.removeEventListener?.('loadingdone', fit); window.removeEventListener('resize', fit) }
+  })
+  return ref
+}
+
 const CALM_QUERY = '(prefers-reduced-motion: reduce)'
 // Scroll-driven reveals run on the compositor with no JavaScript; the CSS for them lives in index.css (data-sv). Browsers without them keep the framer-motion reveal.
 const SCROLL_REVEAL = typeof CSS !== 'undefined' && typeof CSS.supports === 'function' && CSS.supports('animation-timeline: view()')
@@ -142,10 +172,13 @@ function Eyebrow({ children, className }: { children?: React.ReactNode; classNam
   )
 }
 
-function Accented({ text, accent }: { text: string; accent?: string }) {
+function Accented({ text, accent, onDark }: { text: string; accent?: string; onDark?: boolean }) {
   const i = accent ? text.indexOf(accent) : -1
   if (!accent || i < 0) return <>{text}</>
-  return <>{text.slice(0, i)}<em className="not-italic text-primary">{accent}</em>{text.slice(i + accent.length)}</>
+  const mark = onDark
+    ? <em className="not-italic underline decoration-primary decoration-[0.08em] underline-offset-[0.14em]">{accent}</em>
+    : <em className="not-italic text-primary">{accent}</em>
+  return <>{text.slice(0, i)}{mark}{text.slice(i + accent.length)}</>
 }
 
 function Shell({ tone = 'plain', className, children }: { tone?: Tone; className?: string; children?: React.ReactNode }) {
@@ -157,10 +190,11 @@ function Shell({ tone = 'plain', className, children }: { tone?: Tone; className
 }
 
 function Head({ eyebrow, title, description, reveal, className, center }: { eyebrow?: string; title: string; description?: string; reveal?: boolean; className?: string; center?: boolean }) {
+  const fitRef = useFitWords<HTMLHeadingElement>()
   return (
     <Rv on={reveal} className={cn(center && 'mx-auto text-center', className)}>
       <Eyebrow className={cn(center && 'justify-center')}>{eyebrow}</Eyebrow>
-      <h2 className={cn(DISPLAY, eyebrow && 'mt-5')}>{title}</h2>
+      <h2 ref={fitRef} className={cn(DISPLAY, eyebrow && 'mt-5')}>{title}</h2>
       {description && <p className={cn('mt-6 max-w-xl text-base leading-relaxed text-muted-foreground md:text-lg', center && 'mx-auto')}>{description}</p>}
     </Rv>
   )
@@ -172,9 +206,9 @@ function Cta({ label, onClick, mode = 'solid' }: { label: string; onClick?: () =
   const body = mode === 'solid' ? 'border-primary bg-primary text-primary-foreground hover:bg-primary/90' : mode === 'light' ? 'border-white bg-white text-black hover:bg-white/90' : 'border-background bg-background text-foreground hover:bg-background/90'
   const chip = mode === 'solid' ? 'bg-primary-foreground/15' : 'bg-foreground/10'
   return (
-    <button type="button" onClick={onClick} className={cn('inline-flex h-14 items-center gap-5 rounded-xl border pl-6 pr-2 text-base font-medium transition-colors', FOCUS, body)}>
+    <button type="button" onClick={onClick} className={cn('inline-flex min-h-14 items-center gap-5 rounded-xl border py-2 pl-6 pr-2 text-left text-base font-medium transition-colors', FOCUS, body)}>
       {label}
-      <span className={cn('flex h-10 w-10 items-center justify-center rounded-lg', chip)}><ArrowUpRight className="h-5 w-5" aria-hidden="true" /></span>
+      <span className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-lg', chip)}><ArrowUpRight className="h-5 w-5" aria-hidden="true" /></span>
     </button>
   )
 }
@@ -182,11 +216,11 @@ function Cta({ label, onClick, mode = 'solid' }: { label: string; onClick?: () =
 function Actions({ cta, onCta, secondaryLabel, secondaryHref, dark, invert, className }: ActionProps) {
   const mode = dark ? 'light' : invert ? 'invert' : 'solid'
   return (
-    <div className={cn('flex flex-wrap items-center gap-x-6 gap-y-4', className)}>
+    <div className={cn('flex flex-wrap content-end items-center gap-x-6 gap-y-4', className)}>
       {cta && onCta && <Cta label={cta} onClick={onCta} mode={mode} />}
       {secondaryLabel && secondaryHref && (
         cta && onCta
-          ? <a href={secondaryHref} className={cn('text-base font-medium underline underline-offset-[6px] transition-colors', FOCUS, dark ? 'text-white hover:text-white/80' : invert ? 'text-background hover:text-background/80' : 'text-foreground hover:text-primary')}>{secondaryLabel}</a>
+          ? <a href={secondaryHref} className={cn('py-2 text-base font-medium underline underline-offset-[6px] transition-colors', FOCUS, dark ? 'text-white hover:text-white/80' : invert ? 'text-background hover:text-background/80' : 'text-foreground hover:text-primary')}>{secondaryLabel}</a>
           : <a href={secondaryHref} className={cn('inline-flex h-14 items-center rounded-xl border px-6 text-base font-medium transition-colors', FOCUS, dark ? 'border-white/50 text-white hover:bg-white/10' : invert ? 'border-background/50 text-background hover:bg-background/10' : 'border-border text-foreground hover:bg-accent')}>{secondaryLabel}</a>
       )}
     </div>
@@ -201,19 +235,22 @@ function Frame({ media, ratio, className, style, lean }: { media?: React.ReactNo
   )
 }
 
-function FactRow({ facts, className, dark }: { facts?: SectionFact[]; className?: string; dark?: boolean }) {
+function FactRow({ facts, className, dark, invert }: { facts?: SectionFact[]; className?: string; dark?: boolean; invert?: boolean }) {
   if (!facts || facts.length === 0) return null
   return (
-    <dl className={cn('grid gap-x-8 gap-y-5 border-t pt-6', dark ? 'border-white/30' : 'border-border', className)} style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(10rem, 1fr))' }}>
+    // wrapping flex, not an auto-fit grid: a last fact on its own line fills it instead of leaving a hole (2 + 1)
+    <dl className={cn('flex flex-wrap gap-x-8 gap-y-5 border-t pt-6', dark ? 'border-white/30' : invert ? 'border-background/30' : 'border-border', className)}>
       {facts.map((f, i) => (
-        <div key={i}>
-          <dt className={cn('font-mono text-xs', dark ? 'text-white/70' : 'text-muted-foreground')}>{f.label}</dt>
-          <dd className={cn('mt-1.5 text-base', dark ? 'text-white' : 'text-foreground')}>{f.value}</dd>
+        <div key={i} className="min-w-0 flex-[1_1_10rem] [overflow-wrap:anywhere]">
+          <dt className={cn('font-mono text-xs', dark ? 'text-white/70' : invert ? 'text-background/90' : 'text-muted-foreground')}>{f.label}</dt>
+          <dd className={cn('mt-1.5 text-base', TAP_LINK, dark ? 'text-white' : invert ? 'text-background' : 'text-foreground')}>{f.value}</dd>
         </div>
       ))}
     </dl>
   )
 }
+
+const TAP_LINK = '[&_a]:-my-3 [&_a]:inline-block [&_a]:py-3'
 
 const pad = (n: number) => (n < 10 ? '0' : '') + n
 
@@ -233,7 +270,7 @@ function useHeader() {
 
 function MenuButton({ open, setOpen }: { open: boolean; setOpen: (v: boolean) => void }) {
   return (
-    <button type="button" aria-label="Menu" aria-expanded={open} onClick={() => setOpen(!open)} className={cn('flex h-11 w-11 items-center justify-center rounded-lg border border-border text-foreground md:hidden', FOCUS)}>
+    <button type="button" aria-label="Menu" aria-expanded={open} onClick={() => setOpen(!open)} className={cn('flex h-11 w-11 items-center justify-center rounded-lg border border-border text-foreground lg:hidden', FOCUS)}>
       {open ? <X className="h-5 w-5" aria-hidden="true" /> : <Menu className="h-5 w-5" aria-hidden="true" />}
     </button>
   )
@@ -243,7 +280,7 @@ function MobileMenu({ open, setOpen, links, cta }: { open: boolean; setOpen: (v:
   return (
     <AnimatePresence>
       {open && (
-        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2, ease: EASE }} className="border-b border-border bg-background md:hidden">
+        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2, ease: EASE }} className="border-b border-border bg-background lg:hidden">
           <div className={cn(WRAP, 'flex flex-col pb-6 pt-2')}>
             {links.map((l, i) => (
               <a key={l.href} href={l.href} onClick={() => setOpen(false)} className={cn('flex items-baseline gap-4 border-b border-border py-4 font-display text-2xl text-foreground', FOCUS)}>
@@ -259,6 +296,8 @@ function MobileMenu({ open, setOpen, links, cta }: { open: boolean; setOpen: (v:
 }
 
 const headerBase = 'fixed inset-x-0 top-0 z-40 transition-colors'
+// a long business name steps down in size below laptop width so it stays within two lines
+const longBrand = (brand: string) => (brand.length > 28 ? 'text-sm leading-snug sm:text-base lg:text-lg' : undefined)
 // Over a photograph hero the bar starts transparent with white type, and turns solid once the page scrolls or the menu opens.
 function headerSkin(over: boolean | undefined, scrolled: boolean, open: boolean): string {
   if (!over || scrolled || open) return 'bg-background'
@@ -269,12 +308,12 @@ export function HeaderBar({ brand, links = [], cta, over }: { brand: string; lin
   const { scrolled, open, setOpen } = useHeader()
   return (
     <header className={cn(headerBase, headerSkin(over, scrolled, open), scrolled || open ? 'border-b border-border' : 'border-b border-transparent')}>
-      <nav className={cn(WRAP, 'flex h-[72px] items-center justify-between gap-6')}>
-        <a href="#main" className={cn('font-display text-xl text-foreground', FOCUS)}>{brand}</a>
-        <div className="hidden items-center gap-8 md:flex">
-          {links.map(l => <a key={l.href} href={l.href} className={cn('text-sm text-muted-foreground transition-colors hover:text-foreground', FOCUS)}>{l.label}</a>)}
+      <nav className={cn(WRAP, 'flex min-h-[72px] items-center justify-between gap-4 py-2 lg:gap-6')}>
+        <a href="#main" className={cn('inline-flex min-h-10 min-w-0 items-center font-display text-xl text-foreground', longBrand(brand), FOCUS)}>{brand}</a>
+        <div className="hidden items-center gap-5 lg:flex xl:gap-8">
+          {links.map(l => <a key={l.href} href={l.href} className={cn('whitespace-nowrap text-sm text-muted-foreground transition-colors hover:text-foreground', FOCUS)}>{l.label}</a>)}
         </div>
-        <div className="flex items-center gap-3"><div className="hidden md:block">{cta}</div><MenuButton open={open} setOpen={setOpen} /></div>
+        <div className="flex items-center gap-3"><div className="hidden whitespace-nowrap lg:block">{cta}</div><MenuButton open={open} setOpen={setOpen} /></div>
       </nav>
       <MobileMenu open={open} setOpen={setOpen} links={links} cta={cta} />
     </header>
@@ -285,15 +324,15 @@ export function HeaderCentered({ brand, links = [], cta, over }: { brand: string
   const { scrolled, open, setOpen } = useHeader()
   const half = Math.ceil(links.length / 2)
   const left = links.slice(0, half), right = links.slice(half)
-  const item = (l: SectionLink) => <a key={l.href} href={l.href} className={cn('text-sm text-muted-foreground transition-colors hover:text-foreground', FOCUS)}>{l.label}</a>
+  const item = (l: SectionLink) => <a key={l.href} href={l.href} className={cn('whitespace-nowrap text-sm text-muted-foreground transition-colors hover:text-foreground', FOCUS)}>{l.label}</a>
   return (
     <header className={cn(headerBase, headerSkin(over, scrolled, open), scrolled || open ? 'border-b border-border' : 'border-b border-transparent')}>
-      <nav className={cn(WRAP, 'grid h-[76px] grid-cols-[1fr_auto_1fr] items-center gap-6')}>
-        <div className="hidden items-center gap-8 md:flex">{left.map(item)}</div>
-        <a href="#main" className={cn('col-start-1 font-display text-2xl text-foreground md:col-start-2 md:text-center', FOCUS)}>{brand}</a>
-        <div className="col-start-3 flex items-center justify-end gap-6">
-          <div className="hidden items-center gap-8 md:flex">{right.map(item)}</div>
-          <div className="hidden md:block">{cta}</div>
+      <nav className={cn(WRAP, 'grid min-h-[76px] grid-cols-[minmax(0,1fr)_auto] items-center gap-4 py-2 lg:grid-cols-[1fr_auto_1fr] lg:gap-6')}>
+        <div className="hidden items-center gap-5 lg:flex xl:gap-8">{left.map(item)}</div>
+        <a href="#main" className={cn('col-start-1 inline-flex min-h-10 items-center font-display text-lg leading-tight text-foreground sm:text-2xl lg:col-start-2 lg:justify-center lg:text-center', longBrand(brand), FOCUS)}>{brand}</a>
+        <div className="col-start-2 flex items-center justify-end gap-6 lg:col-start-3">
+          <div className="hidden items-center gap-5 lg:flex xl:gap-8">{right.map(item)}</div>
+          <div className="hidden whitespace-nowrap lg:block">{cta}</div>
           <MenuButton open={open} setOpen={setOpen} />
         </div>
       </nav>
@@ -306,19 +345,19 @@ export function HeaderIndex({ brand, links = [], cta, over }: { brand: string; l
   const { scrolled, open, setOpen } = useHeader()
   return (
     <header className={cn(headerBase, headerSkin(over, scrolled, open), over && !scrolled && !open ? 'border-b border-transparent' : 'border-b border-border')}>
-      <nav className={cn(WRAP, 'flex h-[72px] items-center justify-between gap-6')}>
-        <a href="#main" className={cn('flex items-center gap-3 text-foreground', FOCUS)}>
-          <span aria-hidden="true" className="flex h-9 w-9 items-center justify-center rounded-md bg-foreground font-display text-lg text-background">{brand.slice(0, 1)}</span>
-          <span className="font-display text-lg">{brand}</span>
+      <nav className={cn(WRAP, 'flex min-h-[72px] items-center justify-between gap-4 py-2 lg:gap-6')}>
+        <a href="#main" className={cn('flex min-h-10 items-center gap-3 text-foreground', FOCUS)}>
+          <span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-foreground font-display text-lg text-background">{brand.slice(0, 1)}</span>
+          <span className={cn('font-display text-lg', longBrand(brand))}>{brand}</span>
         </a>
-        <div className="hidden items-center gap-7 md:flex">
+        <div className="hidden items-center gap-5 lg:flex xl:gap-7">
           {links.map((l, i) => (
-            <a key={l.href} href={l.href} className={cn('flex items-baseline gap-2 text-sm text-foreground transition-colors hover:text-primary', FOCUS)}>
+            <a key={l.href} href={l.href} className={cn('flex items-baseline gap-2 whitespace-nowrap text-sm text-foreground transition-colors hover:text-primary', FOCUS)}>
               <span className="font-mono text-xs text-muted-foreground">{pad(i + 1)}</span>{l.label}
             </a>
           ))}
         </div>
-        <div className="flex items-center gap-3"><div className="hidden md:block">{cta}</div><MenuButton open={open} setOpen={setOpen} /></div>
+        <div className="flex items-center gap-3"><div className="hidden whitespace-nowrap lg:block">{cta}</div><MenuButton open={open} setOpen={setOpen} /></div>
       </nav>
       <MobileMenu open={open} setOpen={setOpen} links={links} cta={cta} />
     </header>
@@ -330,13 +369,14 @@ export function HeaderIndex({ brand, links = [], cta, over }: { brand: string; l
 type HeroProps = ActionProps & { eyebrow?: string; headline: string; accent?: string; sub: string; media?: React.ReactNode; facts?: SectionFact[]; reveal?: boolean; flip?: boolean }
 
 export function HeroSplitPhoto(p: HeroProps) {
+  const fitRef = useFitWords<HTMLHeadingElement>()
   return (
     <div data-lean-root="" className={cn(WRAP, 'pb-16 pt-32 md:pb-28 md:pt-44')}>
       <div className="grid items-end gap-12 lg:grid-cols-12 lg:gap-16">
         <div className={cn(p.media ? 'lg:col-span-7' : 'lg:col-span-10', p.flip && p.media && 'lg:order-2')}>
           <Rv load on={p.reveal}>
             <Eyebrow>{p.eyebrow}</Eyebrow>
-            <h1 className="mt-6 font-display text-[clamp(2.75rem,6.2vw,6rem)] leading-[0.98] tracking-[-0.03em] text-foreground"><Accented text={p.headline} accent={p.accent} /></h1>
+            <h1 ref={fitRef} className="mt-6 font-display text-[clamp(2.75rem,6.2vw,6rem)] leading-[0.98] tracking-[-0.03em] text-foreground"><Accented text={p.headline} accent={p.accent} /></h1>
             <p className="mt-8 max-w-xl text-lg leading-relaxed text-muted-foreground md:text-xl">{p.sub}</p>
             <Actions {...p} className="mt-10" />
           </Rv>
@@ -353,11 +393,12 @@ export function HeroSplitPhoto(p: HeroProps) {
 }
 
 export function HeroEditorial(p: HeroProps) {
+  const fitRef = useFitWords<HTMLHeadingElement>()
   return (
     <div className={cn(WRAP, 'pb-16 pt-32 md:pb-28 md:pt-44')}>
       <Rv load on={p.reveal}>
         <Eyebrow>{p.eyebrow}</Eyebrow>
-        <h1 className="mt-8 font-display text-[clamp(3rem,10.5vw,10.5rem)] leading-[0.9] tracking-[-0.045em] text-foreground"><Accented text={p.headline} accent={p.accent} /></h1>
+        <h1 ref={fitRef} className="mt-8 font-display text-[clamp(3rem,10.5vw,10.5rem)] leading-[0.9] tracking-[-0.045em] text-foreground"><Accented text={p.headline} accent={p.accent} /></h1>
       </Rv>
       <Rv load on={p.reveal} delay={0.1} className="mt-12 grid gap-8 border-t border-border pt-8 md:grid-cols-12 md:gap-12">
         <p className="max-w-xl text-lg leading-relaxed text-muted-foreground md:col-span-6 md:text-xl">{p.sub}</p>
@@ -374,11 +415,12 @@ export function HeroEditorial(p: HeroProps) {
 }
 
 export function HeroCentered(p: HeroProps) {
+  const fitRef = useFitWords<HTMLHeadingElement>()
   return (
     <div className={cn(WRAP, 'pb-16 pt-32 text-center md:pb-28 md:pt-44')}>
       <Rv load on={p.reveal} className="mx-auto max-w-4xl">
         <Eyebrow className="justify-center">{p.eyebrow}</Eyebrow>
-        <h1 className="mt-6 font-display text-[clamp(2.75rem,7.4vw,7rem)] leading-[0.96] tracking-[-0.035em] text-foreground"><Accented text={p.headline} accent={p.accent} /></h1>
+        <h1 ref={fitRef} className="mt-6 font-display text-[clamp(2.75rem,7.4vw,7rem)] leading-[0.96] tracking-[-0.035em] text-foreground"><Accented text={p.headline} accent={p.accent} /></h1>
         <p className="mx-auto mt-8 max-w-2xl text-lg leading-relaxed text-muted-foreground md:text-xl">{p.sub}</p>
         <Actions {...p} className="mt-10 justify-center" />
       </Rv>
@@ -393,6 +435,7 @@ export function HeroCentered(p: HeroProps) {
 }
 
 export function HeroFullBleed(p: HeroProps) {
+  const fitRef = useFitWords<HTMLHeadingElement>()
   const photo = Boolean(p.media)
   return (
     <div data-lean-root="" className={cn('relative flex min-h-[92svh] flex-col justify-end overflow-hidden', photo ? 'bg-black' : 'bg-foreground')}>
@@ -405,33 +448,34 @@ export function HeroFullBleed(p: HeroProps) {
       <div className={cn(WRAP, 'relative pb-12 pt-40 md:pb-16', photo ? 'text-white' : 'text-background')}>
         <Rv load on={p.reveal}>
           {p.eyebrow && (
-            <p className={cn('flex items-center gap-3 font-mono text-xs', photo ? 'text-white/80' : 'text-background/70')}>
+            <p className={cn('flex items-center gap-3 font-mono text-xs', photo ? 'text-white/80' : 'text-background/90')}>
               <span aria-hidden="true" className={cn('h-px w-8', photo ? 'bg-white/60' : 'bg-background/50')} />{p.eyebrow}
             </p>
           )}
-          <h1 className="mt-6 max-w-5xl font-display text-[clamp(2.9rem,8vw,8rem)] leading-[0.94] tracking-[-0.035em]"><Accented text={p.headline} accent={p.accent} /></h1>
+          <h1 ref={fitRef} className="mt-6 max-w-5xl font-display text-[clamp(2.9rem,8vw,8rem)] leading-[0.94] tracking-[-0.035em]"><Accented text={p.headline} accent={p.accent} onDark /></h1>
           <div className="mt-10 grid gap-8 md:grid-cols-12 md:items-end">
-            <p className={cn('max-w-xl text-lg leading-relaxed md:col-span-6 md:text-xl', photo ? 'text-white/85' : 'text-background/75')}>{p.sub}</p>
+            <p className={cn('max-w-xl text-lg leading-relaxed md:col-span-6 md:text-xl', photo ? 'text-white/85' : 'text-background/95')}>{p.sub}</p>
             <Actions {...p} dark={photo} invert={!photo} className="md:col-span-6 md:justify-end" />
           </div>
         </Rv>
-        <FactRow facts={p.facts} dark={photo} className="mt-12" />
+        <FactRow facts={p.facts} dark={photo} invert={!photo} className="mt-12" />
       </div>
     </div>
   )
 }
 
 export function HeroMinimal(p: HeroProps) {
+  const fitRef = useFitWords<HTMLHeadingElement>()
   return (
     <div className={cn(WRAP, 'pb-16 pt-32 md:pb-28 md:pt-48')}>
       <div className="grid gap-10 md:grid-cols-12 md:gap-12">
-        <div className="hidden md:col-span-2 md:block">
+        <div className="hidden lg:col-span-2 lg:block">
           <p className="font-mono text-xs text-muted-foreground">{p.eyebrow}</p>
           <span aria-hidden="true" className="mt-6 block h-40 w-px bg-border" />
         </div>
-        <Rv load on={p.reveal} className="md:col-span-10">
-          {p.eyebrow && <Eyebrow className="mb-6 md:hidden">{p.eyebrow}</Eyebrow>}
-          <h1 className="font-display text-[clamp(2.9rem,7.6vw,7.5rem)] leading-[0.97] tracking-[-0.035em] text-foreground"><Accented text={p.headline} accent={p.accent} /></h1>
+        <Rv load on={p.reveal} className="md:col-span-12 lg:col-span-10">
+          {p.eyebrow && <Eyebrow className="mb-6 lg:hidden">{p.eyebrow}</Eyebrow>}
+          <h1 ref={fitRef} className="font-display text-[clamp(2.9rem,7.6vw,7.5rem)] leading-[0.97] tracking-[-0.035em] text-foreground"><Accented text={p.headline} accent={p.accent} /></h1>
           <div className="mt-12 grid gap-8 md:grid-cols-10 md:gap-12">
             <p className="max-w-xl text-lg leading-relaxed text-muted-foreground md:col-span-5 md:text-xl">{p.sub}</p>
             <Actions {...p} className="md:col-span-5 md:justify-end" />
@@ -483,10 +527,10 @@ export function FeaturesCards({ eyebrow, title, description, items, tone, reveal
       <div className="mt-14 grid gap-4 md:mt-20 md:grid-cols-6">
         {items.map((it, i) => (
           <Rv key={i} on={reveal} delay={i * 0.05} y={12} className={spanFor(items.length, i)}>
-            <article className="flex h-full min-h-[18rem] flex-col justify-between rounded-2xl border border-border bg-card p-7 transition-colors hover:border-foreground/40 md:p-9">
+            <article className="flex h-full min-h-[18rem] flex-col justify-between rounded-2xl border border-border bg-card p-7 transition-colors hover:border-foreground/40 md:p-5 lg:p-9">
               <span className="font-display text-5xl leading-none text-primary">{pad(i + 1)}</span>
               <div className="mt-12">
-                <h3 className="font-display text-2xl leading-tight tracking-[-0.015em] text-foreground md:text-[1.7rem]">{it.title}</h3>
+                <h3 className="font-display text-2xl leading-tight tracking-[-0.015em] text-foreground md:text-xl lg:text-[1.7rem]">{it.title}</h3>
                 <p className="mt-3 text-base leading-relaxed text-muted-foreground">{it.text}</p>
                 {it.meta && <p className="mt-5 border-t border-border pt-4 font-mono text-sm text-foreground">{it.meta}</p>}
               </div>
@@ -520,11 +564,11 @@ export function FeaturesBento({ eyebrow, title, description, items, tone, reveal
         {a && (
           <Rv on={reveal} y={12} className="md:col-span-2">
             <article className="flex h-full min-h-[22rem] flex-col justify-between rounded-2xl bg-foreground p-8 text-background md:p-12">
-              <span className="font-mono text-sm text-background/70">01</span>
+              <span className="font-mono text-sm text-background/90">01</span>
               <div>
                 <h3 className="font-display text-[clamp(2rem,3.6vw,3.25rem)] leading-[1.05] tracking-[-0.025em]">{a.title}</h3>
-                <p className="mt-4 max-w-md text-base leading-relaxed text-background/80 md:text-lg">{a.text}</p>
-                {a.meta && <p className="mt-6 font-mono text-sm text-background/80">{a.meta}</p>}
+                <p className="mt-4 max-w-md text-base leading-relaxed text-background/95 md:text-lg">{a.text}</p>
+                {a.meta && <p className="mt-6 font-mono text-sm text-background/95">{a.meta}</p>}
               </div>
             </article>
           </Rv>
@@ -560,7 +604,7 @@ export function FeaturesGrid({ eyebrow, title, description, items, tone, reveal 
 /* ---------------------------------- steps ---------------------------------- */
 
 export function StepsColumns({ eyebrow, title, description, items, tone, reveal }: ListProps) {
-  const cols = items.length >= 4 ? 'md:grid-cols-4' : 'md:grid-cols-3'
+  const cols = items.length >= 4 ? 'sm:grid-cols-2 lg:grid-cols-4' : 'md:grid-cols-3'
   return (
     <Shell tone={tone}>
       <Head eyebrow={eyebrow} title={title} description={description} reveal={reveal} className="max-w-3xl" />
@@ -629,12 +673,13 @@ export function AboutSplit({ eyebrow, title, paragraphs, media, flip, tone, reve
 }
 
 export function AboutBand({ eyebrow, title, paragraphs, media, tone, reveal }: AboutProps) {
+  const fitRef = useFitWords<HTMLHeadingElement>()
   const [lead, ...rest] = paragraphs
   return (
     <Shell tone={tone}>
       <Eyebrow>{eyebrow}</Eyebrow>
       <Rv on={reveal}>
-        <h2 className="mt-5 max-w-4xl font-display text-[clamp(2.1rem,5.2vw,4.75rem)] leading-[1.02] tracking-[-0.03em] text-foreground">{title}</h2>
+        <h2 ref={fitRef} className="mt-5 max-w-4xl font-display text-[clamp(2.1rem,5.2vw,4.75rem)] leading-[1.02] tracking-[-0.03em] text-foreground">{title}</h2>
       </Rv>
       <div className="mt-12 grid gap-10 md:mt-16 md:grid-cols-12 md:gap-12">
         <Rv on={reveal} className="md:col-span-5"><p className="font-display text-[clamp(1.3rem,2vw,1.75rem)] leading-[1.35] text-foreground">{lead}</p></Rv>
@@ -704,13 +749,14 @@ export function FaqBoxed({ eyebrow, title, description, faq, tone, reveal }: Faq
 type CtaProps = { title: string; description?: string; cta?: string; onCta?: () => void; secondaryLabel?: string; secondaryHref?: string; reveal?: boolean }
 
 export function CtaBand(p: CtaProps) {
+  const fitRef = useFitWords<HTMLHeadingElement>()
   return (
     <div className="bg-foreground text-background">
       <div className={cn(WRAP, 'py-24 md:py-40')}>
         <Rv on={p.reveal}>
-          <h2 className="max-w-5xl font-display text-[clamp(2.6rem,7vw,7rem)] leading-[0.96] tracking-[-0.04em]">{p.title}</h2>
+          <h2 ref={fitRef} className="max-w-5xl font-display text-[clamp(2.6rem,7vw,7rem)] leading-[0.96] tracking-[-0.04em]">{p.title}</h2>
           <div className="mt-12 grid gap-8 md:grid-cols-12 md:items-end">
-            {p.description && <p className="max-w-lg text-lg leading-relaxed text-background/80 md:col-span-6 md:text-xl">{p.description}</p>}
+            {p.description && <p className="max-w-lg text-lg leading-relaxed text-background/95 md:col-span-6 md:text-xl">{p.description}</p>}
             <Actions cta={p.cta} onCta={p.onCta} secondaryLabel={p.secondaryLabel} secondaryHref={p.secondaryHref} invert className="md:col-span-6 md:justify-end" />
           </div>
         </Rv>
@@ -720,12 +766,13 @@ export function CtaBand(p: CtaProps) {
 }
 
 export function CtaSplit(p: CtaProps) {
+  const fitRef = useFitWords<HTMLHeadingElement>()
   return (
     <div className={cn(WRAP, 'py-16 md:py-28')}>
       <Rv on={p.reveal}>
         <div className="grid gap-10 rounded-3xl border border-foreground bg-card p-8 md:grid-cols-12 md:items-center md:gap-12 md:p-16">
           <div className="md:col-span-8">
-            <h2 className="font-display text-[clamp(2rem,4.6vw,4rem)] leading-[1.02] tracking-[-0.03em] text-foreground">{p.title}</h2>
+            <h2 ref={fitRef} className="font-display text-[clamp(2rem,4.6vw,4rem)] leading-[1.02] tracking-[-0.03em] text-foreground">{p.title}</h2>
             {p.description && <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground md:text-lg">{p.description}</p>}
           </div>
           <Actions cta={p.cta} onCta={p.onCta} secondaryLabel={p.secondaryLabel} secondaryHref={p.secondaryHref} className="md:col-span-4 md:justify-end" />
@@ -750,6 +797,7 @@ export function PhotoBand({ media, ratio = '21/9', caption, reveal }: { media?: 
 
 // The closing screen repeats the mood of the first one: a photograph under a flat dark overlay, a large line, one action.
 export function CtaPhoto(p: CtaProps & { media?: React.ReactNode }) {
+  const fitRef = useFitWords<HTMLHeadingElement>()
   const photo = Boolean(p.media)
   return (
     <div className={cn('relative isolate overflow-hidden', photo ? 'bg-black text-white' : 'bg-foreground text-background')}>
@@ -761,9 +809,9 @@ export function CtaPhoto(p: CtaProps & { media?: React.ReactNode }) {
       )}
       <div className={cn(WRAP, 'py-24 md:py-44')}>
         <Rv on={p.reveal}>
-          <h2 className="max-w-5xl font-display text-[clamp(2.6rem,7vw,7rem)] leading-[0.96] tracking-[-0.04em]">{p.title}</h2>
+          <h2 ref={fitRef} className="max-w-5xl font-display text-[clamp(2.6rem,7vw,7rem)] leading-[0.96] tracking-[-0.04em]">{p.title}</h2>
           <div className="mt-12 grid gap-8 md:grid-cols-12 md:items-end">
-            {p.description && <p className={cn('max-w-lg text-lg leading-relaxed md:col-span-6 md:text-xl', photo ? 'text-white/85' : 'text-background/80')}>{p.description}</p>}
+            {p.description && <p className={cn('max-w-lg text-lg leading-relaxed md:col-span-6 md:text-xl', photo ? 'text-white/85' : 'text-background/95')}>{p.description}</p>}
             <Actions cta={p.cta} onCta={p.onCta} secondaryLabel={p.secondaryLabel} secondaryHref={p.secondaryHref} dark={photo} invert={!photo} className="md:col-span-6 md:justify-end" />
           </div>
         </Rv>
@@ -814,11 +862,11 @@ export function VisitList({ eyebrow, title, description, facts, children, tone, 
             {(facts ?? []).map((f, i) => (
               <div key={i} className="grid gap-1 border-b border-border py-6 sm:grid-cols-3 sm:gap-6">
                 <dt className="font-mono text-sm text-muted-foreground">{f.label}</dt>
-                <dd className="font-display text-xl leading-snug text-foreground sm:col-span-2 md:text-2xl">{f.value}</dd>
+                <dd className={cn('min-w-0 font-display text-xl leading-snug text-foreground [overflow-wrap:anywhere] sm:col-span-2 md:text-2xl', TAP_LINK)}>{f.value}</dd>
               </div>
             ))}
           </dl>
-          {children && <div className="mt-6">{children}</div>}
+          {children && <div className="mt-6 [&>a]:inline-flex [&>a]:min-h-10 [&>a]:items-center">{children}</div>}
         </Rv>
       </div>
     </Shell>
@@ -861,9 +909,12 @@ export function FactTicker({ items, label }: { items: string[]; label?: string }
 
 /* ---------------------------------- footers ---------------------------------- */
 
+const FOOTER_LINK = 'inline-flex min-h-10 min-w-10 items-center text-base text-foreground transition-colors hover:text-primary md:min-h-0 md:min-w-0'
+
 type FooterProps = { brand: string; description?: string; columns?: { title: string; links: SectionLink[] }[]; note?: string }
 
 export function FooterGiant({ brand, description, columns = [], note }: FooterProps) {
+  const fitRef = useFitWords<HTMLHeadingElement>(20)
   const vw = Math.min(16, 150 / Math.max(brand.length, 6))
   return (
     <footer className="border-t border-foreground bg-background">
@@ -874,14 +925,14 @@ export function FooterGiant({ brand, description, columns = [], note }: FooterPr
             {columns.map(col => (
               <div key={col.title}>
                 <p className="font-mono text-xs text-muted-foreground">{col.title}</p>
-                <ul className="mt-5 flex flex-col gap-3">
-                  {col.links.map(l => <li key={l.href + l.label}><a href={l.href} className={cn('text-base text-foreground transition-colors hover:text-primary', FOCUS)}>{l.label}</a></li>)}
+                <ul className="mt-3 flex flex-col md:mt-5 md:gap-3">
+                  {col.links.map(l => <li key={l.href + l.label}><a href={l.href} className={cn(FOOTER_LINK, FOCUS)}>{l.label}</a></li>)}
                 </ul>
               </div>
             ))}
           </div>
         </div>
-        <p aria-hidden="true" className="mt-16 overflow-hidden break-words font-display leading-[0.9] tracking-[-0.045em] text-foreground md:mt-24" style={{ fontSize: 'clamp(2.5rem,' + vw.toFixed(1) + 'vw,14rem)' }}>{brand}</p>
+        <p ref={fitRef} aria-hidden="true" className="mt-16 text-[length:var(--wordmark)] font-display leading-[0.9] tracking-[-0.045em] text-foreground md:mt-24" style={{ '--wordmark': 'clamp(2.5rem,' + vw.toFixed(1) + 'vw,14rem)' } as React.CSSProperties}>{brand}</p>
         {note && <p className="mt-8 border-t border-border py-6 text-sm text-muted-foreground">{note}</p>}
       </div>
     </footer>
@@ -898,8 +949,8 @@ export function FooterSlim({ brand, description, columns = [], note }: FooterPro
             <p className="font-display text-2xl text-foreground">{brand}</p>
             {description && <p className="mt-4 max-w-sm text-base leading-relaxed text-muted-foreground">{description}</p>}
           </div>
-          <ul className="flex flex-wrap gap-x-8 gap-y-3 md:col-span-7 md:justify-end">
-            {links.map(l => <li key={l.href + l.label}><a href={l.href} className={cn('text-base text-foreground transition-colors hover:text-primary', FOCUS)}>{l.label}</a></li>)}
+          <ul className="flex flex-wrap gap-x-8 md:col-span-7 md:justify-end md:gap-y-3">
+            {links.map(l => <li key={l.href + l.label}><a href={l.href} className={cn(FOOTER_LINK, FOCUS)}>{l.label}</a></li>)}
           </ul>
         </div>
         {note && <p className="mt-12 border-t border-border pt-6 text-sm text-muted-foreground">{note}</p>}

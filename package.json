@@ -10,6 +10,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
+    "qa:visual": "node scripts/visual-qa.mjs",
     "test:watch": "vitest"
   },
   "dependencies": {
@@ -93,6 +94,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
     "tailwindcss": "^4",
+    "tailwindcss-v3": "npm:tailwindcss@^3.4.17",
     "typescript": "^5",
     "vitest": "^2.1.9"
   }

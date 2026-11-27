@@ -99,7 +99,7 @@ export default function AuthPage({ state, onState }: { state: SaasState; onState
 
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-10">
-      <a href="#/" className="mb-6 text-sm text-muted-foreground underline underline-offset-4">Back to {productName()}</a>
+      <a href="#/" className="mb-3 inline-flex min-h-10 items-center self-start text-sm text-muted-foreground underline underline-offset-4">Back to {productName()}</a>
       <h1 className="font-display text-3xl font-semibold text-foreground">{mode === 'up' ? 'Create your workspace' : 'Sign in'}</h1>
       <p className="mt-2 text-sm text-muted-foreground">This is a demo account kept in this browser only. Nothing is sent to a server, and email verification needs the email service, which is not connected here.</p>
       <div className="mt-6"><Tabs tabs={[{ id: 'up', label: 'Create account' }, { id: 'in', label: 'Sign in' }]} active={mode} onChange={m => { setMode(m); setError(''); setForgot(false) }} /></div>
@@ -126,7 +126,7 @@ export default function AuthPage({ state, onState }: { state: SaasState; onState
               <Input id="su-ws" value={ws} onChange={e => setWs(e.target.value)} onBlur={() => touch('ws')} autoComplete="organization" />
               {touched.ws && !ws.trim() ? <p className="mt-1 text-xs text-destructive">Name the workspace, for example your business name.</p> : null}
             </div>
-            <label className="flex items-start gap-3 text-sm text-foreground" htmlFor="su-consent">
+            <label className="flex min-h-10 items-start gap-3 py-2 text-sm text-foreground" htmlFor="su-consent">
               <input id="su-consent" type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)} className="mt-1 h-4 w-4 shrink-0 accent-[hsl(var(--primary))]" />
               <span>I agree to the <a className="underline underline-offset-4" href="#/terms">Terms</a> and the <a className="underline underline-offset-4" href="#/privacy">Privacy policy</a>.</span>
             </label>
@@ -151,7 +151,7 @@ export default function AuthPage({ state, onState }: { state: SaasState; onState
             </div>
             {error ? <p role="alert" className="text-sm text-destructive">{error}</p> : null}
             <Button type="submit" size="lg" className="w-full">Sign in</Button>
-            <button type="button" className="text-sm text-muted-foreground underline underline-offset-4" onClick={() => setForgot(true)}>Forgot your password?</button>
+            <button type="button" className="min-h-10 text-sm text-muted-foreground underline underline-offset-4 md:min-h-0" onClick={() => setForgot(true)}>Forgot your password?</button>
           </form>
         )}
       </Card>
@@ -537,11 +537,11 @@ function Page({ title, children }: { title: string; children: React.ReactNode })
   return (
     <div className="min-h-screen bg-background text-foreground">
       <main className="mx-auto max-w-2xl px-4 py-10">
-        <a href="#/" className="text-sm text-muted-foreground underline underline-offset-4">Back to {OWNER.productName || APP.name}</a>
+        <a href="#/" className="inline-flex min-h-10 items-center text-sm text-muted-foreground underline underline-offset-4">Back to {OWNER.productName || APP.name}</a>
         <h1 className="mt-6 font-display text-3xl font-semibold text-foreground">{title}</h1>
         <p className="mt-2 rounded-lg border border-border bg-card p-3 text-sm text-muted-foreground">These pages are a starting point written from what the owner told us. They are not legal advice. Have them reviewed before you take payments or store other people's data.</p>
         <div className="mt-6 space-y-6 text-sm leading-relaxed text-muted-foreground">{children}</div>
-        <p className="mt-10 text-sm text-muted-foreground"><a className="underline underline-offset-4" href="#/terms">Terms</a> · <a className="underline underline-offset-4" href="#/privacy">Privacy policy</a></p>
+        <p className="mt-10 text-sm text-muted-foreground"><a className="inline-block min-w-10 py-3 underline underline-offset-4" href="#/terms">Terms</a> · <a className="inline-block py-3 underline underline-offset-4" href="#/privacy">Privacy policy</a></p>
       </main>
     </div>
   )
@@ -617,7 +617,7 @@ export default function Checklist({ state, store, go, onDismiss, onRemoveSample 
           ))}
         </ul>
       )}
-      {!all ? <div><button type="button" className="text-xs text-muted-foreground underline underline-offset-4" onClick={onDismiss}>Hide this checklist</button></div> : null}
+      {!all ? <div><button type="button" className="min-h-10 text-xs text-muted-foreground underline underline-offset-4 md:min-h-0" onClick={onDismiss}>Hide this checklist</button></div> : null}
     </Card>
   )
 }
