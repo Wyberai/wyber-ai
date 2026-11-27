@@ -20,7 +20,14 @@ Checks: covered text, text over text, sideways scroll, elements wider than the s
 |---|---|---|
 | First full run | all cases | 3,934 |
 | After the main fixes | 327 | 49 in 3 groups |
-| Final full run | FINAL_PAGES | FINAL_FINDINGS |
+| Final full run, 390 / 768 / 1440 | 327 | 0 |
+| Websites only, 390 / 768 / 1024 / 1280 / 1440 | 295 | 0 |
+
+"0" means none of the automatic checks fired. It does not mean a page was reviewed by eye. Defect 16 was one the checks missed until a check was added.
+
+Late in the work, copy length and header style turned out to rotate in step, so long names had only ever met the centred header. The rotation is fixed, a test now requires long copy on every header, and that is how defect 24 was found. The full matrix's default widths stay 390 / 768 / 1440; the fast subset also checks all three headers at 1024px.
+
+On 27 Nov the fast subset (7 tests) took about 80 to 90 seconds, and the whole test suite passed with it (3,165 passed, 10 skipped) with a clean type check.
 
 ## Defects found and fixed
 
@@ -49,6 +56,7 @@ Checks: covered text, text over text, sideways scroll, elements wider than the s
 | 21 | Hindi in the language toggle was cut off | The toggle no longer shrinks |
 | 22 | "Overdue" badge 4.27:1 on a dark palette | The readable shade also allows for the badge's own tint |
 | 23 | Money figure spilled out of its preview box at 768px | Smaller below laptop width |
+| 24 | Numbered header crushed a long business name onto three lines at 1024 to 1440px | With a long name, the link row starts at 1280px and drops its numbers |
 
 **One design change to look at:** on pale-brand palettes, large numbers and labels that were pale yellow are now a dark olive-brown. Buttons and fills keep the original colour.
 
@@ -59,6 +67,6 @@ Checks: covered text, text over text, sideways scroll, elements wider than the s
 - Text over photographs is not contrast-checked: the harness uses flat placeholder pictures.
 - It renders with this repo's React 19 and lucide 1.x, not the React 18 and lucide 0.383 that generated sites install. Tailwind is the matching v3.
 - Copy is stand-in text, not model output. Fonts are fetched from the network, so a run without it measures fallback fonts.
-- The 34 new sections on `claude/cool-bardeen-431d38` (not merged) are not in this matrix. SECTION_TRIAL
+- The 34 new sections on `claude/cool-bardeen-431d38` (not merged) are not in this matrix. A throwaway local merge of that branch (no git conflicts, type check clean, not pushed) was measured on 104 planner-chosen pages covering all 61 section styles at 390 / 768 / 1024 / 1440: **1,065 findings in 60 groups**, no page errors. Text over text 294, covered text 368, tap targets 198, crowded headers 57, contrast 45, wider than the screen 38, text spilling out of a box 37, sideways scroll 25, orphan rows 3. They have not been checked one by one, and some may be deliberate effects (stacked sticky cards, for example), but overlaps in the feature lists, FAQ and steps should be fixed or explained before that branch is merged.
 - The GitHub test workflow runs only on `main`, `builder/**` and pull requests.
-- The `tailwind.config.js` in the render comes from the project itself; the one new dependency is `tailwindcss-v3` (dev only).
+- The one new dependency is `tailwindcss-v3` (dev only).
