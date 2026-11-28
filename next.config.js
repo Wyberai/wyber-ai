@@ -32,6 +32,8 @@ const nextConfig = {
   },
   async rewrites() {
     return [
+      // Contact card + brochure page that the printed QR points to (public/card).
+      { source: '/card', destination: '/card/index.html' },
       // OAuth discovery documents must live at these well-known paths. Next
       // App Router doesn't route dotfolders reliably, so serve them from API
       // route handlers and map the canonical URLs here.
